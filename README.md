@@ -1,20 +1,11 @@
 <div align="center">
 
-```
-██╗  ██╗██╗   ██╗███╗   ███╗ █████╗ ███╗   ██╗    ███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
-██║  ██║██║   ██║████╗ ████║██╔══██╗████╗  ██║    ██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
-███████║██║   ██║██╔████╔██║███████║██╔██╗ ██║    ███████╗█████╔╝ ██║██║     ██║     ███████╗
-██╔══██║██║   ██║██║╚██╔╝██║██╔══██║██║╚██╗██║    ╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
-██║  ██║╚██████╔╝██║ ╚═╝ ██║██║  ██║██║ ╚████║    ███████║██║  ██╗██║███████╗███████╗███████║
-╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝
-```
+<img src="assets/banner.svg" alt="Human Skills — Cyberpunk Banner" width="100%"/>
 
-### 🔬 If it hasn't been tested by a human, it doesn't belong here.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Skills: Verified](https://img.shields.io/badge/Skills-Human--Verified-brightgreen)
-![Sync: Automated](https://img.shields.io/badge/Sync-Automated-blue)
-![Hot Reload: ON](https://img.shields.io/badge/Hot--Reload-ON-blueviolet)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+![Skills: Verified](https://img.shields.io/badge/Skills-Human--Verified-00FF41?style=flat-square&labelColor=0d0d0d)
+![Sync: Automated](https://img.shields.io/badge/Sync-Automated-00FFFF?style=flat-square&labelColor=0d0d0d)
+![Hot Reload: ON](https://img.shields.io/badge/Hot--Reload-ON-FF2079?style=flat-square&labelColor=0d0d0d)
 
 </div>
 
