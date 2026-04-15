@@ -10,6 +10,9 @@ schedule:
   # Fallback: if run_at is null, run every N hours
   interval_hours: 24
 
+  # How often (seconds) to poll config files for hot-reload changes
+  poll_interval_seconds: 30
+
 # ── Git Configuration ─────────────────────────────────────────────────────────
 git:
   auto_push: true

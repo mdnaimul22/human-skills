@@ -37,9 +37,6 @@ AUTOMATION_CONFIG   = HELPERS_DIR / "automation.yaml"
 
 CONFIG_FILES = [UPSTREAM_CONFIG, PATH_FORWARD_CONFIG, AUTOMATION_CONFIG]
 
-# Hot-reload poll interval (seconds)
-POLL_INTERVAL = 30
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Config Watcher — detects YAML changes and hot-reloads
@@ -78,11 +75,16 @@ class ConfigWatcher:
         }
         self._snapshot_mtimes()
 
-    # ── Schedule params helper ─────────────────────────────────────────────
+    # ── Schedule params helpers ────────────────────────────────────────────
     def sched_params(self) -> tuple[str | None, int]:
         """Return (run_at, interval_hours) from automation.yaml."""
         sched = self.config["automation"].get("schedule", {})
         return sched.get("run_at"), sched.get("interval_hours", 24)
+
+    @property
+    def poll_interval(self) -> int:
+        """Seconds between hot-reload checks — read live from automation.yaml."""
+        return self.config["automation"].get("schedule", {}).get("poll_interval_seconds", 30)
 
     # ── Public API ─────────────────────────────────────────────────────────
     def has_changed(self) -> bool:
@@ -321,7 +323,7 @@ def main() -> None:
     logger.info(f"  Repo root    : {REPO_ROOT}")
     logger.info(f"  Upstreams    : {len(watcher.config['upstream'].get('upstreams', []))}")
     logger.info(f"  Forwards     : {len(watcher.config['path_forward'].get('forwards', []))}")
-    logger.info(f"  Config watch : every {POLL_INTERVAL}s")
+    logger.info(f"  Config watch : every {watcher.poll_interval}s")
     logger.info(f"  Log file     : {log_file}")
     logger.info("")
 
@@ -331,7 +333,7 @@ def main() -> None:
 
     # ── Main loop ──────────────────────────────────────────────────────────
     while True:
-        time.sleep(POLL_INTERVAL)
+        time.sleep(watcher.poll_interval)
         schedule.run_pending()
 
         # Hot-reload check
