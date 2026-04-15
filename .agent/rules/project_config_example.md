@@ -1,5 +1,5 @@
 ---
-name: python-project-config
+name: project_config_example
 description: >
   Generates a universal `config/` folder (paths.py, files.py, dotenv.py,
   settings.py, __init__.py, .env.example) that works across any Python project
