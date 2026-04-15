@@ -299,17 +299,18 @@ def register_schedule(watcher: ConfigWatcher, logger: logging.Logger) -> None:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def main() -> None:
-    # Bootstrap logging (before watcher, so we can catch load errors)
-    boot_logger = logging.getLogger("human-skills")
+    # Bootstrap: minimal console logger just for config loading errors
+    boot_logger = logging.getLogger("human-skills-boot")
     boot_logger.setLevel(logging.INFO)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setFormatter(logging.Formatter("%(asctime)s  %(levelname)-8s  %(message)s",
-                                       datefmt="%Y-%m-%d %H:%M:%S"))
-    boot_logger.addHandler(ch)
+    boot_logger.propagate = False
+    _bh = logging.StreamHandler(sys.stdout)
+    _bh.setFormatter(logging.Formatter("%(asctime)s  %(levelname)-8s  %(message)s",
+                                        datefmt="%Y-%m-%d %H:%M:%S"))
+    boot_logger.addHandler(_bh)
 
     watcher = ConfigWatcher(boot_logger)
 
-    # Now set up proper logging from config
+    # Proper logger with console + file output
     log_cfg  = watcher.config["automation"].get("logging", {})
     log_file = Path(log_cfg.get("log_file", str(LOGS_DIR / "sync.log")))
     logger   = setup_logging(log_cfg.get("level", "INFO"), log_file)
