@@ -63,15 +63,30 @@ class ConfigWatcher:
         with open(path, "r") as f:
             return yaml.safe_load(f) or {}
 
+    @staticmethod
+    def _resolve(obj: object) -> object:
+        """
+        Recursively replace {REPO_ROOT} in every string value inside
+        a nested dict/list structure. Makes configs portable across machines.
+        """
+        repo = str(REPO_ROOT)
+        if isinstance(obj, str):
+            return obj.replace("{REPO_ROOT}", repo)
+        if isinstance(obj, dict):
+            return {k: ConfigWatcher._resolve(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [ConfigWatcher._resolve(i) for i in obj]
+        return obj
+
     def _snapshot_mtimes(self) -> None:
         for p in CONFIG_FILES:
             self._mtimes[str(p)] = p.stat().st_mtime if p.exists() else 0.0
 
     def _do_load(self) -> None:
         self.config = {
-            "upstream":     self._read_yaml(UPSTREAM_CONFIG),
-            "path_forward": self._read_yaml(PATH_FORWARD_CONFIG),
-            "automation":   self._read_yaml(AUTOMATION_CONFIG),
+            "upstream":     self._resolve(self._read_yaml(UPSTREAM_CONFIG)),
+            "path_forward": self._resolve(self._read_yaml(PATH_FORWARD_CONFIG)),
+            "automation":   self._resolve(self._read_yaml(AUTOMATION_CONFIG)),
         }
         self._snapshot_mtimes()
 

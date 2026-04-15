@@ -1,5 +1,7 @@
 ---
-description: "A professional and comprehensive guide transforming complex architectures into clean, maintainable systems. Focused on Clean Architecture, Unidirectional Dependency, and Type Safety."
+Name: python-project-config
+Description: >
+  A professional and comprehensive guide transforming complex architectures into clean, maintainable systems. Focused on Clean Architecture, Unidirectional Dependency, and Type Safety.
 ---
 
 # Coding Standards

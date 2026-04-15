@@ -1,8 +1,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # path_forward.yaml — Skill Copy Mapping Rules
 #
-# After pulling each upstream, these rules define WHICH skills get copied
-# from WHICH upstream path → INTO the local skills/ directory.
+# Use {REPO_ROOT} as a portable placeholder for the root of this repo.
+# The sync script resolves it automatically — no hardcoded paths needed.
 #
 # Format:
 #   from    : Absolute source path (in upstream repo)
@@ -18,15 +18,15 @@
 forwards:
 
   # ── everything-claude-code ────────────────────────────────────────────────
-  - from: /home/openscore/a0/usr/projects/human-skills/.everything-claude-code/skills/pytorch-patterns
-    to:   /home/openscore/a0/usr/projects/human-skills/skills/pytorch-patterns
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/pytorch-patterns"
+    to:   "{REPO_ROOT}/skills/pytorch-patterns"
     enabled: true
 
   # ── Add more forwarding rules below ───────────────────────────────────────
-  # - from: /home/openscore/a0/usr/projects/human-skills/.claude-skills/skills/some-skill
-  #   to:   /home/openscore/a0/usr/projects/human-skills/skills/some-skill
+  # - from: "{REPO_ROOT}/.claude-skills/skills/some-skill"
+  #   to:   "{REPO_ROOT}/skills/some-skill"
   #   enabled: true
   #
-  # - from: /home/openscore/a0/usr/projects/human-skills/.superpowers/skills/some-other-skill
-  #   to:   /home/openscore/a0/usr/projects/human-skills/skills/some-other-skill
+  # - from: "{REPO_ROOT}/.superpowers/skills/some-other-skill"
+  #   to:   "{REPO_ROOT}/skills/some-other-skill"
   #   enabled: true

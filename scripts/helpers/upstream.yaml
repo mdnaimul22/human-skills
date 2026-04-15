@@ -1,8 +1,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # upstream.yaml — Human Skills Upstream Repository Tracker
 #
-# List every upstream repo you want to pull from daily.
-# The sync script will run `git pull` in each of these paths.
+# Use {REPO_ROOT} as a portable placeholder for the root of this repo.
+# The sync script resolves it automatically — no hardcoded paths needed.
 #
 # Format:
 #   name  : A short label shown in logs
@@ -12,10 +12,10 @@
 upstreams:
 
   - name: claude-skills
-    path: /home/openscore/a0/usr/projects/human-skills/.claude-skills
+    path: "{REPO_ROOT}/.claude-skills"
 
   - name: everything-claude-code
-    path: /home/openscore/a0/usr/projects/human-skills/.everything-claude-code
+    path: "{REPO_ROOT}/.everything-claude-code"
 
   - name: superpowers
-    path: /home/openscore/a0/usr/projects/human-skills/.superpowers
+    path: "{REPO_ROOT}/.superpowers"

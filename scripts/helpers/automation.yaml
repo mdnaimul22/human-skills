@@ -1,5 +1,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # automation.yaml — Sync Schedule, Git, and Logging Configuration
+#
+# Use {REPO_ROOT} as a portable placeholder for the root of this repo.
+# The sync script resolves it automatically — no hardcoded paths needed.
 # ─────────────────────────────────────────────────────────────────────────────
 
 schedule:
@@ -24,4 +27,4 @@ git:
 # ── Logging Configuration ─────────────────────────────────────────────────────
 logging:
   level: INFO   # DEBUG | INFO | WARNING | ERROR
-  log_file: /home/openscore/a0/usr/projects/human-skills/scripts/logs/sync.log
+  log_file: "{REPO_ROOT}/scripts/logs/sync.log"
