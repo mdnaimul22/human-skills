@@ -1,0 +1,24 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# automation.yaml — Sync Schedule, Git, and Logging Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+
+schedule:
+  # Run once every day at this time (24-hour format HH:MM)
+  # Set run_at to null to use interval_hours instead
+  run_at: "06:00"
+
+  # Fallback: if run_at is null, run every N hours
+  interval_hours: 24
+
+# ── Git Configuration ─────────────────────────────────────────────────────────
+git:
+  auto_push: true
+  branch: main
+
+  # Commit message template — [{datetime}] will be replaced with actual time
+  commit_message: "sync: auto-update from upstream [{datetime}]"
+
+# ── Logging Configuration ─────────────────────────────────────────────────────
+logging:
+  level: INFO   # DEBUG | INFO | WARNING | ERROR
+  log_file: /home/openscore/a0/usr/projects/human-skills/scripts/logs/sync.log

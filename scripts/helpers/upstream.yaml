@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# upstream.yaml — Human Skills Upstream Repository Tracker
+#
+# List every upstream repo you want to pull from daily.
+# The sync script will run `git pull` in each of these paths.
+#
+# Format:
+#   name  : A short label shown in logs
+#   path  : Absolute local path to the cloned upstream repo
+# ─────────────────────────────────────────────────────────────────────────────
+
+upstreams:
+
+  - name: claude-skills
+    path: /home/openscore/a0/usr/projects/human-skills/.claude-skills
+
+  - name: everything-claude-code
+    path: /home/openscore/a0/usr/projects/human-skills/.everything-claude-code
+
+  - name: superpowers
+    path: /home/openscore/a0/usr/projects/human-skills/.superpowers
