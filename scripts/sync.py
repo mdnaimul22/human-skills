@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║              Human Skills — Automated Upstream Sync                        ║
+║          Human Skills — Upstream Sync Daemon  (Hot-Reload Edition)         ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║  Reads three config files from scripts/helpers/:                           ║
-║    • upstream.yaml     — repos to git pull from                            ║
-║    • path_forward.yaml — skills to copy into local skills/                 ║
-║    • automation.yaml   — schedule, git, and logging settings               ║
+║  • Watches helpers/*.yaml for changes every 30 s (no restart needed)       ║
+║  • Reloads config on any YAML edit — new upstreams, paths, schedule all    ║
+║    take effect automatically on the next cycle                             ║
 ║                                                                            ║
 ║  Run inside a screen session:                                              ║
 ║    screen -S human-skills-sync                                             ║
@@ -16,7 +15,6 @@
 """
 
 import logging
-import os
 import shutil
 import subprocess
 import sys
@@ -37,210 +35,240 @@ UPSTREAM_CONFIG     = HELPERS_DIR / "upstream.yaml"
 PATH_FORWARD_CONFIG = HELPERS_DIR / "path_forward.yaml"
 AUTOMATION_CONFIG   = HELPERS_DIR / "automation.yaml"
 
+CONFIG_FILES = [UPSTREAM_CONFIG, PATH_FORWARD_CONFIG, AUTOMATION_CONFIG]
 
-# ── Config Loader ──────────────────────────────────────────────────────────────
-def load_yaml(path: Path) -> dict:
-    """Load and return a YAML file. Exits with error if file not found."""
-    if not path.exists():
-        print(f"[ERROR] Config file not found: {path}", file=sys.stderr)
-        sys.exit(1)
-    with open(path, "r") as f:
-        return yaml.safe_load(f) or {}
+# Hot-reload poll interval (seconds)
+POLL_INTERVAL = 30
 
 
-# ── Logging Setup ──────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# Config Watcher — detects YAML changes and hot-reloads
+# ══════════════════════════════════════════════════════════════════════════════
+
+class ConfigWatcher:
+    """
+    Tracks mtime of all three YAML files.
+    Call has_changed() to detect edits, then reload() to pull the new config.
+    """
+
+    def __init__(self, logger: logging.Logger) -> None:
+        self.logger = logger
+        self._mtimes: dict[str, float] = {}
+        self.config: dict = {}
+        self._do_load()
+
+    # ── Internal helpers ───────────────────────────────────────────────────
+    @staticmethod
+    def _read_yaml(path: Path) -> dict:
+        if not path.exists():
+            print(f"[ERROR] Config not found: {path}", file=sys.stderr)
+            sys.exit(1)
+        with open(path, "r") as f:
+            return yaml.safe_load(f) or {}
+
+    def _snapshot_mtimes(self) -> None:
+        for p in CONFIG_FILES:
+            self._mtimes[str(p)] = p.stat().st_mtime if p.exists() else 0.0
+
+    def _do_load(self) -> None:
+        self.config = {
+            "upstream":     self._read_yaml(UPSTREAM_CONFIG),
+            "path_forward": self._read_yaml(PATH_FORWARD_CONFIG),
+            "automation":   self._read_yaml(AUTOMATION_CONFIG),
+        }
+        self._snapshot_mtimes()
+
+    # ── Schedule params helper ─────────────────────────────────────────────
+    def sched_params(self) -> tuple[str | None, int]:
+        """Return (run_at, interval_hours) from automation.yaml."""
+        sched = self.config["automation"].get("schedule", {})
+        return sched.get("run_at"), sched.get("interval_hours", 24)
+
+    # ── Public API ─────────────────────────────────────────────────────────
+    def has_changed(self) -> bool:
+        """True if any config file was modified since last load."""
+        for p in CONFIG_FILES:
+            mtime = p.stat().st_mtime if p.exists() else 0.0
+            if self._mtimes.get(str(p)) != mtime:
+                return True
+        return False
+
+    def reload(self) -> dict[str, dict]:
+        """
+        Reload all YAML files and return a dict describing what changed.
+        Keys: 'upstream_count', 'forward_count', 'schedule'
+        """
+        old_sched    = self.sched_params()
+        old_upstream = len(self.config["upstream"].get("upstreams", []))
+        old_forward  = len(self.config["path_forward"].get("forwards", []))
+
+        self._do_load()
+
+        new_sched    = self.sched_params()
+        new_upstream = len(self.config["upstream"].get("upstreams", []))
+        new_forward  = len(self.config["path_forward"].get("forwards", []))
+
+        changes: dict[str, dict] = {}
+
+        if old_upstream != new_upstream:
+            changes["upstreams"] = {"before": old_upstream, "after": new_upstream}
+
+        if old_forward != new_forward:
+            changes["forwards"] = {"before": old_forward, "after": new_forward}
+
+        if old_sched != new_sched:
+            changes["schedule"] = {
+                "before": old_sched,
+                "after":  new_sched,
+            }
+
+        return changes
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Logging
+# ══════════════════════════════════════════════════════════════════════════════
+
 def setup_logging(level: str, log_file: Path) -> logging.Logger:
-    """Configure console + file logging."""
     log_file.parent.mkdir(parents=True, exist_ok=True)
-
     logger = logging.getLogger("human-skills")
     logger.setLevel(getattr(logging, level.upper(), logging.INFO))
-
     fmt = logging.Formatter(
         "%(asctime)s  %(levelname)-8s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-
-    # Console
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setFormatter(fmt)
-    logger.addHandler(ch)
-
-    # File
-    fh = logging.FileHandler(log_file, encoding="utf-8")
-    fh.setFormatter(fmt)
-    logger.addHandler(fh)
-
+    for handler in [logging.StreamHandler(sys.stdout),
+                    logging.FileHandler(log_file, encoding="utf-8")]:
+        handler.setFormatter(fmt)
+        logger.addHandler(handler)
     return logger
 
 
-# ── Git Helpers ────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# Git helpers
+# ══════════════════════════════════════════════════════════════════════════════
+
 def run_git(args: list[str], cwd: Path, logger: logging.Logger) -> tuple[bool, str]:
-    """Run a git command. Returns (success, stdout/stderr text)."""
     try:
-        result = subprocess.run(
-            ["git"] + args,
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            timeout=120,
+        r = subprocess.run(
+            ["git"] + args, cwd=cwd,
+            capture_output=True, text=True, timeout=120,
         )
-        if result.returncode == 0:
-            return True, result.stdout.strip()
-        return False, result.stderr.strip() or result.stdout.strip()
+        if r.returncode == 0:
+            return True, r.stdout.strip()
+        return False, (r.stderr.strip() or r.stdout.strip())
     except subprocess.TimeoutExpired:
-        return False, "Command timed out after 120s"
+        return False, "git timed out after 120 s"
     except Exception as exc:
         return False, str(exc)
 
 
-def has_working_tree_changes(repo: Path, logger: logging.Logger) -> bool:
-    """Return True if the repo has staged or unstaged changes."""
-    ok, output = run_git(["status", "--porcelain"], repo, logger)
-    return ok and bool(output.strip())
+def repo_is_dirty(repo: Path, logger: logging.Logger) -> bool:
+    ok, out = run_git(["status", "--porcelain"], repo, logger)
+    return ok and bool(out.strip())
 
 
-# ── Core Steps ─────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# Sync steps
+# ══════════════════════════════════════════════════════════════════════════════
+
 def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> dict[str, bool]:
-    """
-    Run `git pull` in every upstream repo.
-    Returns {name: success_bool}.
-    """
     results: dict[str, bool] = {}
-
     for entry in upstreams:
         name = entry.get("name", "unnamed")
         path = Path(entry.get("path", ""))
-
         if not path.exists():
-            logger.warning(f"  ⚠  [{name}] path not found — skipping: {path}")
+            logger.warning(f"  ⚠  [{name}] path missing — skipping: {path}")
             results[name] = False
             continue
-
         logger.info(f"  ↓  Pulling [{name}] …")
-        ok, output = run_git(["pull"], cwd=path, logger=logger)
-
+        ok, out = run_git(["pull"], path, logger)
         if ok:
-            tag = "already up to date" if "Already up to date" in output else output or "updated"
+            tag = "already up to date" if "Already up to date" in out else (out or "updated")
             logger.info(f"     ✓  {tag}")
-            results[name] = True
         else:
-            logger.error(f"     ✗  {output}")
-            results[name] = False
-
+            logger.error(f"     ✗  {out}")
+        results[name] = ok
     return results
 
 
 def forward_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
-    """
-    Copy skill folders from upstream paths → local skills/.
-    Destination is fully overwritten on every run.
-    Returns list of skill names that were successfully copied.
-    """
     copied: list[str] = []
-
     for rule in forwards:
         if not rule.get("enabled", True):
-            logger.debug(f"  –  Skipping disabled rule: {rule.get('from', '?')}")
             continue
-
-        src = Path(rule.get("from", ""))
-        dst = Path(rule.get("to", ""))
-        skill_name = src.name
-
+        src  = Path(rule.get("from", ""))
+        dst  = Path(rule.get("to",   ""))
+        name = src.name
         if not src.exists():
-            logger.warning(f"  ⚠  Source not found — skipping: {src}")
+            logger.warning(f"  ⚠  Source missing — skipping: {src}")
             continue
-
-        logger.info(f"  →  Forwarding [{skill_name}] …")
+        logger.info(f"  →  Forwarding [{name}] …")
         try:
             if dst.exists():
                 shutil.rmtree(dst)
             shutil.copytree(src, dst)
             logger.info(f"     ✓  {src} → {dst}")
-            copied.append(skill_name)
+            copied.append(name)
         except Exception as exc:
-            logger.error(f"     ✗  Copy failed: {exc}")
-
+            logger.error(f"     ✗  {exc}")
     return copied
 
 
-def push_repo(
-    repo: Path,
-    commit_msg: str,
-    branch: str,
-    logger: logging.Logger,
-) -> bool:
-    """
-    Stage all changes, commit, and push to origin/<branch>.
-    Skips silently if there are no changes.
-    """
-    if not has_working_tree_changes(repo, logger):
+def push_repo(repo: Path, msg: str, branch: str, logger: logging.Logger) -> bool:
+    if not repo_is_dirty(repo, logger):
         logger.info("  ✓  Nothing to commit — repo is clean.")
         return True
-
-    logger.info("  📦 Staging all changes …")
-    ok, out = run_git(["add", "."], repo, logger)
-    if not ok:
-        logger.error(f"     ✗  git add failed: {out}")
-        return False
-
-    logger.info(f"  📝 Committing: {commit_msg}")
-    ok, out = run_git(["commit", "-m", commit_msg], repo, logger)
-    if not ok:
-        logger.error(f"     ✗  git commit failed: {out}")
-        return False
-
-    logger.info(f"  🚀 Pushing to origin/{branch} …")
-    ok, out = run_git(["push", "origin", branch], repo, logger)
-    if not ok:
-        logger.error(f"     ✗  git push failed: {out}")
-        return False
-
-    logger.info(f"     ✓  Push successful.")
+    for git_args, label in [
+        (["add", "."],         "Staging"),
+        (["commit", "-m", msg], f"Committing: {msg}"),
+        (["push", "origin", branch], f"Pushing → origin/{branch}"),
+    ]:
+        logger.info(f"  {'📦' if 'add' in git_args else '📝' if 'commit' in git_args else '🚀'}  {label} …")
+        ok, out = run_git(git_args, repo, logger)
+        if not ok:
+            logger.error(f"     ✗  {out}")
+            return False
+    logger.info("     ✓  Push successful.")
     return True
 
 
-# ── Main Sync Job ──────────────────────────────────────────────────────────────
-def sync_job(config: dict, logger: logging.Logger) -> None:
-    """Full sync cycle: pull → forward → commit → push."""
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    sep = "─" * 62
+# ══════════════════════════════════════════════════════════════════════════════
+# Main sync job — always reads from the live watcher.config
+# ══════════════════════════════════════════════════════════════════════════════
+
+def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
+    cfg      = watcher.config          # always the latest config
+    sep      = "─" * 62
+    now      = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    git_cfg  = cfg["automation"].get("git", {})
+    branch   = git_cfg.get("branch", "main")
+    tmpl     = git_cfg.get("commit_message", "sync: auto-update [{datetime}]")
+    msg      = tmpl.replace("[{datetime}]", datetime.now().strftime("%Y-%m-%d %H:%M"))
 
     logger.info(sep)
     logger.info(f"🔄  SYNC STARTED  —  {now}")
     logger.info(sep)
 
-    upstreams = config["upstream"].get("upstreams", [])
-    forwards  = config["path_forward"].get("forwards", [])
-    git_cfg   = config["automation"].get("git", {})
-
-    branch   = git_cfg.get("branch", "main")
-    msg_tmpl = git_cfg.get("commit_message", "sync: auto-update [{datetime}]")
-    commit_msg = msg_tmpl.replace(
-        "[{datetime}]",
-        datetime.now().strftime("%Y-%m-%d %H:%M"),
-    )
-
-    # ── Step 1: Pull upstreams ──────────────────────────────────────────────
+    # Step 1
     logger.info("📥 STEP 1 — Pulling upstream repositories")
-    pull_results = pull_upstreams(upstreams, logger)
-    ok_pulls = sum(pull_results.values())
+    pulls = pull_upstreams(cfg["upstream"].get("upstreams", []), logger)
 
-    # ── Step 2: Forward skills ──────────────────────────────────────────────
+    # Step 2
     logger.info("📁 STEP 2 — Forwarding skill paths")
-    copied = forward_skills(forwards, logger)
+    copied = forward_skills(cfg["path_forward"].get("forwards", []), logger)
 
-    # ── Step 3: Push to own repo ────────────────────────────────────────────
+    # Step 3
     logger.info("🚀 STEP 3 — Committing & pushing to own repo")
-    push_ok = push_repo(REPO_ROOT, commit_msg, branch, logger)
+    push_ok = push_repo(REPO_ROOT, msg, branch, logger)
 
-    # ── Summary ─────────────────────────────────────────────────────────────
+    # Summary
+    ok_cnt  = sum(pulls.values())
+    icon    = "✅" if push_ok else "⚠️ "
     logger.info(sep)
-    status_icon = "✅" if push_ok else "⚠️ "
     logger.info(
-        f"{status_icon} SYNC COMPLETE  |  "
-        f"Upstreams pulled: {ok_pulls}/{len(pull_results)}  |  "
+        f"{icon} SYNC COMPLETE  |  "
+        f"Upstreams: {ok_cnt}/{len(pulls)}  |  "
         f"Skills copied: {len(copied)}  |  "
         f"Push: {'OK' if push_ok else 'FAILED'}"
     )
@@ -249,55 +277,91 @@ def sync_job(config: dict, logger: logging.Logger) -> None:
     logger.info(sep + "\n")
 
 
-# ── Entry Point ────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# Scheduler helpers
+# ══════════════════════════════════════════════════════════════════════════════
+
+def register_schedule(watcher: ConfigWatcher, logger: logging.Logger) -> None:
+    """Clear all jobs and register sync_job with current schedule config."""
+    schedule.clear()
+    run_at, interval_hours = watcher.sched_params()
+
+    if run_at:
+        schedule.every().day.at(run_at).do(sync_job, watcher=watcher, logger=logger)
+        logger.info(f"⏰  Scheduled: daily at {run_at}")
+    else:
+        schedule.every(interval_hours).hours.do(sync_job, watcher=watcher, logger=logger)
+        logger.info(f"⏰  Scheduled: every {interval_hours} hour(s)")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Entry point
+# ══════════════════════════════════════════════════════════════════════════════
+
 def main() -> None:
-    # Load all configs
-    upstream_cfg    = load_yaml(UPSTREAM_CONFIG)
-    path_fwd_cfg    = load_yaml(PATH_FORWARD_CONFIG)
-    automation_cfg  = load_yaml(AUTOMATION_CONFIG)
+    # Bootstrap logging (before watcher, so we can catch load errors)
+    boot_logger = logging.getLogger("human-skills")
+    boot_logger.setLevel(logging.INFO)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setFormatter(logging.Formatter("%(asctime)s  %(levelname)-8s  %(message)s",
+                                       datefmt="%Y-%m-%d %H:%M:%S"))
+    boot_logger.addHandler(ch)
 
-    config = {
-        "upstream":     upstream_cfg,
-        "path_forward": path_fwd_cfg,
-        "automation":   automation_cfg,
-    }
+    watcher = ConfigWatcher(boot_logger)
 
-    # Setup logging
-    log_cfg  = automation_cfg.get("logging", {})
-    log_lvl  = log_cfg.get("level", "INFO")
+    # Now set up proper logging from config
+    log_cfg  = watcher.config["automation"].get("logging", {})
     log_file = Path(log_cfg.get("log_file", str(LOGS_DIR / "sync.log")))
-    logger   = setup_logging(log_lvl, log_file)
-
-    # Schedule config
-    sched_cfg      = automation_cfg.get("schedule", {})
-    run_at         = sched_cfg.get("run_at")          # e.g. "06:00"
-    interval_hours = sched_cfg.get("interval_hours", 24)
+    logger   = setup_logging(log_cfg.get("level", "INFO"), log_file)
 
     logger.info("╔══════════════════════════════════════════════════════════════╗")
-    logger.info("║          Human Skills — Upstream Sync Daemon                ║")
+    logger.info("║     Human Skills — Upstream Sync Daemon  (Hot-Reload)       ║")
     logger.info("╚══════════════════════════════════════════════════════════════╝")
-    logger.info(f"  Repo root  : {REPO_ROOT}")
-    logger.info(f"  Upstreams  : {len(upstream_cfg.get('upstreams', []))}")
-    logger.info(f"  Forwards   : {len(path_fwd_cfg.get('forwards', []))}")
-    logger.info(f"  Schedule   : {'daily at ' + run_at if run_at else f'every {interval_hours}h'}")
-    logger.info(f"  Log file   : {log_file}")
+    logger.info(f"  Repo root    : {REPO_ROOT}")
+    logger.info(f"  Upstreams    : {len(watcher.config['upstream'].get('upstreams', []))}")
+    logger.info(f"  Forwards     : {len(watcher.config['path_forward'].get('forwards', []))}")
+    logger.info(f"  Config watch : every {POLL_INTERVAL}s")
+    logger.info(f"  Log file     : {log_file}")
     logger.info("")
 
-    # Run once immediately at startup
-    sync_job(config, logger)
+    # Initial sync + schedule
+    sync_job(watcher, logger)
+    register_schedule(watcher, logger)
 
-    # Register schedule
-    if run_at:
-        schedule.every().day.at(run_at).do(sync_job, config=config, logger=logger)
-        logger.info(f"⏰  Next run scheduled daily at {run_at}")
-    else:
-        schedule.every(interval_hours).hours.do(sync_job, config=config, logger=logger)
-        logger.info(f"⏰  Next run scheduled every {interval_hours} hours")
-
-    # Keep the daemon alive
+    # ── Main loop ──────────────────────────────────────────────────────────
     while True:
+        time.sleep(POLL_INTERVAL)
         schedule.run_pending()
-        time.sleep(30)
+
+        # Hot-reload check
+        if watcher.has_changed():
+            logger.info("🔁  Config change detected — hot-reloading …")
+            changes = watcher.reload()
+
+            if not changes:
+                logger.info("   (no functional changes — content edit only)")
+            else:
+                for key, diff in changes.items():
+                    if key == "schedule":
+                        before_at, before_h = diff["before"]
+                        after_at,  after_h  = diff["after"]
+                        logger.info(
+                            f"   📅 Schedule changed: "
+                            f"{'@'+before_at if before_at else str(before_h)+'h'} → "
+                            f"{'@'+after_at  if after_at  else str(after_h) +'h'}"
+                        )
+                    elif key == "upstreams":
+                        logger.info(
+                            f"   📦 Upstreams: {diff['before']} → {diff['after']}"
+                        )
+                    elif key == "forwards":
+                        logger.info(
+                            f"   🔀 Forwards: {diff['before']} → {diff['after']}"
+                        )
+
+            # Always reschedule in case timing changed
+            register_schedule(watcher, logger)
+            logger.info("   ✓  Hot-reload complete — new config active\n")
 
 
 if __name__ == "__main__":
