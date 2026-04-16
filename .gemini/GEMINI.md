@@ -69,10 +69,10 @@ If you experience any of these thoughts, **STOP immediately** — you are ration
 
 ---
 
-## 4. Unified Tool Discovery & Execution
+## 4. SKill Discovery & Execution
 
 > [!NOTE]  
-> The codebase contains a standalone, universal wrapper to securely query and execute external scripts. You MUST use this system to deeply understand a skill's capabilities rather than blindly guessing its inputs.
+> The System contains a standalone external scripts execution method. You MUST use this system to deeply understand a skill's capabilities rather than blindly guessing its inputs.
 
 When attempting to invoke specialized skills programmatically, interact with the global dispatcher via these commands:
 
