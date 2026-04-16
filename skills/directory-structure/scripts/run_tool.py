@@ -6,20 +6,12 @@ and dispatches it to the correct tool — no CLI flags needed.
 
 AUTO-DISCOVERY:
     Any .py file placed in the same `scripts/` directory is automatically
-    detected as a tool if it follows EITHER convention:
+    detected as a tool if it follows the Agent Zero tool convention:
 
-    Convention A — Modern standalone (preferred):
-        def run(args: dict) -> str: ...
-        — or —
-        class MyTool:
-            @classmethod
-            def run(cls, args: dict) -> str: ...
-
-    Convention B — Agent Zero compatible (zero changes to existing tools):
         class MyTool(Tool):
             async def execute(self, **kwargs) -> Response: ...
 
-        Requirements for Convention B:
+        Requirements:
           • Class name must be CamelCase of the filename
             (e.g. manage_project.py → ManageProject)
           • helpers/tool.py shim must be present in this directory
@@ -85,13 +77,9 @@ def _extract_message(result) -> str:
 def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
     """
     Try to import `path` as `module_name` and extract a runner callable.
-
-    Priority:
-        1. module.run               (Convention A — bare function)
-        2. module.CamelCase.run     (Convention A — classmethod)
-        3. module.CamelCase.execute (Convention B — async Agent Zero style)
-
-    All returned callables have the signature:  runner(args: dict) -> str
+    
+    Expects an Agent Zero style class: module.CamelCase.execute
+    Returns a unified sync callable: runner(args: dict) -> str
     """
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
@@ -104,28 +92,14 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
         _warn(f"Failed to load '{module_name}': {exc}")
         return None
 
-    # ── Convention A: bare `run` function ────────────────────────────────────
-    candidate = getattr(module, "run", None)
-    if callable(candidate):
-        def _run_fn(args: dict, _fn=candidate) -> str:
-            return _extract_message(_fn(args))
-        return _run_fn
-
     class_name = _to_camel(module_name)
     cls = getattr(module, class_name, None)
 
     if cls is not None:
-        # ── Convention A: classmethod run ────────────────────────────────────
-        run_method = getattr(cls, "run", None)
-        if callable(run_method):
-            def _run_cm(args: dict, _method=run_method) -> str:
-                return _extract_message(_method(args))
-            return _run_cm
-
-        # ── Convention B: async execute() ────────────────────────────────────
         execute_method = getattr(cls, "execute", None)
         if callable(execute_method):
             def _run_async(args: dict, _cls=cls) -> str:
+                # Agent Zero tools expect tool arguments inside self.args
                 instance = _cls(args=args)
                 result = asyncio.run(instance.execute())
                 return _extract_message(result)
@@ -154,9 +128,8 @@ def _build_registry() -> dict[str, Callable]:
             registry[tool_name] = runner
         else:
             _warn(
-                f"'{py_file.name}' found but no runner detected — skipped.\n"
-                f"  Expected: def run(args), or class {_to_camel(tool_name)} "
-                f"with run() or async execute()."
+                f"'{py_file.name}' found but no valid tool detected — skipped.\n"
+                f"  Expected: class {_to_camel(tool_name)}(Tool) with an async execute() method."
             )
 
     return registry

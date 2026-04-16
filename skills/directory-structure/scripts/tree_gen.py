@@ -1,11 +1,12 @@
 import fnmatch
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from helpers.tool import Tool, Response
 
-class TreeGen:
+
+class TreeGen(Tool):
     """
     Generate a directory structure in Markdown format using professional
     ASCII branch connectors (├──, └──, │).
@@ -349,36 +350,35 @@ class TreeGen:
 
         return output_lines
 
-    # ── Standalone entry point (no Agent Zero required) ──────────────────────
+    # ── Agent Zero entry point ────────────────────────────────────────────────
 
-    @classmethod
-    def run(cls, args: dict) -> str:
+    async def execute(self, **kwargs) -> Response:
         """
-        Execute tree_gen with a plain dict of arguments.
-        Returns a human-readable result string.
-        This is the method called by run_tool.py.
+        Execute tree_gen.
+        Expects arguments to be available in self.args.
         """
-        instance = cls.__new__(cls)
-        instance.args = args
-        instance._effective_patterns = cls.IGNORED_PATTERNS
+        self._effective_patterns = self.IGNORED_PATTERNS
 
-        input_path_str  = args.get("input_path", "").strip()
-        output_path_str = args.get("output_path", input_path_str).strip()
-        file_name_str   = args.get("file_name", "").strip()
-        layout          = args.get("layout", "vertical").strip().lower()
-        use_gitignore   = str(args.get("use_gitignore", "true")).lower() not in ("false", "0", "no")
-        ignored_path_str= args.get("ignored_path", "").strip()
-        ignored_ext_str = args.get("ignored_extensions", "").strip()
-        max_depth       = int(args.get("max_depth", 4))
+        input_path_str  = self.args.get("input_path", "").strip()
+        output_path_str = self.args.get("output_path", input_path_str).strip()
+        file_name_str   = self.args.get("file_name", "").strip()
+        layout          = self.args.get("layout", "vertical").strip().lower()
+        use_gitignore   = str(self.args.get("use_gitignore", "true")).lower() not in ("false", "0", "no")
+        ignored_path_str= self.args.get("ignored_path", "").strip()
+        ignored_ext_str = self.args.get("ignored_extensions", "").strip()
+        max_depth       = int(self.args.get("max_depth", 4))
 
         if not input_path_str:
-            return "Error: `input_path` is required."
+            return Response(message="Error: `input_path` is required.", break_loop=False)
 
         input_path  = Path(input_path_str).resolve()
         output_path = Path(output_path_str).resolve()
 
         if not input_path.exists() or not input_path.is_dir():
-            return f"Error: '{input_path_str}' does not exist or is not a directory."
+            return Response(
+                message=f"Error: '{input_path_str}' does not exist or is not a directory.",
+                break_loop=False
+            )
 
         extra_excludes: set[str] = set()
         for p in ignored_path_str.split(","):
@@ -395,11 +395,11 @@ class TreeGen:
             if ext:
                 extra_ext_excludes.add(ext if ext.startswith(".") else f".{ext}")
 
-        instance._effective_patterns = cls.IGNORED_PATTERNS | extra_ext_excludes
+        self._effective_patterns = self.IGNORED_PATTERNS | extra_ext_excludes
 
         gitignore_patterns: list[str] = []
         if use_gitignore:
-            gitignore_patterns = cls._load_gitignore_patterns(input_path)
+            gitignore_patterns = self._load_gitignore_patterns(input_path)
 
         if file_name_str:
             output_filename = (
@@ -412,16 +412,16 @@ class TreeGen:
 
         try:
             if layout == "horizontal":
-                top_children = instance._get_children(
+                top_children = self._get_children(
                     input_path, extra_excludes, gitignore_patterns,
                     use_gitignore, output_filename, input_path,
                 )
-                tree_lines = instance._render_horizontal(
+                tree_lines = self._render_horizontal(
                     top_children, extra_excludes, gitignore_patterns,
                     use_gitignore, output_filename, input_path, max_depth,
                 )
             else:
-                tree_lines = instance._render_vertical(
+                tree_lines = self._render_vertical(
                     input_path, extra_excludes, gitignore_patterns,
                     use_gitignore, output_filename, input_path, max_depth,
                 )
@@ -435,10 +435,10 @@ class TreeGen:
                     f.write(line + "\n")
 
         except Exception as e:
-            return f"Error: {e}"
+            return Response(message=f"Error: {e}", break_loop=False)
 
-        stats = instance.Stats()
-        instance._collect_stats(
+        stats = self.Stats()
+        self._collect_stats(
             input_path, stats, extra_excludes, gitignore_patterns,
             use_gitignore, output_filename, input_path,
         )
@@ -453,10 +453,10 @@ class TreeGen:
             f"   Layout  : {layout}",
             f"   Depth   : {depth_note}",
             f"   Lines   : {line_count}",
-            f"   Size    : {cls._format_bytes(size_bytes)}",
+            f"   Size    : {self._format_bytes(size_bytes)}",
             f"   Dirs    : {stats.dirs}",
             f"   Files   : {stats.files}",
-            f"   Scanned : {cls._format_bytes(stats.total_bytes)}",
+            f"   Scanned : {self._format_bytes(stats.total_bytes)}",
         ]
 
         if line_count > 500:
@@ -466,10 +466,4 @@ class TreeGen:
                 "entries for a cleaner overview."
             )
 
-        return "\n".join(response_lines)
-
-    # ── Agent Zero bridge (backward-compatible) ───────────────────────────────
-
-    async def execute(self, **kwargs):
-        """Agent Zero entry point — delegates to the standalone run() method."""
-        return self.run(self.args)
+        return Response(message="\n".join(response_lines), break_loop=False)
