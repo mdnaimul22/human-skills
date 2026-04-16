@@ -1,6 +1,6 @@
 ---
 name: "project-manager"
-description: "Manage Agent Zero projects: create, configure, update, delete, and add instructions/knowledge. Use this tool to perform project lifecycle operations."
+description: "Manage AI agent projects: create, configure, update, delete, and add instructions/knowledge. Use this tool to perform project lifecycle operations."
 author: "Human Skill Team"
 tags: ["project", "management", "configuration", "git", "setup"]
 trigger_patterns:
@@ -24,7 +24,7 @@ trigger_patterns:
 
 ## Overview
 
-This skill provides complete guidance for setting up Agent Zero projects, including:
+This skill provides complete guidance for setting up unified AI projects, including:
 - Project creation (empty or Git-based)
 - Custom instructions and configuration
 - Memory management (isolated or shared)
@@ -62,7 +62,7 @@ This skill provides complete guidance for setting up Agent Zero projects, includ
 - Automatic Git exclusion for secrets
 
 ## manage_project tool
-The `manage_project` tool allows you to programmatically manage the entire lifecycle of Agent Zero projects.
+The `manage_project` tool allows you to programmatically manage the entire lifecycle of unified AI projects.
 
 **Supported Actions:**
 - **Lifecycle:** `create`, `list`, `load`, `delete`

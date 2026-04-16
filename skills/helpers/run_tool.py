@@ -64,7 +64,7 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
         execute_method = getattr(target_cls, "execute", None)
         if callable(execute_method):
             def _run_async(args: dict, _cls=target_cls) -> str:
-                # Agent Zero tools expect tool arguments inside self.args
+                # Unified tools expect tool arguments inside self.args
                 instance = _cls(args=args)
                 result = asyncio.run(instance.execute())
                 return _extract_message(result)

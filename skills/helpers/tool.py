@@ -1,11 +1,11 @@
 """
-helpers/tool.py — Standalone shim for Agent Zero Tool & Response
+helpers/tool.py — Standalone shim for Unified Tool & Response
 ================================================================
-Provides drop-in replacements for the Agent Zero `Tool` base class
+Provides drop-in replacements for the standard `Tool` base class
 and `Response` dataclass so that existing tools can be used without
-an Agent Zero runtime.
+a specific framework runtime.
 
-Drop this `helpers/` folder next to any Agent Zero tool script and
+Drop this `helpers/` folder next to any tool script and
 it will import cleanly. run_tool.py handles the rest.
 """
 
@@ -17,7 +17,7 @@ from typing import Any, Optional
 
 @dataclass
 class Response:
-    """Mirrors the Agent Zero Response dataclass."""
+    """Mirrors the unified Response dataclass."""
     message: str
     break_loop: bool
     additional: Optional[dict[str, Any]] = None
@@ -27,13 +27,13 @@ class Response:
 
 class Tool:
     """
-    Minimal standalone base class that mirrors the Agent Zero Tool interface.
+    Minimal standalone base class that mirrors the universal Tool interface.
 
     Only the attributes that tools actually USE are provided:
         self.args  — dict of arguments passed by the caller
         self.name  — tool name (defaults to class name)
 
-    Everything Agent Zero-specific (agent, loop_data, log, PrintStyle, etc.)
+    Everything framework-specific (agent, loop_data, log, PrintStyle, etc.)
     is silently absent; tools that reference those will raise AttributeError,
     which is the correct signal that they need further porting.
     """
