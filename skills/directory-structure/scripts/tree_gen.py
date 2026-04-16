@@ -350,7 +350,6 @@ class TreeGen(Tool):
 
         return output_lines
 
-    # ── Agent Zero entry point ────────────────────────────────────────────────
 
     async def execute(self, **kwargs) -> Response:
         """
