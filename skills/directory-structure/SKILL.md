@@ -64,33 +64,49 @@ This skill uses the `tree_gen` tool to create Markdown-formatted directory trees
 
 ---
 
-### 📋 USAGE EXAMPLES:
+### 📋 HOW TO CALL THIS TOOL:
 
-#### 1. Full example:
-This is a full agument example for a deep map of tha project. where you are excluding tests/ and docs/ to keep it focused using a custom filename and vertical layout.
+The agent executes `run_tool.py` with the JSON payload passed directly as a string argument:
 
-python scripts/tree_gen.py --max_depth 3 --use_gitignore true --layout vertical --file_name PROJECT_MAP --input_path home/usr/projects/my-project/ --output_path home/usr/projects/my-project/ --ignored_path home/usr/projects/my-project/tests, home/usr/projects/my-project/docs --ignored_extensions .csv,.json
+```bash
+python skills/directory-structure/scripts/run_tool.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "/a0/usr/workdir/my-project", "output_path": "/a0/usr/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
+```
 
+Which maps to this JSON payload:
 ```json
 {
     "tool_name": "tree_gen",
-    "tool_args": { 
-        "max_depth":          6,
-        "use_gitignore":      "true",
-        "layout":             "vertical",
+    "tool_args": {
+        "input_path":         "/a0/usr/workdir/my-project",
+        "output_path":        "/a0/usr/workdir/my-project",
         "file_name":          "PROJECT_MAP",
-        "input_path":         "home/usr/projects/my-project/",
-        "output_path":        "home/usr/projects/my-project/",
-        "ignored_path":       "home/usr/projects/my-project/tests, home/usr/projects/my-project/docs",
+        "layout":             "vertical",
+        "max_depth":          "3",
+        "use_gitignore":      "true",
+        "ignored_path":       "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs",
         "ignored_extensions": ".csv,.json"
     }
 }
 ```
 
+Expected output:
+```
+✅ Directory Structure Generated.
+   Path    : /a0/usr/workdir/my-project/PROJECT_MAP.md
+   Layout  : vertical
+   Depth   : 3 levels
+   Lines   : 33
+   Size    : 986.0 B
+   Dirs    : 15
+   Files   : 26
+   Scanned : 282.2 KB
+```
+
 ### ⚠️ IMPORTANT NOTES:
+- **All values in `tool_args` must be strings** (e.g. `"max_depth": "3"`, not `3`).
 - Common patterns (`.git`, `node_modules`, `__pycache__`, binaries, media) are auto-ignored.
 - If output exceeds 500 lines, a tip is shown to reduce `max_depth` or add `ignored_path`.
-- Default filename: `{dir_name}_structure.md` (e.g. `core_structure.md`).
+- Default filename: `{dir_name}_structure.md` (e.g. `my-project_structure.md`).
 
 ## Scenario-Based Instructions
 
