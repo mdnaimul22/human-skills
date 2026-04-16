@@ -112,7 +112,7 @@ human-skills --tool_info tree_gen
 human-skills '{"tool_name": "tree_gen", "tool_args": {"input_path": "/path"}}'
 ```
 
-Finally Point your AI assistant's skill loader at the `skills/` directory. Every folder inside contains a `SKILL.md` that has been human-verified to work.
+Finally Point your AI assistant's skill loader at the `skills/` directory.
 
 ---
 
