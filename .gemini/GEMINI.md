@@ -92,3 +92,13 @@ When attempting to invoke specialized skills programmatically, interact with the
 
 - **Run Tool:**  
   `python3 skills/helpers/execute.py '{"tool_name": "your_tool", "arg1": "val1"}'`
+  **Example:**
+  ```bash
+  python3 skills/helpers/execute.py '{
+      "tool_name": "tree_gen",
+      "tool_args": {
+          "input_path": "/home/openscore/a0/usr/projects/human-skills",
+          "ignored_path": "__pycache__, .git, .venv, .env, .gitkeep, .DS_Store, .log, .tmp"
+      }
+  }'
+  ```

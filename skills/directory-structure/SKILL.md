@@ -69,7 +69,7 @@ This skill uses the `tree_gen` tool to create Markdown-formatted directory trees
 The agent executes `execute.py` with the JSON payload passed directly as a string argument:
 
 ```bash
-python skills/helpers/execute.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "/a0/usr/workdir/my-project", "output_path": "/a0/usr/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
+python skills/helpers/execute.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "home/user_name/workdir/my-project", "output_path": "home/user_name/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "home/user_name/workdir/my-project/tests, home/user_name/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
 ```
 
 Which maps to this JSON payload:
@@ -77,13 +77,13 @@ Which maps to this JSON payload:
 {
     "tool_name": "tree_gen",
     "tool_args": {
-        "input_path":         "/a0/usr/workdir/my-project",
-        "output_path":        "/a0/usr/workdir/my-project",
+        "input_path":         "home/user_name/workdir/my-project",
+        "output_path":        "home/user_name/workdir/my-project",
         "file_name":          "PROJECT_MAP",
         "layout":             "vertical",
         "max_depth":          "3",
         "use_gitignore":      "true",
-        "ignored_path":       "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs",
+        "ignored_path":       "home/user_name/workdir/my-project/tests, home/user_name/workdir/my-project/docs",
         "ignored_extensions": ".csv,.json"
     }
 }
@@ -92,7 +92,7 @@ Which maps to this JSON payload:
 Expected output:
 ```
 ✅ Directory Structure Generated.
-   Path    : /a0/usr/workdir/my-project/PROJECT_MAP.md
+   Path    : home/user_name/workdir/my-project/PROJECT_MAP.md
    Layout  : vertical
    Depth   : 3 levels
    Lines   : 33
@@ -122,7 +122,7 @@ Expected output:
 python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
-        "input_path": "/a0/usr/workdir/my-folder",
+        "input_path": "home/user_name/workdir/my-folder",
         "ignored_path": "__pycache__, .git, .venv, .env, .gitkeep, .DS_Store, .log, .tmp"
     }
 }'
@@ -144,7 +144,7 @@ python skills/helpers/execute.py '{
 python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
-        "input_path": "/a0/usr/workdir/my-webapp",
+        "input_path": "home/user_name/workdir/my-webapp",
         "ignored_path": "node_modules, dist, .next, coverage, __pycache__, .git, .venv, .env, .gitkeep, .DS_Store, .log, .tmp"
     }
 }'
@@ -172,7 +172,7 @@ python skills/helpers/execute.py '{
 python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
-        "input_path": "/a0/usr/workdir/monorepo/packages/backend",
+        "input_path": "home/user_name/workdir/monorepo/packages/backend",
         "ignored_path": "node_modules, dist, coverage, tests, __tests__, .git"
     }
 }'
@@ -184,8 +184,8 @@ python skills/helpers/execute.py '{
 python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
-        "input_path": "/a0/usr/workdir/monorepo/packages/backend",
-        "output_path": "/a0/usr/workdir/docs",
+        "input_path": "home/user_name/workdir/monorepo/packages/backend",
+        "output_path": "home/user_name/workdir/docs",
         "ignored_path": "node_modules, dist, tests"
     }
 }'
@@ -194,8 +194,8 @@ python skills/helpers/execute.py '{
 python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
-        "input_path": "/a0/usr/workdir/monorepo/packages/frontend",
-        "output_path": "/a0/usr/workdir/docs",
+        "input_path": "home/user_name/workdir/monorepo/packages/frontend",
+        "output_path": "home/user_name/workdir/docs",
         "ignored_path": "node_modules, .next, public/assets"
     }
 }'
@@ -203,16 +203,16 @@ python skills/helpers/execute.py '{
 
 ---
 
-### 🌍 Scenario 4: Root-Level Scan (/a0/usr or system root)
+### 🌍 Scenario 4: Root-Level Scan (home/user_name/ or system root)
 
 **When:** Generating a system-wide or root workspace overview. We must aggressively ignore huge directories like workdir, chats, and knowledge to prevent overflowing the token limit.
 
 **⚠️ CRITICAL RULES:**
-1. **ALWAYS ignore these paths for /a0/usr:**
-   - `/a0/usr/workdir` (user projects - scan separately)
-   - `/a0/usr/chats` (conversation history)
-   - `/a0/usr/knowledge/main` (large knowledge base)
-   - `/a0/usr/memory/default` (vector database)
+1. **ALWAYS ignore these paths for home/user_name/:**
+   - `home/user_name/workdir` (user projects - scan separately)
+   - `home/user_name/chats` (conversation history)
+   - `home/user_name/knowledge/main` (large knowledge base)
+   - `home/user_name/memory/default` (vector database)
 
 2. **What to show:**
    - Agent configurations
@@ -225,8 +225,8 @@ python skills/helpers/execute.py '{
 python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
-        "input_path": "/a0/usr",
-        "ignored_path": "/a0/usr/workdir, /a0/usr/chats, /a0/usr/knowledge/main, /a0/usr/memory/default"
+        "input_path": "home/user_name/",
+        "ignored_path": "home/user_name/workdir, home/user_name/chats, home/user_name/knowledge/main, home/user_name/memory/default"
     }
 }'
 ```
@@ -251,7 +251,7 @@ python skills/helpers/execute.py '{
 python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
-        "input_path": "/a0/usr/workdir/my-app/src",
+        "input_path": "home/user_name/workdir/my-app/src",
         "ignored_path": "__pycache__, .pytest_cache"
     }
 }'
@@ -280,8 +280,8 @@ python skills/helpers/execute.py '{
 python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
-        "input_path": "/a0/usr/workdir/my-project",
-        "output_path": "/a0/usr/workdir/my-project/docs",
+        "input_path": "home/user_name/workdir/my-project",
+        "output_path": "home/user_name/workdir/my-project/docs",
         "ignored_path": "node_modules, dist, build, tests, __tests__, coverage, .git, .vscode, public/images"
     }
 }'
@@ -332,12 +332,12 @@ node_modules, .git, src, tests (only ignore source and development files)
 ### ✅ DO:
 1. **Always check project size first** - use `list_dir` to estimate
 2. **For large projects, scan specific directories** - never scan massive roots
-3. **For /a0/usr, ALWAYS ignore workdir and chats**
+3. **For home/user_name/, ALWAYS ignore workdir and chats**
 4. **Match ignores to user's intent** - code review vs documentation needs different ignores
 5. **Present the output** - read structure.md and show it to user after generation
 
 ### ❌ DON'T:
-1. **Don't scan /a0/usr/workdir directly** - ask which project inside it
+1. **Don't scan home/user_name/workdir directly** - ask which project inside it
 2. **Don't forget node_modules** - it can have 100k+ files
 3. **Don't ignore too little** - output will be overwhelming
 4. **Don't use relative paths in ignored_path** - always use absolute paths
