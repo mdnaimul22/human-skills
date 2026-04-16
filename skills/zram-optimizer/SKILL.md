@@ -92,12 +92,12 @@ cat /sys/block/zram0/comp_algorithm 2>/dev/null || echo "zram not loaded"
 
 ### Step 2: Run the Deterministic Evaluator
 
-Use the combined `evaluator.py` CLI to benchmark all configurations:
+Use the combined `zram_optimizer.py` CLI to benchmark all configurations:
 
 ```bash
 # Run the full benchmark suite
 sudo python skills/helpers/run_tool.py '{
-    "tool_name": "evaluator",
+    "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "bench"
     }
@@ -128,7 +128,7 @@ Rank,Algorithm,Priority,Swappiness,PageCluster,FinalScore,...
 ```bash
 # Example: Apply the winning configuration
 sudo python skills/helpers/run_tool.py '{
-    "tool_name": "evaluator",
+    "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "deploy",
         "algorithm": "lz4",
@@ -148,7 +148,7 @@ This command will:
 
 ## Script Reference
 
-### `scripts/evaluator.py` — Unified CLI Tool
+### `scripts/zram_optimizer.py` — Unified CLI Tool
 
 **Purpose:** Comprehensive zram tuning suite containing the memory evaluator, benchmark harness, and deployment automation.
 
@@ -156,7 +156,7 @@ This command will:
 ```bash
 # Review current zram/swap mappings
 python skills/helpers/run_tool.py '{
-    "tool_name": "evaluator",
+    "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "status"
     }
@@ -164,7 +164,7 @@ python skills/helpers/run_tool.py '{
 
 # Low-level memory throughput test
 python skills/helpers/run_tool.py '{
-    "tool_name": "evaluator",
+    "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "run",
         "pressure_gb": "4.0"
@@ -201,7 +201,7 @@ Setting `disk_size` larger than necessary wastes CPU on compression without bene
 ```bash
 # Check compression ratio
 python skills/helpers/run_tool.py '{
-    "tool_name": "evaluator",
+    "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "status"
     }
@@ -236,7 +236,7 @@ cd /opt/zram-config && sudo ./install.bash
 
 # 2. Run the benchmark (takes ~10-20 minutes)
 sudo python skills/helpers/run_tool.py '{
-    "tool_name": "evaluator",
+    "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "bench"
     }
@@ -247,7 +247,7 @@ cat results.csv | sort -t, -k6 -rn | head -5
 
 # 4. Deploy the winner (example: lz4, 8G, priority 1000, swappiness 180, page-cluster 0)
 sudo python skills/helpers/run_tool.py '{
-    "tool_name": "evaluator",
+    "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "deploy",
         "algorithm": "lz4",
@@ -260,7 +260,7 @@ sudo python skills/helpers/run_tool.py '{
 
 # 5. Verify
 python skills/helpers/run_tool.py '{
-    "tool_name": "evaluator",
+    "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "status"
     }
@@ -273,7 +273,7 @@ python skills/helpers/run_tool.py '{
 |------|--------|------|
 | 1 | Install `zram-config` | `git clone` + `install.bash` |
 | 2 | Detect hardware | `free -g`, `nproc` |
-| 3 | Benchmark all profiles | `evaluator.py bench` → `evaluator.py run` |
+| 3 | Benchmark all profiles | `zram_optimizer.py bench` → `zram_optimizer.py run` |
 | 4 | Analyze CSV results | Sort by Score column |
-| 5 | Deploy winner to `/etc/ztab` | `evaluator.py deploy` |
-| 6 | Verify deployment | `evaluator.py status` |
+| 5 | Deploy winner to `/etc/ztab` | `zram_optimizer.py deploy` |
+| 6 | Verify deployment | `zram_optimizer.py status` |
