@@ -9,10 +9,10 @@ from typing import Callable, Optional
 
 
 _HELPERS_DIR = Path(__file__).resolve().parent
-_SCRIPTS_DIR = _HELPERS_DIR.parent
+_SKILLS_DIR = _HELPERS_DIR.parent
 
-if str(_SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS_DIR))
+if str(_SKILLS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SKILLS_DIR))
 
 # excude list
 _EXCLUDED = {"run_tool.py", "__init__.py"}
@@ -75,15 +75,20 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
 
 def _build_registry() -> dict[str, Callable]:
     """
-    Scan _SCRIPTS_DIR for .py files and return a {tool_name: runner} dict.
+    Scan _SKILLS_DIR for .py files inside any 'scripts' folder
+    and return a {tool_name: runner} dict.
     Files listed in _EXCLUDED are skipped.
     """
 
     registry: dict[str, Callable] = {}
 
-    for py_file in sorted(_SCRIPTS_DIR.glob("*.py")):
+    for py_file in sorted(_SKILLS_DIR.glob("*/scripts/*.py")):
         if py_file.name in _EXCLUDED:
             continue
+
+        # Add the script's directory to sys.path so it can import adjacent files
+        if str(py_file.parent) not in sys.path:
+            sys.path.insert(0, str(py_file.parent))
 
         tool_name = py_file.stem
         runner = _resolve_runner(tool_name, py_file)
