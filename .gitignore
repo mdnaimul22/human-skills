@@ -148,3 +148,8 @@ env
 .everything-claude-code
 
 archived/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
