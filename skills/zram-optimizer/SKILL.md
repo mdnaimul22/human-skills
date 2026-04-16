@@ -95,11 +95,13 @@ cat /sys/block/zram0/comp_algorithm 2>/dev/null || echo "zram not loaded"
 Use the combined `evaluator.py` CLI to benchmark all configurations:
 
 ```bash
-# Make script executable
-chmod +x scripts/evaluator.py
-
 # Run the full benchmark suite
-sudo python3 scripts/evaluator.py bench
+sudo python skills/helpers/run_tool.py '{
+    "tool_name": "evaluator",
+    "tool_args": {
+        "command": "bench"
+    }
+}'
 ```
 
 The `bench` command will:
@@ -124,11 +126,18 @@ Rank,Algorithm,Priority,Swappiness,PageCluster,FinalScore,...
 ### Step 4: Deploy the Winner
 
 ```bash
-# Apply the winning configuration
-sudo python3 scripts/evaluator.py deploy <algorithm> <disk_size> <priority> <swappiness> <page_cluster>
-
-# Example:
-sudo python3 scripts/evaluator.py deploy lz4 8G 1000 180 0
+# Example: Apply the winning configuration
+sudo python skills/helpers/run_tool.py '{
+    "tool_name": "evaluator",
+    "tool_args": {
+        "command": "deploy",
+        "algorithm": "lz4",
+        "disk_size": "8G",
+        "priority": 1000,
+        "swappiness": 180,
+        "page_cluster": 0
+    }
+}'
 ```
 
 This command will:
@@ -145,14 +154,22 @@ This command will:
 
 **Commands Overview:**
 ```bash
-# See all available commands
-python3 scripts/evaluator.py --help
+# Review current zram/swap mappings
+python skills/helpers/run_tool.py '{
+    "tool_name": "evaluator",
+    "tool_args": {
+        "command": "status"
+    }
+}'
 
-# Commands:
-python3 scripts/evaluator.py run [pressure_gb]  # Low-level memory throughput test
-python3 scripts/evaluator.py bench              # Multi-profile test matrix loop
-python3 scripts/evaluator.py deploy <args>      # Commit optimal config to OS
-python3 scripts/evaluator.py status             # Review current zram/swap mappings
+# Low-level memory throughput test
+python skills/helpers/run_tool.py '{
+    "tool_name": "evaluator",
+    "tool_args": {
+        "command": "run",
+        "pressure_gb": "4.0"
+    }
+}'
 ```
 
 ## Understanding the Parameters
@@ -183,7 +200,12 @@ Setting `disk_size` larger than necessary wastes CPU on compression without bene
 ### 5. Monitor After Deployment
 ```bash
 # Check compression ratio
-python3 scripts/evaluator.py status
+python skills/helpers/run_tool.py '{
+    "tool_name": "evaluator",
+    "tool_args": {
+        "command": "status"
+    }
+}'
 ```
 
 ## Troubleshooting
@@ -213,16 +235,36 @@ sudo git clone https://github.com/ecdye/zram-config /opt/zram-config
 cd /opt/zram-config && sudo ./install.bash
 
 # 2. Run the benchmark (takes ~10-20 minutes)
-sudo python3 scripts/evaluator.py bench
+sudo python skills/helpers/run_tool.py '{
+    "tool_name": "evaluator",
+    "tool_args": {
+        "command": "bench"
+    }
+}'
 
 # 3. Check results
 cat results.csv | sort -t, -k6 -rn | head -5
 
 # 4. Deploy the winner (example: lz4, 8G, priority 1000, swappiness 180, page-cluster 0)
-sudo python3 scripts/evaluator.py deploy lz4 8G 1000 180 0
+sudo python skills/helpers/run_tool.py '{
+    "tool_name": "evaluator",
+    "tool_args": {
+        "command": "deploy",
+        "algorithm": "lz4",
+        "disk_size": "8G",
+        "priority": 1000,
+        "swappiness": 180,
+        "page_cluster": 0
+    }
+}'
 
 # 5. Verify
-python3 scripts/evaluator.py status
+python skills/helpers/run_tool.py '{
+    "tool_name": "evaluator",
+    "tool_args": {
+        "command": "status"
+    }
+}'
 ```
 
 ## Summary

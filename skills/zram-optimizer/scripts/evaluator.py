@@ -16,6 +16,19 @@ import time
 import csv
 import glob
 import argparse
+import io
+import contextlib
+
+try:
+    from helpers.tool import Tool, Response
+except ImportError:
+    # Fallback/stub for when executed as isolated subprocess or without helpers in sys.path
+    class Tool:
+        def __init__(self, **kwargs): pass
+    class Response:
+        def __init__(self, message="", break_loop=False, **kwargs):
+            self.message = message
+            self.break_loop = break_loop
 
 # ──────────────────────────────────────────────
 # 0. CONFIGURATION & PARAMETERS
@@ -194,7 +207,7 @@ def set_kernel_params(swappiness: int, page_cluster: int):
 
 def run_evaluator_subprocess(pressure_gb: float) -> dict:
     """Run `evaluator.py run` as isolated subprocess to avoid GC issues."""
-    script_path = os.path.abspath(sys.argv[0])
+    script_path = os.path.abspath(__file__)
     result = sh_run(f"{sys.executable} {script_path} run {pressure_gb}")
     metrics = {
         "ALLOC_SPEED": 0.0,
@@ -471,6 +484,48 @@ def main():
     else:
         parser.print_help()
         sys.exit(1)
+
+
+# ──────────────────────────────────────────────
+# AGENT ZERO TOOL INTERFACE
+# ──────────────────────────────────────────────
+
+class Evaluator(Tool):
+    """
+    Agent Zero wrapper for zram-optimizer's evaluator.
+    Captures stdout to return as a Response string.
+    """
+    async def execute(self, **kwargs) -> Response:
+        command = self.args.get("command")
+        
+        f = io.StringIO()
+        with contextlib.redirect_stdout(f), contextlib.redirect_stderr(f):
+            class DummyArgs:
+                pass
+            args = DummyArgs()
+            args.command = command
+            
+            try:
+                if command == "run":
+                    args.pressure_gb = float(self.args.get("pressure_gb", CONFIG.DEFAULT_PRESSURE_GB))
+                    cmd_run(args)
+                elif command == "bench":
+                    cmd_bench(args)
+                elif command == "deploy":
+                    args.algorithm = self.args.get("algorithm")
+                    args.disk_size = self.args.get("disk_size")
+                    args.priority = int(self.args.get("priority", 1000))
+                    args.swappiness = int(self.args.get("swappiness", 180))
+                    args.page_cluster = int(self.args.get("page_cluster", 0))
+                    cmd_deploy(args)
+                elif command == "status":
+                    cmd_status(args)
+                else:
+                    return Response(message=f"Unknown command: {command}", break_loop=False)
+            except Exception as e:
+                print(f"Error executing {command}: {str(e)}")
+                
+        return Response(message=f.getvalue(), break_loop=False)
 
 if __name__ == "__main__":
     main()
