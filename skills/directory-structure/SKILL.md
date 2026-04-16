@@ -1,6 +1,6 @@
 ---
 name: "directory-structure"
-description: "Generates directory structure in Markdown format for codebases and projects. Use when user asks to show, visualize, or document the file structure of a directory, project, or codebase."
+description: "Generate a professional ASCII directory structure in Markdown. Use this before modifying a project to understand its layout, identify key files, visualize or document the file structure of a directory, project or codebase."
 version: "1.0.0"
 author: "Human Skill Team"
 tags: ["documentation", "structure", "visualization", "tree", "file-system"]
@@ -20,25 +20,27 @@ trigger_patterns:
 ## When to Use
 
 Activate this skill when the user asks to:
-- undrestand the directory structure of a project
+- Understand the directory structure of a project
 - Show the directory structure of a project
 - Visualize the file tree of a codebase
 - Document the folder organization
 - List files in a structured format
 - Generate a markdown representation of a directory
 
-## The Tool
+## The **tree_gen** Tool
 
-This skill uses the `generate_structure` tool to create Markdown-formatted directory trees.
+This skill uses the `tree_gen` tool to create Markdown-formatted directory trees.
 
-### Tool Arguments
+### 📝 PARAMETERS:
+- `input_path`: **REQUIRED** - Absolute path of the directory to scan.
+- `output_path`: *OPTIONAL* - Where to write the output file. Defaults to `input_path`.
+- `file_name`: *OPTIONAL* - Output filename. Defaults to `{dir_name}_structure.md`.
+- `layout`: *OPTIONAL* - `"vertical"` (default, classic top-down) or `"horizontal"` (top-level dirs side-by-side).
+- `max_depth`: *OPTIONAL* - How many levels deep to recurse. Default: `4`. Set `0` for unlimited.
+- `use_gitignore`: *OPTIONAL* - Read and apply `.gitignore` rules. Default: `true`.
+- `ignored_path`: *OPTIONAL* - Comma-separated absolute paths to exclude.
+- `ignored_extensions`: *OPTIONAL* - Comma-separated extensions to exclude (e.g. `.log,.tmp`).
 
-| Argument | Type | Required | Description |
-|----------|------|----------|-------------|
-| `tree_structure_input_path` | string | Yes | Directory path to scan |
-| `tree_structure_out_path` | string | No | Where to write structure.md (defaults to input path) |
-| `ignored_path` | string | No | Comma-separated paths to ignore |
-| `ignored_extensions` | string | No | Comma-separated patterns/extensions to ignore |
 
 ## Decision Tree: How to Use This Tool
 
@@ -62,6 +64,34 @@ This skill uses the `generate_structure` tool to create Markdown-formatted direc
 
 ---
 
+### 📋 USAGE EXAMPLES:
+
+#### 1. Full example:
+This is a full agument example for a deep map of tha project. where you are excluding tests/ and docs/ to keep it focused using a custom filename and vertical layout.
+
+python scripts/tree_gen.py --max_depth 3 --use_gitignore true --layout vertical --file_name PROJECT_MAP --input_path home/usr/projects/my-project/ --output_path home/usr/projects/my-project/ --ignored_path home/usr/projects/my-project/tests, home/usr/projects/my-project/docs --ignored_extensions .csv,.json
+
+```json
+{
+    "tool_name": "tree_gen",
+    "tool_args": { 
+        "max_depth":          6,
+        "use_gitignore":      "true",
+        "layout":             "vertical",
+        "file_name":          "PROJECT_MAP",
+        "input_path":         "home/usr/projects/my-project/",
+        "output_path":        "home/usr/projects/my-project/",
+        "ignored_path":       "home/usr/projects/my-project/tests, home/usr/projects/my-project/docs",
+        "ignored_extensions": ".csv,.json"
+    }
+}
+```
+
+### ⚠️ IMPORTANT NOTES:
+- Common patterns (`.git`, `node_modules`, `__pycache__`, binaries, media) are auto-ignored.
+- If output exceeds 500 lines, a tip is shown to reduce `max_depth` or add `ignored_path`.
+- Default filename: `{dir_name}_structure.md` (e.g. `core_structure.md`).
+
 ## Scenario-Based Instructions
 
 ### 📁 Scenario 1: Small Project (< 100 files)
@@ -76,11 +106,12 @@ This skill uses the `generate_structure` tool to create Markdown-formatted direc
 {
     "thoughts": [
         "Small Python project, will show almost everything",
-        "Only ignoring Python cache and git files"
+        "Only ignoring Python cache and git files",
+        "Using default depth of 4"
     ],
-    "tool_name": "generate_structure",
+    "tool_name": "tree_gen",
     "tool_args": {
-        "tree_structure_input_path": "/a0/usr/workdir/my-folder",
+        "input_path": "/a0/usr/workdir/my-folder",
         "ignored_path": "__pycache__, .git, .venv, .env, .gitkeep, .DS_Store, .log, .tmp"
     }
 }
@@ -88,7 +119,7 @@ This skill uses the `generate_structure` tool to create Markdown-formatted direc
 
 ---
 
-### 📦 Scenario 2: Medium Web Application (100-1000 files)
+### 📦 Scenario 2: Medium Web Application (100–1000 files)
 
 **When:** Typical React/Vue/Node.js app with dependencies
 
@@ -104,9 +135,9 @@ This skill uses the `generate_structure` tool to create Markdown-formatted direc
         "Medium-sized Next.js app",
         "Ignoring dependencies and build outputs for cleaner view"
     ],
-    "tool_name": "generate_structure",
+    "tool_name": "tree_gen",
     "tool_args": {
-        "tree_structure_input_path": "/a0/usr/workdir/my-webapp",
+        "input_path": "/a0/usr/workdir/my-webapp",
         "ignored_path": "node_modules, dist, .next, coverage, __pycache__, .git, .venv, .env, .gitkeep, .DS_Store, .log, .tmp"
     }
 }
@@ -136,9 +167,9 @@ This skill uses the `generate_structure` tool to create Markdown-formatted direc
         "Large monorepo - targeting only the backend package",
         "Ignoring tests and dependencies for manageable output"
     ],
-    "tool_name": "generate_structure",
+    "tool_name": "tree_gen",
     "tool_args": {
-        "tree_structure_input_path": "/a0/usr/workdir/monorepo/packages/backend",
+        "input_path": "/a0/usr/workdir/monorepo/packages/backend",
         "ignored_path": "node_modules, dist, coverage, tests, __tests__, .git"
     }
 }
@@ -148,20 +179,20 @@ This skill uses the `generate_structure` tool to create Markdown-formatted direc
 ```json
 // First: Backend
 {
-    "tool_name": "generate_structure",
+    "tool_name": "tree_gen",
     "tool_args": {
-        "tree_structure_input_path": "/a0/usr/workdir/monorepo/packages/backend",
-        "tree_structure_out_path": "/a0/usr/workdir/docs",
+        "input_path": "/a0/usr/workdir/monorepo/packages/backend",
+        "output_path": "/a0/usr/workdir/docs",
         "ignored_path": "node_modules, dist, tests"
     }
 }
 
 // Then: Frontend (separate call)
 {
-    "tool_name": "generate_structure",
+    "tool_name": "tree_gen",
     "tool_args": {
-        "tree_structure_input_path": "/a0/usr/workdir/monorepo/packages/frontend",
-        "tree_structure_out_path": "/a0/usr/workdir/docs",
+        "input_path": "/a0/usr/workdir/monorepo/packages/frontend",
+        "output_path": "/a0/usr/workdir/docs",
         "ignored_path": "node_modules, .next, public/assets"
     }
 }
@@ -193,9 +224,9 @@ This skill uses the `generate_structure` tool to create Markdown-formatted direc
         "User wants to see system structure",
         "Must ignore workdir, chats, and knowledge - they're huge"
     ],
-    "tool_name": "generate_structure",
+    "tool_name": "tree_gen",
     "tool_args": {
-        "tree_structure_input_path": "/a0/usr",
+        "input_path": "/a0/usr",
         "ignored_path": "/a0/usr/workdir, /a0/usr/chats, /a0/usr/knowledge/main, /a0/usr/memory/default"
     }
 }
@@ -223,9 +254,9 @@ This skill uses the `generate_structure` tool to create Markdown-formatted direc
         "User wants detailed view of src directory",
         "Will show all source files with minimal filtering"
     ],
-    "tool_name": "generate_structure",
+    "tool_name": "tree_gen",
     "tool_args": {
-        "tree_structure_input_path": "/a0/usr/workdir/my-app/src",
+        "input_path": "/a0/usr/workdir/my-app/src",
         "ignored_path": "__pycache__, .pytest_cache"
     }
 }
@@ -256,10 +287,10 @@ This skill uses the `generate_structure` tool to create Markdown-formatted direc
         "Generating structure for project README",
         "Showing only source code and config, no tests or builds"
     ],
-    "tool_name": "generate_structure",
+    "tool_name": "tree_gen",
     "tool_args": {
-        "tree_structure_input_path": "/a0/usr/workdir/my-project",
-        "tree_structure_out_path": "/a0/usr/workdir/my-project/docs",
+        "input_path": "/a0/usr/workdir/my-project",
+        "output_path": "/a0/usr/workdir/my-project/docs",
         "ignored_path": "node_modules, dist, build, tests, __tests__, coverage, .git, .vscode, public/images"
     }
 }
