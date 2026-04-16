@@ -66,3 +66,20 @@ If you experience any of these thoughts, **STOP immediately** — you are ration
 1. **`File:`** `.agents/rules/coding_standareds.md`
 2. **`File:`** `.agents/rules/project_tree_example.md`
 3. **`File:`** `.agents/rules/project_config_example.md`
+
+---
+
+## 4. Unified Tool Discovery & Execution
+
+> [!NOTE]  
+> The codebase contains a standalone, universal wrapper to securely query and execute external scripts. You MUST use this system to deeply understand a skill's capabilities rather than blindly guessing its inputs.
+
+When attempting to invoke specialized skills programmatically, interact with the global dispatcher via these commands:
+
+- **List Tools:**  
+  `python3 skills/helpers/run_tool.py --list`
+- **Inspect Specific Tool (Required before running a new tool):**  
+  `python3 skills/helpers/run_tool.py --tool_name {exact_tool_name}`  
+  *(Returns JSON schema, name, description, exact expected arguments, and instruction links).*
+- **Run Tool:**  
+  `python3 skills/helpers/run_tool.py '{"tool_name": "your_tool", "arg1": "val1"}'`
