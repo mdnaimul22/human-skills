@@ -159,6 +159,29 @@ def main() -> None:
         print(__doc__)
         sys.exit(0)
 
+    if sys.argv[1] == "--tool_name":
+        if len(sys.argv) < 3:
+            print("Error: --tool_name requires an exact tool name.", file=sys.stderr)
+            sys.exit(1)
+            
+        target_tool = sys.argv[2]
+        registry = _build_registry()
+        
+        if target_tool not in registry:
+            print(f"Error: Tool '{target_tool}' not found.", file=sys.stderr)
+            sys.exit(1)
+            
+        tool_info = registry[target_tool]
+        output = {
+            "name": tool_info.get("name", ""),
+            "description": tool_info.get("description", ""),
+            "arguments": tool_info.get("arguments", ""),
+            "instruction": tool_info.get("instruction", "")
+        }
+        
+        print(json.dumps(output, indent=2))
+        sys.exit(0)
+
     if sys.argv[1] == "--list":
         registry = _build_registry()
         if not registry:
@@ -170,6 +193,7 @@ def main() -> None:
             print("Discovered tools:")
             for name in sorted(registry.keys()):
                 print(f"  • {name}")
+            print("\nFor more details instruction execute: python3 skills/helpers/run_tool.py --tool_name {exact_tool_name}")
             sys.exit(0)
             
         output = {}
