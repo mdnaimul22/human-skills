@@ -69,7 +69,7 @@ This skill uses the `tree_gen` tool to create Markdown-formatted directory trees
 The agent executes `execute.py` with the JSON payload passed directly as a string argument:
 
 ```bash
-python skills/helpers/execute.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "home/user_name/workdir/my-project", "output_path": "home/user_name/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "home/user_name/workdir/my-project/tests, home/user_name/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
+human-skills '{"tool_name": "tree_gen", "tool_args": {"input_path": "home/user_name/workdir/my-project", "output_path": "home/user_name/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "home/user_name/workdir/my-project/tests, home/user_name/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
 ```
 
 Which maps to this JSON payload:
@@ -119,7 +119,7 @@ Expected output:
 
 **Example:**
 ```bash
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "home/user_name/workdir/my-folder",
@@ -141,7 +141,7 @@ python skills/helpers/execute.py '{
 
 **Example:**
 ```bash
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "home/user_name/workdir/my-webapp",
@@ -169,7 +169,7 @@ python skills/helpers/execute.py '{
 
 **Example - Scan specific package:**
 ```bash
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "home/user_name/workdir/monorepo/packages/backend",
@@ -181,7 +181,7 @@ python skills/helpers/execute.py '{
 **Example - Multiple targeted scans:**
 ```bash
 # First: Backend
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "home/user_name/workdir/monorepo/packages/backend",
@@ -191,7 +191,7 @@ python skills/helpers/execute.py '{
 }'
 
 # Then: Frontend (separate call)
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "home/user_name/workdir/monorepo/packages/frontend",
@@ -222,7 +222,7 @@ python skills/helpers/execute.py '{
 
 **Example:**
 ```bash
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "home/user_name/",
@@ -248,7 +248,7 @@ python skills/helpers/execute.py '{
 
 **Example:**
 ```bash
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "home/user_name/workdir/my-app/src",
@@ -277,7 +277,7 @@ python skills/helpers/execute.py '{
 
 **Example:**
 ```bash
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "home/user_name/workdir/my-project",

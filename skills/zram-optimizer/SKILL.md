@@ -96,7 +96,7 @@ Use the combined `zram_optimizer.py` CLI to benchmark all configurations:
 
 ```bash
 # Run the full benchmark suite
-sudo python skills/helpers/execute.py '{
+sudo human-skills '{
     "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "bench"
@@ -127,7 +127,7 @@ Rank,Algorithm,Priority,Swappiness,PageCluster,FinalScore,...
 
 ```bash
 # Example: Apply the winning configuration
-sudo python skills/helpers/execute.py '{
+sudo human-skills '{
     "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "deploy",
@@ -155,7 +155,7 @@ This command will:
 **Commands Overview:**
 ```bash
 # Review current zram/swap mappings
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "status"
@@ -163,7 +163,7 @@ python skills/helpers/execute.py '{
 }'
 
 # Low-level memory throughput test
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "run",
@@ -200,7 +200,7 @@ Setting `disk_size` larger than necessary wastes CPU on compression without bene
 ### 5. Monitor After Deployment
 ```bash
 # Check compression ratio
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "status"
@@ -235,7 +235,7 @@ sudo git clone https://github.com/ecdye/zram-config /opt/zram-config
 cd /opt/zram-config && sudo ./install.bash
 
 # 2. Run the benchmark (takes ~10-20 minutes)
-sudo python skills/helpers/execute.py '{
+sudo human-skills '{
     "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "bench"
@@ -246,7 +246,7 @@ sudo python skills/helpers/execute.py '{
 cat results.csv | sort -t, -k6 -rn | head -5
 
 # 4. Deploy the winner (example: lz4, 8G, priority 1000, swappiness 180, page-cluster 0)
-sudo python skills/helpers/execute.py '{
+sudo human-skills '{
     "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "deploy",
@@ -259,7 +259,7 @@ sudo python skills/helpers/execute.py '{
 }'
 
 # 5. Verify
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "zram_optimizer",
     "tool_args": {
         "command": "status"

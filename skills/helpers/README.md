@@ -32,7 +32,7 @@ All tools are executed through the centralized runner via JSON instructions.
 ### Execute via JSON String Payload
 Provide the command JSON block directly to the script:
 ```bash
-python skills/helpers/execute.py '{
+human-skills '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/absolute/path/to/dir",
@@ -44,7 +44,7 @@ python skills/helpers/execute.py '{
 ### Execute via JSON File
 For heavier payloads, provide the relative or absolute path to a JSON file format:
 ```bash
-python skills/helpers/execute.py path/to/payload.json
+human-skills path/to/payload.json
 ```
 
 ---
@@ -54,6 +54,6 @@ python skills/helpers/execute.py path/to/payload.json
 To inspect all correctly formatted tools currently detected by the auto-discovery engine:
 
 ```bash
-python skills/helpers/execute.py --list
+human-skills --list
 ```
 *Outputs a bulleted list of tools detected and ready to execute.*

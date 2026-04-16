@@ -77,24 +77,24 @@ If you experience any of these thoughts, **STOP immediately** — you are ration
 When attempting to invoke specialized skills programmatically, interact with the global dispatcher via these commands:
 
 - **List Tools & Skills:**  
-  `python3 skills/helpers/execute.py --list`
+  `human-skills --list`
 
 - **Read Skill Documentation (Required before using a new skill):**  
-  `python3 skills/helpers/execute.py --skill_info {skill_name}`
-  `Example_1: python3 skills/helpers/execute.py --skill_info zram-optimizer`
-  `Example_2: python3 skills/helpers/execute.py --skill_info pytorch-patterns`
+  `human-skills --skill_info {skill_name}`
+  `Example_1: human-skills --skill_info zram-optimizer`
+  `Example_2: human-skills --skill_info pytorch-patterns`
 
 - **Inspect Specific Tool:**  
-  `python3 skills/helpers/execute.py --tool_info {exact_tool_name}` 
-  `Example_1: python3 skills/helpers/execute.py --tool_info tree_gen`
-  `Example_2: python3 skills/helpers/execute.py --tool_info zram_optimizer` 
+  `human-skills --tool_info {exact_tool_name}` 
+  `Example_1: human-skills --tool_info tree_gen`
+  `Example_2: human-skills --tool_info zram_optimizer` 
   *(Returns JSON schema: name, description, arguments mappings, instruction).*
 
 - **Run Tool:**  
-  `python3 skills/helpers/execute.py '{"tool_name": "your_tool", "arg1": "val1"}'`
+  `human-skills '{"tool_name": "your_tool", "arg1": "val1"}'`
   **Example:**
   ```bash
-  python3 skills/helpers/execute.py '{
+  human-skills '{
       "tool_name": "tree_gen",
       "tool_args": {
           "input_path": "/home/openscore/a0/usr/projects/human-skills",
