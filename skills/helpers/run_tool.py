@@ -159,6 +159,20 @@ def main() -> None:
         print(__doc__)
         sys.exit(0)
 
+    if sys.argv[1] == "--skill_name":
+        if len(sys.argv) < 3:
+            print("Error: --skill_name requires a skill name.", file=sys.stderr)
+            sys.exit(1)
+            
+        skill_name = sys.argv[2]
+        skill_md_path = _SKILLS_DIR / skill_name / "SKILL.md"
+        if not skill_md_path.exists():
+            print(f"Error: Skill documentation not found at {skill_md_path}", file=sys.stderr)
+            sys.exit(1)
+            
+        print(skill_md_path.read_text(encoding="utf-8"))
+        sys.exit(0)
+
     if sys.argv[1] == "--tool_name":
         if len(sys.argv) < 3:
             print("Error: --tool_name requires an exact tool name.", file=sys.stderr)
@@ -184,16 +198,38 @@ def main() -> None:
 
     if sys.argv[1] == "--list":
         registry = _build_registry()
-        if not registry:
-            print("No tools discovered.")
-            sys.exit(0)
-            
+        
         fields = sys.argv[2:]
         if not fields:
-            print("Discovered tools:")
-            for name in sorted(registry.keys()):
-                print(f"  • {name}")
+            # Gather available skills by looking for SKILL.md
+            available_skills = []
+            for path in _SKILLS_DIR.iterdir():
+                if path.is_dir() and path.name != "helpers" and (path / "SKILL.md").exists():
+                    available_skills.append(path.name)
+            
+            if available_skills:
+                print("Available Skills:")
+                for skill in sorted(available_skills):
+                    print(f"  • {skill}")
+                print("")
+                
+            if not registry:
+                print("No tools discovered.")
+            else:
+                print("Discovered tools:")
+                for name in sorted(registry.keys()):
+                    print(f"  • {name}")
+                    
             print("\nFor more details instruction execute: python3 skills/helpers/run_tool.py --tool_name {exact_tool_name}")
+            print(
+                "For Proper Skill usages instruction use your view tool or read tool or run python3 skills/helpers/run_tool.py --skill_name {skill_name}",
+                "Example_1: python3 skills/helpers/run_tool.py --skill_name zram-optimizer,",
+                "Example_2: python3 skills/helpers/run_tool.py --skill_name pytorch-patterns"
+            )
+            sys.exit(0)
+            
+        if not registry:
+            print("No tools discovered.", file=sys.stderr)
             sys.exit(0)
             
         output = {}

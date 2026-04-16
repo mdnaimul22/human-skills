@@ -391,9 +391,3 @@ Example output:
 │   └── test_main.py
 └── README.md
 ```
-
-## Related Skills
-
-- **file-analysis** - For detailed file content analysis
-- **code-review** - For examining code structure and quality
-- **documentation** - For generating comprehensive project docs
