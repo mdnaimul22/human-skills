@@ -92,9 +92,30 @@ cd human-skills
 pip install -r scripts/requirements.txt
 ```
 
-Point your AI assistant's skill loader at the `skills/` directory. Every folder inside contains a `SKILL.md` that has been human-verified to work.
+To allow any assistance or user to execute discovered skills globally from **any location** on your machine, use scripts/install.sh wrapper.
+
+```bash
+# Make the install script executable
+chmod +x scripts/install.sh
+
+# Run the installer
+./scripts/install.sh
+```
+
+This automatically binds the `human-skills` command to your environment (`~/.local/bin`), so you no longer needs to use absolute python paths.
+
+Example usages from any directory:
+```bash
+human-skills --list
+human-skills --skill_info directory-structure
+human-skills --tool_info tree_gen
+human-skills '{"tool_name": "tree_gen", "tool_args": {"input_path": "/path"}}'
+```
+
+Finally Point your AI assistant's skill loader at the `skills/` directory. Every folder inside contains a `SKILL.md` that has been human-verified to work.
 
 ---
+
 
 ## Personalising for Your Own Setup
 
@@ -242,20 +263,3 @@ Skills submitted without evidence of testing will not be merged.
 ## License
 
 MIT — see [LICENSE](LICENSE).
-## 🚀 Global Installation (Recommended)
-
-To run Human Skills securely from **any directory** on your machine or agent servers, install the global wrapper:
-
-```bash
-chmod +x scripts/install.sh
-./scripts/install.sh
-```
-
-This binds the `human-skills` command to your environment (`~/.local/bin`), so you no longer need to type long absolute paths!
-
-Example usages from any directory:
-```bash
-human-skills --list
-human-skills --skill_info directory-structure
-human-skills --tool_info tree_gen
-```
