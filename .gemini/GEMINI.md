@@ -77,18 +77,18 @@ If you experience any of these thoughts, **STOP immediately** — you are ration
 When attempting to invoke specialized skills programmatically, interact with the global dispatcher via these commands:
 
 - **List Tools & Skills:**  
-  `python3 skills/helpers/run_tool.py --list`
+  `python3 skills/helpers/execute.py --list`
 
 - **Read Skill Documentation (Required before using a new skill):**  
-  `python3 skills/helpers/run_tool.py --skill_name {skill_name}`
-  `Example_1: python3 skills/helpers/run_tool.py --skill_name zram-optimizer`
-  `Example_2: python3 skills/helpers/run_tool.py --skill_name pytorch-patterns`
+  `python3 skills/helpers/execute.py --skill_info {skill_name}`
+  `Example_1: python3 skills/helpers/execute.py --skill_info zram-optimizer`
+  `Example_2: python3 skills/helpers/execute.py --skill_info pytorch-patterns`
 
 - **Inspect Specific Tool:**  
-  `python3 skills/helpers/run_tool.py --tool_name {exact_tool_name}` 
-  `Example_1: python3 skills/helpers/run_tool.py --tool_name tree_gen`
-  `Example_2: python3 skills/helpers/run_tool.py --tool_name zram_optimizer` 
+  `python3 skills/helpers/execute.py --tool_info {exact_tool_name}` 
+  `Example_1: python3 skills/helpers/execute.py --tool_info tree_gen`
+  `Example_2: python3 skills/helpers/execute.py --tool_info zram_optimizer` 
   *(Returns JSON schema: name, description, arguments mappings, instruction).*
 
 - **Run Tool:**  
-  `python3 skills/helpers/run_tool.py '{"tool_name": "your_tool", "arg1": "val1"}'`
+  `python3 skills/helpers/execute.py '{"tool_name": "your_tool", "arg1": "val1"}'`

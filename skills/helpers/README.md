@@ -1,6 +1,6 @@
 # 🛠️ Human Skills - Global Registry
 
-The `skills/helpers/run_tool.py` script serves as the centralized dispatcher for all tools within the Human Skills library. It acts as a JSON-based executable wrapper that dynamically auto-discovers and executes standalone Python skills across the entire project repository.
+The `skills/helpers/execute.py` script serves as the centralized dispatcher for all tools within the Human Skills library. It acts as a JSON-based executable wrapper that dynamically auto-discovers and executes standalone Python skills across the entire project repository.
 
 By using this unified execution strategy, tools can be developed independently inside their respective directories (`skills/<skill_name>/scripts/`), and the global registry will automatically find and load them!
 
@@ -32,7 +32,7 @@ All tools are executed through the centralized runner via JSON instructions.
 ### Execute via JSON String Payload
 Provide the command JSON block directly to the script:
 ```bash
-python skills/helpers/run_tool.py '{
+python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/absolute/path/to/dir",
@@ -44,7 +44,7 @@ python skills/helpers/run_tool.py '{
 ### Execute via JSON File
 For heavier payloads, provide the relative or absolute path to a JSON file format:
 ```bash
-python skills/helpers/run_tool.py path/to/payload.json
+python skills/helpers/execute.py path/to/payload.json
 ```
 
 ---
@@ -54,6 +54,6 @@ python skills/helpers/run_tool.py path/to/payload.json
 To inspect all correctly formatted tools currently detected by the auto-discovery engine:
 
 ```bash
-python skills/helpers/run_tool.py --list
+python skills/helpers/execute.py --list
 ```
 *Outputs a bulleted list of tools detected and ready to execute.*

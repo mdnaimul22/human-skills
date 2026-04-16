@@ -15,7 +15,7 @@ if str(_SKILLS_DIR) not in sys.path:
     sys.path.insert(0, str(_SKILLS_DIR))
 
 # excude list
-_EXCLUDED = {"run_tool.py", "__init__.py", "__pycache__"}
+_EXCLUDED = {"execute.py", "__init__.py", "__pycache__"}
 
 
 def _extract_message(result) -> str:
@@ -112,7 +112,7 @@ def _build_registry() -> dict[str, dict]:
 
 
 def _warn(msg: str) -> None:
-    print(f"[run_tool] WARNING: {msg}", file=sys.stderr)
+    print(f"[execute] WARNING: {msg}", file=sys.stderr)
 
 
 def _load_payload(source: str) -> dict:
@@ -159,9 +159,9 @@ def main() -> None:
         print(__doc__)
         sys.exit(0)
 
-    if sys.argv[1] == "--skill_name":
+    if sys.argv[1] == "--skill_info":
         if len(sys.argv) < 3:
-            print("Error: --skill_name requires a skill name.", file=sys.stderr)
+            print("Error: --skill_info requires a skill name.", file=sys.stderr)
             sys.exit(1)
             
         skill_name = sys.argv[2]
@@ -173,9 +173,9 @@ def main() -> None:
         print(skill_md_path.read_text(encoding="utf-8"))
         sys.exit(0)
 
-    if sys.argv[1] == "--tool_name":
+    if sys.argv[1] == "--tool_info":
         if len(sys.argv) < 3:
-            print("Error: --tool_name requires an exact tool name.", file=sys.stderr)
+            print("Error: --tool_info requires an exact tool name.", file=sys.stderr)
             sys.exit(1)
             
         target_tool = sys.argv[2]
@@ -220,11 +220,11 @@ def main() -> None:
                 for name in sorted(registry.keys()):
                     print(f"  • {name}")
                     
-            print("\nFor more details instruction execute: python3 skills/helpers/run_tool.py --tool_name {exact_tool_name}")
+            print("\nFor more details instruction execute: python3 skills/helpers/execute.py --tool_info {exact_tool_name}")
             print(
-                "For Proper Skill usages instruction use your view tool or read tool or run python3 skills/helpers/run_tool.py --skill_name {skill_name}",
-                "Example_1: python3 skills/helpers/run_tool.py --skill_name zram-optimizer,",
-                "Example_2: python3 skills/helpers/run_tool.py --skill_name pytorch-patterns"
+                "For Proper Skill usages instruction use your view tool or read tool or run python3 skills/helpers/execute.py --skill_info {skill_name}",
+                "Example_1: python3 skills/helpers/execute.py --skill_info zram-optimizer,",
+                "Example_2: python3 skills/helpers/execute.py --skill_info pytorch-patterns"
             )
             sys.exit(0)
             

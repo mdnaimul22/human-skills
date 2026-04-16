@@ -6,7 +6,7 @@ and `Response` dataclass so that existing tools can be used without
 a specific framework runtime.
 
 Drop this `helpers/` folder next to any tool script and
-it will import cleanly. run_tool.py handles the rest.
+it will import cleanly. execute.py handles the rest.
 """
 
 from dataclasses import dataclass, field

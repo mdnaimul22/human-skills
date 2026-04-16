@@ -66,10 +66,10 @@ This skill uses the `tree_gen` tool to create Markdown-formatted directory trees
 
 ### 📋 HOW TO CALL THIS TOOL:
 
-The agent executes `run_tool.py` with the JSON payload passed directly as a string argument:
+The agent executes `execute.py` with the JSON payload passed directly as a string argument:
 
 ```bash
-python skills/helpers/run_tool.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "/a0/usr/workdir/my-project", "output_path": "/a0/usr/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
+python skills/helpers/execute.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "/a0/usr/workdir/my-project", "output_path": "/a0/usr/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
 ```
 
 Which maps to this JSON payload:
@@ -119,7 +119,7 @@ Expected output:
 
 **Example:**
 ```bash
-python skills/helpers/run_tool.py '{
+python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-folder",
@@ -141,7 +141,7 @@ python skills/helpers/run_tool.py '{
 
 **Example:**
 ```bash
-python skills/helpers/run_tool.py '{
+python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-webapp",
@@ -169,7 +169,7 @@ python skills/helpers/run_tool.py '{
 
 **Example - Scan specific package:**
 ```bash
-python skills/helpers/run_tool.py '{
+python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/monorepo/packages/backend",
@@ -181,7 +181,7 @@ python skills/helpers/run_tool.py '{
 **Example - Multiple targeted scans:**
 ```bash
 # First: Backend
-python skills/helpers/run_tool.py '{
+python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/monorepo/packages/backend",
@@ -191,7 +191,7 @@ python skills/helpers/run_tool.py '{
 }'
 
 # Then: Frontend (separate call)
-python skills/helpers/run_tool.py '{
+python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/monorepo/packages/frontend",
@@ -222,7 +222,7 @@ python skills/helpers/run_tool.py '{
 
 **Example:**
 ```bash
-python skills/helpers/run_tool.py '{
+python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr",
@@ -248,7 +248,7 @@ python skills/helpers/run_tool.py '{
 
 **Example:**
 ```bash
-python skills/helpers/run_tool.py '{
+python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-app/src",
@@ -277,7 +277,7 @@ python skills/helpers/run_tool.py '{
 
 **Example:**
 ```bash
-python skills/helpers/run_tool.py '{
+python skills/helpers/execute.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-project",

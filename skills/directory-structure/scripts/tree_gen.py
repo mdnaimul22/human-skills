@@ -28,7 +28,7 @@ class TreeGen(Tool):
         "ignored_path": "Comma-separated absolute paths to exclude.",
         "ignored_extensions": "Comma-separated extensions to exclude (e.g. '.log,.tmp')."
     }
-    instruction = "For Skill instruction run python3 skills/helpers/run_tool.py --skill_name directory-structure"
+    instruction = "For Skill instruction run python3 skills/helpers/execute.py --skill_info directory-structure"
 
     # Default ignored patterns (common build artifacts, dependencies, and media files)
     IGNORED_PATTERNS: frozenset = frozenset({
