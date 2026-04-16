@@ -22,6 +22,15 @@ forwards:
     to:   "{REPO_ROOT}/skills/pytorch-patterns"
     enabled: true
 
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-patterns"
+    to:   "{REPO_ROOT}/skills/python-patterns"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-testing"
+    to:   "{REPO_ROOT}/skills/python-testing"
+    enabled: true
+
+
   # ── Add more forwarding rules below ───────────────────────────────────────
   # - from: "{REPO_ROOT}/.claude-skills/skills/some-skill"
   #   to:   "{REPO_ROOT}/skills/some-skill"
