@@ -69,7 +69,7 @@ This skill uses the `tree_gen` tool to create Markdown-formatted directory trees
 The agent executes `run_tool.py` with the JSON payload passed directly as a string argument:
 
 ```bash
-python skills/directory-structure/scripts/run_tool.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "/a0/usr/workdir/my-project", "output_path": "/a0/usr/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
+python skills/directory-structure/scripts/helpers/run_tool.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "/a0/usr/workdir/my-project", "output_path": "/a0/usr/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
 ```
 
 Which maps to this JSON payload:

@@ -1,50 +1,15 @@
-"""
-run_tool.py — JSON Wrapper for Human Skills Tools
-============================================================
-This wrapper accepts a JSON payload and dispatches it to the correct tool.
-
-AUTO-DISCOVERY:
-    Any .py file placed in the same `scripts/` directory is automatically
-    detected as a tool if it follows tool convention:
-
-        class MyTool(Tool):
-            async def execute(self, **kwargs) -> Response: ...
-
-        Requirements:
-          • Class name must be CamelCase of the filename
-            (e.g. manage_project.py → ManageProject)
-          • helpers/tool.py shim must be present in this directory
-            
-
-    Tool name = filename without .py  (e.g. tree_gen.py → "tree_gen")
-
-USAGE:
-    python scripts/run_tool.py '<json_string>'
-    python scripts/run_tool.py path/to/call.json
-
-INPUT FORMAT:
-    {
-        "tool_name": "tree_gen",
-        "tool_args": {
-            "input_path": "/absolute/path/to/dir",
-            "max_depth":  "4"
-        }
-    }
-
-LIST AVAILABLE TOOLS:
-    python scripts/run_tool.py --list
-"""
-
+import sys
+import json
 import asyncio
+import inspect
 import importlib
 import importlib.util
-import inspect
-import json
-import sys
 from pathlib import Path
 from typing import Callable, Optional
 
-_SCRIPTS_DIR = Path(__file__).resolve().parent
+
+_HELPERS_DIR = Path(__file__).resolve().parent
+_SCRIPTS_DIR = _HELPERS_DIR.parent
 
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
@@ -58,10 +23,12 @@ def _extract_message(result) -> str:
     Accept either a plain string or a Response object.
     Returns the message string in both cases.
     """
+
     if isinstance(result, str):
         return result
     if hasattr(result, "message"):
         return str(result.message)
+
     return str(result)
 
 
@@ -69,26 +36,25 @@ def _extract_message(result) -> str:
 
 def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
     """
-    Try to import `path` as `module_name` and extract a runner callable.
-    
-    Dynamically searches for any class extending 'Tool' with an async execute().
-    Returns a unified sync callable: runner(args: dict) -> str
+    Searches for any class extending 'Tool' with an async execute().
+    Returns a callable: runner(args: dict) -> str
     """
+
     spec = importlib.util.spec_from_file_location(module_name, path)
+
     if spec is None or spec.loader is None:
         return None
 
     module = importlib.util.module_from_spec(spec)
+
     try:
         spec.loader.exec_module(module)          # type: ignore[union-attr]
     except Exception as exc:
         _warn(f"Failed to load '{module_name}': {exc}")
         return None
 
-    # Find the Tool class dynamically
     target_cls = None
     for name, obj in inspect.getmembers(module, inspect.isclass):
-        # We check base classes by name so we don't need to import Tool here
         base_names = [base.__name__ for base in getattr(obj, "__bases__", [])]
         if "Tool" in base_names and name != "Tool":
             target_cls = obj
@@ -107,13 +73,12 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
     return None
 
 
-# ── Auto-discover all tools in scripts/ ──────────────────────────────────────
-
 def _build_registry() -> dict[str, Callable]:
     """
     Scan _SCRIPTS_DIR for .py files and return a {tool_name: runner} dict.
     Files listed in _EXCLUDED are skipped.
     """
+
     registry: dict[str, Callable] = {}
 
     for py_file in sorted(_SCRIPTS_DIR.glob("*.py")):
@@ -138,21 +103,21 @@ def _warn(msg: str) -> None:
     print(f"[run_tool] WARNING: {msg}", file=sys.stderr)
 
 
-# ── JSON loading ──────────────────────────────────────────────────────────────
-
 def _load_payload(source: str) -> dict:
-    """Accept a raw JSON string or a path to a .json file."""
+
     stripped = source.strip()
     candidate = Path(stripped)
+    
     if candidate.suffix == ".json" and candidate.exists():
         return json.loads(candidate.read_text(encoding="utf-8"))
+
     return json.loads(stripped)
 
 
-# ── Main dispatcher ───────────────────────────────────────────────────────────
 
 def dispatch(payload: dict) -> str:
     """Route a JSON payload to the correct tool and return the result string."""
+
     tool_name = payload.get("tool_name", "").strip()
     tool_args = payload.get("tool_args", {})
 
@@ -168,7 +133,6 @@ def dispatch(payload: dict) -> str:
         available = ", ".join(sorted(registry.keys())) or "(none)"
         return f"Error: Unknown tool '{tool_name}'. Available tools: {available}"
 
-    # Normalise all values to strings for consistent arg handling
     normalised = {
         k: str(v) if not isinstance(v, str) else v
         for k, v in tool_args.items()
@@ -177,7 +141,6 @@ def dispatch(payload: dict) -> str:
     return registry[tool_name](normalised)
 
 
-# ── CLI entry point ───────────────────────────────────────────────────────────
 
 def main() -> None:
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
