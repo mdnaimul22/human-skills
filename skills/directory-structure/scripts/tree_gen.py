@@ -11,28 +11,24 @@ _SKILLS_ROOT = _CURRENT_DIR.parent.parent
 if str(_SKILLS_ROOT) not in sys.path:
     sys.path.insert(0, str(_SKILLS_ROOT))
 
-
-
 class TreeGen(Tool):
     """
     Generate a directory structure in Markdown format using professional
     ASCII branch connectors (├──, └──, │).
-
-    Args:
-        input_path        : Directory to scan. (REQUIRED)
-        output_path       : Directory to write the structure file.
-                            Defaults to input_path.
-        file_name         : Custom output filename.
-                            Defaults to {dir_name}_structure.md.
-        layout            : "vertical" (default) or "horizontal".
-        max_depth         : Maximum depth to recurse. Default: 4.
-                            Set to 0 for unlimited depth.
-        use_gitignore     : Parse .gitignore in input_path and apply rules.
-                            Default: true.
-        ignored_path      : Comma-separated absolute paths to exclude.
-        ignored_extensions: Comma-separated extensions to exclude
-                            (e.g. ".log,.tmp").
     """
+    name = "tree_gen"
+    description = "Generate a directory structure in Markdown format using professional ASCII branch connectors."
+    args_schema = {
+        "input_path": "Directory to scan. (REQUIRED)",
+        "output_path": "Directory to write the structure file. Defaults to input_path.",
+        "file_name": "Custom output filename. Defaults to {dir_name}_structure.md.",
+        "layout": "'vertical' (default) or 'horizontal'.",
+        "max_depth": "Maximum depth to recurse. Default: 4. Set to 0 for unlimited.",
+        "use_gitignore": "Parse .gitignore in input_path and apply rules. Default: true.",
+        "ignored_path": "Comma-separated absolute paths to exclude.",
+        "ignored_extensions": "Comma-separated extensions to exclude (e.g. '.log,.tmp')."
+    }
+    instruction = "For Skill instruction read skills/directory-structure/SKILL.md"
 
     # Default ignored patterns (common build artifacts, dependencies, and media files)
     IGNORED_PATTERNS: frozenset = frozenset({

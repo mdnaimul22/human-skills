@@ -34,10 +34,10 @@ def _extract_message(result) -> str:
 
 # ─ Resolve a single .py file → sync callable or None ──────────
 
-def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
+def _resolve_runner(module_name: str, path: Path) -> Optional[dict]:
     """
     Searches for any class extending 'Tool' with an async execute().
-    Returns a callable: runner(args: dict) -> str
+    Returns a dict containing the runner and metadata.
     """
 
     spec = importlib.util.spec_from_file_location(module_name, path)
@@ -68,19 +68,26 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
                 instance = _cls(args=args)
                 result = asyncio.run(instance.execute())
                 return _extract_message(result)
-            return _run_async
+            
+            return {
+                "runner": _run_async,
+                "name": getattr(target_cls, "name", module_name) or module_name,
+                "description": getattr(target_cls, "description", ""),
+                "args": getattr(target_cls, "args_schema", "") or getattr(target_cls, "args", ""),
+                "instruction": getattr(target_cls, "instruction", "")
+            }
 
     return None
 
 
-def _build_registry() -> dict[str, Callable]:
+def _build_registry() -> dict[str, dict]:
     """
     Scan _SKILLS_DIR for .py files inside any 'scripts' folder
-    and return a {tool_name: runner} dict.
+    and return a {tool_name: tool_dict} mapping.
     Files listed in _EXCLUDED are skipped.
     """
 
-    registry: dict[str, Callable] = {}
+    registry: dict[str, dict] = {}
 
     for py_file in sorted(_SKILLS_DIR.glob("*/scripts/*.py")):
         if py_file.name in _EXCLUDED:
@@ -143,7 +150,7 @@ def dispatch(payload: dict) -> str:
         for k, v in tool_args.items()
     }
 
-    return registry[tool_name](normalised)
+    return registry[tool_name]["runner"](normalised)
 
 
 
@@ -156,10 +163,26 @@ def main() -> None:
         registry = _build_registry()
         if not registry:
             print("No tools discovered.")
-        else:
+            sys.exit(0)
+            
+        fields = sys.argv[2:]
+        if not fields:
             print("Discovered tools:")
             for name in sorted(registry.keys()):
                 print(f"  • {name}")
+            sys.exit(0)
+            
+        output = {}
+        for tool_id, tool_info in registry.items():
+            tool_data = {}
+            for field in fields:
+                field_clean = field.strip(",").lower()
+                if field_clean in ("runner",):
+                    continue
+                tool_data[field_clean] = tool_info.get(field_clean, "")
+            output[tool_id] = tool_data
+            
+        print(json.dumps(output, indent=2))
         sys.exit(0)
 
     source = sys.argv[1]
