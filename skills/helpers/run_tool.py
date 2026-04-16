@@ -15,7 +15,7 @@ if str(_SKILLS_DIR) not in sys.path:
     sys.path.insert(0, str(_SKILLS_DIR))
 
 # excude list
-_EXCLUDED = {"run_tool.py", "__init__.py"}
+_EXCLUDED = {"run_tool.py", "__init__.py", "__pycache__"}
 
 
 def _extract_message(result) -> str:

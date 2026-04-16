@@ -69,7 +69,7 @@ This skill uses the `tree_gen` tool to create Markdown-formatted directory trees
 The agent executes `run_tool.py` with the JSON payload passed directly as a string argument:
 
 ```bash
-python skills/directory-structure/scripts/helpers/run_tool.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "/a0/usr/workdir/my-project", "output_path": "/a0/usr/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
+python skills/helpers/run_tool.py '{"tool_name": "tree_gen", "tool_args": {"input_path": "/a0/usr/workdir/my-project", "output_path": "/a0/usr/workdir/my-project", "file_name": "PROJECT_MAP", "layout": "vertical", "max_depth": "3", "use_gitignore": "true", "ignored_path": "/a0/usr/workdir/my-project/tests, /a0/usr/workdir/my-project/docs", "ignored_extensions": ".csv,.json"}}'
 ```
 
 Which maps to this JSON payload:
@@ -112,7 +112,7 @@ Expected output:
 
 ### 📁 Scenario 1: Small Project (< 100 files)
 
-**When:** User has a simple script, small library, or personal project
+**When:** Scanning a small Python project, simple script, or personal library where we want to show almost everything, ignoring only cache and git files, using the default depth of 4.
 
 **What to ignore:** Minimal - only critical clutter
 - `__pycache__`, `.git`, `.venv`, `node_modules`
@@ -120,11 +120,6 @@ Expected output:
 **Example:**
 ```json
 {
-    "thoughts": [
-        "Small Python project, will show almost everything",
-        "Only ignoring Python cache and git files",
-        "Using default depth of 4"
-    ],
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-folder",
@@ -137,7 +132,7 @@ Expected output:
 
 ### 📦 Scenario 2: Medium Web Application (100–1000 files)
 
-**When:** Typical React/Vue/Node.js app with dependencies
+**When:** Scanning a typical React, Vue, or Node.js web app where we need to ignore dependencies and build outputs for a cleaner overview.
 
 **What to ignore:** Dependencies and build artifacts
 - `node_modules`, `dist`, `build`, `coverage`
@@ -147,10 +142,6 @@ Expected output:
 **Example:**
 ```json
 {
-    "thoughts": [
-        "Medium-sized Next.js app",
-        "Ignoring dependencies and build outputs for cleaner view"
-    ],
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-webapp",
@@ -163,7 +154,7 @@ Expected output:
 
 ### 🏢 Scenario 3: Large Codebase/Monorepo (> 1000 files)
 
-**When:** Enterprise application, monorepo, or complex system
+**When:** Scanning an enterprise application, complex system, or a specific package within a large monorepo. We must ignore tests and dependencies to keep the output manageable.
 
 **Strategy:** 
 1. **Never scan the entire root** - it will be too large
@@ -179,10 +170,6 @@ Expected output:
 **Example - Scan specific package:**
 ```json
 {
-    "thoughts": [
-        "Large monorepo - targeting only the backend package",
-        "Ignoring tests and dependencies for manageable output"
-    ],
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/monorepo/packages/backend",
@@ -218,7 +205,7 @@ Expected output:
 
 ### 🌍 Scenario 4: Root-Level Scan (/a0/usr or system root)
 
-**When:** User wants to see the entire workspace or system structure
+**When:** Generating a system-wide or root workspace overview. We must aggressively ignore huge directories like workdir, chats, and knowledge to prevent overflowing the token limit.
 
 **⚠️ CRITICAL RULES:**
 1. **ALWAYS ignore these paths for /a0/usr:**
@@ -236,10 +223,6 @@ Expected output:
 **Example:**
 ```json
 {
-    "thoughts": [
-        "User wants to see system structure",
-        "Must ignore workdir, chats, and knowledge - they're huge"
-    ],
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr",
@@ -252,7 +235,7 @@ Expected output:
 
 ### 🎯 Scenario 5: Specific Folder Deep Dive
 
-**When:** User wants detailed view of ONE specific directory (e.g., "show me the src folder structure")
+**When:** The user requests a deep dive into ONE specific directory (e.g., "show me the src folder structure"). We need to show all source files with minimal filtering.
 
 **Strategy:**
 - Target ONLY that folder
@@ -266,10 +249,6 @@ Expected output:
 **Example:**
 ```json
 {
-    "thoughts": [
-        "User wants detailed view of src directory",
-        "Will show all source files with minimal filtering"
-    ],
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-app/src",
@@ -282,7 +261,7 @@ Expected output:
 
 ### 📝 Scenario 6: Documentation Purpose
 
-**When:** Creating README, docs, or architectural diagrams
+**When:** Preparing structure output for a README, documentation, or architectural diagram. We should only show source code and configuration, strictly hiding test suites and build outputs.
 
 **Strategy:**
 - Focus on source code and configuration
@@ -299,10 +278,6 @@ Expected output:
 **Example:**
 ```json
 {
-    "thoughts": [
-        "Generating structure for project README",
-        "Showing only source code and config, no tests or builds"
-    ],
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-project",
