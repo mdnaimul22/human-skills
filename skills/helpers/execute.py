@@ -220,11 +220,11 @@ def main() -> None:
                 for name in sorted(registry.keys()):
                     print(f"  • {name}")
                     
-            print("\nFor more details instruction execute: python3 skills/helpers/execute.py --tool_info {exact_tool_name}")
+            print("\nFor more details instruction execute: human-skills --tool_info {exact_tool_name}")
             print(
-                "For Proper Skill usages instruction use your view tool or read tool or run python3 skills/helpers/execute.py --skill_info {skill_name}",
-                "Example_1: python3 skills/helpers/execute.py --skill_info zram-optimizer,",
-                "Example_2: python3 skills/helpers/execute.py --skill_info pytorch-patterns"
+                "For Proper Skill usages instruction use your view tool or read tool or run human-skills --skill_info {skill_name}",
+                "Example_1: human-skills --skill_info zram-optimizer,",
+                "Example_2: human-skills --skill_info pytorch-patterns"
             )
             sys.exit(0)
             
