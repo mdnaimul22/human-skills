@@ -97,7 +97,7 @@ When attempting to invoke specialized skills programmatically, interact with the
   human-skills '{
       "tool_name": "tree_gen",
       "tool_args": {
-          "input_path": "/home/openscore/a0/usr/projects/human-skills",
+          "input_path": "/home/user_name/workdir/my-project",
           "ignored_path": "__pycache__, .git, .venv, .env, .gitkeep, .DS_Store, .log, .tmp"
       }
   }'
