@@ -118,14 +118,14 @@ Expected output:
 - `__pycache__`, `.git`, `.venv`, `node_modules`
 
 **Example:**
-```json
-{
+```bash
+python skills/helpers/run_tool.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-folder",
         "ignored_path": "__pycache__, .git, .venv, .env, .gitkeep, .DS_Store, .log, .tmp"
     }
-}
+}'
 ```
 
 ---
@@ -140,14 +140,14 @@ Expected output:
 - `__pycache__`, `.pytest_cache`
 
 **Example:**
-```json
-{
+```bash
+python skills/helpers/run_tool.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-webapp",
         "ignored_path": "node_modules, dist, .next, coverage, __pycache__, .git, .venv, .env, .gitkeep, .DS_Store, .log, .tmp"
     }
-}
+}'
 ```
 
 ---
@@ -168,37 +168,37 @@ Expected output:
 - All media and assets
 
 **Example - Scan specific package:**
-```json
-{
+```bash
+python skills/helpers/run_tool.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/monorepo/packages/backend",
         "ignored_path": "node_modules, dist, coverage, tests, __tests__, .git"
     }
-}
+}'
 ```
 
 **Example - Multiple targeted scans:**
-```json
-// First: Backend
-{
+```bash
+# First: Backend
+python skills/helpers/run_tool.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/monorepo/packages/backend",
         "output_path": "/a0/usr/workdir/docs",
         "ignored_path": "node_modules, dist, tests"
     }
-}
+}'
 
-// Then: Frontend (separate call)
-{
+# Then: Frontend (separate call)
+python skills/helpers/run_tool.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/monorepo/packages/frontend",
         "output_path": "/a0/usr/workdir/docs",
         "ignored_path": "node_modules, .next, public/assets"
     }
-}
+}'
 ```
 
 ---
@@ -221,14 +221,14 @@ Expected output:
    - Project metadata
 
 **Example:**
-```json
-{
+```bash
+python skills/helpers/run_tool.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr",
         "ignored_path": "/a0/usr/workdir, /a0/usr/chats, /a0/usr/knowledge/main, /a0/usr/memory/default"
     }
-}
+}'
 ```
 
 ---
@@ -247,14 +247,14 @@ Expected output:
 - `*.pyc`, `.DS_Store`
 
 **Example:**
-```json
-{
+```bash
+python skills/helpers/run_tool.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-app/src",
         "ignored_path": "__pycache__, .pytest_cache"
     }
-}
+}'
 ```
 
 ---
@@ -276,15 +276,15 @@ Expected output:
 - All local development files (.env, .vscode)
 
 **Example:**
-```json
-{
+```bash
+python skills/helpers/run_tool.py '{
     "tool_name": "tree_gen",
     "tool_args": {
         "input_path": "/a0/usr/workdir/my-project",
         "output_path": "/a0/usr/workdir/my-project/docs",
         "ignored_path": "node_modules, dist, build, tests, __tests__, coverage, .git, .vscode, public/images"
     }
-}
+}'
 ```
 
 ---
