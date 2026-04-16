@@ -37,32 +37,6 @@ If a skill has never been tested end-to-end by a human, it has **no place here**
 
 ---
 
-## Repository Structure
-
-```
-human-skills/
-├── skills/                         # ✅ Human-verified skills live here
-│   ├── directory-structure/
-│   ├── manage_project/
-│   ├── openevolve-evolutionary-coding/
-│   ├── zram-optimizer/
-│   └── ...
-│
-├── scripts/
-│   ├── sync.py                     # Automated upstream sync daemon
-│   ├── requirements.txt
-│   └── helpers/
-│       ├── upstream.yaml           # Which repos to pull from daily
-│       ├── path_forward.yaml       # Which skills to copy into skills/
-│       └── automation.yaml         # Schedule, git, and logging settings
-│
-├── .claude-skills/                 # Upstream repos (git submodules / clones)
-├── .everything-claude-code/
-└── .superpowers/
-```
-
----
-
 ## Core Concept: Upstream Tracking + Skill Forwarding
 
 Many great skill repos exist in the open-source community. Instead of copying them manually or losing track of updates, Human Skills uses a **two-step pipeline**:
@@ -92,7 +66,7 @@ cd human-skills
 pip install -r scripts/requirements.txt
 ```
 
-To allow any assistance or user to execute discovered skills globally from **any location** on your machine, use scripts/install.sh wrapper.
+To allow any assistance or user to execute skills globally from **any location** on your machine, use scripts/install.sh wrapper.
 
 ```bash
 # Make the install script executable
@@ -246,6 +220,30 @@ A skill qualifies for this repo when:
 Blind skills — instruction files that look good on paper but have never been tested — are explicitly excluded.
 
 ---
+
+## Repository Structure
+
+```
+human-skills/
+├── skills/                         # ✅ Human-verified skills live here
+│   ├── directory-structure/
+│   ├── manage_project/
+│   ├── openevolve-evolutionary-coding/
+│   ├── zram-optimizer/
+│   └── ...
+│
+├── scripts/
+│   ├── sync.py                     # Automated upstream sync daemon
+│   ├── requirements.txt
+│   └── helpers/
+│       ├── upstream.yaml           # Which repos to pull from daily
+│       ├── path_forward.yaml       # Which skills to copy into skills/
+│       └── automation.yaml         # Schedule, git, and logging settings
+│
+├── .claude-skills/                 # Upstream repos (git submodules / clones)
+├── .everything-claude-code/
+└── .superpowers/
+```
 
 ## Contributing
 

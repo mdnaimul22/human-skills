@@ -1,0 +1,44 @@
+# Configuration for the basic evolutionary project
+# -------------------------------------------------------------------------------------
+# BEST PRACTICES:
+# 1. Start with a fast, cheap model (gemini-2.5-flash) for initial prototyping.
+# 2. Use parallel_evaluations to speed up the loop depending on computational limits.
+# 3. Always test your evaluator using `test_evaluator.py` before running the evolution!
+# -------------------------------------------------------------------------------------
+
+max_iterations: 15
+checkpoint_interval: 5
+
+# LLM configuration
+llm:
+  # Using Google Gemini by default (Make sure GEMINI_API_KEY is in your environment)
+  primary_model: "gemini-2.5-flash"
+  primary_model_weight: 0.8
+  secondary_model: "gemini-2.5-pro"
+  secondary_model_weight: 0.2
+  api_base: "https://generativelanguage.googleapis.com/v1beta/openai/"
+  temperature: 0.7
+  max_tokens: 8192
+  timeout: 120
+
+# Prompt configuration
+prompt:
+  system_message: "You are an expert AI programmer. Your goal is to optimize the provided code to achieve the highest possible score according to the evaluation metrics. Always ensure logic correctness before purely focusing on performance."
+
+# Database configuration
+database:
+  population_size: 20
+  archive_size: 10
+  num_islands: 2
+  elite_selection_ratio: 0.2
+  exploitation_ratio: 0.7
+  similarity_threshold: 0.95
+
+# Evaluator configuration
+evaluator:
+  timeout: 30
+  parallel_evaluations: 4
+
+# Evolution settings
+diff_based_evolution: true
+max_code_length: 10000
