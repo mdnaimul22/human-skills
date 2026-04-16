@@ -73,7 +73,7 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[dict]:
                 "runner": _run_async,
                 "name": getattr(target_cls, "name", module_name) or module_name,
                 "description": getattr(target_cls, "description", ""),
-                "args": getattr(target_cls, "args_schema", "") or getattr(target_cls, "args", ""),
+                "arguments": getattr(target_cls, "arguments", ""),
                 "instruction": getattr(target_cls, "instruction", "")
             }
 

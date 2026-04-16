@@ -18,7 +18,7 @@ class TreeGen(Tool):
     """
     name = "tree_gen"
     description = "Generate a directory structure in Markdown format using professional ASCII branch connectors."
-    args_schema = {
+    arguments = {
         "input_path": "Directory to scan. (REQUIRED)",
         "output_path": "Directory to write the structure file. Defaults to input_path.",
         "file_name": "Custom output filename. Defaults to {dir_name}_structure.md.",

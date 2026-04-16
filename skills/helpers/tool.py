@@ -28,7 +28,7 @@ class Response:
 class Tool:
     name: str = ""
     description: str = ""
-    args_schema: str = ""  # Document expected argument shape
+    arguments: str = ""  # Document expected argument shape
     instruction: str = ""  # Where to read docs or how to use
 
     """
