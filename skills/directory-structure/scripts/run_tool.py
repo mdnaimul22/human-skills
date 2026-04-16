@@ -6,15 +6,24 @@ and dispatches it to the correct tool — no CLI flags needed.
 
 AUTO-DISCOVERY:
     Any .py file placed in the same `scripts/` directory is automatically
-    detected as a tool if it follows either convention:
+    detected as a tool if it follows EITHER convention:
 
-    Convention A — Module-level function:
+    Convention A — Modern standalone (preferred):
         def run(args: dict) -> str: ...
-
-    Convention B — CamelCase class with classmethod:
+        — or —
         class MyTool:
             @classmethod
             def run(cls, args: dict) -> str: ...
+
+    Convention B — Agent Zero compatible (zero changes to existing tools):
+        class MyTool(Tool):
+            async def execute(self, **kwargs) -> Response: ...
+
+        Requirements for Convention B:
+          • Class name must be CamelCase of the filename
+            (e.g. manage_project.py → ManageProject)
+          • helpers/tool.py shim must be present in this directory
+            (provides Tool + Response without Agent Zero runtime)
 
     Tool name = filename without .py  (e.g. tree_gen.py → "tree_gen")
 
@@ -35,6 +44,7 @@ LIST AVAILABLE TOOLS:
     python scripts/run_tool.py --list
 """
 
+import asyncio
 import importlib
 import importlib.util
 import json
@@ -51,22 +61,37 @@ if str(_SCRIPTS_DIR) not in sys.path:
 _EXCLUDED = {"run_tool.py", "__init__.py"}
 
 
-# ── Convention: snake_case → CamelCase ───────────────────────────────────────
+# ── Convention helpers ────────────────────────────────────────────────────────
 
 def _to_camel(snake: str) -> str:
     """Convert 'tree_gen' → 'TreeGen'."""
     return "".join(part.capitalize() for part in snake.split("_"))
 
 
-# ── Resolve a single .py file → callable or None ─────────────────────────────
+def _extract_message(result) -> str:
+    """
+    Accept either a plain string or an Agent Zero Response object.
+    Returns the message string in both cases.
+    """
+    if isinstance(result, str):
+        return result
+    if hasattr(result, "message"):
+        return str(result.message)
+    return str(result)
+
+
+# ── Resolve a single .py file → sync callable or None ────────────────────────
 
 def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
     """
-    Try to import `path` as `module_name` and extract a run() callable.
+    Try to import `path` as `module_name` and extract a runner callable.
 
     Priority:
-        1. module.run  (bare function)
-        2. module.<CamelCase>.run  (classmethod on a matching class)
+        1. module.run               (Convention A — bare function)
+        2. module.CamelCase.run     (Convention A — classmethod)
+        3. module.CamelCase.execute (Convention B — async Agent Zero style)
+
+    All returned callables have the signature:  runner(args: dict) -> str
     """
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
@@ -79,18 +104,32 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[Callable]:
         _warn(f"Failed to load '{module_name}': {exc}")
         return None
 
-    # Convention A — bare `run` function at module level
+    # ── Convention A: bare `run` function ────────────────────────────────────
     candidate = getattr(module, "run", None)
     if callable(candidate):
-        return candidate
+        def _run_fn(args: dict, _fn=candidate) -> str:
+            return _extract_message(_fn(args))
+        return _run_fn
 
-    # Convention B — class whose name is CamelCase of the filename
     class_name = _to_camel(module_name)
     cls = getattr(module, class_name, None)
+
     if cls is not None:
+        # ── Convention A: classmethod run ────────────────────────────────────
         run_method = getattr(cls, "run", None)
         if callable(run_method):
-            return run_method
+            def _run_cm(args: dict, _method=run_method) -> str:
+                return _extract_message(_method(args))
+            return _run_cm
+
+        # ── Convention B: async execute() ────────────────────────────────────
+        execute_method = getattr(cls, "execute", None)
+        if callable(execute_method):
+            def _run_async(args: dict, _cls=cls) -> str:
+                instance = _cls(args=args)
+                result = asyncio.run(instance.execute())
+                return _extract_message(result)
+            return _run_async
 
     return None
 
@@ -108,15 +147,16 @@ def _build_registry() -> dict[str, Callable]:
         if py_file.name in _EXCLUDED:
             continue
 
-        tool_name = py_file.stem          # 'tree_gen.py' → 'tree_gen'
+        tool_name = py_file.stem
         runner = _resolve_runner(tool_name, py_file)
 
         if runner is not None:
             registry[tool_name] = runner
         else:
             _warn(
-                f"'{py_file.name}' was found but has no run() — skipped. "
-                f"Expected: a `run(args)` function or a `{_to_camel(tool_name)}.run` classmethod."
+                f"'{py_file.name}' found but no runner detected — skipped.\n"
+                f"  Expected: def run(args), or class {_to_camel(tool_name)} "
+                f"with run() or async execute()."
             )
 
     return registry
@@ -172,7 +212,6 @@ def main() -> None:
         print(__doc__)
         sys.exit(0)
 
-    # --list: show all discovered tools
     if sys.argv[1] == "--list":
         registry = _build_registry()
         if not registry:
