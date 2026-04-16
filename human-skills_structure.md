@@ -1,5 +1,4 @@
 # Directory Structure: human-skills/
-## Path: /home/openscore/a0/usr/projects/human-skills
 
 human-skills/
 │
