@@ -3,6 +3,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+import sys
+
+# Professional path resolution to globally expose 'helpers' directory
+_CURRENT_DIR = Path(__file__).resolve().parent
+_SKILLS_ROOT = _CURRENT_DIR.parent.parent
+if str(_SKILLS_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SKILLS_ROOT))
+
+# Now we can safely import globally without dirty fallback blocks
 from helpers.tool import Tool, Response
 
 
