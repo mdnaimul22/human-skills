@@ -1,44 +1,396 @@
-# Configuration for the basic evolutionary project
-# -------------------------------------------------------------------------------------
-# BEST PRACTICES:
-# 1. Start with a fast, cheap model (gemini-2.5-flash) for initial prototyping.
-# 2. Use parallel_evaluations to speed up the loop depending on computational limits.
-# 3. Always test your evaluator using `test_evaluator.py` before running the evolution!
-# -------------------------------------------------------------------------------------
+# ============================================================
+# OpenEvolve — Reference Configuration
+# ============================================================
+# Consolidated from official example configs. It's a single
+# source of truth. Every option includes an inline comment
+# explaining the default and the effect of changing it.
+# ============================================================
 
-max_iterations: 15
+
+# ------------------------------------------------------------
+# 1. GENERAL SETTINGS
+# ------------------------------------------------------------
+
+max_iterations: 50
+# Increase → more evolution cycles, longer runtime.
+# If early stopping is disabled, the run always terminates here.
+
 checkpoint_interval: 5
+# Increase → fewer checkpoint saves, less disk I/O.
+# Decrease → safer crash recovery, but higher disk usage.
 
-# LLM configuration
-llm:
-  # Using Google Gemini by default (Make sure GEMINI_API_KEY is in your environment)
-  primary_model: "gemini-2.5-flash"
-  primary_model_weight: 0.8
-  secondary_model: "gemini-2.5-pro"
-  secondary_model_weight: 0.2
-  api_base: "https://generativelanguage.googleapis.com/v1beta/openai/"
-  temperature: 0.7
-  max_tokens: 8192
-  timeout: 120
+log_level: "INFO"
+# Options: DEBUG | INFO | WARNING | ERROR | CRITICAL
+# DEBUG   → all internal logs visible, ideal for development.
+# WARNING → only problems logged, suitable for production.
 
-# Prompt configuration
-prompt:
-  system_message: "You are an expert AI programmer. Your goal is to optimize the provided code to achieve the highest possible score according to the evaluation metrics. Always ensure logic correctness before purely focusing on performance."
+log_dir: null
+# null        → logs go to output_dir/logs/ (default).
+# Custom path → log files are written to that directory.
 
-# Database configuration
-database:
-  population_size: 20
-  archive_size: 10
-  num_islands: 2
-  elite_selection_ratio: 0.2
-  exploitation_ratio: 0.7
-  similarity_threshold: 0.95
+random_seed: 42
+# 42   → reproducible runs, identical results every time.
+# null → random behavior each run, better for production diversity.
 
-# Evaluator configuration
-evaluator:
-  timeout: 30
-  parallel_evaluations: 4
 
-# Evolution settings
+# ------------------------------------------------------------
+# 2. EVOLUTION SETTINGS
+# ------------------------------------------------------------
+
 diff_based_evolution: true
-max_code_length: 10000
+# true  → LLM generates only the changed diff/patch.
+#         Fewer tokens, faster, efficient for large codebases.
+# false → LLM rewrites the entire program from scratch.
+#         Better for small programs or when drastic changes are needed.
+
+max_code_length: 20000
+# Decrease → forces the LLM to write more concise code.
+# Increase → allows larger and more complex programs to evolve.
+
+
+# ------------------------------------------------------------
+# 3. EARLY STOPPING SETTINGS
+# ------------------------------------------------------------
+
+early_stopping_patience: null
+# null    → early stopping disabled, runs until max_iterations.
+# Integer → stops after N iterations with no improvement.
+#           Example 2 uses 30 — a solid starting point.
+
+convergence_threshold: 0.001
+# Increase → larger improvement required to reset patience; stops sooner.
+# Decrease → smaller improvements count as progress; runs longer.
+
+early_stopping_metric: "combined_score"
+# The metric to track for early stopping.
+# Any metric returned by your evaluator can be used here.
+# Default: "combined_score" (weighted average of all metrics).
+
+
+# ------------------------------------------------------------
+# 4. LLM CONFIGURATION
+# ------------------------------------------------------------
+
+llm:
+
+  # -- Evolution Models --
+  models:
+    - name: "qwen/qwen3.5-397b-a17b" # from nvdia
+      weight: 0.8
+      # Higher weight → this model handles most evolution calls.
+      # Fast and cheap — ideal for high-volume generation.
+    - name: "openai/gpt-oss-120b"  # from nvdia
+      weight: 0.2
+      # Increase weight → higher quality output, higher cost.
+      # To use OpenAI instead:
+      #   - name: "gpt-4o-mini"
+      #     weight: 1.0
+
+  # -- Evaluator Models --
+  evaluator_models:
+    - name: "qwen/qwen3.5-122b-a10b"  # from nvdia
+    #- name: "gemini-2.5-flash-lite"  # from Gemini
+      weight: 0.8
+    - name: "openai/gpt-oss-120b"
+      weight: 0.2
+
+    # Keeping evaluator models separate from evolution models reduces evaluation bias.
+    # Using the same models simplifies setup.
+
+  # -- API Configuration --
+  api_base: "https://integrate.api.nvidia.com/v1"
+
+  # Nvdia: "https://integrate.api.nvidia.com/v1"
+  # Gemini: "https://generativelanguage.googleapis.com/v1beta/openai/"
+  # OpenAI:       "https://api.openai.com/v1"
+  # Local models: "http://localhost:11434/v1"
+  # Any OpenAI-compatible endpoint is supported.
+
+  api_key: ${GEMINI_API_KEY}
+  # null        → reads from the OPENAI_API_KEY environment variable.
+  # ${VAR_NAME} → reads from the specified environment variable.
+  # Never hardcode keys — always use .env files.
+
+  # -- Generation Parameters --
+  temperature: 0.7
+  # Increase (→1.0) → more creative and diverse output, less stable.
+  # Decrease (→0.0) → deterministic output, less variety.
+  # 0.7–0.9 generally works well for evolutionary search.
+
+  top_p: 0.95
+  # Controls diversity alongside temperature.
+  # Decrease → only high-probability tokens are sampled.
+
+  max_tokens: 4096
+  # Increase → longer code can be generated, but cost rises.
+  # With diff_based_evolution: true, 4096 is usually sufficient.
+
+  # -- Request Parameters --
+  timeout: 60
+  # Increase for larger models or slow API endpoints (seconds).
+
+  retries: 3
+  # Number of retry attempts on API failure.
+
+  retry_delay: 5
+  # Wait time between retries (seconds).
+
+
+# ------------------------------------------------------------
+# 5. PROMPT CONFIGURATION
+# ------------------------------------------------------------
+
+prompt:
+  template_dir: null
+  # null        → built-in prompt templates are used.
+  # Custom path → your own prompt templates are loaded instead.
+
+  system_message: "You are an expert coder helping to improve programs through evolution."
+  # Changing this alters the LLM's behavior and focus.
+  # Make it domain-specific: "You are an expert in numerical optimization..."
+
+  evaluator_system_message: "You are an expert code reviewer."
+  # Used when LLM-based evaluation is enabled.
+
+  # -- Context Programs --
+  num_top_programs: 3
+  # Increase → LLM sees more high-performing examples, but prompt grows larger.
+
+  num_diverse_programs: 2
+  # Increase → LLM sees more varied examples.
+  # Keep both values within your model's context window limit.
+
+  # -- Template Stochasticity --
+  use_template_stochasticity: true
+  # true  → prompt phrasing varies randomly, improving diversity.
+  # false → the same prompt structure is sent every time.
+
+  template_variations:
+    improvement_suggestion:
+      - "Here's how we could improve this code:"
+      - "I suggest the following improvements:"
+      - "We can enhance this code by:"
+    # Add more variations to increase prompting diversity.
+
+  # -- Artifact Rendering --
+  include_artifacts: true
+  # true  → execution outputs and errors are included in the prompt.
+  # false → only code is sent; prompt stays smaller and cheaper.
+
+  max_artifact_bytes: 20480          # 20 KB
+  # Increase → more output is visible to the LLM, but prompt cost rises.
+
+  artifact_security_filter: true
+  # true → sensitive data (keys, tokens) is filtered from artifacts.
+
+  # -- Feature Extraction Thresholds --
+  suggest_simplification_after_chars: 500
+  # If a program exceeds this length, the LLM is prompted to simplify it.
+
+  include_changes_under_chars: 100
+  # Change descriptions are included in the prompt only if shorter than this.
+
+  concise_implementation_max_lines: 10
+  # Programs at or below this line count are labeled "concise implementation".
+
+  comprehensive_implementation_min_lines: 50
+  # Programs at or above this line count are labeled "comprehensive implementation".
+
+  # -- Diff Summary Formatting --
+  diff_summary_max_line_len: 100
+  # Lines longer than this are truncated with "..." in SEARCH/REPLACE blocks.
+
+  diff_summary_max_lines: 30
+  # Maximum lines shown per SEARCH/REPLACE block in the prompt.
+
+
+# ------------------------------------------------------------
+# 6. DATABASE CONFIGURATION
+# ------------------------------------------------------------
+
+database:
+  db_path: null
+  # null  → in-memory only; all data is lost on restart.
+  # Path  → persisted to disk; essential for long runs.
+
+  in_memory: true
+  # true  → stored in RAM, significantly faster.
+  # false → read from disk, saves memory for large populations.
+
+  log_prompts: true
+  # true  → all prompts and responses are logged to the database.
+  #         Useful for debugging and auditing.
+  # false → no logging; keeps the database small.
+
+  # -- Population Settings --
+  population_size: 1000
+  # Increase → more programs in memory, better diversity.
+  # Decrease → faster and less memory usage, but reduced diversity.
+  # Quick tests: 50–200 | Production: 500–2000.
+
+  archive_size: 100
+  # Number of elite programs retained at all times.
+  # A good rule of thumb: ~10% of population_size.
+
+  # -- Island-Based Evolution --
+  # Islands = separate sub-populations that evolve independently.
+  # Migration = best programs are periodically shared between islands.
+
+  num_islands: 4
+  # Increase → more diversity, better at escaping local optima.
+  # Decrease → faster convergence, but higher risk of premature convergence.
+  #
+  # Preset reference (from Example 4):
+  #   max_diversity      → 10 islands
+  #   balanced (default) → 5  islands
+  #   focused/quick      → 3  islands
+  #   large_scale        → 15 islands
+
+  migration_interval: 25
+  # Decrease → more frequent knowledge sharing, faster convergence.
+  # Increase → islands evolve more independently before syncing.
+  #
+  # Preset reference:
+  #   max_diversity  → 25
+  #   balanced       → 50
+  #   focused        → 100
+  #   large_scale    → 75
+
+  migration_rate: 0.1
+  # Fraction of top programs that migrate (0.1 = 10%).
+  # Increase → knowledge spreads faster, but island diversity drops.
+  # Decrease → islands remain independent longer.
+  #
+  # Preset reference:
+  #   max_diversity  → 0.2
+  #   balanced       → 0.1
+  #   focused        → 0.05
+  #   large_scale    → 0.08
+
+  # -- Selection Parameters --
+  elite_selection_ratio: 0.1
+  # Fraction of the population treated as elite candidates.
+
+  exploration_ratio: 0.2
+  # Fraction allocated to random exploration — searching new territory.
+
+  exploitation_ratio: 0.7
+  # Fraction allocated to improving known best programs.
+  # exploration + exploitation + elite should approximately equal 1.0.
+
+  # -- MAP-Elites Feature Map --
+  feature_dimensions:
+    - "complexity"    # Built-in: code length
+    - "diversity"     # Built-in: structural diversity
+  # To use custom metrics, return them from your evaluator:
+  # feature_dimensions:
+  #   - "performance"
+  #   - "correctness"
+  #   - "memory_efficiency"
+
+  feature_bins: 10
+  # Number of bins per dimension.
+  # Increase → finer-grained diversity mapping, higher memory usage.
+  # Per-dimension configuration:
+  # feature_bins:
+  #   complexity: 10
+  #   diversity: 15
+
+  diversity_reference_size: 20
+  # Size of the reference set used for diversity calculation.
+
+
+# ------------------------------------------------------------
+# 7. EVALUATOR CONFIGURATION
+# ------------------------------------------------------------
+
+evaluator:
+  timeout: 300
+  # Increase for complex evaluations (seconds).
+  # 60 is sufficient for quick prototypes.
+
+  max_retries: 3
+  # Number of retry attempts on evaluation failure.
+
+  # -- Cascade Evaluation --
+  cascade_evaluation: true
+  # true  → poor solutions are eliminated early, saving evaluation time.
+  # false → all solutions receive a full evaluation pass.
+
+  cascade_thresholds:
+    - 0.5     # Solutions scoring below this are dropped at stage 1.
+    - 0.75    # Solutions scoring below this are dropped at stage 2.
+    - 0.9     # Solutions scoring below this are dropped at stage 3.
+  # Raise thresholds → stricter filtering, more solutions are cut early.
+  # Lower thresholds → more solutions advance to full evaluation.
+
+  # -- Parallel Evaluation --
+  parallel_evaluations: 2
+  # Number of evaluations running concurrently.
+  # Tune this to match your available CPU core count.
+  # Decrease → lower resource use, slower throughput.
+  # Increase → faster throughput, higher CPU and memory demand.
+
+  # -- LLM Feedback (Experimental) --
+  use_llm_feedback: false
+  # true  → LLM evaluates code quality (incurs additional API cost).
+  # false → only your evaluator function's output is used.
+
+  llm_feedback_weight: 0.1
+  # When use_llm_feedback is true, this is the LLM's share of the final score.
+  # 0.1 = 10% LLM feedback, 90% from your evaluator.
+
+
+# ------------------------------------------------------------
+# 8. EVOLUTION TRACE (RL Training / Analysis)
+# ------------------------------------------------------------
+
+evolution_trace:
+  enabled: false
+  # true → detailed trace of every evolution step is logged.
+  #        Useful for RL training data collection or post-run analysis.
+
+  format: "jsonl"
+  # jsonl → line-by-line JSON, streaming-friendly and easy to parse.
+  # json  → single large JSON file.
+  # hdf5  → binary format, efficient for large-scale datasets.
+
+  include_code: false
+  # true  → full program code is stored in each trace entry. Large files.
+  # false → only metadata and metrics are stored.
+
+  include_prompts: true
+  # true  → LLM prompts and responses are included in the trace.
+  # false → prompts are omitted; trace files stay smaller.
+
+  output_path: null
+  # null        → saved to output_dir/evolution_trace.{format}.
+  # Custom path → saved to the specified location.
+
+  buffer_size: 10
+  # Number of trace entries buffered in memory before flushing to disk.
+  # Increase → fewer disk writes, but more data loss risk on crash.
+
+  compress: false
+  # true  → jsonl output is gzip-compressed, saves disk space.
+  # false → plain text, readable directly without decompression.
+
+
+# ============================================================
+#                    QUICK PRESET REFERENCE 
+# ============================================================
+#
+#  USE CASE              num_islands  migration_interval  migration_rate  population_size
+#  ──────────────────    ───────────  ──────────────────  ──────────────  ───────────────
+#  max_diversity         10           25                  0.2             1000
+#  balanced (default)    5            50                  0.1             1000
+#  focused_exploration   3            100                 0.05            500
+#  quick_exploration     3            20                  0.15            200
+#  large_scale           15           75                  0.08            2000
+#
+# Rule of thumb:
+#   Complex problems  → more islands, less frequent migration
+#   Simple problems   → fewer islands, more frequent migration
+#   Long runs         → more islands to sustain diversity
+#   Short runs        → fewer islands for faster convergence
+# ============================================================

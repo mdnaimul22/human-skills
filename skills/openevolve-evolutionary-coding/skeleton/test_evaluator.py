@@ -1,35 +1,63 @@
 import os
+import sys
+import json
 from evaluator import evaluate
 
 def run_test():
     """
-    Utility script to test whether your evaluator.py correctly scores your initial_program.py.
-    ALWAYS run this before starting an OpenEvolve evolution. 
-    If this fails, the LLM will fail too!
+    Validation script for the OpenEvolve skeleton.
+    Verifies that evaluator.py can correctly load and score initial_program.py.
     """
-    program_path = "initial_program.py"
+    # Use absolute paths to avoid confusion
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    program_path = os.path.join(current_dir, "initial_program.py")
+    
+    print("=" * 50)
+    print("🛡️  OPENEVOLVE EVALUATOR VALIDATION")
+    print("=" * 50)
     
     if not os.path.exists(program_path):
-        print(f"Error: {program_path} not found.")
+        print(f"❌ Error: {program_path} not found.")
         return
 
-    with open(program_path, "r") as f:
-        code_string = f.read()
-
-    print(f"Testing evaluator against {program_path}...\n")
+    print(f"[*] Testing evaluator against: {os.path.basename(program_path)}")
     
     try:
-        score, metadata = evaluate(code_string)
-        print("✅ Evaluator ran successfully!")
-        print(f"Score: {score}")
-        print(f"Metadata: {metadata}")
+        # Run the evaluation
+        result = evaluate(program_path)
         
-        if not metadata.get("correct", False):
-            print("⚠️ Warning: The initial program did not pass the correctness check.")
-            print("This is fine if the initial program is supposed to be broken, but ensure the evaluator logic is sound.")
+        # Accessing metrics and artifacts from EvaluationResult
+        metrics = result.metrics
+        artifacts = result.artifacts
+        
+        print("\n📊 METRICS:")
+        for key, value in metrics.items():
+            print(f"  - {key}: {value}")
             
+        print("\n🎨 ARTIFACTS:")
+        # Pretty print artifacts if they contain complex data
+        print(json.dumps(artifacts, indent=2))
+        
+        # Validation Logic
+        print("\n" + "=" * 50)
+        if metrics.get("combined_score", 0) > 0:
+            print("✅ SUCCESS: Evaluator is working and produced a positive fitness score.")
+        else:
+            print("⚠️ WARNING: Evaluator returned a score of 0.0.")
+            print("Check if initial_program.py logic matches the test cases in evaluator.py.")
+            
+        if artifacts.get("error_type"):
+            print(f"❌ ERROR DETECTED: {artifacts['error_type']} - {artifacts['error_message']}")
+            if artifacts.get("suggestion"):
+                print(f"💡 SUGGESTION: {artifacts['suggestion']}")
+        
     except Exception as e:
-        print(f"❌ Evaluator crashed: {str(e)}")
+        print(f"\n❌ CRITICAL FAILURE: The evaluator script itself crashed.")
+        print(f"Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+    print("=" * 50)
 
 if __name__ == "__main__":
     run_test()
