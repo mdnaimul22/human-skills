@@ -194,10 +194,30 @@ def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> dict[str, b
     for entry in upstreams:
         name = entry.get("name", "unnamed")
         path = Path(entry.get("path", ""))
-        if not path.exists():
-            logger.warning(f"  ⚠  [{name}] path missing — skipping: {path}")
-            results[name] = False
+        url  = entry.get("url", "")
+        pull_enabled = entry.get("pull", True)
+        
+        if not pull_enabled:
+            logger.info(f"  ⏭  [{name}] Pull disabled — skipping update")
+            results[name] = True  # Consider it successful since we intentionally skipped
             continue
+            
+        if not path.exists():
+            if url:
+                logger.info(f"  ↓  Cloning [{name}] from {url} …")
+                path.parent.mkdir(parents=True, exist_ok=True)
+                ok, out = run_git(["clone", url, str(path)], path.parent, logger)
+                if ok:
+                    logger.info(f"     ✓  Cloned successfully")
+                else:
+                    logger.error(f"     ✗  Failed to clone: {out}")
+                results[name] = ok
+                continue
+            else:
+                logger.warning(f"  ⚠  [{name}] path missing and no URL provided — skipping: {path}")
+                results[name] = False
+                continue
+                
         logger.info(f"  ↓  Pulling [{name}] …")
         ok, out = run_git(["pull"], path, logger)
         if ok:
@@ -211,24 +231,55 @@ def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> dict[str, b
 
 def forward_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
     copied: list[str] = []
+    cleared_dsts: set[str] = set()
+
     for rule in forwards:
         if not rule.get("enabled", True):
             continue
-        src  = Path(rule.get("from", ""))
-        dst  = Path(rule.get("to",   ""))
+            
+        src_path_str = rule.get("from", "")
+        dst_path_str = rule.get("to", "")
+        
+        src  = Path(src_path_str)
+        dst  = Path(dst_path_str)
         name = src.name
+        
         if not src.exists():
             logger.warning(f"  ⚠  Source missing — skipping: {src}")
             continue
+            
         logger.info(f"  →  Forwarding [{name}] …")
         try:
-            if dst.exists():
-                shutil.rmtree(dst)
-            shutil.copytree(src, dst)
-            logger.info(f"     ✓  {src} → {dst}")
-            copied.append(name)
+            if src.is_file():
+                # If dst is an existing directory or the path explicitly ends with a slash
+                if dst.is_dir() or dst_path_str.endswith("/") or dst_path_str.endswith("\\"):
+                    dst.mkdir(parents=True, exist_ok=True)
+                    actual_dst = dst / name
+                else:
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    actual_dst = dst
+                    
+                shutil.copy2(src, actual_dst)
+                logger.info(f"     ✓  [File] {src} → {actual_dst}")
+                copied.append(name)
+                
+            elif src.is_dir():
+                resolved_dst = str(dst.resolve())
+                
+                # Smart Wipe Memory: Only wipe a directory once per sync cycle
+                if resolved_dst not in cleared_dsts:
+                    if dst.exists():
+                        shutil.rmtree(dst)
+                    cleared_dsts.add(resolved_dst)
+                    
+                # dirs_exist_ok=True is required so multiple rules can merge into the same dir
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+                logger.info(f"     ✓  [Dir]  {src} → {dst}")
+                copied.append(name)
+                
         except Exception as exc:
             logger.error(f"     ✗  {exc}")
+            
     return copied
 
 

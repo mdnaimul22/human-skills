@@ -13,9 +13,20 @@ upstreams:
 
   - name: claude-skills
     path: "{REPO_ROOT}/.claude-skills"
+    url: "https://github.com/alirezarezvani/claude-skills.git"
+    pull: true
 
   - name: everything-claude-code
     path: "{REPO_ROOT}/.everything-claude-code"
+    url: "https://github.com/affaan-m/everything-claude-code.git"
+    pull: true
 
   - name: superpowers
     path: "{REPO_ROOT}/.superpowers"
+    url: "https://github.com/obra/superpowers.git"
+    pull: true
+
+  - name: ui-ux-pro-max-skill
+    path: "{REPO_ROOT}/.ui-ux-pro-max-skill"
+    url: "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git"
+    pull: true

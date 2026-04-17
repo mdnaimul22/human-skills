@@ -17,7 +17,7 @@
 
 forwards:
 
-  # ── everything-claude-code ────────────────────────────────────────────────
+# everything-claude-code
   - from: "{REPO_ROOT}/.everything-claude-code/skills/pytorch-patterns"
     to:   "{REPO_ROOT}/skills/pytorch-patterns"
     enabled: true
@@ -28,6 +28,19 @@ forwards:
 
   - from: "{REPO_ROOT}/.everything-claude-code/skills/python-testing"
     to:   "{REPO_ROOT}/skills/python-testing"
+    enabled: true
+
+# ui-ux-pro-max-skill
+  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/src/ui-ux-pro-max"
+    to: "{REPO_ROOT}/skills/ui-ux-pro-max" 
+    enabled: true
+
+  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/.claude/skills/SKILL.md"
+    to: "{REPO_ROOT}/skills/ui-ux-pro-max"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/README.md"
+    to: "{REPO_ROOT}/skills/ui-ux-pro-max"
     enabled: true
 
 
