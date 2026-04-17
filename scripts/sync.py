@@ -189,8 +189,10 @@ def repo_is_dirty(repo: Path, logger: logging.Logger) -> bool:
 # Sync steps
 # ══════════════════════════════════════════════════════════════════════════════
 
-def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> dict[str, bool]:
+def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> tuple[dict[str, bool], list[str]]:
     results: dict[str, bool] = {}
+    updated_upstreams: list[str] = []
+    
     for entry in upstreams:
         name = entry.get("name", "unnamed")
         path = Path(entry.get("path", ""))
@@ -209,6 +211,7 @@ def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> dict[str, b
                 ok, out = run_git(["clone", url, str(path)], path.parent, logger)
                 if ok:
                     logger.info(f"     ✓  Cloned successfully")
+                    updated_upstreams.append(name)
                 else:
                     logger.error(f"     ✗  Failed to clone: {out}")
                 results[name] = ok
@@ -223,10 +226,13 @@ def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> dict[str, b
         if ok:
             tag = "already up to date" if "Already up to date" in out else (out or "updated")
             logger.info(f"     ✓  {tag}")
+            if "Already up to date" not in out:
+                updated_upstreams.append(name)
         else:
             logger.error(f"     ✗  {out}")
         results[name] = ok
-    return results
+        
+    return results, updated_upstreams
 
 
 def forward_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
@@ -311,8 +317,6 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     now      = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     git_cfg  = cfg["automation"].get("git", {})
     branch   = git_cfg.get("branch", "main")
-    tmpl     = git_cfg.get("commit_message", "sync: auto-update [{datetime}]")
-    msg      = tmpl.replace("[{datetime}]", datetime.now().strftime("%Y-%m-%d %H:%M"))
 
     logger.info(sep)
     logger.info(f"🔄  SYNC STARTED  —  {now}")
@@ -320,7 +324,7 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
 
     # Step 1
     logger.info("📥 STEP 1 — Pulling upstream repositories")
-    pulls = pull_upstreams(cfg["upstream"].get("upstreams", []), logger)
+    pulls, updated_upstreams = pull_upstreams(cfg["upstream"].get("upstreams", []), logger)
 
     # Step 2
     logger.info("📁 STEP 2 — Forwarding skill paths")
@@ -328,6 +332,16 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
 
     # Step 3
     logger.info("🚀 STEP 3 — Committing & pushing to own repo")
+    
+    # Generate dynamic commit message
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+    if updated_upstreams:
+        names = ", ".join(updated_upstreams)
+        msg = f"sync: auto-update from upstream {names} {current_time}"
+    else:
+        tmpl = git_cfg.get("commit_message", "sync: auto-update [{datetime}]")
+        msg  = tmpl.replace("[{datetime}]", current_time)
+        
     push_ok = push_repo(REPO_ROOT, msg, branch, logger)
 
     # Summary

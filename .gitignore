@@ -142,14 +142,15 @@ pnpm-lock.yaml
 .env
 env
 
-
-.superpowers
-.claude-skills
-.everything-claude-code
-
 archived/
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
+
+.superpowers
+.claude-skills
+.everything-claude-code
+.ui-ux-pro-max-skill
+
