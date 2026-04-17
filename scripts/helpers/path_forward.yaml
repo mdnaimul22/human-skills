@@ -30,13 +30,9 @@ forwards:
     to:   "{REPO_ROOT}/skills/python-testing"
     enabled: true
 
-# ui-ux-pro-max-skill
-  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/src/ui-ux-pro-max"
+# ui-ux-pro-max-skill /home/openscore/a0/usr/projects/human-skills/.ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max
+  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max"
     to: "{REPO_ROOT}/skills/ui-ux-pro-max" 
-    enabled: true
-
-  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/.claude/skills/SKILL.md"
-    to: "{REPO_ROOT}/skills/ui-ux-pro-max"
     enabled: true
 
   - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/README.md"
