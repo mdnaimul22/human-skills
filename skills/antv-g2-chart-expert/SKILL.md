@@ -9,53 +9,52 @@ You are an expert in AntV G2 v5 charting library. Generate accurate, runnable co
 
 ---
 
-## 1. Core Constraints / 核心约束 (MUST follow)
+## 1. Core Constraints (MUST follow)
 
 1. **`container` is mandatory**: `new Chart({ container: 'container', ... })`
-2. **Use Spec Mode ONLY**: `chart.options({ type: 'interval', data, encode: {...} })`（V4 链式 API 见 Forbidden Patterns）
-3. **`chart.options()` 只能调用一次**：多次调用会完整覆盖前一次配置，只有最后一次生效。多 mark 叠加必须用 `type: 'view'` + `children` 数组，而不是多次调用 `chart.options()`
-4. **`encode` object**: `encode: { x, y }`（禁止 V4 的 `.position('x*y')`）
+2. **Use Spec Mode ONLY**: `chart.options({ type: 'interval', data, encode: {...} })` (See Forbidden Patterns for V4 chained API)
+3. **`chart.options()` can only be called once**: Multiple calls will completely overwrite the previous configuration, only the last call takes effect. For multiple mark overlays, use `type: 'view'` + `children` array instead of multiple calls to `chart.options()`
+4. **`encode` object**: `encode: { x, y }` (V4's `.position('x*y')` is prohibited)
 5. **`transform` must be array**: `transform: [{ type: 'stackY' }]`
 6. **`labels` is plural**: Use `labels: [{ text: 'field' }]` not `label: {}`
-7. **`coordinate` 规则**：
-   - 坐标系类型直接写：`coordinate: { type: 'theta' }`、`coordinate: { type: 'polar' }`
-   - transpose 是**变换**不是坐标系类型，必须写在 `transform` 数组里：`coordinate: { transform: [{ type: 'transpose' }] }`
-   - ❌ 禁止：`coordinate: { type: 'transpose' }`
-8. **范围编码**（甘特图、candlestick 等）：`encode: { y: 'start', y1: 'end' }`，禁止 `y: ['start', 'end']`
-9. **样式原则**：用户描述中提到的样式（radius、fillOpacity、color、fontSize 等）必须完整保留；用户未提及的装饰性样式（`shadowBlur`、`shadowColor`、`shadowOffsetX/Y` 等）不要自行添加
-10. **`animate` 规则**：用户未明确要求动画时不要添加 `animate` 配置（G2 自带默认动画），只有用户明确描述动画需求时才添加
-11. **`scale.color.palette` 只能用合法值**：palette 通过 d3-scale-chromatic 查找，非法名称会抛 `Unknown palette` 错误。**不要推断或创造不存在的名称**（如 `'blueOrange'`、`'redGreen'`、`'hot'`、`'jet'`、`'coolwarm'` 等均非法）。合法的常用值：顺序色阶 `'blues'|'greens'|'reds'|'ylOrRd'|'viridis'|'plasma'|'turbo'`；发散色阶 `'rdBu'|'rdYlGn'|'spectral'`；不确定时用 `range: ['#startColor', '#endColor']` 自定义替代
-12. **禁止在用户代码中使用 `d3.*`**：G2 内部使用 d3，但 `d3` 对象不会暴露到用户代码作用域，调用 `d3.sum()` 等会抛 `ReferenceError: d3 is not defined`。如需聚合，优先使用 G2 内置选项（如 `sortX` 的 `reducer: 'sum'`），不得不自定义时用原生 JS：`d3.sum(arr, d=>d.v)` → `arr.reduce((s,d)=>s+d.v,0)`；`d3.max(arr, d=>d.v)` → `Math.max(...arr.map(d=>d.v))`
-13. **用户未指定配色时，禁止使用白色或近白色作为图形填充色**：`style: { fill: '#fff' }`、`style: { fill: 'white' }`、`style: { fill: '#ffffff' }` 等在白色背景下会让图形完全不可见。未指定配色时应依赖 G2 的 `encode.color` 自动分配主题色，或使用有明确视觉区分度的颜色（如 `'#5B8FF9'`）。以下是合法例外：label 文字 `fill: '#fff'`（深色背景内标签）、分隔线 `stroke: '#fff'`（堆叠/pack/treemap 的分隔白线）
-15. **用户未指定容器时**： `container` 默认为 `'container'`，不要通过 `document.createElement('div')` 进行创建，代码末尾必须有 `chart.render();`
+7. **`coordinate` rules**:
+   - Coordinate type should be written directly: `coordinate: { type: 'theta' }`, `coordinate: { type: 'polar' }`
+   - `transpose` is a **transformation**, not a coordinate type, and must be written in the `transform` array: `coordinate: { transform: [{ type: 'transpose' }] }`
+   - ❌ Prohibited: `coordinate: { type: 'transpose' }`
+8. **Range encoding** (Gantt chart, candlestick, etc.): `encode: { y: 'start', y1: 'end' }`, prohibit `y: ['start', 'end']`
+9. **Style principles**: Styles mentioned in the user description (radius, fillOpacity, color, fontSize, etc.) must be fully preserved; decorative styles not mentioned by the user (shadowBlur, shadowColor, shadowOffsetX/Y, etc.) should not be added
+10. **`animate` rules**: Do not add `animate` configuration when the user does not explicitly require animation (G2 has default animations), only add when the user explicitly describes animation requirements
+11. **`scale.color.palette` can only use valid values**: Palette is looked up through d3-scale-chromatic, invalid names will throw an `Unknown palette` error. **Do not infer or create non-existent names** (e.g., `'blueOrange'`, `'redGreen'`, `'hot'`, `'jet'`, `'coolwarm'` are all invalid). Common valid values: sequential color scales `'blues'|'greens'|'reds'|'ylOrRd'|'viridis'|'plasma'|'turbo'`; diverging color scales `'rdBu'|'rdYlGn'|'spectral'`; when in doubt, use `range: ['#startColor', '#endColor']` for custom alternatives
+12. **Prohibit using `d3.*` in user code**: G2 uses d3 internally, but the `d3` object is not exposed to the user code scope, calling `d3.sum()` etc. will throw `ReferenceError: d3 is not defined`. For aggregation, prioritize using G2 built-in options (e.g., `sortX`'s `reducer: 'sum'`), when custom aggregation is necessary, use native JS: `d3.sum(arr, d=>d.v)` → `arr.reduce((s,d)=>s+d.v,0)`; `d3.max(arr, d=>d.v)` → `Math.max(...arr.map(d=>d.v))`
+13. **When the user does not specify a color scheme, prohibit using white or near-white as the shape fill color**: `style: { fill: '#fff' }`, `style: { fill: 'white' }`, `style: { fill: '#ffffff' }` etc. will make the shape completely invisible on a white background. When no color scheme is specified, rely on G2's `encode.color` to automatically assign theme colors, or use colors with clear visual distinction (e.g., `'#5B8FF9'`). The following are valid exceptions: label text `fill: '#fff'` (labels within dark backgrounds), separator lines `stroke: '#fff'` (white separator lines in stacked/pack/treemap)
+14. **When the user does not specify a container**: `container` defaults to `'container'`, do not create it using `document.createElement('div')`, the code must end with `chart.render();`
 
-### 1.1 Forbidden Patterns / 禁止使用的写法
+### 1.1 Forbidden Patterns
 
-**禁止使用 V4 语法**，必须使用 V5 Spec 模式：
-
+**Forbidden: V4 Syntax**, Must Use V5 Spec Mode:
 
 ```javascript
-// ❌ 禁止：V4 createView
+// ❌ Forbidden: V4 createView
 const view = chart.createView();
 view.options({...});
 
-// ❌ 禁止：V4 链式 API 调用
+// ❌ Forbidden: V4 Chained API Calls
 chart.interval()
   .data([...])
   .encode('x', 'genre')
   .encode('y', 'sold')
   .style({ radius: 4 });
 
-// ❌ 禁止：V4 链式 encode
+// ❌ Forbidden: V4 Chained encode
 chart.line().encode('x', 'date').encode('y', 'value');
 
-// ❌ 禁止：V4 source
+// ❌ Forbidden: V4 source
 chart.source(data);
 
-// ❌ 禁止：V4 position
+// ❌ Forbidden: V4 position
 chart.interval().position('genre*sold');
 
-// ✅ 正确：V5 Spec 模式
+// ✅ Correct: V5 Spec Mode
 chart.options({
   type: 'interval',
   data: [...],
@@ -64,17 +63,17 @@ chart.options({
 });
 ```
 
-**原因**：V5 使用 Spec 模式，结构清晰，易于序列化、动态生成和调试。
+**Reason**: V5 uses Spec mode, which has a clear structure and is easy to serialize, dynamically generate, and debug.
 
-#### `createView` 的正确 V5 替代方案
+#### Correct V5 Alternative for `createView`
 
-`chart.createView()` 在 V4 中用于"多视图共享容器但数据各异"，V5 中对应两种场景：
+`chart.createView()` in V4 was used for "multiple views sharing a container but with different data". In V5, it corresponds to two scenarios:
 
-**场景 A：同一坐标系内叠加多个 mark（最常见）**
-→ 用 `type: 'view'` + `children` 数组，`children` 中不能再嵌套 `view` 或者 `children` ：
+**Scenario A: Multiple marks stacked within the same coordinate system (most common)**
+→ Use `type: 'view'` + `children` array, `children` cannot nest `view` or `children`:
 
 ```javascript
-// ✅ 多 mark 叠加（折线 + 散点）
+// ✅ Multiple marks stacked (line + point)
 chart.options({
   type: 'view',
   data,
@@ -85,24 +84,24 @@ chart.options({
 });
 ```
 
-**场景 B：多个独立坐标系并排/叠加（如人口金字塔、butterfly 图）**
-→ 用 `type: 'spaceLayer'` + `children`（各子 view 有独立数据和坐标系）：
+**Scenario B: Multiple independent coordinate systems side by side or stacked (e.g., population pyramid, butterfly chart)**
+→ Use `type: 'spaceLayer'` + `children` (each child view has independent data and coordinate system):
 
 ```javascript
-// ✅ 人口金字塔：左右两侧独立视图叠加，共享 Y 轴
+// ✅ Population Pyramid: Two independent views stacked, sharing the Y-axis
 chart.options({
   type: 'spaceLayer',
   children: [
     {
       type: 'interval',
-      data: leftData,                              // 左侧数据（负值或翻转）
+      data: leftData,                              // Left data (negative values or flipped)
       coordinate: { transform: [{ type: 'transpose' }, { type: 'reflectX' }] },
       encode: { x: 'age', y: 'male' },
       axis: { y: { position: 'right' } },
     },
     {
       type: 'interval',
-      data: rightData,                             // 右侧数据
+      data: rightData,                             // Right data
       coordinate: { transform: [{ type: 'transpose' }] },
       encode: { x: 'age', y: 'female' },
       axis: { y: false },
@@ -110,10 +109,10 @@ chart.options({
   ],
 });
 
-// ✅ 更简单方案：单一视图 + 负值技巧（数据可在一个数组里）
+// ✅ Simpler Approach: Single view + negative value trick (data in one array)
 chart.options({
   type: 'interval',
-  data: combinedData,                              // 合并数据，用负值区分方向
+  data: combinedData,                              // Combined data, using negative values to distinguish direction
   coordinate: { transform: [{ type: 'transpose' }] },
   encode: {
     x: 'age',
@@ -121,40 +120,40 @@ chart.options({
     color: 'sex',
   },
   axis: {
-    y: { labelFormatter: (d) => Math.abs(d) },     // 显示绝对值
+    y: { labelFormatter: (d) => Math.abs(d) },     // Display absolute values
   },
 });
 ```
 
-**选择原则**：
-- 两侧数据结构相同、只是方向相反 → **优先用负值技巧**（单 `interval`，代码最简洁）
-- 两侧需要完全独立的坐标系/比例尺 → 用 `spaceLayer`
+**Selection Principle**:
+- If both sides have the same data structure but opposite directions → **Prioritize negative value trick** (single `interval`, most concise code)
+- If both sides require completely independent coordinate systems/scales → Use `spaceLayer`
 
-### 1.2 禁止使用的幻觉 Mark 类型 / Hallucinated Mark Types
+### 1.2 Prohibited Hallucinated Mark Types
 
-以下类型来自其他图表库（如 ECharts、Vega），**G2 中不存在**，使用将导致运行时报错：
+The following types are from other charting libraries (such as ECharts, Vega) and **do not exist in G2**. Using them will result in runtime errors:
 
-| ❌ 错误写法 | ✅ 正确替换 |
+| ❌ Incorrect Usage | ✅ Correct Replacement |
 |------------|-----------|
-| `type: 'ruleX'` | `type: 'lineX'`（垂直参考线） |
-| `type: 'ruleY'` | `type: 'lineY'`（水平参考线） |
-| `type: 'regionX'` | `type: 'rangeX'`（X 轴区间高亮） |
-| `type: 'regionY'` | `type: 'rangeY'`（Y 轴区间高亮） |
+| `type: 'ruleX'` | `type: 'lineX'` (vertical reference line) |
+| `type: 'ruleY'` | `type: 'lineY'` (horizontal reference line) |
+| `type: 'regionX'` | `type: 'rangeX'` (X-axis range highlight) |
+| `type: 'regionY'` | `type: 'rangeY'` (Y-axis range highlight) |
 | `type: 'venn'` | `type: 'path'` + `data.transform: [{ type: 'venn' }]` |
 
-**G2 合法 mark 类型完整列表**（不得凭空创造其他 type）：
-- 基础：`interval`、`line`、`area`、`point`、`rect`、`cell`、`text`、`image`、`path`、`polygon`、`shape`
-- 连接：`link`、`connector`、`vector`
-- 参考线/区域：`lineX`、`lineY`、`rangeX`、`rangeY`；`range`（极少用，仅在 x/y 均需限定二维矩形时使用，且数据的 x/y 字段必须是 `[start,end]` 数组）
-- 统计：`box`、`boxplot`、`density`、`heatmap`、`beeswarm`
-- 层次/关系：`treemap`、`pack`、`partition`、`tree`、`sankey`、`chord`、`forceGraph`
-- 特殊：`wordCloud`、`gauge`、`liquid`
-- 需引入扩展包：`sunburst`（需 `@antv/g2-extension-plot`，见 [旭日图](references/marks/g2-mark-sunburst.md)）
+**Complete List of Valid Mark Types in G2** (do not create other types):  
+- Basic: `interval`, `line`, `area`, `point`, `rect`, `cell`, `text`, `image`, `path`, `polygon`, `shape`  
+- Connections: `link`, `connector`, `vector`  
+- Reference Lines/Areas: `lineX`, `lineY`, `rangeX`, `rangeY`; `range` (rarely used, only when both x/y need to define a 2D rectangle, and the x/y fields in the data must be `[start, end]` arrays)  
+- Statistical: `box`, `boxplot`, `density`, `heatmap`, `beeswarm`  
+- Hierarchical/Relational: `treemap`, `pack`, `partition`, `tree`, `sankey`, `chord`, `forceGraph`  
+- Special: `wordCloud`, `gauge`, `liquid`  
+- Requires Extension Package: `sunburst` (requires `@antv/g2-extension-plot`, see [Sunburst Chart](references/marks/g2-mark-sunburst.md))  
 ---
 
-## 2. Common Mistakes / 常见错误
+## 2. Common Mistakes
 
-代码示例：
+Code Examples:
 
 ```javascript
 // ❌ Wrong: missing container
@@ -175,15 +174,15 @@ chart.options({ label: { text: 'value' } });
 // ✅ Correct: labels (plural)
 chart.options({ labels: [{ text: 'value' }] });
 
-// ❌ Wrong: 多次调用 chart.options() —— 每次调用完整替换前一次，只有最后一次生效
-chart.options({ type: 'interval', data, encode: { x: 'x', y: 'y' } });  // ❌ 被覆盖，不渲染
-chart.options({ type: 'line',     data, encode: { x: 'x', y: 'y' } });  // ❌ 被覆盖，不渲染
-chart.options({ type: 'text',     data, encode: { x: 'x', y: 'y', text: 'label' } });  // 只有这个生效
+// ❌ Wrong: Multiple calls to chart.options() - Each call completely replaces the previous one, only the last call takes effect
+chart.options({ type: 'interval', data, encode: { x: 'x', y: 'y' } });  // ❌ Overwritten, not rendered
+chart.options({ type: 'line',     data, encode: { x: 'x', y: 'y' } });  // ❌ Overwritten, not rendered
+chart.options({ type: 'text',     data, encode: { x: 'x', y: 'y', text: 'label' } });  // Only this takes effect
 
-// ✅ Correct: 多 mark 叠加必须用 type: 'view' + children
+// ✅ Correct: Multiple marks must use type: 'view' + children
 chart.options({
   type: 'view',
-  data,                                  // 共享数据（子 mark 可以覆盖）
+  data,                                  // Shared data (can be overridden by child marks)
   children: [
     { type: 'interval', encode: { x: 'x', y: 'y' } },
     { type: 'line',     encode: { x: 'x', y: 'y' } },
@@ -191,84 +190,84 @@ chart.options({
   ],
 });
 
-// ✅ 子 mark 需要不同数据时，在 children 里单独指定 data
+// ✅ When child marks require different data, specify data separately within children
 chart.options({
   type: 'view',
   data: mainData,
   children: [
-    { type: 'interval', encode: { x: 'x', y: 'y' } },        // 用父级 mainData
-    { type: 'text', data: labelData, encode: { x: 'x', text: 'label' } },  // 用独立数据
+    { type: 'interval', encode: { x: 'x', y: 'y' } },        // Uses parent mainData
+    { type: 'text', data: labelData, encode: { x: 'x', text: 'label' } },  // Uses independent data
   ],
 });
 
-// ⚠️ 多 mark 组合规则：
-// 1. 只能使用 children，禁止使用 marks、layers 等配置
-// 2. children 不能嵌套（children 内不能再有 children）
-// 3. 复杂组合使用 spaceLayer/spaceFlex
+// ⚠️ Multi-mark combination rules:
+// 1. Only use children, do not use marks, layers, etc.
+// 2. Children cannot be nested (children cannot contain children)
+// 3. Use spaceLayer/spaceFlex for complex combinations
 
-// ❌ Wrong: 使用 marks（禁止）
+// ❌ Wrong: Using marks (prohibited)
 chart.options({
   type: 'view',
   data,
-  marks: [...],  // ❌ 禁止！
+  marks: [...],  // ❌ Prohibited!
 });
 
-// ❌ Wrong: 使用 layers（禁止）
+// ❌ Wrong: Using layers (prohibited)
 chart.options({
   type: 'view',
   data,
-  Layers: [...],  // ❌ 禁止！
+  layers: [...],  // ❌ Prohibited!
 });
 
-// ✅ Correct: 使用 children
+// ✅ Correct: Using children
 chart.options({
   type: 'view',
   data,
-  children: [  // ✅ 正确
+  children: [  // ✅ Correct
     { type: 'line', encode: { x: 'year', y: 'value' } },
     { type: 'point', encode: { x: 'year', y: 'value' } },
   ],
 });
 
-// ❌ Wrong: children 嵌套（禁止）
+// ❌ Wrong: Nested children (prohibited)
 chart.options({
   type: 'view',
   children: [
     {
       type: 'view',
-      children: [...],  // ❌ 禁止！children 不能嵌套
+      children: [...],  // ❌ Prohibited! Children cannot be nested
     },
   ],
 });
 
-// ✅ Correct: 使用 spaceLayer/spaceFlex 处理复杂组合
+// ✅ Correct: Using spaceLayer/spaceFlex for complex combinations
 chart.options({
   type: 'spaceLayer',
   children: [
-    { type: 'view', children: [...] },  // ✅ spaceLayer 下可以有 view + children
+    { type: 'view', children: [...] },  // ✅ Allowed under spaceLayer: view + children
     { type: 'line', ... },
   ],
 });
 
-// ❌ Wrong: unnecessary scale type specification
+// ❌ Wrong: Unnecessary scale type specification
 chart.options({
   scale: {
-    x: { type: 'linear' },  // ❌ 不需要，默认就是 linear
-    y: { type: 'linear' },  // ❌ 不需要
+    x: { type: 'linear' },  // ❌ Not needed, default is linear
+    y: { type: 'linear' },  // ❌ Not needed
   },
 });
 
-// ✅ Correct: let G2 infer scale type automatically
+// ✅ Correct: Let G2 infer scale type automatically
 chart.options({
   scale: {
-    y: { domain: [0, 100] },  // ✅ 只配置需要的属性
+    y: { domain: [0, 100] },  // ✅ Configure only necessary properties
   },
 });
 ```
 
 ---
 
-## 3. Basic Structure / 基础结构
+## 3. Basic Structure
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -294,46 +293,46 @@ chart.render();
 
 ---
 
-## 4. Core / 核心概念
+## 4. Core Concepts
 
-核心概念是 G2 的基础，理解这些概念是正确使用 G2 的前提。
+Core concepts are the foundation of G2, and understanding them is a prerequisite for using G2 correctly.
 
-### 4.1 Chart 初始化
+### 4.1 Chart Initialization
 
-Chart 是 G2 的核心类，所有图表都从 Chart 实例开始。
+Chart is the core class of G2, and all charts start from a Chart instance.
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
-  container: 'container',  // 必填：DOM 容器 ID 或元素
-  width: 640,              // 可选：宽度
-  height: 480,             // 可选：高度
-  autoFit: true,           // 可选：自适应容器大小
-  padding: 'auto',         // 可选：内边距
-  theme: 'light',          // 可选：主题
+  container: 'container',  // Required: DOM container ID or element
+  width: 640,              // Optional: width
+  height: 480,             // Optional: height
+  autoFit: true,           // Optional: auto-fit container size
+  padding: 'auto',         // Optional: padding
+  theme: 'light',          // Optional: theme
 });
 ```
 
-> **详细文档**: [Chart 初始化](references/core/g2-core-chart-init.md)
+> **Detailed Documentation**: [Chart Initialization](references/core/g2-core-chart-init.md)
 
-### 4.2 encode 通道系统
+### 4.2 encode Channel System
 
-encode 将数据字段映射到视觉通道，是 G2 的核心概念。
+encode maps data fields to visual channels and is a core concept in G2.
 
-| 通道 | 用途 | 示例 |
+| Channel | Usage | Example |
 |------|------|------|
-| `x` | X 轴位置 | `encode: { x: 'month' }` |
-| `y` | Y 轴位置 | `encode: { y: 'value' }` |
-| `color` | 颜色 | `encode: { color: 'category' }` |
-| `size` | 大小 | `encode: { size: 'population' }` |
-| `shape` | 形状 | `encode: { shape: 'type' }` |
+| `x` | X-axis position | `encode: { x: 'month' }` |
+| `y` | Y-axis position | `encode: { y: 'value' }` |
+| `color` | Color | `encode: { color: 'category' }` |
+| `size` | Size | `encode: { size: 'population' }` |
+| `shape` | Shape | `encode: { shape: 'type' }` |
 
-> **详细文档**: [encode 通道系统](references/core/g2-core-encode-channel.md)
+> **Detailed Documentation**: [encode Channel System](references/core/g2-core-encode-channel.md)
 
-### 4.3 视图组合 (view + children)
+### 4.3 View Composition (view + children)
 
-使用 `view` 类型配合 `children` 数组组合多个 mark。
+Use the `view` type in conjunction with the `children` array to compose multiple marks.
 
 ```javascript
 chart.options({
@@ -346,338 +345,338 @@ chart.options({
 });
 ```
 
-> **详细文档**: [视图组合](references/core/g2-core-view-composition.md)
+> **Detailed Documentation**: [View Composition](references/core/g2-core-view-composition.md)
 
 ---
 
-## 5. Concepts / 概念指南
+## 5. Concepts / Concept Guide
 
-概念指南帮助选择正确的图表类型和配置方案。
+The concept guide helps in selecting the correct chart type and configuration scheme.
 
-### 5.1 图表类型选择 / Chart Selection
+### 5.1 Chart Selection
 
-根据数据特征和可视化目标选择合适的图表类型：
+Select the appropriate chart type based on data characteristics and visualization goals:
 
-| 数据关系 | 推荐图表 | Mark |
+| Data Relationship | Recommended Chart | Mark |
 |---------|---------|------|
-| 比较 | 柱状图、条形图 | `interval` |
-| 趋势 | 折线图、面积图 | `line`、`area` |
-| 占比 | 饼图、环形图 | `interval` + `theta` |
-| 分布 | 直方图、箱线图 | `rect`、`boxplot` |
-| 相关 | 散点图、气泡图 | `point` |
-| 层级 | 矩形树图、旭日图 | `treemap`、`sunburst`（需扩展包） |
+| Comparison | Bar Chart, Column Chart | `interval` |
+| Trend | Line Chart, Area Chart | `line`, `area` |
+| Proportion | Pie Chart, Ring Chart | `interval` + `theta` |
+| Distribution | Histogram, Box Plot | `rect`, `boxplot` |
+| Correlation | Scatter Plot, Bubble Chart | `point` |
+| Hierarchy | Treemap, Sunburst | `treemap`, `sunburst` (requires extension package) |
 
-> **详细文档**: [图表类型选择指南](references/concepts/g2-concept-chart-selection.md)
+> **Detailed Documentation**: [Chart Selection Guide](references/concepts/g2-concept-chart-selection.md)
 
-### 5.2 视觉通道 / Visual Channels
+### 5.2 Visual Channels
 
-视觉通道是数据到视觉属性的映射方式：
+Visual channels are the mapping methods from data to visual attributes:
 
-| 通道类型 | 适合数据 | 感知精度 |
-|---------|---------|---------|
-| 位置 | 连续/离散 | 最高 |
-| 长度 | 连续 | 高 |
-| 颜色（色相） | 离散 | 中 |
-| 颜色（亮度） | 连续 | 中 |
-| 大小 | 连续 | 中低 |
-| 形状 | 离散 | 低 |
+| Channel Type | Suitable Data | Perceptual Accuracy |
+|--------------|---------------|---------------------|
+| Position     | Continuous/Discrete | Highest |
+| Length       | Continuous     | High     |
+| Color (Hue)  | Discrete       | Medium   |
+| Color (Luminance) | Continuous | Medium   |
+| Size         | Continuous     | Medium-Low |
+| Shape        | Discrete       | Low      |
 
-> **详细文档**: [视觉通道](references/concepts/g2-concept-visual-channels.md)
+> **Detailed Documentation**: [Visual Channels](references/concepts/g2-concept-visual-channels.md)
 
-### 5.3 配色理论 / Color Theory
+### 5.3 Color Theory
 
-选择合适的配色方案提升图表可读性：
+Selecting an appropriate color scheme enhances chart readability:
 
-| 场景 | 推荐方案 | 示例 |
-|------|---------|------|
-| 分类数据 | 离散色板 | `category10`、`category20` |
-| 连续数据 | 顺序色板 | `Blues`、`RdYlBu` |
-| 正负对比 | 发散色板 | `RdYlGn` |
+| Scenario | Recommended Scheme | Example |
+|----------|--------------------|---------|
+| Categorical Data | Discrete Palette | `category10`, `category20` |
+| Continuous Data | Sequential Palette | `Blues`, `RdYlBu` |
+| Positive/Negative Contrast | Diverging Palette | `RdYlGn` |
 
-> **详细文档**: [配色理论](references/concepts/g2-concept-color-theory.md)
+> **Detailed Documentation**: [Color Theory](references/concepts/g2-concept-color-theory.md)
 
 ---
 
-## 6. Marks / 图表类型
+## 6. Marks / Chart Types
 
-Marks 是 G2 的核心可视化元素，决定了数据的视觉表现形式。每种 Mark 适合特定的数据类型和可视化场景。
+Marks are the core visualization elements in G2, determining the visual representation of data. Each Mark is suitable for specific data types and visualization scenarios.
 
-### 6.1 柱状图系列 / Interval
+### 6.1 Bar Chart Series / Interval
 
-柱状图用于比较分类数据的大小，是最常用的图表类型。基础柱状图使用 `interval` mark，堆叠柱状图需要添加 `stackY` transform，分组柱状图使用 `dodgeX` transform。
+Bar charts are used to compare the magnitude of categorical data and are one of the most commonly used chart types. Basic bar charts use the `interval` mark, stacked bar charts require the `stackY` transform, and grouped bar charts use the `dodgeX` transform.
 
-| 类型 | Mark | 关键配置 |
+| Type | Mark | Key Configuration |
 |------|------|----------|
-| 基础柱状图 | `interval` | - |
-| 堆叠柱状图 | `interval` | `transform: [{ type: 'stackY' }]` |
-| 分组柱状图 | `interval` | `transform: [{ type: 'dodgeX' }]` |
-| 百分比柱状图 | `interval` | `transform: [{ type: 'normalizeY' }]` |
-| 水平柱状图 | `interval` | `coordinate: { transform: [{ type: 'transpose' }] }` |
+| Basic Bar Chart | `interval` | - |
+| Stacked Bar Chart | `interval` | `transform: [{ type: 'stackY' }]` |
+| Grouped Bar Chart | `interval` | `transform: [{ type: 'dodgeX' }]` |
+| Percentage Bar Chart | `interval` | `transform: [{ type: 'normalizeY' }]` |
+| Horizontal Bar Chart | `interval` | `coordinate: { transform: [{ type: 'transpose' }] }` |
 
-> **详细文档**: [基础柱状图](references/marks/g2-mark-interval-basic.md) | [堆叠柱状图](references/marks/g2-mark-interval-stacked.md) | [分组柱状图](references/marks/g2-mark-interval-grouped.md) | [百分比柱状图](references/marks/g2-mark-interval-normalized.md)
+> **Detailed Documentation**: [Basic Bar Chart](references/marks/g2-mark-interval-basic.md) | [Stacked Bar Chart](references/marks/g2-mark-interval-stacked.md) | [Grouped Bar Chart](references/marks/g2-mark-interval-grouped.md) | [Percentage Bar Chart](references/marks/g2-mark-interval-normalized.md)
 
-### 6.2 折线图系列 / Line
+### 6.2 Line Chart Series / Line
 
-折线图用于展示数据随时间或有序类别的变化趋势。支持单线、多线对比，以及不同插值方式。
+Line charts are used to display the trend of data changes over time or ordered categories. They support single lines, multi-line comparisons, and different interpolation methods.
 
-| 类型 | Mark | 关键配置 |
+| Type | Mark | Key Configuration |
 |------|------|----------|
-| 基础折线图 | `line` | - |
-| 多系列折线 | `line` | `encode: { color: 'category' }` |
-| 平滑曲线 | `line` | `encode: { shape: 'smooth' }` |
-| 阶梯线 | `line` | `encode: { shape: 'step' }` |
+| Basic Line Chart | `line` | - |
+| Multi-Series Line | `line` | `encode: { color: 'category' }` |
+| Smooth Curve | `line` | `encode: { shape: 'smooth' }` |
+| Step Line | `line` | `encode: { shape: 'step' }` |
 
-> **详细文档**: [基础折线图](references/marks/g2-mark-line-basic.md) | [多系列折线](references/marks/g2-mark-line-multi.md) | [LineX/LineY](references/marks/g2-mark-linex-liney.md)
+> **Detailed Documentation**: [Basic Line Chart](references/marks/g2-mark-line-basic.md) | [Multi-Series Line](references/marks/g2-mark-line-multi.md) | [LineX/LineY](references/marks/g2-mark-linex-liney.md)
 
-### 6.3 面积图系列 / Area
+### 6.3 Area Series / Area
 
-面积图在折线图基础上填充区域，强调数量随时间的变化程度。堆叠面积图用于展示各部分对整体的贡献。
+Area charts build upon line charts by filling the area beneath the line, emphasizing the magnitude of change over time. Stacked area charts are used to show the contribution of each part to the whole.
 
-| 类型 | Mark | 关键配置 |
+| Type | Mark | Key Configuration |
 |------|------|----------|
-| 基础面积图 | `area` | - |
-| 堆叠面积图 | `area` | `transform: [{ type: 'stackY' }]` |
+| Basic Area Chart | `area` | - |
+| Stacked Area Chart | `area` | `transform: [{ type: 'stackY' }]` |
 
-> **详细文档**: [基础面积图](references/marks/g2-mark-area-basic.md) | [堆叠面积图](references/marks/g2-mark-area-stacked.md)
+> **Detailed Documentation**: [Basic Area Chart](references/marks/g2-mark-area-basic.md) | [Stacked Area Chart](references/marks/g2-mark-area-stacked.md)
 
-### 6.4 饼图/环形图 / Arc (Pie/Donut)
+### 6.4 Pie Chart/Donut Chart / Arc (Pie/Donut)
 
-饼图用于展示各部分占整体的比例关系。使用 `theta` 坐标系配合 `interval` mark 实现。
+Pie charts are used to display the proportion of each part to the whole. They are implemented using the `theta` coordinate system in conjunction with the `interval` mark.
 
-| 类型 | Mark | 关键配置 |
+| Type | Mark | Key Configuration |
 |------|------|----------|
-| 饼图 | `interval` | `coordinate: { type: 'theta' }` + `stackY` |
-| 环形图 | `interval` | `coordinate: { type: 'theta', innerRadius: 0.6 }` |
+| Pie Chart | `interval` | `coordinate: { type: 'theta' }` + `stackY` |
+| Donut Chart | `interval` | `coordinate: { type: 'theta', innerRadius: 0.6 }` |
 
-> **详细文档**: [饼图](references/marks/g2-mark-arc-pie.md) | [环形图](references/marks/g2-mark-arc-donut.md)
+> **Detailed Documentation**: [Pie Chart](references/marks/g2-mark-arc-pie.md) | [Donut Chart](references/marks/g2-mark-arc-donut.md)
 
-### 6.5 散点图/气泡图 / Point
+### 6.5 Scatter Plot/Bubble Plot / Point
 
-散点图用于展示两个数值变量的关系，气泡图通过点的大小展示第三个维度。
+Scatter plots are used to display the relationship between two numerical variables, while bubble plots use the size of the points to represent a third dimension.
 
-| 类型 | Mark | 关键配置 |
+| Type | Mark | Key Configuration |
 |------|------|----------|
-| 散点图 | `point` | `encode: { x, y }` |
-| 气泡图 | `point` | `encode: { x, y, size }` |
+| Scatter Plot | `point` | `encode: { x, y }` |
+| Bubble Plot | `point` | `encode: { x, y, size }` |
 
-> **详细文档**: [散点图](references/marks/g2-mark-point-scatter.md) | [气泡图](references/marks/g2-mark-point-bubble.md)
+> **Detailed Documentation**: [Scatter Plot](references/marks/g2-mark-point-scatter.md) | [Bubble Plot](references/marks/g2-mark-point-bubble.md)
 
-### 6.6 直方图 / Histogram
+### 6.6 Histogram
 
-直方图用于展示连续数值数据的分布情况，使用 `rect` 标记配合 `binX` 转换实现。与柱状图不同，直方图的柱子之间无间隔，表示数据连续。
+Histograms are used to display the distribution of continuous numerical data, implemented using the `rect` mark with the `binX` transform. Unlike bar charts, histograms have no gaps between bars, representing continuous data.
 
-| 类型 | Mark | 关键配置 |
+| Type | Mark | Key Configuration |
 |------|------|----------|
-| 基础直方图 | `rect` | `transform: [{ type: 'binX', y: 'count' }]` |
-| 多分布对比 | `rect` | `groupBy` 分组 |
+| Basic Histogram | `rect` | `transform: [{ type: 'binX', y: 'count' }]` |
+| Multi-Distribution Comparison | `rect` | `groupBy` grouping |
 
-> **详细文档**: [直方图](references/marks/g2-mark-histogram.md)
+> **Detailed Documentation**: [Histogram](references/marks/g2-mark-histogram.md)
 
-### 6.7 玫瑰图/玉珏图 / Polar Charts
+### 6.7 Rose Chart / Radial Bar Chart / Polar Charts
 
-极坐标系下的图表，通过半径或弧长表示数值大小，视觉上更加美观。
+Charts under the polar coordinate system, representing numerical values through radius or arc length, are visually more appealing.
 
-| 类型 | Mark | 关键配置 |
+| Type | Mark | Key Configuration |
 |------|------|----------|
-| 玫瑰图 | `interval` | `coordinate: { type: 'polar' }` |
-| 玉珏图 | `interval` | `coordinate: { type: 'radial' }` |
+| Rose Chart | `interval` | `coordinate: { type: 'polar' }` |
+| Radial Bar Chart | `interval` | `coordinate: { type: 'radial' }` |
 
-> **详细文档**: [玫瑰图](references/marks/g2-mark-rose.md) | [玉珏图](references/marks/g2-mark-radial-bar.md)
+> **Detailed Documentation**: [Rose Chart](references/marks/g2-mark-rose.md) | [Radial Bar Chart](references/marks/g2-mark-radial-bar.md)
 
-### 6.8 统计分布图 / Distribution
+### 6.8 Distribution
 
-展示数据分布特征的图表，适用于统计分析和探索性数据分析。
+Charts that display data distribution characteristics, suitable for statistical analysis and exploratory data analysis.
 
-| 类型 | Mark | 用途 |
+| Type | Mark | Usage |
 |------|------|------|
-| 箱线图 | `boxplot` | 数据分布统计 |
-| 箱型图(Box) | `box` | 手动指定五数概括的箱线图 |
-| 密度图 | `density` | 核密度估计曲线 |
-| 小提琴图 | `density` + `boxplot` | 密度分布 + 统计信息 |
-| 多边形 | `polygon` | 自定义多边形区域 |
+| Boxplot | `boxplot` | Data distribution statistics |
+| Box (Boxplot) | `box` | Manually specified boxplot with five-number summary |
+| Density Plot | `density` | Kernel density estimation curve |
+| Violin Plot | `density` + `boxplot` | Density distribution + statistical information |
+| Polygon | `polygon` | Custom polygon area |
 
-> **详细文档**: [箱线图](references/marks/g2-mark-boxplot.md) | [箱型图(Box)](references/marks/g2-mark-box-boxplot.md) | [密度图](references/marks/g2-mark-density.md) | [小提琴图](references/marks/g2-mark-violin.md) | [多边形](references/marks/g2-mark-polygon.md)
+> **Detailed Documentation**: [Boxplot](references/marks/g2-mark-boxplot.md) | [Box (Boxplot)](references/marks/g2-mark-box-boxplot.md) | [Density Plot](references/marks/g2-mark-density.md) | [Violin Plot](references/marks/g2-mark-violin.md) | [Polygon](references/marks/g2-mark-polygon.md)
 
-### 6.9 关系图 / Relation
+### 6.9 Relation
 
-展示数据之间关系的图表，适用于网络分析和集合关系展示。
+Charts that display relationships between data, suitable for network analysis and set relationship visualization.
 
-| 类型 | Mark | 用途 |
+| Type | Mark | Use Case |
+|------|------|----------|
+| Sankey Diagram | `sankey` | Flow/Transfer Relationships |
+| Chord Diagram | `chord` | Matrix Flow Relationships |
+| Venn Diagram | `path` + venn data transform | Set Intersection Relationships (venn is a data transform, not a mark type) |
+| Arc Diagram | `line` + `point` | Node Link Relationships |
+
+> **Detailed Documentation**: [Sankey Diagram](references/marks/g2-mark-sankey.md) | [Chord Diagram](references/marks/g2-mark-chord.md) | [Venn Diagram](references/marks/g2-mark-venn.md) | [Arc Diagram](references/marks/g2-mark-arc-diagram.md)
+
+### 6.10 Project Management Charts / Project
+
+Charts suitable for project management and progress tracking.
+
+| Type | Mark | Usage |
 |------|------|------|
-| 桑基图 | `sankey` | 流向/转移关系 |
-| 和弦图 | `chord` | 矩阵流向关系 |
-| 韦恩图 | `path` + venn数据变换 | 集合交集关系（venn 是 data transform，不是 mark type） |
-| 弧长连接图 | `line` + `point` | 节点链接关系 |
+| Gantt Chart | `interval` | Task scheduling |
+| Bullet Chart | `interval` + `point` | KPI metric display |
 
-> **详细文档**: [桑基图](references/marks/g2-mark-sankey.md) | [和弦图](references/marks/g2-mark-chord.md) | [韦恩图](references/marks/g2-mark-venn.md) | [弧长连接图](references/marks/g2-mark-arc-diagram.md)
+> **Detailed Documentation**: [Gantt Chart](references/marks/g2-mark-gantt.md) | [Bullet Chart](references/marks/g2-mark-bullet.md)
 
-### 6.10 项目管理图 / Project
+### 6.11 Finance
 
-适用于项目管理和进度跟踪的图表。
+Professional charts for financial data analysis.
 
-| 类型 | Mark | 用途 |
+| Type | Mark | Usage |
 |------|------|------|
-| 甘特图 | `interval` | 任务时间安排 |
-| 子弹图 | `interval` + `point` | KPI 指标展示 |
+| K-line Chart | `link` + `interval` | Stock four-price data |
 
-> **详细文档**: [甘特图](references/marks/g2-mark-gantt.md) | [子弹图](references/marks/g2-mark-bullet.md)
+> **Detailed Documentation**: [K-line Chart](references/marks/g2-mark-k-chart.md)
 
-### 6.11 金融图表 / Finance
+### 6.12 Multivariate Data Chart / Multivariate
 
-适用于金融数据分析的专业图表。
+Charts for displaying multivariate data relationships.
 
-| 类型 | Mark | 用途 |
+| Type | Mark | Use Case |
+|------|------|----------|
+| Parallel Coordinates | `line` | Multivariate data relationship analysis |
+| Radar Chart | `line` | Multivariate data comparison |
+
+> **Detailed Documentation**: [Parallel Coordinates](references/marks/g2-mark-parallel.md) | [Radar Chart](references/marks/g2-mark-radar.md)
+
+### 6.13 Comparison Chart / Comparison
+
+Suitable for data comparison.
+
+| Type | Mark | Usage |
 |------|------|------|
-| K线图 | `link` + `interval` | 股票四价数据 |
+| Bi-directional Bar Chart | `interval` | Positive and negative data comparison |
 
-> **详细文档**: [K线图](references/marks/g2-mark-k-chart.md)
+> **Detailed Documentation**: [Bi-directional Bar Chart](references/marks/g2-mark-bi-directional-bar.md)
 
-### 6.12 多维数据图 / Multivariate
+### 6.14 Basic Marks
 
-展示多维数据关系的图表。
+Basic marks are the fundamental building blocks of G2, which can be used independently or combined to construct complex charts.
 
-| 类型 | Mark | 用途 |
+| Type | Mark | Usage |
 |------|------|------|
-| 平行坐标系 | `line` | 多维数据关系分析 |
-| 雷达图 | `line` | 多维数据对比 |
+| Rectangle | `rect` | Rectangular area, basis for histograms/heatmaps |
+| Text | `text` | Text annotations and labels |
+| Image | `image` | Image mark, representing data points with images |
+| Path | `path` | Custom path drawing |
+| Link | `link` | Line connecting two points |
+| Connector | `connector` | Connection line between data points |
+| Shape | `shape` | Custom shape drawing |
+| Vector | `vector` | Vector/arrow mark, for wind field charts, etc. |
 
-> **详细文档**: [平行坐标系](references/marks/g2-mark-parallel.md) | [雷达图](references/marks/g2-mark-radar.md)
+> **Detailed Documentation**: [rect](references/marks/g2-mark-rect.md) | [text](references/marks/g2-mark-text.md) | [image](references/marks/g2-mark-image.md) | [path](references/marks/g2-mark-path.md) | [link](references/marks/g2-mark-link.md) | [connector](references/marks/g2-mark-connector.md) | [shape](references/marks/g2-mark-shape.md) | [vector](references/marks/g2-mark-vector.md)
 
-### 6.13 对比图 / Comparison
+### 6.15 Range Mark / Range
 
-适用于数据对比的图表。
+The range mark is used to display the interval range of data.
 
-| 类型 | Mark | 用途 |
+| Type | Mark | Usage |
 |------|------|------|
-| 双向柱状图 | `interval` | 正负数据对比 |
+| Time Period/Interval Highlight (X Direction) | `rangeX` | X-axis interval, `encode: { x: 'start', x1: 'end' }` |
+| Numerical Range Highlight (Y Direction) | `rangeY` | Y-axis interval, `encode: { y: 'min', y1: 'max' }` |
+| Two-Dimensional Rectangular Area | `range` | x/y fields are `[start,end]` arrays, `encode: { x:'x', y:'y' }`, rarely used |
 
-> **详细文档**: [双向柱状图](references/marks/g2-mark-bi-directional-bar.md)
+> **Detailed Documentation**: [range/rangeY](references/marks/g2-mark-range-rangey.md) | [rangeX](references/marks/g2-mark-rangex.md)
 
-### 6.14 基础标记 / Basic Marks
+### 6.16 Distribution & Pack
 
-基础标记是 G2 的底层构建块，可独立使用或组合构建复杂图表。
-
-| 类型 | Mark | 用途 |
+| Type | Mark | Usage |
 |------|------|------|
-| 矩形 | `rect` | 矩形区域，直方图/热力图基础 |
-| 文本 | `text` | 文本标注和标签 |
-| 图片 | `image` | 图片标记，数据点用图片表示 |
-| 路径 | `path` | 自定义路径绘制 |
-| 链接 | `link` | 两点之间的连线 |
-| 连接器 | `connector` | 数据点之间的连接线 |
-| 形状 | `shape` | 自定义形状绘制 |
-| 向量 | `vector` | 向量/箭头标记，风场图等 |
+| Beeswarm Plot | `point` + `pack` | Closely arranged data points to display distribution |
+| Pack Layout | `pack` | Circular packing of hierarchical data |
 
-> **详细文档**: [rect](references/marks/g2-mark-rect.md) | [text](references/marks/g2-mark-text.md) | [image](references/marks/g2-mark-image.md) | [path](references/marks/g2-mark-path.md) | [link](references/marks/g2-mark-link.md) | [connector](references/marks/g2-mark-connector.md) | [shape](references/marks/g2-mark-shape.md) | [vector](references/marks/g2-mark-vector.md)
+> **Detailed Documentation**: [Beeswarm Plot](references/marks/g2-mark-beeswarm.md) | [Pack Layout](references/marks/g2-mark-pack.md)
 
-### 6.15 范围标记 / Range
+### 6.17 Hierarchy
 
-范围标记用于展示数据的区间范围。
+Charts for displaying hierarchical data, representing numerical proportions through area or radius.
 
-| 类型 | Mark | 用途 |
+| Type | Mark | Usage |
 |------|------|------|
-| 时间段/区间高亮（X 方向） | `rangeX` | X 轴区间，`encode: { x: 'start', x1: 'end' }` |
-| 数值范围高亮（Y 方向） | `rangeY` | Y 轴区间，`encode: { y: 'min', y1: 'max' }` |
-| 二维矩形区域 | `range` | x/y 字段为 `[start,end]` 数组，`encode: { x:'x', y:'y' }`，极少使用 |
+| Treemap | `treemap` | Hierarchical data proportion |
+| Sunburst | `sunburst`⚠️ | Multi-level concentric circle display (requires @antv/g2-extension-plot) |
+| Partition | `partition` | Hierarchical data partition display |
+| Tree | `tree` | Tree-like hierarchical structure |
 
-> **详细文档**: [range/rangeY](references/marks/g2-mark-range-rangey.md) | [rangeX](references/marks/g2-mark-rangex.md)
+> **Detailed Documentation**: [Treemap](references/marks/g2-mark-treemap.md) | [Sunburst](references/marks/g2-mark-sunburst.md) | [Partition](references/marks/g2-mark-partition.md) | [Tree](references/marks/g2-mark-tree.md)
 
-### 6.16 分布与打包图 / Distribution & Pack
+### 6.18 Other Charts / Others
 
-| 类型 | Mark | 用途 |
+| Type | Mark | Usage |
 |------|------|------|
-| 蜂群图 | `point` + `pack` | 数据点紧密排列展示分布 |
-| 打包图 | `pack` | 层级数据的圆形打包 |
+| Heatmap | `cell` | Visualization of two-dimensional matrix data |
+| Density Heatmap | `heatmap` | Continuous density heatmap |
+| Gauge | `gauge` | Metric progress display |
+| Word Cloud | `wordCloud` | Text frequency visualization |
+| Liquid Fill Gauge | `liquid` | Percentage progress |
 
-> **详细文档**: [蜂群图](references/marks/g2-mark-beeswarm.md) | [打包图](references/marks/g2-mark-pack.md)
-
-### 6.17 层次结构图 / Hierarchy
-
-展示层级数据的图表，通过面积或半径表示数值占比。
-
-| 类型 | Mark | 用途 |
-|------|------|------|
-| 矩形树图 | `treemap` | 层级数据占比 |
-| 旭日图 | `sunburst`⚠️ | 多层级同心圆展示（需引入 @antv/g2-extension-plot） |
-| 分区图 | `partition` | 层级数据分区展示 |
-| 树图 | `tree` | 树形层级结构 |
-
-> **详细文档**: [矩形树图](references/marks/g2-mark-treemap.md) | [旭日图](references/marks/g2-mark-sunburst.md) | [分区图](references/marks/g2-mark-partition.md) | [树图](references/marks/g2-mark-tree.md)
-
-### 6.18 其他图表 / Others
-
-| 类型 | Mark | 用途 |
-|------|------|------|
-| 热力图 | `cell` | 二维矩阵数据可视化 |
-| 密度热力图 | `heatmap` | 连续密度热力图 |
-| 仪表盘 | `gauge` | 指标进度展示 |
-| 词云 | `wordCloud` | 文本频率可视化 |
-| 水波图 | `liquid` | 百分比进度 |
-
-> **详细文档**: [热力图](references/marks/g2-mark-cell-heatmap.md) | [密度热力图](references/marks/g2-mark-heatmap.md) | [仪表盘](references/marks/g2-mark-gauge.md) | [词云](references/marks/g2-mark-wordcloud.md) | [水波图](references/marks/g2-mark-liquid.md)
+> **Detailed Documentation**: [Heatmap](references/marks/g2-mark-cell-heatmap.md) | [Density Heatmap](references/marks/g2-mark-heatmap.md) | [Gauge](references/marks/g2-mark-gauge.md) | [Word Cloud](references/marks/g2-mark-wordcloud.md) | [Liquid Fill Gauge](references/marks/g2-mark-liquid.md)
 
 ---
 
-## 7. Data / 数据变换
+## 7. Data / Data Transformation
 
-数据变换在数据加载阶段执行，配置在 `data.transform` 中，影响所有使用该数据的标记。
+Data transformation is performed during the data loading stage and is configured in `data.transform`, affecting all marks that use this data.
 
-### 7.1 Data Transform 类型（配置在 `data.transform`）
+### 7.1 Data Transform Types (Configured in `data.transform`)
 
-| 变换 | 类型 | 用途 | 示例场景 |
+| Transform | Type | Purpose | Example Scenario |
 |------|------|------|---------|
-| **fold** | `fold` | 宽表转长表 | 多列数据转多系列 |
-| **filter** | `filter` | 条件过滤数据 | 过滤无效数据 |
-| **sort** | `sort` | 使用回调函数排序 | 自定义排序逻辑 |
-| **sortBy** | `sortBy` | 按字段排序 | 按字段值排序 |
-| **map** | `map` | 数据映射转换 | 添加计算字段 |
-| **join** | `join` | 合并数据表 | 关联外部数据 |
-| **pick** | `pick` | 选择指定字段 | 精简字段 |
-| **rename** | `rename` | 重命名字段 | 字段重命名 |
-| **slice** | `slice` | 截取数据范围 | 分页/截取 |
-| **ema** | `ema` | 指数移动平均 | 时间序列平滑 |
-| **kde** | `kde` | 核密度估计 | 密度图/小提琴图 |
-| **log** | `log` | 打印数据到控制台 | 调试 |
-| **custom** | `custom` | 自定义数据处理 | 复杂转换 |
+| **fold** | `fold` | Wide table to long table conversion | Convert multi-column data to multiple series |
+| **filter** | `filter` | Conditional data filtering | Filter out invalid data |
+| **sort** | `sort` | Sorting using a callback function | Custom sorting logic |
+| **sortBy** | `sortBy` | Sorting by field | Sort by field values |
+| **map** | `map` | Data mapping transformation | Add computed fields |
+| **join** | `join` | Merge data tables | Associate external data |
+| **pick** | `pick` | Select specified fields | Simplify fields |
+| **rename** | `rename` | Rename fields | Field renaming |
+| **slice** | `slice` | Slice data range | Pagination/slicing |
+| **ema** | `ema` | Exponential moving average | Time series smoothing |
+| **kde** | `kde` | Kernel density estimation | Density plot/violin plot |
+| **log** | `log` | Print data to console | Debugging |
+| **custom** | `custom` | Custom data processing | Complex transformations |
 
-### 7.2 数据格式与模式
+### 7.2 Data Format and Patterns
 
-| 类型 | 用途 |
+| Type | Purpose |
 |------|------|
-| 表格数据格式 | G2 接受的标准表格数据格式说明 |
-| 数据变换模式 | Data Transform 和 Mark Transform 的组合使用模式 |
+| Tabular Data Format | Description of the standard tabular data format accepted by G2 |
+| Data Transform Patterns | Combination usage patterns of Data Transform and Mark Transform |
 
-> **详细文档**: [filter](references/data/g2-data-filter.md) | [sort](references/data/g2-data-sort.md) | [sortBy](references/data/g2-data-sortby.md) | [fold](references/data/g2-data-fold.md) | [slice](references/data/g2-data-slice.md) | [ema](references/data/g2-data-ema.md) | [kde](references/data/g2-data-kde.md) | [log](references/data/g2-data-log.md) | [fetch](references/data/g2-data-fetch.md) | [表格数据格式](references/data/g2-data-format-tabular.md) | [数据变换模式](references/data/g2-data-transform-patterns.md)
+> **Detailed Documentation**: [filter](references/data/g2-data-filter.md) | [sort](references/data/g2-data-sort.md) | [sortBy](references/data/g2-data-sortby.md) | [fold](references/data/g2-data-fold.md) | [slice](references/data/g2-data-slice.md) | [ema](references/data/g2-data-ema.md) | [kde](references/data/g2-data-kde.md) | [log](references/data/g2-data-log.md) | [fetch](references/data/g2-data-fetch.md) | [Tabular Data Format](references/data/g2-data-format-tabular.md) | [Data Transform Patterns](references/data/g2-data-transform-patterns.md)
 
-### 7.3 常见错误：Data Transform 放错位置
+### 7.3 Common Mistakes: Incorrect Placement of Data Transform
 
 ```javascript
-// ❌ 错误：fold 是数据变换，不能放在 mark transform
+// ❌ Wrong: fold is a data transform and cannot be placed in mark transform
 chart.options({
   type: 'interval',
   data: wideData,
-  transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ❌ 错误！
+  transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ❌ Wrong!
 });
 
-// ✅ 正确：fold 放在 data.transform
+// ✅ Correct: fold placed in data.transform
 chart.options({
   type: 'interval',
   data: {
     type: 'inline',
     value: wideData,
-    transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ✅ 正确
+    transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ✅ Correct
   },
   transform: [{ type: 'stackY' }],  // mark transform
 });
 ```
 
-### 7.4 组合示例：宽表数据 + 堆叠图
+### 7.4 Combination Example: Wide Table Data + Stacked Chart
 
 ```javascript
-// 宽表数据：每个月有多个类型的数据列
+// Wide table data: Multiple data columns for each month
 const wideData = [
-  { year: '2000', '类型 A': 21, '类型 B': 16, '类型 C': 8 },
-  { year: '2001', '类型 A': 25, '类型 B': 16, '类型 C': 8 },
+  { year: '2000', 'Type A': 21, 'Type B': 16, 'Type C': 8 },
+  { year: '2001', 'Type A': 25, 'Type B': 16, 'Type C': 8 },
   // ...
 ];
 
@@ -687,351 +686,349 @@ chart.options({
     type: 'inline',
     value: wideData,
     transform: [
-      // ✅ Data Transform：宽表转长表
-      { type: 'fold', fields: ['类型 A', '类型 B', '类型 C'], key: 'type', value: 'value' },
+      // ✅ Data Transform: Wide to Long Table
+      { type: 'fold', fields: ['Type A', 'Type B', 'Type C'], key: 'type', value: 'value' },
     ],
   },
   encode: { x: 'year', y: 'value', color: 'type' },
   transform: [
-    // ✅ Mark Transform：堆叠
+    // ✅ Mark Transform: Stacked
     { type: 'stackY' },
   ],
-  coordinate: { type: 'polar' },  // 极坐标系
+  coordinate: { type: 'polar' },  // Polar coordinate system
 });
 ```
 
 ---
 
-## 8. Transforms / 标记变换
+## 8. Transforms / Mark Transformations
 
-标记变换在绑定视觉通道时执行，配置在 mark 的 `transform` 数组中，用于数据聚合、防重叠等。
+Mark transformations are executed when binding visual channels and are configured in the `transform` array of the mark. They are used for data aggregation, anti-overlapping, and more.
 
-**配置位置**：`transform` 数组，与 `data`、`encode` 同级，**不是**在 `data.transform` 中。
+**Configuration Location**: The `transform` array, which is at the same level as `data` and `encode`, **not** in `data.transform`.
 
 ```javascript
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'category', y: 'value', color: 'type' },
-  transform: [  // ✅ Mark Transform：与 data/encode 同级
+  transform: [  // ✅ Mark Transform: At the same level as data/encode
     { type: 'stackY' },
     { type: 'sortX', by: 'y' },
   ],
 });
 ```
 
-### 8.1 防重叠变换 / Anti-overlap
+### 8.1 Anti-overlap Transformations
 
-| 变换 | 类型 | 用途 |
+| Transformation | Type | Usage |
 |------|------|------|
-| 堆叠 | `stackY` | 数据堆叠，用于堆叠图 |
-| 分组 | `dodgeX` | 数据分组，用于分组图 |
-| 抖动 | `jitter` | 散点抖动避免重叠 |
-| X轴抖动 | `jitterX` | X 方向抖动 |
-| Y轴抖动 | `jitterY` | Y 方向抖动 |
-| 打包 | `pack` | 紧密排列数据点 |
+| Stack | `stackY` | Data stacking, used for stacked charts |
+| Dodge | `dodgeX` | Data grouping, used for dodged charts |
+| Jitter | `jitter` | Scatter jitter to avoid overlap |
+| Jitter X | `jitterX` | Jitter in the X direction |
+| Jitter Y | `jitterY` | Jitter in the Y direction |
+| Pack | `pack` | Tightly arrange data points |
 
-> **详细文档**: [stackY](references/transforms/g2-transform-stacky.md) | [dodgeX](references/transforms/g2-transform-dodgex.md) | [jitter](references/transforms/g2-transform-jitter.md) | [jitterX](references/transforms/g2-transform-jitterx.md) | [jitterY](references/transforms/g2-transform-jittery.md) | [pack](references/transforms/g2-transform-pack.md)
+> **Detailed Documentation**: [stackY](references/transforms/g2-transform-stacky.md) | [dodgeX](references/transforms/g2-transform-dodgex.md) | [jitter](references/transforms/g2-transform-jitter.md) | [jitterX](references/transforms/g2-transform-jitterx.md) | [jitterY](references/transforms/g2-transform-jittery.md) | [pack](references/transforms/g2-transform-pack.md)
 
-### 8.2 聚合变换 / Aggregation
+### 8.2 Aggregation Transforms / Aggregation
 
-| 变换 | 类型 | 用途 |
+| Transform | Type | Purpose |
 |------|------|------|
-| 通用分组 | `group` | 通用分组聚合 |
-| 分组聚合 | `groupX` / `groupY` | 按维度分组并聚合 |
-| 分组颜色 | `groupColor` | 按颜色分组聚合 |
-| 分箱 | `bin` | 二维分箱 |
-| X轴分箱 | `binX` | X 轴方向分箱 |
-| 采样 | `sample` | 数据采样 |
+| General Grouping | `group` | General grouping aggregation |
+| Group Aggregation | `groupX` / `groupY` | Group and aggregate by dimension |
+| Group Color | `groupColor` | Group aggregation by color |
+| Binning | `bin` | Two-dimensional binning |
+| X-axis Binning | `binX` | Binning in the X-axis direction |
+| Sampling | `sample` | Data sampling |
 
-> **详细文档**: [group](references/transforms/g2-transform-group.md) | [groupX](references/transforms/g2-transform-groupx.md) | [groupY](references/transforms/g2-transform-groupy.md) | [groupColor](references/transforms/g2-transform-groupcolor.md) | [bin](references/transforms/g2-transform-bin.md) | [binX](references/transforms/g2-transform-binx.md) | [sample](references/transforms/g2-transform-sample.md)
+> **Detailed Documentation**: [group](references/transforms/g2-transform-group.md) | [groupX](references/transforms/g2-transform-groupx.md) | [groupY](references/transforms/g2-transform-groupy.md) | [groupColor](references/transforms/g2-transform-groupcolor.md) | [bin](references/transforms/g2-transform-bin.md) | [binX](references/transforms/g2-transform-binx.md) | [sample](references/transforms/g2-transform-sample.md)
 
-### 8.3 排序变换 / Sorting
+### 8.3 Sorting Transforms / Sorting
 
-| 变换 | 类型 | 用途 |
+| Transform | Type | Purpose |
 |------|------|------|
-| X轴排序 | `sortX` | 按 X 通道排序 |
-| Y轴排序 | `sortY` | 按 Y 通道排序 |
-| 颜色排序 | `sortColor` | 按颜色通道排序 |
+| X-axis Sorting | `sortX` | Sort by X channel |
+| Y-axis Sorting | `sortY` | Sort by Y channel |
+| Color Sorting | `sortColor` | Sort by color channel |
 
-> **详细文档**: [sortX](references/transforms/g2-transform-sortx.md) | [sortY](references/transforms/g2-transform-sorty.md) | [sortColor](references/transforms/g2-transform-sort-color.md)
+> **Detailed Documentation**: [sortX](references/transforms/g2-transform-sortx.md) | [sortY](references/transforms/g2-transform-sorty.md) | [sortColor](references/transforms/g2-transform-sort-color.md)
 
-### 8.4 选取变换 / Selection
+### 8.4 Selection Transforms / Selection
 
-| 变换 | 类型 | 用途 |
+| Transform | Type | Purpose |
 |------|------|------|
-| 选取 | `select` | 全局选取数据 |
-| X轴选取 | `selectX` | 按 X 分组选取 |
-| Y轴选取 | `selectY` | 按 Y 分组选取 |
+| Selection | `select` | Global data selection |
+| X-axis Selection | `selectX` | Selection by X grouping |
+| Y-axis Selection | `selectY` | Selection by Y grouping |
 
-> **详细文档**: [select](references/transforms/g2-transform-select.md) | [selectX](references/transforms/g2-transform-selectx.md) | [selectY](references/transforms/g2-transform-selecty.md)
+> **Detailed Documentation**: [select](references/transforms/g2-transform-select.md) | [selectX](references/transforms/g2-transform-selectx.md) | [selectY](references/transforms/g2-transform-selecty.md)
 
-### 8.5 其他变换 / Others
+### 8.5 Other Transforms / Others
 
-| 变换 | 类型 | 用途 |
+| Transform | Type | Usage |
 |------|------|------|
-| 归一化 | `normalizeY` | Y 轴归一化 |
-| 差值 | `diffY` | 计算差值 |
-| 对称 | `symmetryY` | Y 轴对称 |
-| 弹性X | `flexX` | X 轴弹性布局 |
-| 堆叠入场 | `stackEnter` | 入场动画堆叠 |
+| Normalize | `normalizeY` | Y-axis normalization |
+| Difference | `diffY` | Calculate differences |
+| Symmetry | `symmetryY` | Y-axis symmetry |
+| Flex X | `flexX` | X-axis flex layout |
+| Stack Enter | `stackEnter` | Stacked enter animation |
 
-> **详细文档**: [normalizeY](references/transforms/g2-transform-normalizey.md) | [diffY](references/transforms/g2-transform-diffy.md) | [symmetryY](references/transforms/g2-transform-symmetryy.md) | [flexX](references/transforms/g2-transform-flexx.md) | [stackEnter](references/transforms/g2-transform-stack-enter.md)
+> **Detailed Documentation**: [normalizeY](references/transforms/g2-transform-normalizey.md) | [diffY](references/transforms/g2-transform-diffy.md) | [symmetryY](references/transforms/g2-transform-symmetryy.md) | [flexX](references/transforms/g2-transform-flexx.md) | [stackEnter](references/transforms/g2-transform-stack-enter.md)
 
 ---
 
-## 9. Interactions / 交互
+## 9. Interactions
 
-G2 提供丰富的内置交互，用于数据探索和图表操作。
+G2 provides a rich set of built-in interactions for data exploration and chart manipulation.
 
-### 9.1 选择类交互 / Selection
+### 9.1 Selection Interactions
 
-| 交互 | 类型 | 用途 |
+| Interaction | Type | Purpose |
 |------|------|------|
-| 元素选择 | `elementSelect` | 点击选择数据元素 |
-| 按条件选择 | `elementSelectBy` | 按条件批量选择元素 |
-| 框选 | `brush` / `brushX` / `brushY` | 矩形区域选择 |
-| 二维框选 | `brushXY` | XY 同时框选 |
-| 轴框选 | `brushAxis` | 坐标轴范围选择 |
-| 图例过滤 | `legendFilter` | 点击图例筛选数据 |
+| Element Selection | `elementSelect` | Click to select data elements |
+| Conditional Selection | `elementSelectBy` | Batch select elements based on conditions |
+| Brush Selection | `brush` / `brushX` / `brushY` | Rectangular area selection |
+| 2D Brush Selection | `brushXY` | Simultaneous XY brush selection |
+| Axis Brush Selection | `brushAxis` | Coordinate axis range selection |
+| Legend Filter | `legendFilter` | Click legend to filter data |
 
-> **详细文档**: [elementSelect](references/interactions/g2-interaction-element-select.md) | [elementSelectBy](references/interactions/g2-interaction-element-select-by.md) | [brush](references/interactions/g2-interaction-brush.md) | [brushXY](references/interactions/g2-interaction-brush-xy.md) | [brushAxis](references/interactions/g2-interaction-brush-axis.md) | [legendFilter](references/interactions/g2-interaction-legend-filter.md)
+> **Detailed Documentation**: [elementSelect](references/interactions/g2-interaction-element-select.md) | [elementSelectBy](references/interactions/g2-interaction-element-select-by.md) | [brush](references/interactions/g2-interaction-brush.md) | [brushXY](references/interactions/g2-interaction-brush-xy.md) | [brushAxis](references/interactions/g2-interaction-brush-axis.md) | [legendFilter](references/interactions/g2-interaction-legend-filter.md)
 
-### 9.2 高亮类交互 / Highlight
+### 9.2 Highlight Interactions / Highlight
 
-| 交互 | 类型 | 用途 |
+| Interaction | Type | Purpose |
 |------|------|------|
-| 元素高亮 | `elementHighlight` | 悬停高亮元素 |
-| 按条件高亮 | `elementHighlightBy` | 按条件批量高亮元素 |
-| 悬停缩放 | `elementHoverScale` | 悬停时元素放大 |
-| 图例高亮 | `legendHighlight` | 悬停图例高亮对应元素 |
-| 框选高亮 | `brushXHighlight` / `brushYHighlight` | 框选区域高亮 |
+| Element Highlight | `elementHighlight` | Hover to highlight elements |
+| Conditional Highlight | `elementHighlightBy` | Batch highlight elements based on conditions |
+| Hover Scale | `elementHoverScale` | Scale up elements on hover |
+| Legend Highlight | `legendHighlight` | Highlight corresponding elements on legend hover |
+| Brush Highlight | `brushXHighlight` / `brushYHighlight` | Highlight selected area |
 
-> **详细文档**: [elementHighlight](references/interactions/g2-interaction-element-highlight.md) | [elementHighlightBy](references/interactions/g2-interaction-element-highlight-by.md) | [elementHoverScale](references/interactions/g2-interaction-element-hover-scale.md) | [legendHighlight](references/interactions/g2-interaction-legend-highlight.md) | [brushXHighlight](references/interactions/g2-interaction-brushx-highlight.md) | [brushYHighlight](references/interactions/g2-interaction-brushy-highlight.md) | [单轴框选高亮](references/interactions/g2-interaction-brush-x-y-highlight.md)
+> **Detailed Documentation**: [elementHighlight](references/interactions/g2-interaction-element-highlight.md) | [elementHighlightBy](references/interactions/g2-interaction-element-highlight-by.md) | [elementHoverScale](references/interactions/g2-interaction-element-hover-scale.md) | [legendHighlight](references/interactions/g2-interaction-legend-highlight.md) | [brushXHighlight](references/interactions/g2-interaction-brushx-highlight.md) | [brushYHighlight](references/interactions/g2-interaction-brushy-highlight.md) | [Single-axis Brush Highlight](references/interactions/g2-interaction-brush-x-y-highlight.md)
 
-### 9.3 过滤类交互 / Filter
+### 9.3 Filter Interactions / Filter
 
-| 交互 | 类型 | 用途 |
+| Interaction | Type | Purpose |
 |------|------|------|
-| 滑动条过滤 | `sliderFilter` | 滑动条筛选数据范围 |
-| 滚动条过滤 | `scrollbarFilter` | 滚动条筛选数据 |
-| 框选过滤 | `brushFilter` | 框选区域过滤数据 |
-| X轴框选过滤 | `brushXFilter` | X 轴方向框选过滤 |
-| Y轴框选过滤 | `brushYFilter` | Y 轴方向框选过滤 |
-| 自适应过滤 | `adaptiveFilter` | 自适应数据过滤 |
+| Slider Filter | `sliderFilter` | Filter data range using a slider |
+| Scrollbar Filter | `scrollbarFilter` | Filter data using a scrollbar |
+| Brush Filter | `brushFilter` | Filter data within a selected area |
+| X-Axis Brush Filter | `brushXFilter` | Filter data along the X-axis direction |
+| Y-Axis Brush Filter | `brushYFilter` | Filter data along the Y-axis direction |
+| Adaptive Filter | `adaptiveFilter` | Adaptively filter data |
 
-> **详细文档**: [sliderFilter](references/interactions/g2-interaction-slider-filter.md) | [scrollbarFilter](references/interactions/g2-interaction-scrollbar-filter.md) | [brushFilter](references/interactions/g2-interaction-brush-filter.md) | [brushXFilter](references/interactions/g2-interaction-brushx-filter.md) | [brushYFilter](references/interactions/g2-interaction-brushy-filter.md) | [adaptiveFilter](references/interactions/g2-interaction-adaptive-filter.md)
+> **Detailed Documentation**: [sliderFilter](references/interactions/g2-interaction-slider-filter.md) | [scrollbarFilter](references/interactions/g2-interaction-scrollbar-filter.md) | [brushFilter](references/interactions/g2-interaction-brush-filter.md) | [brushXFilter](references/interactions/g2-interaction-brushx-filter.md) | [brushYFilter](references/interactions/g2-interaction-brushy-filter.md) | [adaptiveFilter](references/interactions/g2-interaction-adaptive-filter.md)
 
-### 9.4 其他交互 / Others
+### 9.4 Other Interactions / Others
 
-| 交互 | 类型 | 用途 |
+| Interaction | Type | Purpose |
 |------|------|------|
-| 提示信息 | `tooltip` | 悬停显示数据详情 |
-| 气泡提示 | `poptip` | 简洁气泡提示 |
-| 下钻 | `drilldown` | 层级数据下钻 |
-| 矩形树图下钻 | `treemapDrilldown` | 矩形树图层级下钻 |
-| 缩放 | `fisheye` | 鱼眼放大镜效果 |
-| 滚轮滑动 | `sliderWheel` | 鼠标滚轮控制滑动条 |
-| 拖拽移动 | `elementPointMove` | 拖拽数据点移动 |
-| 图表索引 | `chartIndex` | 多图表联动索引线 |
+| Tooltip | `tooltip` | Display data details on hover |
+| PopTip | `poptip` | Concise pop-up tip |
+| Drilldown | `drilldown` | Hierarchical data drilldown |
+| Treemap Drilldown | `treemapDrilldown` | Treemap hierarchical drilldown |
+| Fisheye | `fisheye` | Fisheye magnifier effect |
+| Slider Wheel | `sliderWheel` | Mouse wheel controls slider |
+| Element Point Move | `elementPointMove` | Drag data point to move |
+| Chart Index | `chartIndex` | Multi-chart linkage index line |
 
-> **详细文档**: [tooltip](references/interactions/g2-interaction-tooltip.md) | [poptip](references/interactions/g2-interaction-poptip.md) | [drilldown](references/interactions/g2-interaction-drilldown.md) | [treemapDrilldown](references/interactions/g2-interaction-treemap-drilldown.md) | [fisheye](references/interactions/g2-interaction-fisheye.md) | [sliderWheel](references/interactions/g2-interaction-slider-wheel.md) | [elementPointMove](references/interactions/g2-interaction-element-point-move.md) | [chartIndex](references/interactions/g2-interaction-chart-index.md)
+> **Detailed Documentation**: [tooltip](references/interactions/g2-interaction-tooltip.md) | [poptip](references/interactions/g2-interaction-poptip.md) | [drilldown](references/interactions/g2-interaction-drilldown.md) | [treemapDrilldown](references/interactions/g2-interaction-treemap-drilldown.md) | [fisheye](references/interactions/g2-interaction-fisheye.md) | [sliderWheel](references/interactions/g2-interaction-slider-wheel.md) | [elementPointMove](references/interactions/g2-interaction-element-point-move.md) | [chartIndex](references/interactions/g2-interaction-chart-index.md)
 
 ---
 
 ## 10. Components / 组件
 
-组件是图表的辅助元素，如坐标轴、图例、提示信息等。
+Components are auxiliary elements of charts, such as axes, legends, and tooltips.
 
-### 10.1 坐标轴 / Axis
+### 10.1 Axis
 
-坐标轴展示数据维度，支持丰富的样式配置。
+The axis displays data dimensions and supports rich style configurations.
 
-> **详细文档**: [坐标轴配置](references/components/g2-comp-axis-config.md) | [雷达图坐标轴](references/components/g2-comp-axis-radar.md)
+> **Detailed Documentation**: [Axis Configuration](references/components/g2-comp-axis-config.md) | [Radar Chart Axis](references/components/g2-comp-axis-radar.md)
 
-### 10.2 图例 / Legend
+### 10.2 Legend
 
-图例展示数据分类或连续数值映射，支持分类图例和连续图例（色带）。
+The legend displays data categorization or continuous value mapping, supporting categorical legends and continuous legends (color ramps).
 
-| 类型 | 用途 |
+| Type | Purpose |
 |------|------|
-| 分类图例 | 离散分类数据的颜色映射说明 |
-| 连续图例 | 连续数值的颜色/大小映射说明（色带） |
+| Categorical Legend | Color mapping explanation for discrete categorical data |
+| Continuous Legend | Color/size mapping explanation for continuous values (color ramp) |
 
-> **详细文档**: [图例配置](references/components/g2-comp-legend-config.md) | [分类图例](references/components/g2-comp-legend-category.md) | [连续图例](references/components/g2-comp-legend-continuous.md)
+> **Detailed Documentation**: [Legend Configuration](references/components/g2-comp-legend-config.md) | [Categorical Legend](references/components/g2-comp-legend-category.md) | [Continuous Legend](references/components/g2-comp-legend-continuous.md)
 
-### 10.3 提示信息 / Tooltip
+### 10.3 Tooltip
 
-Tooltip 在悬停时显示数据详情，支持自定义模板和格式化。
+Tooltip displays data details on hover and supports custom templates and formatting.
 
-> **详细文档**: [Tooltip 配置](references/components/g2-comp-tooltip-config.md)
+> **Detailed Documentation**: [Tooltip Configuration](references/components/g2-comp-tooltip-config.md)
 
-### 10.4 其他组件 / Others
+### 10.4 Other Components / Others
 
-| 组件 | 用途 |
-|------|------|
-| 标题 | 图表标题 |
-| 标签 | 数据标签 |
-| 滚动条 | 数据滚动浏览 |
-| 滑动条 | 数据范围选择 |
-| 标注 | 数据标注和辅助线 |
+| Component | Purpose |
+|-----------|---------|
+| Title     | Chart title |
+| Label     | Data label |
+| Scrollbar | Data scrolling |
+| Slider    | Data range selection |
+| Annotation| Data annotation and auxiliary lines |
 
-> **详细文档**: [标题](references/components/g2-comp-title.md) | [标签](references/components/g2-comp-label-config.md) | [滚动条](references/components/g2-comp-scrollbar.md) | [滑动条](references/components/g2-comp-slider.md) | [标注](references/components/g2-comp-annotation.md)
+> **Detailed Documentation**: [Title](references/components/g2-comp-title.md) | [Label](references/components/g2-comp-label-config.md) | [Scrollbar](references/components/g2-comp-scrollbar.md) | [Slider](references/components/g2-comp-slider.md) | [Annotation](references/components/g2-comp-annotation.md)
 
 ---
 
-## 11. Scales / 比例尺
+## 11. Scales
 
-比例尺将数据值映射到视觉通道，如位置、颜色、大小等。
+Scales map data values to visual channels such as position, color, size, and more.
 
-### 11.1 ⚠️ 默认行为（不要过度指定 type）
+### 11.1 ⚠️ Default Behavior (Avoid Over-Specifying `type`)
 
-**G2 会根据数据类型自动推断 scale 类型，非特殊情况下不要手动指定 type：**
+**G2 automatically infers the scale type based on the data type. Avoid manually specifying `type` unless necessary:**
 
-| 数据类型 | 自动推断的 scale | 示例 |
-|---------|-----------------|------|
-| 数值字段 | `linear` | `{ value: 100 }` → linear |
-| 分类字段 | `band` | `{ category: 'A' }` → band |
-| Date 对象 | `time` | `{ date: new Date() }` → time |
+| Data Type | Inferred Scale | Example |
+|-----------|----------------|---------|
+| Numerical Field | `linear` | `{ value: 100 }` → linear |
+| Categorical Field | `band` | `{ category: 'A' }` → band |
+| Date Object | `time` | `{ date: new Date() }` → time |
 
 ```javascript
-// ❌ 错误：不必要的 type 指定，可能导致渲染异常
+// ❌ Incorrect: Unnecessary type specification, may cause rendering issues
 chart.options({
   scale: {
-    x: { type: 'linear' },  // ❌ 数值字段默认就是 linear
-    y: { type: 'linear' },  // ❌ 不需要指定
+    x: { type: 'linear' },  // ❌ Numerical fields default to linear
+    y: { type: 'linear' },  // ❌ No need to specify
   },
 });
 
-// ✅ 正确：让 G2 自动推断，只在需要时配置 domain/range
+// ✅ Correct: Let G2 infer automatically, configure domain/range only when needed
 chart.options({
   scale: {
-    y: { domain: [0, 100] },  // ✅ 只配置需要的属性
+    y: { domain: [0, 100] },  // ✅ Configure only necessary properties
     color: { range: ['#1890ff', '#52c41a'] },
   },
 });
 ```
 
-**需要手动指定 type 的特殊情况：**
+**Special Cases Requiring Manual `type` Specification:**
 
-| 场景 | type | 说明 |
-|------|------|------|
-| 对数刻度 | `log` | 跨数量级数据 |
-| 幂函数刻度 | `pow` | 非线性数据映射 |
-| 平方根刻度 | `sqrt` | 非负数据的压缩 |
-| 字符串日期 | `time` | 日期字段是字符串而非 Date 对象时 |
-| 自定义映射 | `ordinal` | 离散值到离散值 |
-| 渐变色 | `sequential` | 连续数值到颜色渐变 |
-| 分段映射 | `threshold` | 按阈值分段映射到颜色 |
-| 等量分段 | `quantize` / `quantile` | 连续数据离散化 |
+| Scenario | Type | Description |
+|----------|------|-------------|
+| Logarithmic Scale | `log` | Data spanning multiple orders of magnitude |
+| Power Scale | `pow` | Non-linear data mapping |
+| Square Root Scale | `sqrt` | Compression of non-negative data |
+| String Date | `time` | Date field is a string, not a Date object |
+| Custom Mapping | `ordinal` | Discrete to discrete mapping |
+| Gradient Color | `sequential` | Continuous values to color gradient |
+| Threshold Mapping | `threshold` | Mapping to colors based on thresholds |
+| Equal Interval Binning | `quantize` / `quantile` | Discretization of continuous data |
 
-### 11.2 比例尺类型
+### 11.2 Scale Types
 
-| 比例尺 | 类型 | 用途 |
+| Scale | Type | Usage |
 |--------|------|------|
-| 线性 | `linear` | 连续数值映射（默认） |
-| 分类 | `band` | 离散分类映射（默认） |
-| 点 | `point` | 离散点位置映射 |
-| 时间 | `time` | 时间数据映射 |
-| 对数 | `log` | 对数刻度 |
-| 幂/平方根 | `pow` / `sqrt` | 幂函数/平方根映射 |
-| 序数 | `ordinal` | 离散值到离散值映射 |
-| 顺序 | `sequential` | 连续值到颜色渐变 |
-| 分位数/量化 | `quantile` / `quantize` | 连续数据离散化映射 |
-| 阈值 | `threshold` | 按阈值分段映射 |
+| Linear | `linear` | Continuous numerical mapping (default) |
+| Band | `band` | Discrete categorical mapping (default) |
+| Point | `point` | Discrete point position mapping |
+| Time | `time` | Time data mapping |
+| Log | `log` | Logarithmic scale |
+| Power/Square Root | `pow` / `sqrt` | Power function/square root mapping |
+| Ordinal | `ordinal` | Discrete to discrete value mapping |
+| Sequential | `sequential` | Continuous value to color gradient |
+| Quantile/Quantize | `quantile` / `quantize` | Continuous data discretization mapping |
+| Threshold | `threshold` | Segmented mapping by threshold |
 
-> **详细文档**: [linear](references/scales/g2-scale-linear.md) | [band](references/scales/g2-scale-band.md) | [point](references/scales/g2-scale-point.md) | [time](references/scales/g2-scale-time.md) | [log](references/scales/g2-scale-log.md) | [pow/sqrt](references/scales/g2-scale-pow-sqrt.md) | [ordinal](references/scales/g2-scale-ordinal.md) | [sequential](references/scales/g2-scale-sequential.md) | [quantile/quantize](references/scales/g2-scale-quantile-quantize.md) | [threshold](references/scales/g2-scale-threshold.md)
+> **Detailed Documentation**: [linear](references/scales/g2-scale-linear.md) | [band](references/scales/g2-scale-band.md) | [point](references/scales/g2-scale-point.md) | [time](references/scales/g2-scale-time.md) | [log](references/scales/g2-scale-log.md) | [pow/sqrt](references/scales/g2-scale-pow-sqrt.md) | [ordinal](references/scales/g2-scale-ordinal.md) | [sequential](references/scales/g2-scale-sequential.md) | [quantile/quantize](references/scales/g2-scale-quantile-quantize.md) | [threshold](references/scales/g2-scale-threshold.md)
 
 ---
 
 ## 12. Coordinates / 坐标系
 
-坐标系定义数据到画布位置的映射方式，不同坐标系产生不同图表形态。
+The coordinate system defines the mapping method from data to canvas positions, and different coordinate systems produce different chart forms.
 
-| 坐标系 | 类型 | 用途 |
-|--------|------|------|
-| 笛卡尔 | `cartesian` | 直角坐标系（默认） |
-| 极坐标 | `polar` | 雷达图、玫瑰图 |
-| Theta | `theta` | 饼图、环形图 |
-| 径向 | `radial` | 径向坐标系，玉珏图 |
-| 转置 | `transpose` | X/Y 轴交换 |
-| 平行 | `parallel` | 平行坐标系 |
-| 螺旋 | `helix` | 螺旋坐标系 |
-| 鱼眼 | `fisheye` | 局部放大效果 |
+| Coordinate System | Type | Usage |
+|-------------------|------|------|
+| Cartesian | `cartesian` | Rectangular coordinate system (default) |
+| Polar | `polar` | Radar chart, rose chart |
+| Theta | `theta` | Pie chart, donut chart |
+| Radial | `radial` | Radial coordinate system, gauge chart |
+| Transpose | `transpose` | X/Y axis swap |
+| Parallel | `parallel` | Parallel coordinate system |
+| Helix | `helix` | Helix coordinate system |
+| Fisheye | `fisheye` | Local magnification effect |
 
-> **详细文档**: [cartesian](references/coordinates/g2-coord-cartesian.md) | [polar](references/coordinates/g2-coord-polar.md) | [theta](references/coordinates/g2-coord-theta.md) | [radial](references/coordinates/g2-coord-radial.md) | [transpose](references/coordinates/g2-coord-transpose.md) | [parallel](references/coordinates/g2-coord-parallel.md) | [helix](references/coordinates/g2-coord-helix.md) | [fisheye](references/coordinates/g2-coord-fisheye.md)
+> **Detailed Documentation**: [cartesian](references/coordinates/g2-coord-cartesian.md) | [polar](references/coordinates/g2-coord-polar.md) | [theta](references/coordinates/g2-coord-theta.md) | [radial](references/coordinates/g2-coord-radial.md) | [transpose](references/coordinates/g2-coord-transpose.md) | [parallel](references/coordinates/g2-coord-parallel.md) | [helix](references/coordinates/g2-coord-helix.md) | [fisheye](references/coordinates/g2-coord-fisheye.md)
 
 ---
 
-## 13. Compositions / 组合视图
+## 13. Compositions / Composition Views
 
-组合视图用于创建多图表布局，如分面、多视图叠加等。
+Composition views are used to create multi-chart layouts, such as facets, multi-view overlays, etc.
 
-| 组合 | 类型 | 用途 |
+| Composition | Type | Purpose |
 |------|------|------|
-| 基础视图 | `view` | 单视图容器，组合多个 mark |
-| 分面图 | `facetRect` | 按维度拆分矩形网格多图 |
-| 圆形分面 | `facetCircle` | 按维度拆分环形多图 |
-| 重复矩阵 | `repeatMatrix` | 多变量组合矩阵图 |
-| 空间层叠 | `spaceLayer` | 多图层叠加 |
-| 空间弹性 | `spaceFlex` | 弹性布局 |
-| 时间关键帧 | `timingKeyframe` | 动画序列 |
-| 地理视图 | `geoView` | 地理坐标系视图 |
-| 地图 | `geoPath` | 地理路径绘制 |
+| Basic View | `view` | Single view container, combining multiple marks |
+| Facet Rect | `facetRect` | Split rectangular grid multi-chart by dimension |
+| Facet Circle | `facetCircle` | Split circular multi-chart by dimension |
+| Repeat Matrix | `repeatMatrix` | Multi-variable combination matrix chart |
+| Space Layer | `spaceLayer` | Multi-layer overlay |
+| Space Flex | `spaceFlex` | Flexible layout |
+| Timing Keyframe | `timingKeyframe` | Animation sequence |
+| Geo View | `geoView` | Geographic coordinate system view |
+| Geo Path | `geoPath` | Geographic path rendering |
 
-> **详细文档**: [view](references/compositions/g2-comp-view.md) | [facetRect](references/compositions/g2-comp-facet-rect.md) | [facetCircle](references/compositions/g2-comp-facet-circle.md) | [repeatMatrix](references/compositions/g2-comp-repeat-matrix.md) | [spaceLayer](references/compositions/g2-comp-space-layer.md) | [spaceFlex](references/compositions/g2-comp-space-flex.md) | [timingKeyframe](references/compositions/g2-comp-timing-keyframe.md) | [geoView](references/compositions/g2-comp-geoview.md) | [地图](references/compositions/g2-comp-geo-map.md)
+> **Detailed Documentation**: [view](references/compositions/g2-comp-view.md) | [facetRect](references/compositions/g2-comp-facet-rect.md) | [facetCircle](references/compositions/g2-comp-facet-circle.md) | [repeatMatrix](references/compositions/g2-comp-repeat-matrix.md) | [spaceLayer](references/compositions/g2-comp-space-layer.md) | [spaceFlex](references/compositions/g2-comp-space-flex.md) | [timingKeyframe](references/compositions/g2-comp-timing-keyframe.md) | [geoView](references/compositions/g2-comp-geoview.md) | [geoPath](references/compositions/g2-comp-geo-map.md)
 
 ---
 
 ## 14. Themes / 主题
 
-主题定义图表的整体视觉风格，包括颜色、字体、间距等。
+Themes define the overall visual style of a chart, including colors, fonts, spacing, and more.
 
-> **详细文档**: [内置主题](references/themes/g2-theme-builtin.md) | [自定义主题](references/themes/g2-theme-custom.md)
-
----
-
-## 15. Palettes / 调色板
-
-调色板定义颜色序列，用于分类数据或连续数据的颜色映射。
-
-> **详细文档**: [category10](references/palette/g2-palette-category10.md) | [category20](references/palette/g2-palette-category20.md)
+> **Detailed Documentation**: [Built-in Themes](references/themes/g2-theme-builtin.md) | [Custom Themes](references/themes/g2-theme-custom.md)
 
 ---
 
-## 16. Animations / 动画
+## 15. Palettes
 
-动画增强图表的表现力，支持入场、更新、退场动画配置。
+Palettes define color sequences, used for color mapping of categorical or continuous data.
 
-**⚠️ 重要规则**：G2 底层自带默认动画效果，用户没有明确要求动画时**不要**添加 `animate` 配置。只有用户明确描述了动画需求（如"渐入动画"、"波浪入场"等）时，才查阅参考文档添加对应的 animate 配置。
-
-> **详细文档**: [动画介绍](references/animations/g2-animation-intro.md) | [动画类型](references/animations/g2-animation-types.md) | [关键帧动画](references/animations/g2-animation-keyframe.md)
+> **Detailed Documentation**: [category10](references/palette/g2-palette-category10.md) | [category20](references/palette/g2-palette-category20.md)
 
 ---
 
-## 17. Label Transforms / 标签变换
+## 16. Animations
 
-标签变换用于处理标签重叠、溢出等问题，提升标签可读性。
+Animations enhance the expressiveness of charts, supporting entrance, update, and exit animation configurations.
 
-| 变换 | 类型 | 用途 |
+**⚠️ Important Rule**: G2 comes with default animation effects at the underlying level. **Do not** add `animate` configurations unless the user explicitly requests animations. Only when the user clearly describes animation requirements (e.g., "fade-in animation", "wave entrance", etc.) should you refer to the documentation and add the corresponding `animate` configuration.
+
+> **Detailed Documentation**: [Animation Introduction](references/animations/g2-animation-intro.md) | [Animation Types](references/animations/g2-animation-types.md) | [Keyframe Animations](references/animations/g2-animation-keyframe.md)
+
+---
+
+## 17. Label Transforms
+
+Label transforms are used to handle issues such as label overlap and overflow, improving label readability.
+
+| Transform | Type | Purpose |
 |------|------|------|
-| 溢出隐藏 | `overflowHide` | 超出区域的标签隐藏 |
-| 重叠隐藏 | `overlapHide` | 重叠标签自动隐藏 |
-| 重叠偏移 | `overlapDodgeY` | 重叠标签 Y 方向偏移 |
-| 对比反转 | `contrastReverse` | 标签颜色自动反转以保证对比度 |
-| 溢出调整 | `exceedAdjust` | 超出画布边界的标签位置调整 |
-| 溢出描边 | `overflowStroke` | 溢出区域添加描边标记 |
+| Overflow Hide | `overflowHide` | Hide labels that exceed the area |
+| Overlap Hide | `overlapHide` | Automatically hide overlapping labels |
+| Overlap Dodge Y | `overlapDodgeY` | Offset overlapping labels in the Y direction |
+| Contrast Reverse | `contrastReverse` | Automatically reverse label colors to ensure contrast |
+| Exceed Adjust | `exceedAdjust` | Adjust the position of labels that exceed the canvas boundaries |
+| Overflow Stroke | `overflowStroke` | Add stroke marks to overflowing areas |
 
-> **详细文档**: [overflowHide](references/label-transform/g2-label-transform-overflow-hide.md) | [overlapHide](references/label-transform/g2-label-transform-overlap-hide.md) | [overlapDodgeY](references/label-transform/g2-label-transform-overlap-dodge-y.md) | [contrastReverse](references/label-transform/g2-label-transform-contrast-reverse.md) | [exceedAdjust](references/label-transform/g2-label-transform-exceed-adjust.md) | [overflowStroke](references/label-transform/g2-label-transform-overflow-stroke.md)
+> **Detailed Documentation**: [overflowHide](references/label-transform/g2-label-transform-overflow-hide.md) | [overlapHide](references/label-transform/g2-label-transform-overlap-hide.md) | [overlapDodgeY](references/label-transform/g2-label-transform-overlap-dodge-y.md) | [contrastReverse](references/label-transform/g2-label-transform-contrast-reverse.md) | [exceedAdjust](references/label-transform/g2-label-transform-exceed-adjust.md) | [overflowStroke](references/label-transform/g2-label-transform-overflow-stroke.md)
 
 ---
-
 
 ## 18. Patterns / 模式
 
-模式是常见场景的最佳实践，包含迁移指南、性能优化、响应式适配等。
-
-### 18.1 迁移指南 / Migration (v4 → v5)
+Patterns are best practices for common scenarios, including migration guides, performance optimization, responsive adaptation, and more.
+### 18.1 Migration Guide / Migration (v4 → v5)
 
 | v4 (Deprecated) | v5 (Correct) |
 |-----------------|--------------|
@@ -1042,26 +1039,26 @@ chart.options({
 | `.adjust('dodge')` | `transform: [{ type: 'dodgeX' }]` |
 | `label: {}` | `labels: [{}]` |
 
-> **详细文档**: [v4 → v5 迁移](references/patterns/g2-pattern-v4-to-v5.md)
+> **Detailed Documentation**: [v4 → v5 Migration](references/patterns/g2-pattern-v4-to-v5.md)
 
-### 18.2 性能优化 / Performance
+### 18.2 Performance Optimization / Performance
 
-数据预聚合、LTTB 降采样、Canvas 渲染器确认、高频实时数据节流更新。
+Data pre-aggregation, LTTB downsampling, Canvas renderer confirmation, high-frequency real-time data throttling updates.
 
-| 场景 | 数据量 | 建议方案 |
-|------|--------|---------|
-| 折线图 | < 1,000 点 | 直接渲染 |
-| 折线图 | 1,000 ~ 10,000 点 | 降采样到 500 点以内 |
-| 折线图 | > 10,000 点 | 后端聚合 + 时间范围过滤 |
-| 散点图 | < 5,000 点 | 直接渲染 |
-| 散点图 | 5,000 ~ 50,000 点 | Canvas 渲染 + 降采样 |
+| Scenario | Data Volume | Recommended Solution |
+|----------|------------------|---------------------|
+| Line Chart | < 1,000 points | Direct rendering |
+| Line Chart | 1,000 ~ 10,000 points | Downsample to within 500 points |
+| Line Chart | > 10,000 points | Backend aggregation + time range filtering |
+| Scatter Chart | < 5,000 points | Direct rendering |
+| Scatter Chart | 5,000 ~ 50,000 points | Canvas rendering + downsampling |
 
-> **详细文档**: [性能优化](references/patterns/g2-pattern-performance.md)
+> **Detailed Documentation**: [Performance Optimization](references/patterns/g2-pattern-performance.md)
 
-### 18.3 响应式适配 / Responsive
+### 18.3 Responsive
 
-autoFit 自适应、ResizeObserver 动态调整、移动端字体/边距适配。
+autoFit adaptive, ResizeObserver dynamic adjustment, mobile font/margin adaptation.
 
-> **详细文档**: [响应式适配](references/patterns/g2-pattern-responsive.md)
+> **Detailed Documentation**: [Responsive Adaptation](references/patterns/g2-pattern-responsive.md)
 
 ---

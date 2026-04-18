@@ -1,32 +1,29 @@
+
+
 ---
 id: "g2-animation-keyframe"
-title: "G2 关键帧动画（timingKeyframe）"
+title: "G2 Keyframe Animation (timingKeyframe)"
 description: |
-  timingKeyframe 是 G2 v5 的组合类型，将多个图表视图按时序播放，
-  实现数据故事讲述（data storytelling）效果。
-  每个子视图是一个"关键帧"，系统自动在帧间插值过渡，支持形变动画（morphing）。
-
+  timingKeyframe is a composition type in G2 v5 that plays multiple chart views sequentially to achieve a data storytelling effect.
+  Each sub-view is a 'keyframe', and the system automatically interpolates transitions between frames, supporting morphing animation.
 library: "g2"
 version: "5.x"
 category: "animations"
 tags:
   - "timingKeyframe"
-  - "关键帧"
-  - "数据故事"
+  - "keyframe"
+  - "data story"
   - "keyframe"
   - "morphing"
-  - "动画"
+  - "animation"
   - "composition"
-
 related:
   - "g2-animation-intro"
   - "g2-core-view-composition"
-
 use_cases:
-  - "演示数据如何从一种图表类型变为另一种（柱状图 → 折线图）"
-  - "展示数据随时间的演变过程"
-  - "数据新闻和可视化故事讲述"
-
+  - "Demonstrate how data changes from one chart type to another (bar chart → line chart)"
+  - "Show the evolution of data over time"
+  - "Data journalism and visual storytelling"
 difficulty: "advanced"
 completeness: "full"
 created: "2025-03-24"
@@ -34,9 +31,7 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/composition/timing-keyframe"
 ---
-
-## 最小可运行示例（柱状图 → 折线图）
-
+## Minimal Runnable Example (Bar Chart → Line Chart)
 ```javascript
 import { Chart } from '@antv/g2';
 
@@ -48,23 +43,26 @@ const data = [
   { month: 'May', value: 110 },
 ];
 
-const chart = new Chart({ container: 'container', width: 640, height: 480 });
+const chart = new Chart({
+  container: 'container',
+  width: 640,
+  height: 480,
+});
 
 chart.options({
-  type: 'timingKeyframe',   // 关键帧组合类型
-  duration: 1000,           // 每帧过渡时长（毫秒）
-  iterationCount: 2,        // 循环次数（'infinite' 为无限循环）
-  direction: 'alternate',   // 'normal' | 'reverse' | 'alternate' | 'reverse-alternate'
+  type: 'timingKeyframe', // Keyframe composition type
+  duration: 1000, // Transition duration per frame (ms)
+  iterationCount: 2, // Iteration count ('infinite' for infinite loop)
+  direction: 'alternate', // 'normal' | 'reverse' | 'alternate' | 'reverse-alternate'
   easing: 'ease-in-out-sine',
-  children: [
-    // 关键帧 1：柱状图
+  children: [ // Keyframe 1: Bar Chart
     {
       type: 'interval',
       data,
       encode: { x: 'month', y: 'value', color: 'month' },
-      axis: { y: { title: '月份销量' } },
+      axis: { y: { title: 'Monthly Sales' } },
     },
-    // 关键帧 2：折线图（自动在两者之间插值动画）
+    // Keyframe 2: Line Chart (automatically interpolates animation between the two)
     {
       type: 'line',
       data,
@@ -76,9 +74,7 @@ chart.options({
 
 chart.render();
 ```
-
-## 多关键帧（数据更新动画）
-
+## Multiple Keyframes (Data Update Animation)
 ```javascript
 chart.options({
   type: 'timingKeyframe',
@@ -86,64 +82,59 @@ chart.options({
   iterationCount: 'infinite',
   direction: 'alternate',
   children: [
-    // 关键帧 1：2022 年数据
+    // Keyframe 1: 2022 Data
     {
       type: 'interval',
-       data2022,
+      data: data2022,
       encode: { x: 'city', y: 'gdp', color: 'city' },
-      title: '2022 年 GDP',
+      title: '2022 GDP',
     },
-    // 关键帧 2：2023 年数据（相同字段，自动形变过渡）
+    // Keyframe 2: 2023 Data (same fields, automatic morphing transition)
     {
       type: 'interval',
       data: data2023,
       encode: { x: 'city', y: 'gdp', color: 'city' },
-      title: '2023 年 GDP',
+      title: '2023 GDP',
     },
   ],
 });
 ```
-
-## 配置项
-
+## Configuration Options
 ```javascript
 chart.options({
   type: 'timingKeyframe',
-  duration: 1000,                  // 关键帧间过渡时长（毫秒），默认 1000
-  iterationCount: 1,               // 循环次数，默认 1；'infinite' 无限循环
-  direction: 'normal',             // 播放方向：
-                                   //   'normal' - 正向
-                                   //   'reverse' - 反向
-                                   //   'alternate' - 正反交替
-                                   //   'reverse-alternate' - 反正交替
-  easing: 'ease-in-out-sine',     // 缓动函数，默认 'ease-in-out-sine'
-  children: [/* 各关键帧视图配置 */],
+  duration: 1000, // Transition duration between keyframes (ms), default 1000
+  iterationCount: 1, // Iteration count, default 1; 'infinite' for infinite loop
+  direction: 'normal', // Playback direction:
+  // 'normal' - Forward
+  // 'reverse' - Reverse
+  // 'alternate' - Alternating forward and reverse
+  // 'reverse-alternate' - Alternating reverse and forward
+  easing: 'ease-in-out-sine', // Easing function, default 'ease-in-out-sine'
+  children: [/* Configuration for each keyframe view */],
 });
 ```
-
-## 常见错误与修正
-
-### 错误 1：children 帧的 encode 字段名不一致——无法形变
+## Common Errors and Fixes
+### Error 1: Inconsistent encode field names in children frames — Morphing fails
 ```javascript
-// ❌ 字段名不一致，无法识别对应关系，形变效果丢失
+// ❌ Field names inconsistent, correspondence cannot be identified, morphing effect lost
 children: [
-  { type: 'interval', encode: { x: 'month', y: 'sales' } },   // sales
-  { type: 'line',     encode: { x: 'month', y: 'revenue' } }, // revenue ❌ 名字不同
-]
+  { type: 'interval', encode: { x: 'month', y: 'sales' } }, // sales
+  { type: 'line', encode: { x: 'month', y: 'revenue' } }, // revenue ❌ Different names
+];
 
-// ✅ 相同字段名才能实现平滑形变
+// ✅ Same field names required for smooth morphing
 children: [
   { type: 'interval', encode: { x: 'month', y: 'value' } },
-  { type: 'line',     encode: { x: 'month', y: 'value' } },  // ✅ 同名字段
-]
+  { type: 'line', encode: { x: 'month', y: 'value' } }, // ✅ Same named fields
+];
 ```
-
-### 错误 2：iterationCount 写成数字字符串
+### Error 2: iterationCount written as a number
 ```javascript
-// ❌ 错误：应该是字符串 'infinite'，不是数字
-chart.options({ iterationCount: Infinity });  // ❌
+// ❌ Error: should be string 'infinite', not number
+chart.options({ iterationCount: Infinity }); // ❌
 
-// ✅ 正确
-chart.options({ iterationCount: 'infinite' });  // ✅
-chart.options({ iterationCount: 3 });           // ✅ 或具体数字
+// ✅ Correct
+chart.options({ iterationCount: 'infinite' }); // ✅
+chart.options({ iterationCount: 3 }); // ✅ Or specific number
 ```

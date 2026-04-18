@@ -1,11 +1,11 @@
 ---
 id: "g2-animation-types"
-title: "G2 内置动画类型详解（fadeIn/scaleIn/growIn/pathIn/waveIn/zoomIn/morphing）"
+title: "Detailed Explanation of G2 Built-in Animation Types (fadeIn/scaleIn/growIn/pathIn/waveIn/zoomIn/morphing)"
 description: |
-  G2 v5 内置多种动画类型，每种适用于不同的 Mark 和坐标系：
-  fadeIn/Out（渐显渐隐）、scaleInX/Y（缩放展开）、growInX/Y（生长入场）、
-  pathIn（路径绘制）、waveIn（极坐标波浪入场）、zoomIn/Out（缩放点入场）、morphing（形变过渡）。
-  通过 animate.enter.type 等配置使用。
+  G2 v5 includes multiple built-in animation types, each suitable for different Marks and coordinate systems:
+  fadeIn/Out (fade in/out), scaleInX/Y (scale in along X/Y axis), growInX/Y (grow in along X/Y axis),
+  pathIn (path drawing), waveIn (polar wave in), zoomIn/Out (zoom in/out), morphing (shape transition).
+  These animations can be configured using animate.enter.type and similar settings.
 
 library: "g2"
 version: "5.x"
@@ -21,17 +21,17 @@ tags:
   - "zoomIn"
   - "zoomOut"
   - "morphing"
-  - "动画类型"
+  - "animation types"
 
 related:
   - "g2-animation-intro"
   - "g2-animation-keyframe"
 
 use_cases:
-  - "按图表类型选择最合适的入场动画"
-  - "折线图路径绘制动画"
-  - "饼图/玫瑰图波浪入场"
-  - "数据更新时的形变过渡"
+  - "Selecting the most appropriate entrance animation based on chart type"
+  - "Line chart path drawing animation"
+  - "Pie/rose chart wave entrance"
+  - "Shape transition during data updates"
 
 difficulty: "beginner"
 completeness: "full"
@@ -41,28 +41,28 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/animate"
 ---
 
-## 动画类型与适用场景
+## Animation Types and Applicable Scenarios
 
-| 动画名 | 方向 | 最适合 Mark | 特点 |
-|--------|------|------------|------|
-| `fadeIn` | - | 所有 Mark | 渐显，通用，最安全 |
-| `fadeOut` | - | 所有 Mark | 渐隐，退场通用 |
-| `scaleInX` | X 轴 | interval（柱状图） | 从左上角向右扩展 |
-| `scaleInY` | Y 轴 | interval（柱状图） | 从底部向上缩放 |
-| `scaleOutX` | X 轴 | interval | scaleInX 的退场版本 |
-| `scaleOutY` | Y 轴 | interval | scaleInY 的退场版本 |
-| `growInX` | X 轴 | line, area, interval（直角坐标） | 裁剪从左向右生长 |
-| `growInY` | Y 轴 | interval, area（直角坐标） | 裁剪从底部向上生长；**极坐标/helix 禁用** |
-| `pathIn` | 路径 | line, path, link | 路径线条逐步绘制 |
-| `waveIn` | 波浪 | interval（极坐标） | 极坐标专用扇形展开 |
-| `zoomIn` | 中心 | point, text | 从中心缩放放大 |
-| `zoomOut` | 中心 | point, text | 向中心缩小消失 |
-| `morphing` | 形变 | 所有 Mark | 形状平滑变形过渡 |
+| Animation Name | Direction | Best for Mark | Features |
+|----------------|-----------|---------------|----------|
+| `fadeIn` | - | All Marks | Fade in, universal, safest |
+| `fadeOut` | - | All Marks | Fade out, universal exit |
+| `scaleInX` | X-axis | interval (bar chart) | Expands from top-left to right |
+| `scaleInY` | Y-axis | interval (bar chart) | Scales up from bottom to top |
+| `scaleOutX` | X-axis | interval | Exit version of scaleInX |
+| `scaleOutY` | Y-axis | interval | Exit version of scaleInY |
+| `growInX` | X-axis | line, area, interval (Cartesian coordinates) | Clips and grows from left to right |
+| `growInY` | Y-axis | interval, area (Cartesian coordinates) | Clips and grows from bottom to top; **Disabled for polar/helix coordinates** |
+| `pathIn` | Path | line, path, link | Path lines drawn step by step |
+| `waveIn` | Wave | interval (polar coordinates) | Polar-specific sector expansion |
+| `zoomIn` | Center | point, text | Zooms in from the center |
+| `zoomOut` | Center | point, text | Zooms out and disappears into the center |
+| `morphing` | Morphing | All Marks | Smooth shape transition |
 
-## fadeIn / fadeOut（渐显渐隐）
+## fadeIn / fadeOut
 
 ```javascript
-// 最通用的动画，适合任何 mark
+// The most universal animation, suitable for any mark
 chart.options({
   type: 'point',
   data,
@@ -74,46 +74,46 @@ chart.options({
 });
 ```
 
-## scaleInY / growInY（柱状图入场）
+## scaleInY / growInY (Bar Chart Entry)
 
 ```javascript
-// scaleInY：缩放展开（有缩放感）
-// growInY：裁剪生长（有"从地面长出来"的感觉，更自然）
+// scaleInY: Scale expansion (with a scaling effect)
+// growInY: Crop growth (with a "growing from the ground" feel, more natural)
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre', y: 'sold' },
   animate: {
-    // 方式一：缩放
+    // Method 1: Scaling
     enter: { type: 'scaleInY', duration: 800, easing: 'ease-out' },
-    // 方式二：生长（推荐）
+    // Method 2: Growth (recommended)
     // enter: { type: 'growInY', duration: 800 },
   },
 });
 ```
 
-## pathIn（折线图路径绘制）
+## pathIn (Line Chart Path Drawing)
 
 ```javascript
-// pathIn：折线/路径从左向右逐步绘制
+// pathIn: Line/path gradually drawn from left to right
 chart.options({
   type: 'line',
   data: timeSeriesData,
   encode: { x: 'date', y: 'value', color: 'type' },
   animate: {
     enter: {
-      type: 'pathIn',      // 路径逐步绘制
+      type: 'pathIn',      // Path drawn gradually
       duration: 1500,
-      easing: 'linear',    // 匀速绘制效果更佳
+      easing: 'linear',    // Linear easing for better effect
     },
   },
 });
 ```
 
-## waveIn（极坐标/饼图专用）
+## waveIn (Exclusive to Polar/Pie Charts)
 
 ```javascript
-// waveIn：从外圈向内的波浪扫入，专为极坐标设计
+// waveIn: Wave sweep from the outer circle to the inner, specifically designed for polar coordinates
 chart.options({
   type: 'interval',
   data,
@@ -122,17 +122,17 @@ chart.options({
   coordinate: { type: 'theta', outerRadius: 0.8 },
   animate: {
     enter: {
-      type: 'waveIn',       // 极坐标专用
+      type: 'waveIn',       // Exclusive to polar coordinates
       duration: 1000,
     },
   },
 });
 ```
 
-## zoomIn / zoomOut（点图缩放）
+## zoomIn / zoomOut (Point Chart Zoom)
 
 ```javascript
-// zoomIn：散点从中心缩放出现
+// zoomIn: Scatter points zoom in from the center
 chart.options({
   type: 'point',
   data: scatterData,
@@ -144,23 +144,23 @@ chart.options({
 });
 ```
 
-## morphing（形变更新动画）
+## Morphing (Shape Transformation Animation)
 
 ```javascript
-// morphing：数据更新时图形平滑变形
+// morphing: Smooth shape transformation during data updates
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre', y: 'sold' },
   animate: {
     update: {
-      type: 'morphing',    // 数据更新时形变过渡
+      type: 'morphing',    // Shape transformation transition during data updates
       duration: 600,
     },
   },
 });
 
-// 也可以在 timingKeyframe 中自动触发形变
+// Morphing can also be automatically triggered in timingKeyframe
 chart.options({
   type: 'timingKeyframe',
   children: [
@@ -169,7 +169,6 @@ chart.options({
   ],
 });
 ```
-
 ## 按图表类型推荐的动画
 
 ```javascript

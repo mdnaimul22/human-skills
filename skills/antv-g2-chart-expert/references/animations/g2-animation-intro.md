@@ -1,32 +1,30 @@
+
+
 ---
 id: "g2-animation-intro"
-title: "G2 动画系统总览（animate 配置）"
+title: "G2 Animation System Overview (animate configuration)"
 description: |
-  G2 v5 动画系统通过 animate 属性配置，支持入场（enter）、更新（update）、退场（exit）三种时机。
-  内置动画类型包括 fadeIn/Out、scaleInX/Y、growInX/Y、waveIn、zoomIn/Out、morphing、pathIn。
-  每种动画可配置 duration（时长）、delay（延迟）、easing（缓动函数）。
-
+ The G2 v5 animation system is configured via the animate property, supporting three timing points: enter, update, and exit.
+ Built-in animation types include fadeIn/Out, scaleInX/Y, growInX/Y, waveIn, zoomIn/Out, morphing, pathIn.
+ Each animation can be configured with duration (length), delay (latency), easing (easing function).
 library: "g2"
 version: "5.x"
 category: "animations"
 tags:
-  - "animation"
-  - "动画"
-  - "animate"
-  - "入场动画"
-  - "fadeIn"
-  - "scaleInX"
-  - "waveIn"
-
+- "animation"
+- "animation"
+- "animate"
+- "enter animation"
+- "fadeIn"
+- "scaleInX"
+- "waveIn"
 related:
-  - "g2-animation-keyframe"
-  - "g2-core-chart-init"
-
+- "g2-animation-keyframe"
+- "g2-core-chart-init"
 use_cases:
-  - "图表首次渲染时添加入场动画提升视觉体验"
-  - "数据更新时添加过渡动画"
-  - "退场时添加淡出效果"
-
+- "Add enter animation when chart is first rendered to enhance visual experience"
+- "Add transition animation when data updates"
+- "Add fade out effect when exiting"
 difficulty: "beginner"
 completeness: "full"
 created: "2025-03-24"
@@ -34,32 +32,30 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/animate"
 ---
-
-## 内置动画类型速查
-
-| 动画名 | 效果 | 适合场景 |
+## Quick Reference for Built-in Animation Types
+| Animation Name | Effect | Suitable Scenario |
 |--------|------|---------|
-| `fadeIn` | 从透明到不透明 | 通用入场 |
-| `fadeOut` | 从不透明到透明 | 通用退场 |
-| `scaleInX` | 从 X 轴起点缩放展开 | 柱状图入场 |
-| `scaleInY` | 从 Y 轴底部缩放展开 | 柱状图入场（竖向） |
-| `scaleOutX` | 向 X 轴收缩消失 | 柱状图退场 |
-| `scaleOutY` | 向 Y 轴收缩消失 | 柱状图退场 |
-| `growInX` | 从左向右生长 | 条形图、折线图入场 |
-| `growInY` | 从下向上生长 | 柱状图入场 |
-| `waveIn` | 波浪扫描入场 | 极坐标图（玫瑰图、饼图） |
-| `zoomIn` | 从中心缩放放大 | 点图入场 |
-| `zoomOut` | 向中心缩小消失 | 点图退场 |
-| `pathIn` | 路径逐步绘制 | 折线图、路径图 |
-| `morphing` | 形状变形过渡 | 图表类型切换 |
-
-## 最小可运行示例
-
+| `fadeIn` | From transparent to opaque | General enter |
+| `fadeOut` | From opaque to transparent | General exit |
+| `scaleInX` | Scale expand from X axis start | Bar chart enter |
+| `scaleInY` | Scale expand from Y axis bottom | Bar chart enter (vertical) |
+| `scaleOutX` | Shrink disappear towards X axis | Bar chart exit |
+| `scaleOutY` | Shrink disappear towards Y axis | Bar chart exit |
+| `growInX` | Grow from left to right | Bar chart, Line chart enter |
+| `growInY` | Grow from bottom to top | Bar chart enter |
+| `waveIn` | Wave scan enter | Polar chart (Rose chart, Pie chart) |
+| `zoomIn` | Scale up from center | Point chart enter |
+| `zoomOut` | Shrink disappear towards center | Point chart exit |
+| `pathIn` | Path drawing step by step | Line chart, Path chart |
+| `morphing` | Shape deformation transition | Chart type switch |
+## Minimal Runnable Example
 ```javascript
 import { Chart } from '@antv/g2';
-
-const chart = new Chart({ container: 'container', width: 640, height: 480 });
-
+const chart = new Chart({
+  container: 'container',
+  width: 640,
+  height: 480
+});
 chart.options({
   type: 'interval',
   data: [
@@ -68,40 +64,45 @@ chart.options({
     { genre: 'Action', sold: 120 },
     { genre: 'RPG', sold: 98 },
   ],
-  encode: { x: 'genre', y: 'sold', color: 'genre' },
+  encode: {
+    x: 'genre',
+    y: 'sold',
+    color: 'genre'
+  },
   animate: {
     enter: {
-      type: 'growInY',    // 入场动画：从下向上生长
-      duration: 800,      // 持续时间（毫秒）
-      delay: 0,           // 延迟
-      easing: 'ease-out', // 缓动函数
+      type: 'growInY', // Enter animation: grow from bottom to top
+      duration: 800, // Duration (milliseconds)
+      delay: 0, // Delay
+      easing: 'ease-out', // Easing function
     },
   },
 });
-
 chart.render();
 ```
-
-## 配置动画的三个时机
-
+## Three Timing Points for Configuring Animations
 ```javascript
 chart.options({
   type: 'interval',
   data,
-  encode: { x: 'x', y: 'y', color: 'type' },
+  encode: {
+    x: 'x',
+    y: 'y',
+    color: 'type'
+  },
   animate: {
-    // 入场：图表首次渲染时
+    // Enter: When chart is first rendered
     enter: {
       type: 'scaleInY',
       duration: 1000,
       easing: 'ease-out-bounce',
     },
-    // 更新：数据变化时
+    // Update: When data changes
     update: {
       type: 'morphing',
       duration: 500,
     },
-    // 退场：图元被移除时
+    // Exit: When elements are removed
     exit: {
       type: 'fadeOut',
       duration: 300,
@@ -109,68 +110,99 @@ chart.options({
   },
 });
 ```
-
-## 禁用动画
-
+## Disable Animations
 ```javascript
-// 禁用所有动画
+// Disable all animations
 chart.options({
   animate: false,
 });
-
-// 仅禁用入场动画
+// Disable only enter animation
 chart.options({
   animate: {
     enter: false,
   },
 });
 ```
-
-## 常见动画组合推荐
-
+## Recommended Common Animation Combinations
 ```javascript
-// 柱状图：growInY 入场
-animate: { enter: { type: 'growInY', duration: 800 } }
-
-// 折线图：pathIn 入场（路径绘制效果）
-animate: { enter: { type: 'pathIn', duration: 1200 } }
-
-// 饼图（极坐标）：waveIn 入场
-animate: { enter: { type: 'waveIn', duration: 1000 } }
-
-// 散点图：zoomIn 入场
-animate: { enter: { type: 'zoomIn', duration: 600 } }
-
-// 通用淡入
-animate: { enter: { type: 'fadeIn', duration: 500 } }
+// Bar chart: growInY enter
+animate: {
+  enter: {
+    type: 'growInY',
+    duration: 800
+  }
+}
+// Line chart: pathIn enter (path drawing effect)
+animate: {
+  enter: {
+    type: 'pathIn',
+    duration: 1200
+  }
+}
+// Pie chart (polar): waveIn enter
+animate: {
+  enter: {
+    type: 'waveIn',
+    duration: 1000
+  }
+}
+// Scatter plot: zoomIn enter
+animate: {
+  enter: {
+    type: 'zoomIn',
+    duration: 600
+  }
+}
+// General fade in
+animate: {
+  enter: {
+    type: 'fadeIn',
+    duration: 500
+  }
+}
 ```
-
-## 常见错误与修正
-
-### 错误 1：animate.enter 写成字符串
+## Common Errors and Corrections
+### Error 1: animate.enter written as string
 ```javascript
-// ❌ 错误：enter 不是字符串，是对象
+// ❌ Error: enter is not a string, it is an object
 chart.options({
-  animate: { enter: 'fadeIn' },  // ❌
+  animate: {
+    enter: 'fadeIn', // ❌
+  },
 });
-
-// ✅ 正确
+// ✅ Correct
 chart.options({
-  animate: { enter: { type: 'fadeIn', duration: 600 } },  // ✅
+  animate: {
+    enter: {
+      type: 'fadeIn',
+      duration: 600
+    }, // ✅
+  },
 });
 ```
-
-### 错误 2：在极坐标图用非极坐标动画
+### Error 2: Using non-polar animations in polar charts
 ```javascript
-// ❌ scaleInX/Y 在极坐标中效果不对
+// ❌ scaleInX/Y effect is incorrect in polar coordinates
 chart.options({
-  coordinate: { type: 'theta' },
-  animate: { enter: { type: 'scaleInY' } },  // ❌ 饼图应该用 waveIn
+  coordinate: {
+    type: 'theta'
+  },
+  animate: {
+    enter: {
+      type: 'scaleInY'
+    }, // ❌ Pie chart should use waveIn
+  },
 });
-
-// ✅ 极坐标图推荐 waveIn
+// ✅ Polar charts recommend waveIn
 chart.options({
-  coordinate: { type: 'theta' },
-  animate: { enter: { type: 'waveIn', duration: 1000 } },  // ✅
+  coordinate: {
+    type: 'theta'
+  },
+  animate: {
+    enter: {
+      type: 'waveIn',
+      duration: 1000
+    }, // ✅
+  },
 });
 ```
