@@ -33,5 +33,5 @@ upstreams:
 
   - name: chart-visualization-skills
     path: "{REPO_ROOT}/.chart-visualization-skills"
-    url: "https://github.com/antvis/chart-visualization-skills.git"
+    url: "https://github.com/mdnaimul22/chart-visualization-skills.git"
     pull: true
