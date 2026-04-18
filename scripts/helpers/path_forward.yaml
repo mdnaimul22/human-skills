@@ -30,7 +30,7 @@ forwards:
     to:   "{REPO_ROOT}/skills/python-testing"
     enabled: true
 
-# ui-ux-pro-max-skill /home/openscore/a0/usr/projects/human-skills/.ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max
+# ui-ux-pro-max-skill
   - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max"
     to: "{REPO_ROOT}/skills/ui-ux-pro-max" 
     enabled: true
@@ -39,12 +39,121 @@ forwards:
     to: "{REPO_ROOT}/skills/ui-ux-pro-max"
     enabled: true
 
+# .claude-skills
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/epic-design"
+    to: "{REPO_ROOT}/skills/epic-design" 
+    enabled: true
 
-  # ── Add more forwarding rules below ───────────────────────────────────────
-  # - from: "{REPO_ROOT}/.claude-skills/skills/some-skill"
-  #   to:   "{REPO_ROOT}/skills/some-skill"
-  #   enabled: true
-  #
-  # - from: "{REPO_ROOT}/.superpowers/skills/some-other-skill"
-  #   to:   "{REPO_ROOT}/skills/some-other-skill"
-  #   enabled: true
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-architect"
+    to: "{REPO_ROOT}/skills/senior-architect"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-backend"
+    to: "{REPO_ROOT}/skills/senior-backend"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-data-engineer"
+    to: "{REPO_ROOT}/skills/senior-data-engineer"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-data-scientist"
+    to: "{REPO_ROOT}/skills/senior-data-scientist"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-devops"
+    to: "{REPO_ROOT}/skills/senior-devops"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-frontend"
+    to: "{REPO_ROOT}/skills/senior-frontend"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-fullstack"
+    to: "{REPO_ROOT}/skills/senior-fullstack"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-ml-engineer"
+    to: "{REPO_ROOT}/skills/senior-ml-engineer"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-qa"
+    to: "{REPO_ROOT}/skills/senior-qa"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-secops"
+    to: "{REPO_ROOT}/skills/senior-secops"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-security"
+    to: "{REPO_ROOT}/skills/senior-security"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/tdd-guide"
+    to: "{REPO_ROOT}/skills/tdd-guide"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/api-design-reviewer"
+    to: "{REPO_ROOT}/skills/api-design-reviewer"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/api-test-suite-builder"
+    to: "{REPO_ROOT}/skills/api-test-suite-builder"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/ci-cd-pipeline-builder"
+    to: "{REPO_ROOT}/skills/ci-cd-pipeline-builder"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/data-quality-auditor"
+    to: "{REPO_ROOT}/skills/data-quality-auditor"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/database-designer"
+    to: "{REPO_ROOT}/skills/database-designer"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/database-schema-designer"
+    to: "{REPO_ROOT}/skills/database-schema-designer"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/git-worktree-manager"
+    to: "{REPO_ROOT}/skills/git-worktree-manager"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/docker-development"
+    to: "{REPO_ROOT}/skills/docker-development"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/pr-review-expert"
+    to: "{REPO_ROOT}/skills/pr-review-expert"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/release-manager"
+    to: "{REPO_ROOT}/skills/release-manager"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/engineering/sql-database-assistant"
+    to: "{REPO_ROOT}/skills/sql-database-assistant"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/marketing-skill"
+    to: "{REPO_ROOT}/skills/marketing-skill"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/marketing-skill/schema-markup"
+    to: "{REPO_ROOT}/skills/schema-markup"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/marketing-skill/seo-audit"
+    to: "{REPO_ROOT}/skills/seo-audit"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/marketing-skill/site-architecture"
+    to: "{REPO_ROOT}/skills/site-architecture"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.claude-skills/product-team/landing-page-generator"
+    to: "{REPO_ROOT}/skills/landing-page-generator"
+    enabled: true
+
+
