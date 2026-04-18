@@ -159,25 +159,25 @@ forwards:
 # .chart-visualization-skills
 
   - from: "{REPO_ROOT}/.chart-visualization-skills/skills/antv-g2-chart"
-    to: "{REPO_ROOT}/skills/g2-chart-generator"
+    to: "{REPO_ROOT}/skills/antv-g2-chart-expert"
     enabled: true
 
   - from: "{REPO_ROOT}/.chart-visualization-skills/skills/antv-s2-expert"
-    to: "{REPO_ROOT}/skills/s2-pivot-table-expert"
+    to: "{REPO_ROOT}/skills/antv-s2-pivot-table-expert"
     enabled: true
 
   - from: "{REPO_ROOT}/.chart-visualization-skills/skills/chart-visualization"
-    to: "{REPO_ROOT}/skills/chart-image-generator"
+    to: "{REPO_ROOT}/skills/antv-chart-image-generator"
     enabled: true
 
   - from: "{REPO_ROOT}/.chart-visualization-skills/skills/icon-retrieval"
-    to: "{REPO_ROOT}/skills/svg-icon-searcher"
+    to: "{REPO_ROOT}/skills/antv-svg-icon-searcher"
     enabled: true
 
   - from: "{REPO_ROOT}/.chart-visualization-skills/skills/infographic-creator"
-    to: "{REPO_ROOT}/skills/infographic-creator"
+    to: "{REPO_ROOT}/skills/antv-infographic-generator"
     enabled: true
 
   - from: "{REPO_ROOT}/.chart-visualization-skills/skills/narrative-text-visualization"
-    to: "{REPO_ROOT}/skills/t8-narrative-generator"
+    to: "{REPO_ROOT}/skills/antv-t8-narrative-generator"
     enabled: true

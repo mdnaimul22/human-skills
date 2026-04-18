@@ -333,12 +333,14 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     # Step 3
     logger.info("🚀 STEP 3 — Committing & pushing to own repo")
     
-    # Generate dynamic commit message
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
-    
     # Identify which upstreams actually caused modifications
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
     changed_upstreams = set(updated_upstreams)
+    
+    # Check git status to find which forwards were updated
     ok, status_out = run_git(["status", "--porcelain"], REPO_ROOT, logger)
+    
+    manual_changes = []
     if ok and status_out.strip():
         forwards = cfg["path_forward"].get("forwards", [])
         upstreams = cfg["upstream"].get("upstreams", [])
@@ -346,9 +348,11 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
         for line in status_out.strip().split("\n"):
             if len(line) < 4:
                 continue
+            # Extract path from line (e.g., " M skills/g2-chart-generator/SKILL.md")
             changed_file = line[3:].strip('"')
             changed_path = (REPO_ROOT / changed_file).resolve()
             
+            matched_upstream = False
             for rule in forwards:
                 if not rule.get("enabled", True) or not rule.get("to"):
                     continue
@@ -369,15 +373,29 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
                         try:
                             if src == up_path or src.is_relative_to(up_path):
                                 changed_upstreams.add(up.get("name", "unknown"))
+                                matched_upstream = True
+                                break
                         except AttributeError:
                             if str(src).startswith(str(up_path)):
                                 changed_upstreams.add(up.get("name", "unknown"))
+                                matched_upstream = True
+                                break
+                    if matched_upstream:
+                        break
+            
+            if not matched_upstream:
+                manual_changes.append(changed_file)
 
     if changed_upstreams:
         names = ", ".join(sorted(changed_upstreams))
         msg = f"sync: auto-update from {names} {current_time}"
+        if manual_changes:
+            logger.info(f"  ℹ️  Detected {len(manual_changes)} manual changes alongside sync")
+    elif manual_changes:
+        msg = f"chore: manual update of {len(manual_changes)} file(s) {current_time}"
+        logger.info(f"  📝 Manual changes detected: {', '.join(manual_changes[:3])}{'...' if len(manual_changes) > 3 else ''}")
     else:
-        tmpl = git_cfg.get("commit_message", "sync: auto-update [{datetime}]")
+        tmpl = git_cfg.get("commit_message", "sync: [{datetime}]")
         msg  = tmpl.replace("[{datetime}]", current_time)
         
     push_ok = push_repo(REPO_ROOT, msg, branch, logger)
