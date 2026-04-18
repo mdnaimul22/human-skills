@@ -22,7 +22,7 @@ git:
   branch: main
 
   # Commit message template — [{datetime}] will be replaced with actual time
-  commit_message: "sync: auto-update [{datetime}]"
+  commit_message: "sync: [{datetime}]"
 
 # ── Logging Configuration ─────────────────────────────────────────────────────
 logging:
