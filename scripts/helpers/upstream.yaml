@@ -30,3 +30,8 @@ upstreams:
     path: "{REPO_ROOT}/.ui-ux-pro-max-skill"
     url: "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git"
     pull: true
+
+  - name: chart-visualization-skills
+    path: "{REPO_ROOT}/.chart-visualization-skills"
+    url: "https://github.com/antvis/chart-visualization-skills.git"
+    pull: true

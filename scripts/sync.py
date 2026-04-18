@@ -335,9 +335,47 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     
     # Generate dynamic commit message
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
-    if updated_upstreams:
-        names = ", ".join(updated_upstreams)
-        msg = f"sync: auto-update from upstream {names} {current_time}"
+    
+    # Identify which upstreams actually caused modifications
+    changed_upstreams = set(updated_upstreams)
+    ok, status_out = run_git(["status", "--porcelain"], REPO_ROOT, logger)
+    if ok and status_out.strip():
+        forwards = cfg["path_forward"].get("forwards", [])
+        upstreams = cfg["upstream"].get("upstreams", [])
+        
+        for line in status_out.strip().split("\n"):
+            if len(line) < 4:
+                continue
+            changed_file = line[3:].strip('"')
+            changed_path = (REPO_ROOT / changed_file).resolve()
+            
+            for rule in forwards:
+                if not rule.get("enabled", True) or not rule.get("to"):
+                    continue
+                dst = Path(rule["to"]).resolve()
+                
+                is_match = False
+                try:
+                    if changed_path == dst or changed_path.is_relative_to(dst):
+                        is_match = True
+                except AttributeError:
+                    if str(changed_path).startswith(str(dst)):
+                        is_match = True
+                        
+                if is_match and rule.get("from"):
+                    src = Path(rule["from"]).resolve()
+                    for up in upstreams:
+                        up_path = Path(up.get("path", "")).resolve()
+                        try:
+                            if src == up_path or src.is_relative_to(up_path):
+                                changed_upstreams.add(up.get("name", "unknown"))
+                        except AttributeError:
+                            if str(src).startswith(str(up_path)):
+                                changed_upstreams.add(up.get("name", "unknown"))
+
+    if changed_upstreams:
+        names = ", ".join(sorted(changed_upstreams))
+        msg = f"sync: auto-update from {names} {current_time}"
     else:
         tmpl = git_cfg.get("commit_message", "sync: auto-update [{datetime}]")
         msg  = tmpl.replace("[{datetime}]", current_time)
