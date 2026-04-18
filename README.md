@@ -111,37 +111,58 @@ Edit `scripts/helpers/upstream.yaml`:
 ```yaml
 upstreams:
 
-  - name: some-skill-repo
-    path: /absolute/path/to/cloned/some-skill-repo
+  - name: claude-skills
+    path: "{REPO_ROOT}/.claude-skills"
+    url: "https://github.com/alirezarezvani/claude-skills.git"
+    pull: true
 
-  - name: another-repo
-    path: /absolute/path/to/cloned/another-repo
+  - name: everything-claude-code
+    path: "{REPO_ROOT}/.everything-claude-code"
+    url: "https://github.com/affaan-m/everything-claude-code.git"
+    pull: true
 ```
 
-Each entry is a locally cloned git repository. The sync script will run `git pull` in each one every day.
+Each entry defines an upstream repository. 
+- **Auto-Clone:** If the `path` does not exist locally but a `url` is provided, the script will automatically run `git clone` to download it.
+- **Auto-Pull:** The sync script will run `git pull` in each one every cycle.
+- **Freeze Updates:** Set `pull: false` if you want to freeze an upstream at its current version and stop receiving automatic updates.
 
 ### Step 4 — Define which skills to forward
 
 Edit `scripts/helpers/path_forward.yaml`:
 
 ```yaml
-forwards:
-
-  - from: /absolute/path/to/cloned/some-skill-repo/skills/skill-name
-    to:   /absolute/path/to/human-skills/skills/skill-name
+# everything-claude-code
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/pytorch-patterns"
+    to:   "{REPO_ROOT}/skills/pytorch-patterns"
     enabled: true
 
-  - from: /absolute/path/to/cloned/another-repo/skills/other-skill
-    to:   /absolute/path/to/human-skills/skills/other-skill
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-patterns"
+    to:   "{REPO_ROOT}/skills/python-patterns"
     enabled: true
 
-  # Temporarily pause a forward without deleting it:
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-testing"
+    to:   "{REPO_ROOT}/skills/python-testing"
+    enabled: true
+
+# ui-ux-pro-max-skill
+  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max"
+    to: "{REPO_ROOT}/skills/ui-ux-pro-max" 
+    enabled: true
+
+  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/README.md"
+    to: "{REPO_ROOT}/skills/ui-ux-pro-max"
+    enabled: true
+
+# Temporarily pause a forward:
   - from: /absolute/path/to/cloned/some-skill-repo/skills/unverified-skill
     to:   /absolute/path/to/human-skills/skills/unverified-skill
     enabled: false
 ```
 
 > **Rule of thumb:** Only set `enabled: true` for skills you have personally run and verified. This is what makes it a *Human Skill*.
+> 
+> **Smart Forwarding:** The daemon supports forwarding both entire directories and individual files. It uses a **Wipe-Once Merge Strategy**: multiple rules can safely copy files into the same destination directory without accidentally overwriting each other.
 
 ### Step 5 — Tune the schedule
 
@@ -185,9 +206,9 @@ screen -r human-skills-sync
 
 On every sync cycle the daemon:
 
-1. **Pulls** all upstream repos (`git pull`)
+1. **Pulls** or clones all upstream repos
 2. **Copies** the forwarded skill folders into `skills/`
-3. **Commits** all changes with a timestamped message
+3. **Commits** all changes with a dynamic timestamped message detailing exactly which upstreams were updated (e.g. `sync: auto-update from upstream ui-ux-pro-max-skill 2026-04-17`)
 4. **Pushes** to your remote repository automatically
 
 ---
@@ -198,7 +219,8 @@ The daemon watches `scripts/helpers/*.yaml` for file changes every `poll_interva
 
 | What you change | What happens automatically |
 |---|---|
-| Add a new upstream in `upstream.yaml` | Picked up on next sync cycle |
+| Add a new upstream in `upstream.yaml` | Cloned/Picked up on next sync cycle |
+| Toggle `pull: false` on an upstream | Pauses pulling updates for that specific upstream (freezing it) |
 | Add a new forward in `path_forward.yaml` | Picked up on next sync cycle |
 | Set `enabled: false` on a forward | Skipped from next sync onwards |
 | Change `run_at` in `automation.yaml` | Schedule cleared and re-registered immediately |
