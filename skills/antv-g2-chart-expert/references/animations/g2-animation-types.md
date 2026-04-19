@@ -169,84 +169,85 @@ chart.options({
   ],
 });
 ```
-## 按图表类型推荐的动画
+
+## Recommended Animations by Chart Type
 
 ```javascript
-// 柱状图（推荐 growInY）
+// Bar Chart (Recommended: growInY)
 { type: 'interval', animate: { enter: { type: 'growInY', duration: 800 } } }
 
-// 条形图（推荐 growInX）
+// Column Chart (Recommended: growInX)
 { type: 'interval', coordinate: { transform: [{ type: 'transpose' }] },
   animate: { enter: { type: 'growInX', duration: 800 } } }
 
-// 折线图（推荐 pathIn）
+// Line Chart (Recommended: pathIn)
 { type: 'line', animate: { enter: { type: 'pathIn', duration: 1200 } } }
 
-// 散点图（推荐 zoomIn 或 fadeIn）
+// Scatter Plot (Recommended: zoomIn or fadeIn)
 { type: 'point', animate: { enter: { type: 'zoomIn', duration: 400 } } }
 
-// 饼图/环形图（推荐 waveIn）
+// Pie/Donut Chart (Recommended: waveIn)
 { type: 'interval', coordinate: { type: 'theta' },
   animate: { enter: { type: 'waveIn', duration: 1000 } } }
 
-// 面积图（推荐 fadeIn 或 growInX）
+// Area Chart (Recommended: fadeIn or growInX)
 { type: 'area', animate: { enter: { type: 'fadeIn', duration: 800 } } }
 
-// 螺旋图 helix 坐标系（必须用 fadeIn，禁止用 growInX/Y）
+// Helix Coordinate System (Must use fadeIn, growInX/Y is prohibited)
 { type: 'interval', coordinate: { type: 'helix', ... },
   animate: { enter: { type: 'fadeIn', duration: 800 } } }
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：在条形图（转置）上用 scaleInY
+### Error 1: Using scaleInY on a Transposed Bar Chart
 ```javascript
-// ❌ 条形图是水平方向，用 scaleInY（竖向缩放）效果不对
+// ❌ Bar charts are horizontal, so using scaleInY (vertical scaling) is incorrect
 chart.options({
   type: 'interval',
   coordinate: { transform: [{ type: 'transpose' }] },
-  animate: { enter: { type: 'scaleInY' } },  // ❌ 应该用 growInX 或 scaleInX
+  animate: { enter: { type: 'scaleInY' } },  // ❌ Should use growInX or scaleInX
 });
 
-// ✅ 条形图用 X 方向动画
+// ✅ Use X-direction animation for bar charts
 chart.options({
   animate: { enter: { type: 'growInX', duration: 800 } },  // ✅
 });
 ```
 
-### 错误 2：在 helix（螺旋）坐标系上用 growInX/growInY
+### Error 2: Using growInX/growInY in the helix coordinate system
 
-`growInX` / `growInY` 的实现是沿直角坐标轴方向做 **clipPath 裁剪**。在 `helix` 坐标系中，坐标轴被重映射为螺旋路径，屏幕上不存在"底部"或"左侧"基线，裁剪矩形会横穿螺旋形，导致部分螺旋区域被切掉或渲染残缺，动画结束后图表也可能显示不完整。
+The implementation of `growInX` / `growInY` involves **clipPath clipping** along the Cartesian coordinate axes. In the `helix` coordinate system, the axes are remapped to a spiral path, and there is no "bottom" or "left" baseline on the screen. The clipping rectangle crosses the spiral, causing parts of the spiral area to be cut off or rendered incompletely. After the animation ends, the chart may also appear incomplete.
 
-**同样问题适用于所有非直角坐标系**（`polar`、`theta`、`helix`）——这些坐标系均应使用 `waveIn`（极坐标专用）或 `fadeIn`（通用），不能使用 `growInX/Y`。
+**The same issue applies to all non-Cartesian coordinate systems** (`polar`, `theta`, `helix`)—these systems should use `waveIn` (polar-specific) or `fadeIn` (general-purpose) instead of `growInX/Y`.
 
 ```javascript
-// ❌ 错误：helix 坐标系用 growInY → 裁剪矩形横穿螺旋，图表渲染残缺
+// ❌ Incorrect: Using growInY in helix coordinate system → Clipping rectangle crosses the spiral, causing incomplete rendering
 chart.options({
   type: 'interval',
   coordinate: { type: 'helix', startAngle: 0, endAngle: Math.PI * 6 },
   animate: {
-    enter: { type: 'growInY', duration: 2000 },  // ❌ 螺旋被裁剪，部分区域缺失
+    enter: { type: 'growInY', duration: 2000 },  // ❌ Spiral is clipped, some areas are missing
   },
 });
 
-// ✅ 正确：helix 坐标系用 fadeIn
+// ✅ Correct: Using fadeIn in helix coordinate system
 chart.options({
   type: 'interval',
   coordinate: { type: 'helix', startAngle: 0, endAngle: Math.PI * 6 },
   animate: {
-    enter: { type: 'fadeIn', duration: 1000 },   // ✅ 渐显，无裁剪副作用
+    enter: { type: 'fadeIn', duration: 1000 },   // ✅ Fades in without clipping side effects
   },
 });
 
-// ✅ 极坐标（theta/polar）用 waveIn
+// ✅ Using waveIn in polar coordinates (theta/polar)
 chart.options({
   type: 'interval',
   coordinate: { type: 'theta' },
   animate: {
-    enter: { type: 'waveIn', duration: 1000 },   // ✅ 极坐标专用扇形展开
+    enter: { type: 'waveIn', duration: 1000 },   // ✅ Polar-specific sector expansion
   },
 });
 ```
 
-**根本原因**：`growInX/Y` 假设存在固定的直角基线（X=0 或 Y=0）作为裁剪起点，这在笛卡尔坐标系中成立；但 `helix` / `polar` 将坐标重映射到极坐标或螺旋路径后，该基线不再对应可见边界，裁剪结果是任意截断螺旋形状。
+**Root Cause**: `growInX/Y` assumes the existence of a fixed Cartesian baseline (X=0 or Y=0) as the clipping starting point, which holds true in the Cartesian coordinate system. However, in `helix` / `polar` systems, where coordinates are remapped to polar or spiral paths, this baseline no longer corresponds to a visible boundary, resulting in arbitrary truncation of the spiral shape.
