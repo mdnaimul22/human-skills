@@ -160,3 +160,120 @@ epic-adb/
 ├── /README.md
 └── /tree.py
 ```
+
+### Canonical Project Structure Example-3
+```
+ClassLens/
+│
+├── main.py                          # Entry point — FastAPI server boot
+├── worker.py                        # Entry point — Pipeline worker boot
+├── pyproject.toml
+├── .env
+├── .env.example
+│
+├── src/
+│   │
+│   ├── config/                      # ⚙️ Single Source of Truth
+│   │   ├── __init__.py
+│   │   ├── paths.py
+│   │   ├── files.py
+│   │   ├── dotenv.py
+│   │   └── settings.py              # EduWatchSettings extends BaseProjectSettings
+│   │
+│   ├── schema/                      # 📐 Data Contracts — পরম সত্য
+│   │   ├── __init__.py
+│   │   ├── student.py               # Student, GuardianContact
+│   │   ├── detection.py             # DetectionResult, FaceMatch
+│   │   ├── attendance.py            # AttendanceRecord, DailyAggregate
+│   │   ├── behavior.py              # BehaviorEvent, BehaviorScore
+│   │   ├── report.py                # WeeklyReport, ReportDelivery
+│   │   └── pipeline.py              # PipelineEvent, PipelineStatus
+│   │
+│   ├── core/                        # 🧠 Pure Business Logic
+│   │   ├── __init__.py
+│   │   ├── settings.py              # EduWatchSettings (extends BaseProjectSettings)
+│   │   ├── pipeline/
+│   │   │   ├── __init__.py
+│   │   │   ├── engine.py            # PipelineEngine — orchestrates all stages
+│   │   │   ├── registry.py          # ModuleRegistry — plugin loader
+│   │   │   └── base.py              # BasePipelineModule (ABC)
+│   │   ├── voting.py                # Attendance voting logic
+│   │   └── aggregator.py           # Daily/weekly aggregation logic
+│   │
+│   ├── modules/                     # 🔌 Pipeline Modules (Plugin System)
+│   │   ├── __init__.py
+│   │   ├── base.py                  # BasePipelineModule (ABC) — contract
+│   │   │
+│   │   ├── ingestion/               # Phase 1
+│   │   │   ├── __init__.py
+│   │   │   └── frame_sampler.py     # RTSPFrameSampler
+│   │   │
+│   │   ├── vision/                  # Phase 2
+│   │   │   ├── __init__.py
+│   │   │   ├── face_detector.py     # InsightFaceFaceDetector
+│   │   │   ├── embedder.py          # ArcFaceEmbedder
+│   │   │   └── matcher.py           # VectorDBMatcher
+│   │   │
+│   │   ├── behavior/                # Phase 3 — Future modules এখানে আসবে
+│   │   │   ├── __init__.py
+│   │   │   ├── head_pose.py         # HeadPoseAnalyzer
+│   │   │   ├── drowsiness.py        # DrowsinessDetector
+│   │   │   ├── phone_detector.py    # PhoneDetector
+│   │   │   └── seat_tracker.py      # SeatPresenceTracker
+│   │   │
+│   │   └── reporting/               # Phase 5
+│   │       ├── __init__.py
+│   │       ├── sms.py               # SMSReporter
+│   │       ├── push.py              # PushNotificationReporter
+│   │       └── dashboard.py         # DashboardReporter
+│   │
+│   ├── providers/                   # 🔌 External Service Wrappers
+│   │   ├── __init__.py
+│   │   ├── vector_db.py             # ChromaDB / pgvector abstraction
+│   │   ├── llm.py                   # OpenAI / Claude for report generation
+│   │   ├── sms.py                   # SSL Wireless API
+│   │   └── camera.py                # RTSP stream provider
+│   │
+│   ├── services/                    # 🏗️ Use-case orchestration
+│   │   ├── __init__.py
+│   │   ├── enrollment.py            # Student face enrollment
+│   │   ├── attendance.py            # Attendance CRUD + aggregation
+│   │   ├── behavior.py              # Behavior event CRUD + scoring
+│   │   ├── report.py                # Weekly report generation + delivery
+│   │   └── helpers/
+│   │       └── report_builder.py    # Bengali LLM prompt builder
+│   │
+│   ├── api/                         # 🚪 HTTP Interface (FastAPI)
+│   │   ├── __init__.py
+│   │   ├── routes/
+│   │   │   ├── enrollment.py        # POST /students/enroll
+│   │   │   ├── attendance.py        # GET /attendance/{date}
+│   │   │   ├── behavior.py          # GET /behavior/{student_id}
+│   │   │   └── reports.py           # GET /reports/weekly
+│   │   └── helpers/
+│   │       └── auth.py              # JWT middleware
+│   │
+│   ├── db/                          # 🗄️ Database Layer
+│   │   ├── __init__.py
+│   │   ├── connection.py            # Async SQLAlchemy engine
+│   │   ├── migrations/              # Alembic migrations
+│   │   └── repositories/
+│   │       ├── student.py
+│   │       ├── detection.py
+│   │       ├── attendance.py
+│   │       └── behavior.py
+│   │
+│   └── helpers/                     # 🌐 Global Utilities
+│       ├── __init__.py
+│       ├── logger.py
+│       ├── exceptions.py
+│       └── date_utils.py
+│
+├── tests/
+│   ├── test_modules/
+│   ├── test_services/
+│   └── test_api/
+│
+└── docs/
+    └── architecture.md
+```
