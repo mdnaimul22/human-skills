@@ -14,6 +14,7 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
+import json
 import logging
 import shutil
 import subprocess
@@ -34,6 +35,7 @@ LOGS_DIR            = SCRIPT_DIR / "logs"
 UPSTREAM_CONFIG     = HELPERS_DIR / "upstream.yaml"
 PATH_FORWARD_CONFIG = HELPERS_DIR / "path_forward.yaml"
 AUTOMATION_CONFIG   = HELPERS_DIR / "automation.yaml"
+MANAGED_SKILLS_FILE = HELPERS_DIR / "managed_skills.json"
 
 CONFIG_FILES = [UPSTREAM_CONFIG, PATH_FORWARD_CONFIG, AUTOMATION_CONFIG]
 
@@ -235,9 +237,28 @@ def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> tuple[dict[
     return results, updated_upstreams
 
 
-def forward_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
+def load_registry() -> set[str]:
+    """Loads the set of managed skill paths from JSON."""
+    if not MANAGED_SKILLS_FILE.exists():
+        return set()
+    try:
+        with open(MANAGED_SKILLS_FILE, "r") as f:
+            return set(json.load(f))
+    except Exception:
+        return set()
+
+
+def save_registry(paths: set[str]) -> None:
+    """Saves the set of managed skill paths to JSON."""
+    MANAGED_SKILLS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(MANAGED_SKILLS_FILE, "w") as f:
+        json.dump(sorted(list(paths)), f, indent=4)
+
+
+def forward_skills(forwards: list[dict], logger: logging.Logger) -> tuple[list[str], set[str]]:
     copied: list[str] = []
     cleared_dsts: set[str] = set()
+    touched_dsts: set[str] = set()
 
     for rule in forwards:
         if not rule.get("enabled", True):
@@ -254,10 +275,12 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
             logger.warning(f"  ⚠  Source missing — skipping: {src}")
             continue
             
+        # Record this destination as managed
+        touched_dsts.add(str(dst.resolve()))
+            
         logger.info(f"  →  Forwarding [{name}] …")
         try:
             if src.is_file():
-                # If dst is an existing directory or the path explicitly ends with a slash
                 if dst.is_dir() or dst_path_str.endswith("/") or dst_path_str.endswith("\\"):
                     dst.mkdir(parents=True, exist_ok=True)
                     actual_dst = dst / name
@@ -271,14 +294,11 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
                 
             elif src.is_dir():
                 resolved_dst = str(dst.resolve())
-                
-                # Smart Wipe Memory: Only wipe a directory once per sync cycle
                 if resolved_dst not in cleared_dsts:
                     if dst.exists():
                         shutil.rmtree(dst)
                     cleared_dsts.add(resolved_dst)
                     
-                # dirs_exist_ok=True is required so multiple rules can merge into the same dir
                 shutil.copytree(src, dst, dirs_exist_ok=True)
                 logger.info(f"     ✓  [Dir]  {src} → {dst}")
                 copied.append(name)
@@ -286,57 +306,7 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
         except Exception as exc:
             logger.error(f"     ✗  {exc}")
             
-    return copied
-
-
-def cleanup_orphaned_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
-    """
-    Identifies and removes directories in the skills/ folder that are no longer
-    defined as a destination in path_forward.yaml.
-    """
-    removed: list[str] = []
-    managed_dsts: set[Path] = set()
-    
-    # 1. Collect all active destination paths from config
-    for rule in forwards:
-        if not rule.get("enabled", True):
-            continue
-        dst_path = Path(rule.get("to", "")).resolve()
-        managed_dsts.add(dst_path)
-
-    # 2. Identify the skills/ root
-    skills_root = REPO_ROOT / "skills"
-    if not skills_root.exists():
-        return []
-
-    # 3. Scan for orphans
-    # We only look at top-level directories inside /skills/
-    for item in skills_root.iterdir():
-        if not item.is_dir():
-            continue
-            
-        # Resolve to absolute path for comparison
-        resolved_item = item.resolve()
-        
-        # If this directory is NOT in our managed list, it's an orphan
-        if resolved_item not in managed_dsts:
-            # SAFETY CHECK: Don't delete if it's explicitly protected
-            # These are core skills that might not be managed by sync
-            protected = [
-                ".git", "node_modules", "__pycache__",
-                "directory-structure", "openevolve-evolutionary-coding", "zram-optimizer"
-            ]
-            if item.name in protected:
-                continue
-                
-            logger.warning(f"  🗑️  Orphan detected — removing: {item.name}")
-            try:
-                shutil.rmtree(item)
-                removed.append(item.name)
-            except Exception as exc:
-                logger.error(f"     ✗  Failed to remove {item.name}: {exc}")
-                
-    return removed
+    return copied, touched_dsts
 
 
 def push_repo(repo: Path, msg: str, branch: str, logger: logging.Logger) -> bool:
@@ -378,11 +348,34 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
 
     # Step 2
     logger.info("📁 STEP 2 — Forwarding skill paths")
-    copied = forward_skills(cfg["path_forward"].get("forwards", []), logger)
+    # Load what we managed previously
+    previous_managed = load_registry()
+    
+    # Run forward and get current managed paths
+    copied, current_managed = forward_skills(cfg["path_forward"].get("forwards", []), logger)
 
-    # Step 2.5
-    logger.info("🧹 STEP 2.5 — Cleaning up orphaned skills")
-    removed = cleanup_orphaned_skills(cfg["path_forward"].get("forwards", []), logger)
+    # Step 2.5 — Orphan Cleanup
+    logger.info("🧹 STEP 2.5 — Cleaning up orphaned upstream skills")
+    removed = []
+    
+    # Orphans = (Paths we managed before) - (Paths we touched now)
+    orphans = previous_managed - current_managed
+    
+    for orphan_path_str in orphans:
+        orphan_path = Path(orphan_path_str)
+        if orphan_path.exists():
+            logger.warning(f"  🗑️  Removing orphaned upstream skill: {orphan_path.name}")
+            try:
+                if orphan_path.is_dir():
+                    shutil.rmtree(orphan_path)
+                else:
+                    orphan_path.unlink()
+                removed.append(orphan_path.name)
+            except Exception as exc:
+                logger.error(f"     ✗  Failed to remove {orphan_path.name}: {exc}")
+    
+    # Update registry for next time
+    save_registry(current_managed)
 
     # Step 3
     logger.info("🚀 STEP 3 — Committing & pushing to own repo")
