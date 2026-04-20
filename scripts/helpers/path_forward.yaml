@@ -26,9 +26,9 @@ forwards:
     to:   "{REPO_ROOT}/skills/python-patterns"
     enabled: true
 
-#  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-testing"
-#    to:   "{REPO_ROOT}/skills/python-testing"
-#    enabled: true
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-testing"
+    to:   "{REPO_ROOT}/skills/python-testing"
+    enabled: true
 
 # ui-ux-pro-max-skill
   - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max"
