@@ -136,8 +136,8 @@ forwards:
     to: "{REPO_ROOT}/skills/sql-database-assistant"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/marketing-skill"
-    to: "{REPO_ROOT}/skills/marketing-skill"
+  - from: "{REPO_ROOT}/.claude-skills/programmatic-seo"
+    to: "{REPO_ROOT}/skills/programmatic-seo"
     enabled: true
 
   - from: "{REPO_ROOT}/.claude-skills/marketing-skill/schema-markup"
