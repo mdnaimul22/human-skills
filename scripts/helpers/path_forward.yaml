@@ -22,9 +22,9 @@ forwards:
     to:   "{REPO_ROOT}/skills/pytorch-patterns"
     enabled: true
 
-  #- from: "{REPO_ROOT}/.everything-claude-code/skills/python-patterns"
-   # to:   "{REPO_ROOT}/skills/python-patterns"
-    #enabled: true
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-patterns"
+    to:   "{REPO_ROOT}/skills/python-patterns"
+    enabled: true
 
   - from: "{REPO_ROOT}/.everything-claude-code/skills/python-testing"
     to:   "{REPO_ROOT}/skills/python-testing"
