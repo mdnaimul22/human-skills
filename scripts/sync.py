@@ -549,6 +549,13 @@ def main() -> None:
 
             # Always reschedule in case timing changed
             register_schedule(watcher, logger)
+            
+            # TRIGGER IMMEDIATE SYNC:
+            # Since the user edited the config, they likely want to see the 
+            # results immediately rather than waiting for the next scheduled run.
+            logger.info("   ⚡ Triggering immediate sync due to config change …")
+            sync_job(watcher, logger)
+            
             logger.info("   ✓  Hot-reload complete — new config active\n")
 
 
