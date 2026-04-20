@@ -289,6 +289,56 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
     return copied
 
 
+def cleanup_orphaned_skills(forwards: list[dict], logger: logging.Logger) -> list[str]:
+    """
+    Identifies and removes directories in the skills/ folder that are no longer
+    defined as a destination in path_forward.yaml.
+    """
+    removed: list[str] = []
+    managed_dsts: set[Path] = set()
+    
+    # 1. Collect all active destination paths from config
+    for rule in forwards:
+        if not rule.get("enabled", True):
+            continue
+        dst_path = Path(rule.get("to", "")).resolve()
+        managed_dsts.add(dst_path)
+
+    # 2. Identify the skills/ root
+    skills_root = REPO_ROOT / "skills"
+    if not skills_root.exists():
+        return []
+
+    # 3. Scan for orphans
+    # We only look at top-level directories inside /skills/
+    for item in skills_root.iterdir():
+        if not item.is_dir():
+            continue
+            
+        # Resolve to absolute path for comparison
+        resolved_item = item.resolve()
+        
+        # If this directory is NOT in our managed list, it's an orphan
+        if resolved_item not in managed_dsts:
+            # SAFETY CHECK: Don't delete if it's explicitly protected
+            # These are core skills that might not be managed by sync
+            protected = [
+                ".git", "node_modules", "__pycache__",
+                "directory-structure", "openevolve-evolutionary-coding", "zram-optimizer"
+            ]
+            if item.name in protected:
+                continue
+                
+            logger.warning(f"  🗑️  Orphan detected — removing: {item.name}")
+            try:
+                shutil.rmtree(item)
+                removed.append(item.name)
+            except Exception as exc:
+                logger.error(f"     ✗  Failed to remove {item.name}: {exc}")
+                
+    return removed
+
+
 def push_repo(repo: Path, msg: str, branch: str, logger: logging.Logger) -> bool:
     if not repo_is_dirty(repo, logger):
         logger.info("  ✓  Nothing to commit — repo is clean.")
@@ -329,6 +379,10 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     # Step 2
     logger.info("📁 STEP 2 — Forwarding skill paths")
     copied = forward_skills(cfg["path_forward"].get("forwards", []), logger)
+
+    # Step 2.5
+    logger.info("🧹 STEP 2.5 — Cleaning up orphaned skills")
+    removed = cleanup_orphaned_skills(cfg["path_forward"].get("forwards", []), logger)
 
     # Step 3
     logger.info("🚀 STEP 3 — Committing & pushing to own repo")
@@ -407,11 +461,13 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     logger.info(
         f"{icon} SYNC COMPLETE  |  "
         f"Upstreams: {ok_cnt}/{len(pulls)}  |  "
-        f"Skills copied: {len(copied)}  |  "
+        f"Skills: +{len(copied)} / -{len(removed)}  |  "
         f"Push: {'OK' if push_ok else 'FAILED'}"
     )
     if copied:
-        logger.info(f"   Skills synced: {', '.join(copied)}")
+        logger.info(f"   Added: {', '.join(copied)}")
+    if removed:
+        logger.info(f"   Removed: {', '.join(removed)}")
     logger.info(sep + "\n")
 
 
