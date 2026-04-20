@@ -1,33 +1,33 @@
 ---
 id: "g2-mark-mosaic"
-title: "G2 马赛克图（mosaic）"
+title: "G2 Mosaic Plot (mosaic)"
 description: |
-  马赛克图（Mosaic Plot / Marimekko Chart）有两种形式：
-  1. 均匀马赛克图：type: 'cell'，用颜色和大小展示二维分类数据分布；
-  2. 非均匀马赛克图：type: 'interval' + flexX/stackY/normalizeY transform，
-     矩形宽度代表类别规模，高度代表内部分布比例；
-  3. 密度马赛克图：type: 'rect' + bin transform，展示二维连续数据的分布密度。
+  Mosaic Plot (Mosaic Plot / Marimekko Chart) has three forms:
+  1. Uniform Mosaic Plot: type: 'cell', uses color and size to display the distribution of two-dimensional categorical data;
+  2. Non-uniform Mosaic Plot: type: 'interval' + flexX/stackY/normalizeY transform,
+     rectangle width represents category scale, height represents internal distribution ratio;
+  3. Density Mosaic Plot: type: 'rect' + bin transform, displays the distribution density of two-dimensional continuous data.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "马赛克图"
+  - "mosaic plot"
   - "mosaic"
   - "marimekko"
   - "cell"
   - "flexX"
   - "bin"
-  - "热力图"
+  - "heatmap"
 
 related:
   - "g2-mark-cell-heatmap"
   - "g2-mark-interval-stacked"
 
 use_cases:
-  - "二维分类数据分布（均匀马赛克图）"
-  - "市场细分分析（非均匀马赛克图）"
-  - "二维连续数据密度分析（密度马赛克图）"
+  - "Two-dimensional categorical data distribution (Uniform Mosaic Plot)"
+  - "Market segmentation analysis (Non-uniform Mosaic Plot)"
+  - "Two-dimensional continuous data density analysis (Density Mosaic Plot)"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -37,17 +37,17 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/mosaic"
 ---
 
-## 核心概念
+## Core Concepts
 
-马赛克图有三种实现方式：
+There are three implementation methods for mosaic plots:
 
-| 类型 | mark | 特点 |
+| Type | Mark | Characteristics |
 |------|------|------|
-| 均匀马赛克图 | `cell` | 坐标轴均匀分布，用颜色/大小编码第三维 |
-| 非均匀马赛克图 | `interval` + flexX | X 轴宽度按数据比例分配 |
-| 密度马赛克图 | `rect` + bin | 连续数据分箱后展示密度 |
+| Uniform Mosaic Plot | `cell` | Axes are uniformly distributed, using color/size to encode the third dimension |
+| Non-Uniform Mosaic Plot | `interval` + flexX | X-axis width is allocated according to data proportions |
+| Density Mosaic Plot | `rect` + bin | Displays density after binning continuous data |
 
-## 均匀马赛克图（cell）
+## Uniform Mosaic Plot (Cell)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -60,25 +60,25 @@ const chart = new Chart({
 
 chart.options({
   type: 'cell',
-   [
-    { product: '手机', region: '华北', sales: 120, category: '高端' },
-    { product: '手机', region: '华东', sales: 180, category: '高端' },
-    { product: '手机', region: '华南', sales: 150, category: '高端' },
-    { product: '电脑', region: '华北', sales: 80, category: '中端' },
-    { product: '电脑', region: '华东', sales: 110, category: '中端' },
-    { product: '电脑', region: '华南', sales: 95, category: '中端' },
-    { product: '平板', region: '华北', sales: 60, category: '中端' },
-    { product: '平板', region: '华东', sales: 85, category: '中端' },
-    { product: '平板', region: '华南', sales: 70, category: '低端' },
-    { product: '耳机', region: '华北', sales: 40, category: '低端' },
-    { product: '耳机', region: '华东', sales: 55, category: '低端' },
-    { product: '耳机', region: '华南', sales: 45, category: '低端' },
+  data: [
+    { product: 'Phone', region: 'North China', sales: 120, category: 'High-end' },
+    { product: 'Phone', region: 'East China', sales: 180, category: 'High-end' },
+    { product: 'Phone', region: 'South China', sales: 150, category: 'High-end' },
+    { product: 'Computer', region: 'North China', sales: 80, category: 'Mid-range' },
+    { product: 'Computer', region: 'East China', sales: 110, category: 'Mid-range' },
+    { product: 'Computer', region: 'South China', sales: 95, category: 'Mid-range' },
+    { product: 'Tablet', region: 'North China', sales: 60, category: 'Mid-range' },
+    { product: 'Tablet', region: 'East China', sales: 85, category: 'Mid-range' },
+    { product: 'Tablet', region: 'South China', sales: 70, category: 'Low-end' },
+    { product: 'Headphones', region: 'North China', sales: 40, category: 'Low-end' },
+    { product: 'Headphones', region: 'East China', sales: 55, category: 'Low-end' },
+    { product: 'Headphones', region: 'South China', sales: 45, category: 'Low-end' },
   ],
   encode: {
     x: 'product',
     y: 'region',
     color: 'category',
-    size: 'sales',      // 用格子大小编码数值
+    size: 'sales',      // Encode numerical values using cell size
   },
   scale: {
     color: { palette: 'category10', type: 'ordinal' },
@@ -94,9 +94,9 @@ chart.options({
 chart.render();
 ```
 
-## 非均匀马赛克图（Marimekko Chart）
+## Non-Uniform Marimekko Chart
 
-矩形宽度按 X 轴字段的总量比例分配，展示市场份额类数据：
+The width of the rectangles is allocated according to the proportion of the total amount of the X-axis field, displaying market share-like data:
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -116,9 +116,9 @@ chart.options({
     value: 'https://gw.alipayobjects.com/os/bmw-prod/3041da62-1bf4-4849-aac3-01a387544bf4.csv',
   },
   transform: [
-    { type: 'flexX', reducer: 'sum' },  // X轴宽度按 sum 比例分配
-    { type: 'stackY' },                  // Y轴堆叠
-    { type: 'normalizeY' },              // Y轴归一化到 0-1
+    { type: 'flexX', reducer: 'sum' },  // X-axis width allocated by sum proportion
+    { type: 'stackY' },                  // Y-axis stacking
+    { type: 'normalizeY' },              // Y-axis normalization to 0-1
   ],
   encode: {
     x: 'market',
@@ -148,9 +148,9 @@ chart.options({
 chart.render();
 ```
 
-## 密度马赛克图（bin transform）
+## Density Mosaic Plot (Bin Transform)
 
-适合展示两个连续字段的分布密度关系：
+Suitable for displaying the distribution density relationship between two continuous fields:
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -181,29 +181,29 @@ chart.options({
 chart.render();
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：非均匀马赛克图缺少 flexX transform
+### Error 1: Non-Uniform Mosaic Chart Missing flexX Transform
 
 ```javascript
-// ❌ 错误：没有 flexX，X 轴宽度均等，不是真正的马赛克图
+// ❌ Error: Without flexX, X-axis widths are equal, not a true mosaic chart
 chart.options({
   type: 'interval',
   data,
   transform: [
     { type: 'stackY' },
     { type: 'normalizeY' },
-    // ❌ 缺少 flexX
+    // ❌ Missing flexX
   ],
   encode: { x: 'market', y: 'value', color: 'segment' },
 });
 
-// ✅ 正确：三个 transform 必须同时使用
+// ✅ Correct: Three transforms must be used together
 chart.options({
   type: 'interval',
   data,
   transform: [
-    { type: 'flexX', reducer: 'sum' },  // ✅ X轴宽度按比例
+    { type: 'flexX', reducer: 'sum' },  // ✅ X-axis widths proportional
     { type: 'stackY' },
     { type: 'normalizeY' },
   ],
@@ -211,17 +211,17 @@ chart.options({
 });
 ```
 
-### 错误 2：均匀马赛克图使用 interval 而非 cell
+### Error 2: Uniform Mosaic Charts Use `interval` Instead of `cell`
 
 ```javascript
-// ❌ 问题：interval 在均匀网格场景下不如 cell 直观
+// ❌ Issue: `interval` is less intuitive than `cell` in uniform grid scenarios
 chart.options({
-  type: 'interval',   // ❌ 均匀格子应用 cell
+  type: 'interval',   // ❌ Use `cell` for uniform grids
   data,
   encode: { x: 'product', y: 'region', color: 'category' },
 });
 
-// ✅ 正确：均匀二维分类用 cell
+// ✅ Correct: Use `cell` for uniform two-dimensional categorizations
 chart.options({
   type: 'cell',  // ✅
   data,
@@ -229,17 +229,17 @@ chart.options({
 });
 ```
 
-### 错误 3：密度马赛克图用 cell/interval 而非 rect
+### Error 3: Using cell/interval instead of rect for density mosaic plots
 
 ```javascript
-// ❌ 错误：连续数据分箱应用 rect + bin transform
+// ❌ Incorrect: Continuous data binning applied with rect + bin transform
 chart.options({
-  type: 'cell',   // ❌ cell 适合离散数据
+  type: 'cell',   // ❌ cell is suitable for discrete data
   data,
   encode: { x: 'IMDB Rating', y: 'Rotten Tomatoes Rating' },
 });
 
-// ✅ 正确：连续数据分箱用 rect
+// ✅ Correct: Continuous data binning should use rect
 chart.options({
   type: 'rect',  // ✅
   data,
@@ -248,10 +248,10 @@ chart.options({
 });
 ```
 
-## 三种马赛克图对比
+## Comparison of Three Types of Mosaic Plots
 
-| 类型 | 数据类型 | mark | 核心 transform |
+| Type | Data Type | Mark | Core Transform |
 |------|---------|------|---------------|
-| 均匀马赛克图 | 二维离散 | `cell` | 无 |
-| 非均匀马赛克图 | 多维分类+数值 | `interval` | `flexX + stackY + normalizeY` |
-| 密度马赛克图 | 二维连续 | `rect` | `bin` |
+| Uniform Mosaic Plot | Two-dimensional Discrete | `cell` | None |
+| Non-uniform Mosaic Plot | Multi-dimensional Categorical + Numerical | `interval` | `flexX + stackY + normalizeY` |
+| Density Mosaic Plot | Two-dimensional Continuous | `rect` | `bin` |

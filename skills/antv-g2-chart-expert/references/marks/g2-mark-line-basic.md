@@ -1,22 +1,22 @@
 ---
 id: "g2-mark-line-basic"
-title: "G2 基础折线图（Line Mark）"
+title: "G2 Basic Line Chart (Line Mark)"
 description: |
-  使用 Line Mark 创建折线图，用于展示数据随时间或有序类别的变化趋势。
-  本文采用 Spec 模式（chart.options({})），支持单系列、多系列、平滑曲线等常见变体。
+  Create a line chart using Line Mark to display the trend of data changes over time or ordered categories.
+  This article uses the Spec mode (chart.options({})), supporting common variants such as single series, multiple series, and smooth curves.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 subcategory: "line"
 tags:
-  - "折线图"
-  - "趋势"
-  - "时间序列"
+  - "line chart"
+  - "trend"
+  - "time series"
   - "Line"
   - "line chart"
-  - "曲线"
-  - "多系列"
+  - "curve"
+  - "multiple series"
   - "spec"
 
 related:
@@ -26,13 +26,13 @@ related:
   - "g2-interaction-tooltip"
 
 use_cases:
-  - "展示数据随时间的变化趋势"
-  - "对比多个指标或维度的走势"
-  - "展示连续数值的变化"
+  - "Displaying data trends over time"
+  - "Comparing trends of multiple metrics or dimensions"
+  - "Showing changes in continuous numerical values"
 
 anti_patterns:
-  - "数据点较少（< 5 个）时折线图不直观，改用柱状图"
-  - "非有序数据（无序分类）不适合折线图"
+  - "Line charts are not intuitive with fewer data points (< 5), use bar charts instead"
+  - "Unordered data (unordered categories) are not suitable for line charts"
 
 difficulty: "beginner"
 completeness: "full"
@@ -42,7 +42,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/line/basic"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -69,7 +69,7 @@ chart.options({
 chart.render();
 ```
 
-## 时间序列折线图
+## Time Series Line Chart
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -86,13 +86,13 @@ chart.options({
     { date: new Date('2024-05-01'), value: 145 },
   ],
   encode: {
-    x: 'date',     // Date 类型自动使用 Time Scale
+    x: 'date',     // Date type automatically uses Time Scale
     y: 'value',
   },
   axis: {
     x: {
       tickCount: 5,
-      labelFormatter: 'YYYY-MM',  // 日期格式化
+      labelFormatter: 'YYYY-MM',  // Date formatting
     },
   },
 });
@@ -100,7 +100,7 @@ chart.options({
 chart.render();
 ```
 
-## 多系列折线图
+## Multi-Series Line Chart
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -110,26 +110,26 @@ const chart = new Chart({ container: 'container', width: 700, height: 400 });
 chart.options({
   type: 'line',
   data: [
-    { month: 'Jan', type: '产品A', value: 33 },
-    { month: 'Jan', type: '产品B', value: 55 },
-    { month: 'Feb', type: '产品A', value: 78 },
-    { month: 'Feb', type: '产品B', value: 62 },
-    { month: 'Mar', type: '产品A', value: 56 },
-    { month: 'Mar', type: '产品B', value: 89 },
-    { month: 'Apr', type: '产品A', value: 91 },
-    { month: 'Apr', type: '产品B', value: 74 },
+    { month: 'Jan', type: 'Product A', value: 33 },
+    { month: 'Jan', type: 'Product B', value: 55 },
+    { month: 'Feb', type: 'Product A', value: 78 },
+    { month: 'Feb', type: 'Product B', value: 62 },
+    { month: 'Mar', type: 'Product A', value: 56 },
+    { month: 'Mar', type: 'Product B', value: 89 },
+    { month: 'Apr', type: 'Product A', value: 91 },
+    { month: 'Apr', type: 'Product B', value: 74 },
   ],
   encode: {
     x: 'month',
     y: 'value',
-    color: 'type',   // color 通道自动按 type 拆分多条线
+    color: 'type',   // color channel automatically splits multiple lines by type
   },
 });
 
 chart.render();
 ```
 
-## 平滑曲线
+## Smooth Curve
 
 ```javascript
 chart.options({
@@ -143,12 +143,12 @@ chart.options({
 });
 ```
 
-## 折线 + 数据点（Layer 组合）
+## Line + Data Points (Layer Combination)
 
 ```javascript
-// Spec 中用 children 数组实现多 Mark 叠加
+// Multiple Marks are overlaid using the children array in the Spec
 chart.options({
-  type: 'view',               // view 容器
+  type: 'view',               // view container
    [...],
   children: [
     {
@@ -169,7 +169,7 @@ chart.options({
 });
 ```
 
-## 折线 + 面积填充（Layer 组合）
+## Line + Area Fill (Layer Combination)
 
 ```javascript
 chart.options({
@@ -190,7 +190,7 @@ chart.options({
 });
 ```
 
-## 带 Tooltip 和末端标签
+## With Tooltip and End Label
 
 ```javascript
 chart.options({
@@ -198,21 +198,21 @@ chart.options({
   data: [...],
   encode: { x: 'month', y: 'value' },
   tooltip: {
-    items: [{ field: 'value', name: '值' }],
+    items: [{ field: 'value', name: 'Value' }],
   },
   labels: [
     {
       text: 'value',
-      selector: 'last',    // 只在最后一个点显示标签
+      selector: 'last',    // Display label only on the last point
       style: { fontSize: 12, fill: '#1890ff' },
     },
   ],
 });
 ```
 
-## 宽表数据 + fold 转长表
+## Wide Table Data + fold to Long Table
 
-宽表每行含多个指标列，用 `fold` transform 转为长表再绘制多系列：
+Each row in a wide table contains multiple metric columns. Use the `fold` transform to convert it into a long table and then plot multiple series:
 
 ```javascript
 const wideData = [
@@ -223,19 +223,19 @@ const wideData = [
 
 chart.options({
   type: 'line',
-   wideData,
+  data: wideData,
   transform: [
     {
       type: 'fold',
-      fields: ['DAU', 'MAU'],   // 要转换的列
-      key: 'metric',             // 新增列名（存原字段名）
-      value: 'count',            // 新增列名（存原字段值）
+      fields: ['DAU', 'MAU'],   // Columns to transform
+      key: 'metric',             // New column name (stores original field names)
+      value: 'count',            // New column name (stores original field values)
     },
   ],
   encode: {
     x: 'date',
-    y: 'count',      // fold 后使用 value 字段名
-    color: 'metric', // fold 后使用 key 字段名
+    y: 'count',      // Use the value field name after fold
+    color: 'metric', // Use the key field name after fold
   },
   labels: [
     { text: 'metric', selector: 'last', position: 'right' },
@@ -243,7 +243,7 @@ chart.options({
 });
 ```
 
-## 双 Y 轴（不同量级系列）
+## Dual Y-Axis (Different Orders of Magnitude Series)
 
 ```javascript
 chart.options({
@@ -252,21 +252,21 @@ chart.options({
     {
       type: 'line',
       data: revenueData,
-      encode: { x: 'date', y: 'revenue', color: () => '收入(万元)' },
-      scale: { y: { key: 'revenue' } },   // key 唯一 → 独立 y 轴
+      encode: { x: 'date', y: 'revenue', color: () => 'Revenue (10,000 Yuan)' },
+      scale: { y: { key: 'revenue' } },   // Unique key → Independent y-axis
     },
     {
       type: 'line',
       data: userCountData,
-      encode: { x: 'date', y: 'count', color: () => '用户数' },
+      encode: { x: 'date', y: 'count', color: () => 'User Count' },
       scale: { y: { key: 'count' } },
-      axis: { y: { position: 'right' } },  // 右侧 y 轴
+      axis: { y: { position: 'right' } },  // Right y-axis
     },
   ],
 });
 ```
 
-## 多系列 Tooltip 配置
+## Multi-Series Tooltip Configuration
 
 ```javascript
 chart.options({
@@ -279,39 +279,38 @@ chart.options({
       return `${date.getFullYear()}年${date.getMonth() + 1}月`;
     },
     items: [
-      { field: 'series', name: '系列' },
-      { field: 'value', name: '数值', valueFormatter: (v) => v.toLocaleString() },
+      { field: 'series', name: 'Series' },
+      { field: 'value', name: 'Value', valueFormatter: (v) => v.toLocaleString() },
     ],
   },
   interaction: [{ type: 'tooltip' }],
 });
 ```
+## Spec Field Quick Reference
 
-## Spec 字段速查
-
-| 字段 | 示例值 | 说明 |
+| Field | Example Value | Description |
 |------|--------|------|
-| `encode.x` | `'month'` | X 轴字段 |
-| `encode.y` | `'value'` | Y 轴字段 |
-| `encode.color` | `'type'` | 颜色/系列区分 |
-| `encode.shape` | `'smooth'` | 线型 |
-| `style.lineWidth` | `2` | 线宽 |
-| `style.stroke` | `'#f00'` | 线条颜色（固定） |
-| `labels` | `[{ text: 'value', selector: 'last' }]` | 数据标签 |
+| `encode.x` | `'month'` | X-axis field |
+| `encode.y` | `'value'` | Y-axis field |
+| `encode.color` | `'type'` | Color/series distinction |
+| `encode.shape` | `'smooth'` | Line type |
+| `style.lineWidth` | `2` | Line width |
+| `style.stroke` | `'#f00'` | Line color (fixed) |
+| `labels` | `[{ text: 'value', selector: 'last' }]` | Data labels |
 | `tooltip` | `{ items: [{ field: 'value' }] }` | Tooltip |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：多系列数据缺少 color 通道
+### Error 1: Missing color channel for multi-series data
 ```javascript
-// ❌ 错误：多类型数据没有 color，所有点被错误地连成一条乱线
+// ❌ Incorrect: Multi-series data without color, all points are incorrectly connected into a messy line
 chart.options({
   type: 'line',
   data: multiSeriesData,
-  encode: { x: 'month', y: 'value' },  // 缺少 color！
+  encode: { x: 'month', y: 'value' },  // Missing color!
 });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({
   type: 'line',
   data: multiSeriesData,
@@ -319,14 +318,14 @@ chart.options({
 });
 ```
 
-### 错误 2：时间字段是字符串
+### Error 2: Time Field is a String
 ```javascript
-// ❌ 不推荐：字符串时间轴排序可能不正确
+// ❌ Not Recommended: String time axis sorting may be incorrect
 const data = [{ date: '2024-03-01', value: 100 }];
 
-// ✅ 正确：转为 Date 对象，或显式配置 scale type
+// ✅ Correct: Convert to Date object, or explicitly configure scale type
 const data = [{ date: new Date('2024-03-01'), value: 100 }];
-// 或：
+// or:
 chart.options({
   type: 'line',
   data,
@@ -335,13 +334,13 @@ chart.options({
 });
 ```
 
-### 错误 3：多 Mark 叠加忘用 view 容器
+### Error 3: Forgetting to Use the View Container for Multiple Mark Overlays
 ```javascript
-// ❌ 错误：直接调用 options 两次会覆盖
+// ❌ Incorrect: Directly calling options twice will overwrite
 chart.options({ type: 'line', ... });
-chart.options({ type: 'point', ... });  // 覆盖了上面！
+chart.options({ type: 'point', ... });  // Overwrites the above!
 
-// ✅ 正确：用 type: 'view' + children 数组
+// ✅ Correct: Use type: 'view' + children array
 chart.options({
   type: 'view',
   data: [...],

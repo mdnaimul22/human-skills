@@ -1,20 +1,19 @@
 ---
 id: "g2-mark-gauge"
-title: "G2 仪表盘（gauge）"
+title: "G2 Gauge"
 description: |
-  G2 v5 内置 gauge Mark，通过 type: 'gauge' 创建仪表盘，
-  数据包含 target（当前值）和 total（最大值），
-  支持分段配色（thresholds）、中心文字和自定义样式。
+  G2 v5 has a built-in gauge Mark, which can be created using `type: 'gauge'`.
+  The data includes `target` (current value) and `total` (maximum value),
+  and supports segmented coloring (thresholds), center text, and custom styles.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "仪表盘"
   - "gauge"
-  - "表盘"
+  - "dial"
   - "KPI"
-  - "进度"
+  - "progress"
   - "spec"
 
 related:
@@ -22,9 +21,9 @@ related:
   - "g2-mark-arc-pie"
 
 use_cases:
-  - "展示 KPI 完成率/达成度"
-  - "实时监控指标（如 CPU 使用率）"
-  - "进度展示（分数、评级）"
+  - "Display KPI completion rate/achievement"
+  - "Real-time monitoring of metrics (e.g., CPU usage)"
+  - "Progress display (scores, ratings)"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,7 +33,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/gauge"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -49,9 +48,9 @@ chart.options({
   type: 'gauge',
   data: {
     value: {
-      target: 120,   // 当前值
-      total: 400,    // 满分/最大值
-      name: '评分',  // 中心标签
+      target: 120,   // Current value
+      total: 400,    // Full score/Maximum value
+      name: 'Score', // Center label
     },
   },
   legend: false,
@@ -60,7 +59,7 @@ chart.options({
 chart.render();
 ```
 
-## 分段配色仪表盘（阈值配色）
+## Segmented Color Gauge (Threshold Coloring)
 
 ```javascript
 chart.options({
@@ -69,62 +68,62 @@ chart.options({
     value: {
       target: 159,
       total: 280,
-      name: '速度',
-      // thresholds：按百分比分段（0-1），每段用不同颜色
-      thresholds: [100, 200, 280],   // 对应数值分段
+      name: 'Speed',
+      // thresholds: Segmented by percentage (0-1), each segment with a different color
+      thresholds: [100, 200, 280],   // Corresponding value segments
     },
   },
   scale: {
     color: {
-      // 对应每段的颜色
+      // Colors corresponding to each segment
       range: ['#F4664A', '#FAAD14', '#30BF78'],
     },
   },
   style: {
-    // 中心文字
+    // Center text
     textContent: (target, total) =>
-      `进度\n${((target / total) * 100).toFixed(0)}%`,
+      `Progress\n${((target / total) * 100).toFixed(0)}%`,
   },
   legend: false,
 });
 ```
 
-## 完整配置说明
+## Complete Configuration Description
 
 ```javascript
 chart.options({
   type: 'gauge',
   data: {
     value: {
-      target: 75,       // 当前值（必填）
-      total: 100,       // 最大值（必填）
-      name: 'score',    // 标签名称（可选）
-      thresholds: [40, 70, 100],  // 分段阈值（可选）
+      target: 75,       // Current value (required)
+      total: 100,       // Maximum value (required)
+      name: 'score',    // Label name (optional)
+      thresholds: [40, 70, 100],  // Segment thresholds (optional)
     },
   },
 
-  // 颜色比例尺（配合 thresholds 使用）
+  // Color scale (used with thresholds)
   scale: {
     color: {
       range: ['#F4664A', '#FAAD14', '#30BF78'],
     },
   },
 
-  // 仪表盘样式
+  // Gauge style
   style: {
-    // 弧线端点形状：'round'（圆弧端）| 'butt'（直角端）
+    // Arc endpoint shape: 'round' (rounded end) | 'butt' (square end)
     arcShape: 'round',
     arcLineWidth: 1,
     arcStroke: '#fff',
 
-    // 中心文字：签名固定为 (target, total)，无第三个 datum 参数
+    // Center text: signature fixed as (target, total), no third datum parameter
     textContent: (target, total) => `${target}/${total}`,
     textX: '50%',
     textY: '70%',
     textFontSize: 24,
     textFill: '#262626',
 
-    // 指针（false 表示隐藏）
+    // Pointer (false to hide)
     pointerShape: false,
     pinShape: false,
   },
@@ -133,27 +132,27 @@ chart.options({
 });
 ```
 
-## 自定义起止角度
+## Custom Start and End Angles
 
 ```javascript
 chart.options({
   type: 'gauge',
-  data: { value: { target: 60, total: 100, name: '完成率' } },
-  // gauge 内部使用 radial 坐标，可通过 coordinate 调整角度
+  data: { value: { target: 60, total: 100, name: 'Completion Rate' } },
+  // gauge internally uses radial coordinates, which can be adjusted via coordinate
   coordinate: {
     type: 'radial',
     innerRadius: 0.8,
-    startAngle: (-10 / 12) * Math.PI,   // 约 -150°
-    endAngle: (2 / 12) * Math.PI,        // 约 30°
+    startAngle: (-10 / 12) * Math.PI,   // approximately -150°
+    endAngle: (2 / 12) * Math.PI,        // approximately 30°
   },
   legend: false,
 });
 ```
 
-## 多指标仪表盘组合
+## Multi-Metric Gauge Dashboard Combination
 
 ```javascript
-// 用 facetRect 或 spaceFlex 并排多个仪表盘
+// Use facetRect or spaceFlex to arrange multiple gauges side by side
 chart.options({
   type: 'spaceFlex',
   children: [
@@ -164,36 +163,36 @@ chart.options({
     },
     {
       type: 'gauge',
-      data: { value: { target: 60, total: 100, name: '内存' } },
+      data: { value: { target: 60, total: 100, name: 'Memory' } },
       legend: false,
     },
     {
       type: 'gauge',
-      data: { value: { target: 45, total: 100, name: '磁盘' } },
+      data: { value: { target: 45, total: 100, name: 'Disk' } },
       legend: false,
     },
   ],
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 0：textContent 函数签名错误——误传第三个 datum 参数
+### Error 0: Incorrect `textContent` Function Signature — Passing an Unnecessary Third `datum` Parameter
 
-`textContent` 的签名是 `(target, total) => string`，G2 内部**只传两个数值**，不存在第三个参数。
+The signature for `textContent` is `(target, total) => string`. Internally, G2 **only passes two values**, and there is no third parameter.
 
 ```javascript
-// ❌ 错误：datum 是 undefined，访问 datum.unit 会抛出 TypeError
+// ❌ Error: `datum` is undefined, accessing `datum.unit` will throw a TypeError
 style: {
   textContent: (target, total, datum) => `${target}${datum.unit}\n${datum.name}`,
-  //                            ^^^^^ 始终是 undefined！
+  //                            ^^^^^ Always undefined!
 }
 
-// ✅ 正确：用闭包捕获 data 中的额外字段
+// ✅ Correct: Use closure to capture additional fields from `data`
 const gaugeData = {
   target: 48,
   total: 60,
-  name: '响应时长',
+  name: 'Response Time',
   unit: 'min',
   thresholds: [15, 30, 45, 60],
 };
@@ -202,22 +201,22 @@ chart.options({
   type: 'gauge',
   data: { value: gaugeData },
   style: {
-    // 通过闭包引用外部变量
+    // Reference external variables via closure
     textContent: (target, total) => `${target}${gaugeData.unit}\n${gaugeData.name}`,
   },
 });
 ```
 
-### 错误 1：数据格式不正确
+### Error 1: Incorrect Data Format
 
 ```javascript
-// ❌ 错误：gauge 数据需要嵌套在 value 对象内
+// ❌ Incorrect: Gauge data must be nested within a value object
 chart.options({
   type: 'gauge',
-  data: { target: 75, total: 100 },   // ❌ 顶层对象
+  data: { target: 75, total: 100 },   // ❌ Top-level object
 });
 
-// ✅ 正确：需要 { value: { target, total } } 结构
+// ✅ Correct: Requires { value: { target, total } } structure
 chart.options({
   type: 'gauge',
   data: {
@@ -226,22 +225,22 @@ chart.options({
 });
 ```
 
-### 错误 2：thresholds 与 color range 数量不匹配
+### Error 2: Mismatch Between Thresholds and Color Range Count
 
 ```javascript
-// ❌ 错误：3 个 thresholds 对应 3 段，但只给了 2 个颜色
+// ❌ Error: 3 thresholds correspond to 3 segments, but only 2 colors are provided
 chart.options({
   type: 'gauge',
   data: { value: { target: 60, total: 100, thresholds: [40, 70, 100] } },
   scale: {
-    color: { range: ['#F4664A', '#30BF78'] },   // ❌ 应该有 3 个颜色
+    color: { range: ['#F4664A', '#30BF78'] },   // ❌ Should have 3 colors
   },
 });
 
-// ✅ 正确：颜色数量 = 阈值段数（thresholds.length 段）
+// ✅ Correct: Number of colors = Number of threshold segments (thresholds.length segments)
 chart.options({
   scale: {
-    color: { range: ['#F4664A', '#FAAD14', '#30BF78'] },   // ✅ 3 段 3 色
+    color: { range: ['#F4664A', '#FAAD14', '#30BF78'] },   // ✅ 3 segments, 3 colors
   },
 });
 ```

@@ -1,21 +1,20 @@
 ---
 id: "g2-mark-partition"
-title: "G2 旭日图 / 矩形分区（partition）"
+title: "G2 Sunburst / Rectangular Partition (partition)"
 description: |
-  partition mark 用矩形分区展示层次数据，每层从父节点延伸，子节点填满父节点宽度。
-  配合极坐标可绘制旭日图（sunburst）——同心圆环形式的层次可视化。
-  支持 drillDown 交互实现层次下钻。
+  The partition mark uses rectangular partitioning to display hierarchical data, with each layer extending from the parent node, and child nodes filling the width of the parent node.
+  Combined with polar coordinates, it can create a sunburst chart—a hierarchical visualization in the form of concentric rings.
+  Supports drillDown interaction for hierarchical drilling.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
   - "partition"
-  - "旭日图"
   - "sunburst"
-  - "层次数据"
-  - "矩形分区"
-  - "下钻"
+  - "hierarchical data"
+  - "rectangular partition"
+  - "drilldown"
 
 related:
   - "g2-mark-treemap"
@@ -23,9 +22,9 @@ related:
   - "g2-mark-pack"
 
 use_cases:
-  - "旭日图展示层次分类的占比（如文件目录）"
-  - "组织结构的层次可视化"
-  - "多层类别数据的占比展示"
+  - "Sunburst chart to display proportional hierarchical categories (e.g., file directories)"
+  - "Hierarchical visualization of organizational structures"
+  - "Proportional display of multi-level categorical data"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,34 +34,34 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/other/#sunburst"
 ---
 
-## 最小可运行示例（旭日图）
+## Minimum Viable Example (Sunburst Chart)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = {
-  name: '总计',
+  name: 'Total',
   children: [
     {
-      name: '技术',
+      name: 'Technology',
       children: [
-        { name: '前端', value: 15 },
-        { name: '后端', value: 20 },
-        { name: '算法', value: 10 },
+        { name: 'Frontend', value: 15 },
+        { name: 'Backend', value: 20 },
+        { name: 'Algorithm', value: 10 },
       ],
     },
     {
-      name: '产品',
+      name: 'Product',
       children: [
-        { name: '产品经理', value: 8 },
-        { name: '用研', value: 5 },
+        { name: 'Product Manager', value: 8 },
+        { name: 'User Research', value: 5 },
       ],
     },
     {
-      name: '设计',
+      name: 'Design',
       children: [
         { name: 'UX', value: 7 },
-        { name: '视觉', value: 6 },
+        { name: 'Visual', value: 6 },
       ],
     },
   ],
@@ -71,58 +70,58 @@ const data = {
 const chart = new Chart({ container: 'container', width: 600, height: 600 });
 
 chart.options({
-  type: 'sunburst',   // 旭日图 = partition + 极坐标（G2 内置别名）
+  type: 'sunburst',   // Sunburst chart = partition + polar coordinates (G2 built-in alias)
   data: { value: data },
   encode: {
-    value: 'value',   // 叶子节点数值
+    value: 'value',   // Leaf node value
   },
   style: {
     fillOpacity: 0.9,
     lineWidth: 1,
     stroke: '#fff',
   },
-  interaction: { drillDown: true },  // 可选：启用下钻
+  interaction: { drillDown: true },  // Optional: Enable drill-down
 });
 
 chart.render();
 ```
 
-## 数据配置形式说明
+## Data Configuration Format Explanation
 
-**为什么 partition/sunburst 使用 ` { value: data }` 而不是 `data`？**
+**Why do `partition/sunburst` use `{ value: data }` instead of `data`?**
 
-层次数据是**对象**（包含 name/children），不是数组，必须使用完整形式：
+Hierarchical data is an **object** (containing `name/children`), not an array, and must use the full form:
 
 ```javascript
-// ❌ 错误：层次数据不是数组，不能用简写
+// ❌ Error: Hierarchical data is not an array, cannot use shorthand
 chart.options({
   type: 'partition',
-   hierarchyData,  // ❌ 不工作
+  hierarchyData,  // ❌ Does not work
 });
 
-// ✅ 正确：层次数据必须用完整形式
+// ✅ Correct: Hierarchical data must use the full form
 chart.options({
   type: 'partition',
   data: { value: hierarchyData },  // ✅
 });
 ```
 
-**简写形式仅适用于数组数据**（满足三个条件：内联、是数组、无 transform）。
+**Shorthand form is only applicable to array data** (meeting three conditions: inline, is an array, and has no transform).
 
 ---
 
-## 矩形分区图（不加极坐标）
+## Rectangle Partition Chart (Without Polar Coordinates)
 
 ```javascript
 chart.options({
-  type: 'partition',   // 矩形分区（不是旭日图）
+  type: 'partition',   // Rectangle partition (not a sunburst chart)
   data: { value: data },
   encode: {
-    value: 'value',   // 叶子节点数值
+    value: 'value',   // Leaf node value
   },
   layout: {
-    valueField: 'value',   // 决定节点宽度的字段
-    sort: (a, b) => b.value - a.value,  // 按值降序排列
+    valueField: 'value',   // Field determining node width
+    sort: (a, b) => b.value - a.value,  // Sort in descending order by value
   },
   style: {
     fillOpacity: 0.85,
@@ -132,17 +131,17 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：data 直接传树形对象而不用 hierarchy 包装
+### Error: Directly passing tree object to data without hierarchy wrapper
 ```javascript
-// ❌ 错误
+// ❌ Incorrect
 chart.options({
   type: 'sunburst',
-  data: treeData,   // ❌ 直接传树形数据
+  data: treeData,   // ❌ Directly passing tree data
 });
 
-// ✅ 正确：需要放到 data.value 中
+// ✅ Correct: Needs to be placed in data.value
 chart.options({
   type: 'sunburst',
   data: { value: treeData },  // ✅
@@ -151,107 +150,106 @@ chart.options({
 
 ---
 
-## 节点数据访问规则（重要！）
+## Node Data Access Rules (Important!)
 
-层次结构图中，回调函数接收到的参数 `d` **不是原始数据对象**，而是 G2 用 d3-hierarchy 包装后的层次节点，**原始数据在 `d.data` 中**。
+In the hierarchical chart, the parameter `d` received by the callback function **is not the original data object**, but rather a hierarchical node wrapped by G2 using d3-hierarchy. **The original data is stored in `d.data`**.
 
-### 为什么 `encode.color: 'category'` 不起作用？
+### Why doesn’t `encode.color: 'category'` work?
 
-**根本原因**：当 encode 是字符串时，G2 内部做的是 `datum[fieldName]`，直接访问层次节点属性。层次节点上没有 `category` 属性，返回 `undefined`，导致所有区域显示相同颜色。
+**Root Cause**: When `encode` is a string, G2 internally performs `datum[fieldName]`, directly accessing the hierarchy node property. The hierarchy node does not have a `category` property, so it returns `undefined`, causing all areas to display the same color.
 
 ```
-d['category']        → undefined   ❌（层次节点没有 category 属性）
-d.data['category']   → '技术'      ✅（原始数据在 d.data 上）
+d['category']        → undefined   ❌ (Hierarchy node has no category property)
+d.data['category']   → '技术'      ✅ (Original data is on d.data)
 ```
 
-**特例**：`encode.value: 'value'` 字符串可以工作，因为 G2 对层次 mark 的 `value` 通道做了**专项处理**。其他通道（`color`、`shape` 等）无此特殊处理，必须用回调。
-
-### 回调参数 d 的结构
+**Special Case**: `encode.value: 'value'` works as a string because G2 has **special handling** for the `value` channel of hierarchical marks. Other channels (`color`, `shape`, etc.) do not have this special handling and must use a callback.
+### Structure of Callback Parameter d
 
 ```javascript
-// d 是 d3-hierarchy 节点，结构如下：
+// d is a d3-hierarchy node with the following structure:
 {
-  value: 100,              // 节点数值（d3 计算的子树总和）
-  depth: 2,                // 层级深度（0 = 根节点）
-  height: 0,               // 子树高度（叶子节点为 0）
-   {                  // ← 原始数据在这里！
-    name: '前端',
+  value: 100,              // Node value (sum of subtree calculated by d3)
+  depth: 2,                // Hierarchy depth (0 = root node)
+  height: 0,               // Subtree height (0 for leaf nodes)
+  data: {                  // ← Original data is here!
+    name: 'Frontend',
     value: 15,
-    category: '技术',
-    // ... 其它自定义字段
+    category: 'Technology',
+    // ... Other custom fields
   },
-  path: ['root', '技术', '前端'],
+  path: ['root', 'Technology', 'Frontend'],
 }
 ```
 
-### encode 中访问字段
+### Accessing Fields in encode
 
 ```javascript
-// ❌ 错误：字符串字段名对 color 通道不起作用
+// ❌ Incorrect: String field names do not work for the color channel
 encode: {
-  value: 'value',      // ✅ value 通道有专项处理
-  color: 'category',   // ❌ d['category'] = undefined → 所有区域颜色相同
+  value: 'value',      // ✅ value channel has specialized handling
+  color: 'category',   // ❌ d['category'] = undefined → all areas have the same color
 }
 
-// ✅ 正确：color 必须用回调函数
+// ✅ Correct: color must use a callback function
 encode: {
   value: 'value',
   color: (d) => d.data?.category,  // ✅
 }
 ```
 
-### 常用着色策略
+### Common Coloring Strategies
 
 ```javascript
-// 按第二层父节点着色（推荐，同门类同色）
+// Color by the second-level parent node (recommended, same category, same color)
 color: (d) => d.path?.[1] || d.data?.name
 
-// 按层级深度着色
+// Color by hierarchy depth
 color: (d) => d.depth
 
-// 按自定义字段着色
+// Color by custom field
 color: (d) => d.data?.category
 color: (d) => d.data?.type
 
-// 按数值着色（连续色板）
+// Color by numerical value (continuous color palette)
 color: (d) => d.value
 ```
 
-### 错误 2：encode.color 使用字符串字段名导致所有区域颜色相同
+### Error 2: Using String Field Name in encode.color Causes All Sectors to Have the Same Color
 
 ```javascript
-// ❌ 错误：color: 'category' 等价于 d['category']，层次节点上没有此属性 → undefined
+// ❌ Incorrect: color: 'category' is equivalent to d['category'], which does not exist on the hierarchy node → undefined
 chart.options({
   type: 'sunburst',
   data: { value: data },
   encode: {
     value: 'value',
-    color: 'category',  // ❌ → 所有扇区相同颜色
+    color: 'category',  // ❌ → All sectors have the same color
   },
 });
 
-// ✅ 正确：color 必须用回调，通过 d.data 访问原始字段
+// ✅ Correct: color must use a callback to access the original field via d.data
 chart.options({
   type: 'sunburst',
   data: { value: data },
   encode: {
     value: 'value',
-    color: (d) => d.path?.[1] || d.data?.name,  // ✅ 按父节点着色
+    color: (d) => d.path?.[1] || d.data?.name,  // ✅ Color by parent node
   },
 });
 ```
 
-### 错误 3：labels 中使用 d.name 导致 undefined
+### Error 3: Using `d.name` in `labels` results in `undefined`
 
 ```javascript
-// ❌ 错误：partition 节点的原始字段在 d.data 中，d.name 是 undefined
+// ❌ Error: The original field of the partition node is in `d.data`, `d.name` is undefined
 labels: [
   {
-    text: (d) => d.name,  // ❌ d.name 是 undefined
+    text: (d) => d.name,  // ❌ `d.name` is undefined
   },
 ]
 
-// ✅ 正确：通过 d.data 访问原始数据字段
+// ✅ Correct: Access the original data field through `d.data`
 labels: [
   {
     text: (d) => d.data?.name || '',  // ✅
@@ -259,7 +257,7 @@ labels: [
 ]
 ```
 
-### 配合 scale 自定义颜色
+### Customizing Colors with Scale
 
 ```javascript
 encode: {

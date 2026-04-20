@@ -1,10 +1,10 @@
 ---
 id: "g2-scale-pow-sqrt"
-title: "G2 幂次比例尺（pow）和平方根比例尺（sqrt）"
+title: "G2 Power Scale (pow) and Square Root Scale (sqrt)"
 description: |
-  pow 比例尺将数值按幂函数（y = x^exponent）映射，exponent=0.5 时等同于 sqrt 比例尺。
-  sqrt 是 pow 的特例（exponent=0.5），将数值映射为平方根，
-  常用于面积编码（如气泡大小）确保视觉面积与数值成线性比例。
+  The pow scale maps numerical values according to a power function (y = x^exponent), where exponent=0.5 is equivalent to the sqrt scale.
+  sqrt is a special case of pow (exponent=0.5), mapping values to their square roots,
+  commonly used in area encoding (e.g., bubble sizes) to ensure visual area is linearly proportional to the value.
 
 library: "g2"
 version: "5.x"
@@ -12,11 +12,10 @@ category: "scales"
 tags:
   - "pow"
   - "sqrt"
-  - "幂次"
-  - "平方根"
-  - "比例尺"
+  - "power"
+  - "square root"
   - "scale"
-  - "气泡图"
+  - "bubble chart"
 
 related:
   - "g2-scale-log"
@@ -24,9 +23,9 @@ related:
   - "g2-mark-point-bubble"
 
 use_cases:
-  - "气泡图 size 通道用 sqrt 比例尺（确保面积线性）"
-  - "数据轻微偏斜时用 pow 拉伸/压缩数值范围"
-  - "视觉编码中面积与数值的线性映射"
+  - "Using sqrt scale for the size channel in bubble charts (ensuring linear area)"
+  - "Using pow to stretch/compress value ranges when data is slightly skewed"
+  - "Linear mapping of area to value in visual encoding"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,17 +35,17 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/scale/pow"
 ---
 
-## 最小可运行示例（气泡图 sqrt 比例尺）
+## Minimum Viable Example (Bubble Chart with Sqrt Scale)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = [
-  { country: '中国', gdp: 17.7, population: 141 },
-  { country: '美国', gdp: 25.5, population: 33 },
-  { country: '印度', gdp: 3.4,  population: 142 },
-  { country: '日本', gdp: 4.2,  population: 13 },
-  { country: '巴西', gdp: 1.8,  population: 22 },
+  { country: 'China', gdp: 17.7, population: 141 },
+  { country: 'United States', gdp: 25.5, population: 33 },
+  { country: 'India', gdp: 3.4,  population: 142 },
+  { country: 'Japan', gdp: 4.2,  population: 13 },
+  { country: 'Brazil', gdp: 1.8,  population: 22 },
 ];
 
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
@@ -62,8 +61,8 @@ chart.options({
   },
   scale: {
     size: {
-      type: 'sqrt',        // 平方根比例尺：面积与 population 成线性比例
-      range: [8, 60],      // 半径范围
+      type: 'sqrt',        // Sqrt scale: area is linearly proportional to population
+      range: [8, 60],      // Radius range
     },
   },
   style: { fillOpacity: 0.7 },
@@ -72,53 +71,53 @@ chart.options({
 chart.render();
 ```
 
-## pow 比例尺（自定义指数）
+## pow Scale (Custom Exponent)
 
 ```javascript
-// exponent = 2：数值越大差异越被放大（适合展示小差异）
+// exponent = 2: Larger values amplify differences (suitable for displaying small differences)
 scale: {
   y: {
     type: 'pow',
-    exponent: 2,    // y = x^2，放大大值之间的差异
+    exponent: 2,    // y = x^2, amplifies differences between large values
   },
 }
 
-// exponent = 0.5：等同于 sqrt（压缩大值）
+// exponent = 0.5: Equivalent to sqrt (compresses large values)
 scale: {
   y: {
     type: 'pow',
-    exponent: 0.5,  // 等同于 type: 'sqrt'
+    exponent: 0.5,  // Equivalent to type: 'sqrt'
   },
 }
 ```
 
-## 为什么气泡大小要用 sqrt
+## Why Use Sqrt for Bubble Size
 
 ```javascript
-// ❌ 错误：用 linear 比例尺映射半径
-// 半径 r 与数值成线性，则面积 = πr²，面积与数值呈平方关系
-// 人口 100 和 400，视觉面积比是 1:16，误导读者
+// ❌ Wrong: Using linear scale to map radius
+// Radius r is linearly proportional to the value, so area = πr², area is quadratically related to the value
+// Population 100 and 400, visual area ratio is 1:16, misleading the reader
 scale: { size: { type: 'linear', range: [8, 60] } }  // ❌
 
-// ✅ 正确：用 sqrt 比例尺映射半径
-// 半径 r = sqrt(数值)，面积 = πr² = π×数值，面积与数值成线性
-// 人口 100 和 400，视觉面积比是 1:4，符合实际比例
+// ✅ Correct: Using sqrt scale to map radius
+// Radius r = sqrt(value), area = πr² = π×value, area is linearly related to the value
+// Population 100 and 400, visual area ratio is 1:4, consistent with actual proportions
 scale: { size: { type: 'sqrt', range: [8, 60] } }  // ✅
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：数据包含 0 或负数且 exponent < 1——sqrt(0) = 0 正常，但负数会得到 NaN
+### Error: Data contains 0 or negative numbers and exponent < 1——sqrt(0) = 0 is normal, but negative numbers will result in NaN
 ```javascript
-// ❌ sqrt(-1) = NaN，数据中有负数时会报错
+// ❌ sqrt(-1) = NaN, an error will occur if there are negative numbers in the data
 chart.options({
   scale: { y: { type: 'sqrt' } },
-   [{ y: -10 }],  // ❌ 负数
+   [{ y: -10 }],  // ❌ Negative number
 });
 
-// ✅ sqrt 比例尺只适用于非负数
-// 如果有负数，先用 Math.abs 处理，或改用 linear
+// ✅ The sqrt scale is only applicable to non-negative numbers
+// If there are negative numbers, process them with Math.abs first, or switch to linear
 chart.options({
-  scale: { y: { type: 'sqrt', domain: [0, 200] } },  // ✅ 确保 domain 非负
+  scale: { y: { type: 'sqrt', domain: [0, 200] } },  // ✅ Ensure domain is non-negative
 });
 ```

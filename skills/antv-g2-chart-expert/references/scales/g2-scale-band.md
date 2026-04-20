@@ -1,18 +1,18 @@
 ---
 id: "g2-scale-band"
-title: "G2 Band 分类比例尺"
+title: "G2 Band Categorical Scale"
 description: |
-  Band Scale 是 G2 中用于分类 x 轴（柱状图等）的比例尺，
-  将离散分类值映射到等宽区间（band），支持配置内外间距。
-  当 encode.x 映射字符串/分类字段时自动使用。
+  Band Scale is a scale in G2 used for categorical x-axes (bar charts, etc.),
+  mapping discrete categorical values to equal-width intervals (bands) and supporting the configuration of inner and outer padding.
+  It is automatically used when encode.x maps to a string or categorical field.
 
 library: "g2"
 version: "5.x"
 category: "scales"
 tags:
   - "band"
-  - "分类比例尺"
-  - "柱状图"
+  - "categorical scale"
+  - "bar chart"
   - "padding"
   - "scale"
   - "ordinal"
@@ -24,9 +24,9 @@ related:
   - "g2-comp-axis-config"
 
 use_cases:
-  - "配置柱状图的柱体宽度和间距"
-  - "指定分类轴的显示顺序"
-  - "控制分类数据的对齐方式"
+  - "Configure the width and spacing of bars in a bar chart"
+  - "Specify the display order of a categorical axis"
+  - "Control the alignment of categorical data"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,9 +36,9 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/scale/band"
 ---
 
-## 自动识别
+## Auto Recognition
 
-当 encode.x 映射字符串类型字段时，G2 自动使用 Band Scale，通常无需显式配置：
+When `encode.x` maps to a string type field, G2 automatically uses a Band Scale, typically without requiring explicit configuration:
 
 ```javascript
 chart.options({
@@ -47,11 +47,11 @@ chart.options({
     { genre: 'Sports',   sold: 275 },
     { genre: 'Strategy', sold: 115 },
   ],
-  encode: { x: 'genre', y: 'sold' },   // 'genre' 是字符串，自动使用 Band Scale
+  encode: { x: 'genre', y: 'sold' },   // 'genre' is a string, automatically uses Band Scale
 });
 ```
 
-## 配置柱体宽度（padding）
+## Configure Bar Width (Padding)
 
 ```javascript
 chart.options({
@@ -61,18 +61,18 @@ chart.options({
   scale: {
     x: {
       type: 'band',
-      padding: 0.3,         // 柱体内间距（0-1），默认 0.1
-      // paddingInner: 0.3, // 同 padding
-      // paddingOuter: 0.2, // 两端外间距
+      padding: 0.3,         // Inner spacing between bars (0-1), default 0.1
+      // paddingInner: 0.3, // Same as padding
+      // paddingOuter: 0.2, // Outer spacing at both ends
     },
   },
 });
 ```
 
-## 自定义分类顺序
+## Customizing Category Order
 
 ```javascript
-// 指定分类显示顺序（不按数据顺序）
+// Specify the display order of categories (not following data order)
 chart.options({
   type: 'interval',
   data,
@@ -80,48 +80,48 @@ chart.options({
   scale: {
     x: {
       type: 'band',
-      domain: ['Action', 'Shooter', 'Sports', 'Strategy', 'Other'],  // 显式指定顺序
+      domain: ['Action', 'Shooter', 'Sports', 'Strategy', 'Other'],  // Explicitly specify the order
     },
   },
 });
 ```
 
-## 热力图（cell mark）
+## Heatmap (cell mark)
 
-`cell` mark 同样依赖 bandwidth，离散的 x/y 轴应使用 `band`（或省略让 G2 自动推断）。**不要用 `point` 比例尺**——point 的 bandwidth=0，格子会不可见。
+The `cell` mark also depends on bandwidth. Discrete x/y axes should use `band` (or omit it to let G2 infer automatically). **Do not use the `point` scale**——point's bandwidth=0, making the grid invisible.
 
 ```javascript
 chart.options({
   type: 'cell',
   data: heatmapData,
   encode: { x: 'date', y: 'month', color: 'value' },
-  // ✅ 省略 x/y scale，G2 自动为 cell 使用 band
+  // ✅ Omit x/y scale, G2 automatically uses band for cell
   scale: {
     color: { type: 'sequential', palette: 'blues' },
   },
 });
 
-// ✅ 也可以显式写 band
+// ✅ Can also explicitly write band
 scale: {
   x: { type: 'band' },
   y: { type: 'band' },
   color: { type: 'sequential', palette: 'blues' },
 }
 
-// ❌ 不要用 point：bandwidth=0，格子消失
+// ❌ Do not use point: bandwidth=0, grid disappears
 scale: {
   x: { type: 'point' },  // ❌
   y: { type: 'point' },  // ❌
 }
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：padding 超出 [0, 1] 范围
+### Error: padding exceeds the range [0, 1]
 ```javascript
-// ❌ 错误：padding > 1，柱体宽度变为负值
+// ❌ Error: padding > 1, bar width becomes negative
 chart.options({ scale: { x: { padding: 1.5 } } });
 
-// ✅ 正确：padding 在 0-1 之间，0 = 无间距，0.5 = 柱宽与间距各占一半
+// ✅ Correct: padding between 0-1, 0 = no spacing, 0.5 = bar width and spacing each occupy half
 chart.options({ scale: { x: { padding: 0.3 } } });
 ```

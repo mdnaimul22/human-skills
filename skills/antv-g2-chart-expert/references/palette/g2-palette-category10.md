@@ -1,19 +1,18 @@
 ---
 id: "g2-palette-category10"
-title: "G2 Category10 调色板"
+title: "G2 Category10 Palette"
 description: |
-  AntV 经典 10 色调色板，用于分类数据的颜色映射。
-  包含 10 种精心设计的颜色，适合大多数分类可视化场景。
+  AntV's classic 10-color palette, used for color mapping in categorical data.
+  Includes 10 carefully designed colors, suitable for most categorical visualization scenarios.
 
 library: "g2"
 version: "5.x"
 category: "palette"
 tags:
-  - "调色板"
   - "palette"
-  - "颜色"
-  - "分类"
-  - "10色"
+  - "color"
+  - "category"
+  - "10-color"
 
 related:
   - "g2-palette-category20"
@@ -21,12 +20,12 @@ related:
   - "g2-theme-builtin"
 
 use_cases:
-  - "分类数据的默认颜色"
-  - "柱状图、折线图的颜色映射"
-  - "需要 10 种以内颜色的场景"
+  - "Default colors for categorical data"
+  - "Color mapping for bar charts and line charts"
+  - "Scenarios requiring 10 or fewer colors"
 
 anti_patterns:
-  - "超过 10 个类别时应考虑 Category20 或自定义调色板"
+  - "For more than 10 categories, consider Category20 or custom palettes"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,29 +34,28 @@ updated: "2025-03-26"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/palette"
 ---
+## Core Concepts
 
-## 核心概念
+Category10 is the default categorical color palette of AntV:
+- Contains 10 colors
+- Colors are carefully designed for easy distinction
+- Suitable for most categorical visualization scenarios
 
-Category10 是 AntV 的默认分类调色板：
-- 包含 10 种颜色
-- 颜色经过精心设计，易于区分
-- 适合大多数分类可视化场景
-
-**颜色列表：**
+**Color List:**
 ```
-#5B8FF9  - 蓝色
-#5AD8A6  - 绿色
-#5D7092  - 灰蓝色
-#F6BD16  - 黄色
-#6F5EF9  - 紫色
-#6DC8EC  - 青色
-#945FB9  - 深紫色
-#FF9845  - 橙色
-#1E9493  - 深青色
-#FF99C3  - 粉色
+#5B8FF9  - Blue
+#5AD8A6  - Green
+#5D7092  - Grayish Blue
+#F6BD16  - Yellow
+#6F5EF9  - Purple
+#6DC8EC  - Cyan
+#945FB9  - Dark Purple
+#FF9845  - Orange
+#1E9493  - Dark Cyan
+#FF99C3  - Pink
 ```
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -80,15 +78,15 @@ chart.options({
     y: 'value',
     color: 'category',
   },
-  // Category10 是默认调色板，无需显式指定
+  // Category10 is the default palette, no need to explicitly specify
 });
 
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 显式指定调色板
+### Explicitly Specify the Palette
 
 ```javascript
 chart.options({
@@ -98,13 +96,13 @@ chart.options({
   scale: {
     color: {
       type: 'ordinal',
-      range: 'category10',  // 显式指定
+      range: 'category10',  // Explicitly specified
     },
   },
 });
 ```
 
-### 自定义颜色范围
+### Custom Color Range
 
 ```javascript
 chart.options({
@@ -126,7 +124,7 @@ chart.options({
 });
 ```
 
-### 使用 Theme 配置
+### Using Theme Configuration
 
 ```javascript
 chart.options({
@@ -139,44 +137,44 @@ chart.options({
 });
 ```
 
-## 完整颜色参考
+## Complete Color Reference
 
-| 索引 | 颜色值 | 颜色名 |
+| Index | Color Value | Color Name |
 |------|--------|--------|
-| 0 | #5B8FF9 | 蓝色 |
-| 1 | #5AD8A6 | 绿色 |
-| 2 | #5D7092 | 灰蓝色 |
-| 3 | #F6BD16 | 黄色 |
-| 4 | #6F5EF9 | 紫色 |
-| 5 | #6DC8EC | 青色 |
-| 6 | #945FB9 | 深紫色 |
-| 7 | #FF9845 | 橙色 |
-| 8 | #1E9493 | 深青色 |
-| 9 | #FF99C3 | 粉色 |
+| 0 | #5B8FF9 | Blue |
+| 1 | #5AD8A6 | Green |
+| 2 | #5D7092 | Grayish Blue |
+| 3 | #F6BD16 | Yellow |
+| 4 | #6F5EF9 | Purple |
+| 5 | #6DC8EC | Cyan |
+| 6 | #945FB9 | Dark Purple |
+| 7 | #FF9845 | Orange |
+| 8 | #1E9493 | Dark Cyan |
+| 9 | #FF99C3 | Pink |
 
-## 与 Category20 的对比
+## Comparison with Category20
 
-| 特性 | Category10 | Category20 |
+| Feature | Category10 | Category20 |
 |------|------------|------------|
-| 颜色数量 | 10 | 20 |
-| 颜色风格 | 饱和度一致 | 饱和度交替 |
-| 适用场景 | ≤10 类别 | 10-20 类别 |
-| 默认使用 | 是 | 否 |
+| Number of Colors | 10 | 20 |
+| Color Style | Consistent Saturation | Alternating Saturation |
+| Applicable Scenarios | ≤10 Categories | 10-20 Categories |
+| Default Usage | Yes | No |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：类别超过 10 个
+### Error 1: More Than 10 Categories
 
 ```javascript
-// ⚠️ 注意：超过 10 个类别会循环使用颜色
-// 类别 11 会使用与类别 1 相同的颜色
+// ⚠️ Note: More than 10 categories will reuse colors in a loop
+// Category 11 will use the same color as Category 1
 
-// ✅ 解决方案 1：使用 Category20
+// ✅ Solution 1: Use Category20
 scale: {
   color: { type: 'ordinal', range: 'category20' }
 }
 
-// ✅ 解决方案 2：自定义更多颜色
+// ✅ Solution 2: Customize More Colors
 scale: {
   color: {
     type: 'ordinal',
@@ -185,12 +183,12 @@ scale: {
 }
 ```
 
-### 错误 2：颜色值格式错误
+### Error 2: Incorrect Color Value Format
 
 ```javascript
-// ❌ 错误：颜色值格式不正确
+// ❌ Incorrect: Color value format is wrong
 range: ['rgb(91, 143, 249)', ...]
 
-// ✅ 正确：使用标准 HEX 格式
+// ✅ Correct: Use standard HEX format
 range: ['#5B8FF9', ...]
 ```

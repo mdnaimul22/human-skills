@@ -1,10 +1,10 @@
 ---
 id: "g2-scale-ordinal"
-title: "G2 序数比例尺（ordinal）"
+title: "G2 Ordinal Scale"
 description: |
-  序数比例尺将离散的分类值映射到离散的输出值（如颜色）。
-  主要用于 color 通道，将字符串类别映射到颜色数组。
-  通过 range 指定自定义颜色列表，或通过 palette 使用内置调色板。
+  The ordinal scale maps discrete categorical values to discrete output values (such as colors).
+  It is primarily used in the color channel to map string categories to a color array.
+  Customize the color list via `range` or use built-in palettes with `palette`.
 
 library: "g2"
 version: "5.x"
@@ -23,9 +23,9 @@ related:
   - "g2-theme-builtin"
 
 use_cases:
-  - "自定义分类颜色映射"
-  - "指定特定类别对应特定颜色"
-  - "使用内置或自定义调色板"
+  - "Custom categorical color mapping"
+  - "Assign specific colors to specific categories"
+  - "Use built-in or custom color palettes"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,8 +34,7 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/scale/ordinal"
 ---
-
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -45,16 +44,16 @@ const chart = new Chart({ container: 'container', width: 640, height: 400 });
 chart.options({
   type: 'interval',
   data: [
-    { genre: '运动', sold: 275 },
-    { genre: '策略', sold: 115 },
-    { genre: '动作', sold: 120 },
+    { genre: 'Sports', sold: 275 },
+    { genre: 'Strategy', sold: 115 },
+    { genre: 'Action', sold: 120 },
     { genre: 'RPG',  sold: 98 },
   ],
   encode: { x: 'genre', y: 'sold', color: 'genre' },
   scale: {
     color: {
       type: 'ordinal',
-      // 自定义颜色列表（顺序对应 domain 中的分类）
+      // Custom color list (order corresponds to categories in domain)
       range: ['#F4664A', '#FAAD14', '#5B8FF9', '#30BF78'],
     },
   },
@@ -63,70 +62,70 @@ chart.options({
 chart.render();
 ```
 
-## 指定类别到颜色的映射（domain + range）
+## Specify Category-to-Color Mapping (domain + range)
 
 ```javascript
 chart.options({
   scale: {
     color: {
       type: 'ordinal',
-      domain: ['通过', '失败', '跳过'],   // 指定分类顺序
-      range: ['#52c41a', '#ff4d4f', '#faad14'],  // 对应颜色
+      domain: ['Pass', 'Fail', 'Skip'],   // Specify category order
+      range: ['#52c41a', '#ff4d4f', '#faad14'],  // Corresponding colors
     },
   },
 });
 ```
 
-## 使用内置调色板
+## Using Built-in Palettes
 
 ```javascript
-// G2 内置调色板名称：'tableau10', 'category10', 'set2', 'pastel', 'blues', etc.
+// G2 built-in palette names: 'tableau10', 'category10', 'set2', 'pastel', 'blues', etc.
 chart.options({
   scale: {
     color: {
       type: 'ordinal',
-      palette: 'tableau10',   // 使用 Tableau 10 色调色板
+      palette: 'tableau10',   // Use Tableau 10 color palette
     },
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：range 颜色数量少于分类数量——后面的类别颜色循环重用
+### Error 1: Number of range colors is less than the number of categories—later categories reuse colors in a loop
 ```javascript
-// ⚠️  5 个分类只有 3 个颜色，第 4/5 个类别颜色与前两个相同
+// ⚠️  5 categories but only 3 colors, the 4th/5th categories reuse the colors of the first two
 chart.options({
   scale: {
     color: {
       type: 'ordinal',
       domain: ['A', 'B', 'C', 'D', 'E'],
-      range: ['red', 'blue', 'green'],  // ⚠️  只有 3 个颜色，D/E 会循环
+      range: ['red', 'blue', 'green'],  // ⚠️  Only 3 colors, D/E will loop
     },
   },
 });
 
-// ✅ range 颜色数量应 ≥ 分类数量
+// ✅ The number of range colors should be ≥ the number of categories
 chart.options({
   scale: {
     color: {
       type: 'ordinal',
-      range: ['#F4664A', '#FAAD14', '#5B8FF9', '#30BF78', '#9254DE'],  // ✅ 5 个
+      range: ['#F4664A', '#FAAD14', '#5B8FF9', '#30BF78', '#9254DE'],  // ✅ 5 colors
     },
   },
 });
 ```
 
-### 错误 2：连续数值通道误用 ordinal——应用 linear 或 sequential
+### Error 2: Misusing ordinal for continuous numerical channels—Use linear or sequential instead
 ```javascript
-// ❌ 对数值 y 轴使用 ordinal（Y 轴会变成离散）
+// ❌ Using ordinal for numerical y-axis (Y-axis becomes discrete)
 chart.options({
   scale: {
-    y: { type: 'ordinal' },  // ❌ y 是数值，应用 linear
+    y: { type: 'ordinal' },  // ❌ y is numerical, use linear instead
   },
 });
 
-// ✅ 数值比例尺用 linear
+// ✅ Use linear for numerical scales
 chart.options({
   scale: {
     y: { type: 'linear' },  // ✅

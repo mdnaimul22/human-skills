@@ -1,19 +1,18 @@
 ---
 id: "g2-palette-category20"
-title: "G2 Category20 调色板"
+title: "G2 Category20 Palette"
 description: |
-  AntV 经典 20 色调色板，用于分类数据的颜色映射。
-  包含 20 种颜色，采用饱和度交替的设计，适合更多类别的可视化场景。
+  AntV's classic 20-color palette, used for color mapping of categorical data.
+  It includes 20 colors with an alternating saturation design, suitable for visualization scenarios with more categories.
 
 library: "g2"
 version: "5.x"
 category: "palette"
 tags:
-  - "调色板"
   - "palette"
-  - "颜色"
-  - "分类"
-  - "20色"
+  - "color"
+  - "categorical"
+  - "20-color"
 
 related:
   - "g2-palette-category10"
@@ -21,12 +20,12 @@ related:
   - "g2-theme-builtin"
 
 use_cases:
-  - "超过 10 个类别的颜色映射"
-  - "需要更多颜色区分的场景"
-  - "复杂分类数据可视化"
+  - "Color mapping for more than 10 categories"
+  - "Scenarios requiring more color distinctions"
+  - "Complex categorical data visualization"
 
 anti_patterns:
-  - "类别较少时建议使用 Category10"
+  - "For fewer categories, it is recommended to use Category10"
 
 difficulty: "beginner"
 completeness: "full"
@@ -36,19 +35,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/palette"
 ---
 
-## 核心概念
+## Core Concepts
 
-Category20 是 AntV 的扩展分类调色板：
-- 包含 20 种颜色
-- 采用饱和度交替的设计模式
-- 适合 10-20 个类别的场景
+Category20 is an extended categorical color palette from AntV:
+- Contains 20 colors
+- Uses an alternating saturation design pattern
+- Suitable for scenarios with 10-20 categories
 
-**设计特点：**
-- 前半部分为饱和色（与 Category10 一致）
-- 后半部分为低饱和度色
-- 交替使用可增加区分度
+**Design Features:**
+- First half consists of saturated colors (consistent with Category10)
+- Second half consists of low-saturation colors
+- Alternating usage enhances distinguishability
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -64,7 +63,7 @@ chart.options({
   data: [
     { category: 'A', value: 100 },
     { category: 'B', value: 150 },
-    // ... 更多类别
+    // ... more categories
   ],
   encode: {
     x: 'category',
@@ -82,9 +81,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 显式指定颜色范围
+### Explicitly Specify Color Range
 
 ```javascript
 chart.options({
@@ -111,7 +110,7 @@ chart.options({
 });
 ```
 
-### 结合自定义颜色
+### Combine with Custom Colors
 
 ```javascript
 chart.options({
@@ -123,7 +122,7 @@ chart.options({
       type: 'ordinal',
       range: [
         ...customColors.slice(0, 10),
-        '#5B8FF9', '#CDDDFD', // 补充 Category20 的颜色
+        '#5B8FF9', '#CDDDFD', // Supplement Category20 colors
         // ...
       ],
     },
@@ -131,60 +130,60 @@ chart.options({
 });
 ```
 
-## 完整颜色参考
+## Complete Color Reference
 
-| 索引 | 颜色值 | 饱和度 |
-|------|--------|--------|
-| 0 | #5B8FF9 | 高 |
-| 1 | #CDDDFD | 低 |
-| 2 | #5AD8A6 | 高 |
-| 3 | #CDF3E4 | 低 |
-| 4 | #5D7092 | 高 |
-| 5 | #CED4DE | 低 |
-| 6 | #F6BD16 | 高 |
-| 7 | #FCEBB9 | 低 |
-| 8 | #6F5EF9 | 高 |
-| 9 | #D3CEFD | 低 |
-| 10 | #6DC8EC | 高 |
-| 11 | #D3EEF9 | 低 |
-| 12 | #945FB9 | 高 |
-| 13 | #DECFEA | 低 |
-| 14 | #FF9845 | 高 |
-| 15 | #FFE0C7 | 低 |
-| 16 | #1E9493 | 高 |
-| 17 | #BBDEDE | 低 |
-| 18 | #FF99C3 | 高 |
-| 19 | #FFE0ED | 低 |
+| Index | Color Value | Saturation |
+|-------|-------------|------------|
+| 0     | #5B8FF9     | High       |
+| 1     | #CDDDFD     | Low        |
+| 2     | #5AD8A6     | High       |
+| 3     | #CDF3E4     | Low        |
+| 4     | #5D7092     | High       |
+| 5     | #CED4DE     | Low        |
+| 6     | #F6BD16     | High       |
+| 7     | #FCEBB9     | Low        |
+| 8     | #6F5EF9     | High       |
+| 9     | #D3CEFD     | Low        |
+| 10    | #6DC8EC     | High       |
+| 11    | #D3EEF9     | Low        |
+| 12    | #945FB9     | High       |
+| 13    | #DECFEA     | Low        |
+| 14    | #FF9845     | High       |
+| 15    | #FFE0C7     | Low        |
+| 16    | #1E9493     | High       |
+| 17    | #BBDEDE     | Low        |
+| 18    | #FF99C3     | High       |
+| 19    | #FFE0ED     | Low        |
 
-## 与 Category10 的对比
+## Comparison with Category10
 
-| 特性 | Category10 | Category20 |
+| Feature | Category10 | Category20 |
 |------|------------|------------|
-| 颜色数量 | 10 | 20 |
-| 颜色风格 | 饱和度一致 | 饱和度交替 |
-| 适用场景 | ≤10 类别 | 10-20 类别 |
-| 默认使用 | 是 | 否 |
-| 区分难度 | 较易 | 需注意相邻色 |
+| Number of Colors | 10 | 20 |
+| Color Style | Consistent Saturation | Alternating Saturation |
+| Applicable Scenarios | ≤10 Categories | 10-20 Categories |
+| Default Usage | Yes | No |
+| Distinguishing Difficulty | Easier | Requires Attention to Adjacent Colors |
 
-## 设计建议
+## Design Recommendations
 
-### 类别数量建议
+### Category Quantity Recommendations
 
-| 类别数量 | 推荐调色板 |
+| Category Quantity | Recommended Palette |
 |---------|-----------|
 | 1-5 | Category10 |
 | 6-10 | Category10 |
 | 11-15 | Category20 |
 | 16-20 | Category20 |
-| >20 | 自定义或分组 |
+| >20 | Custom or Grouped |
 
-### 使用技巧
+### Usage Tips
 
 ```javascript
-// 技巧：利用饱和度交替增加区分度
-// 将重要类别放在高饱和度位置（偶数索引）
+// Tip: Use alternating saturation to increase distinguishability
+// Place important categories in high saturation positions (even indices)
 
-// 例如：高亮重要类别
+// Example: Highlight important categories
 chart.options({
   type: 'interval',
   data,
@@ -193,9 +192,9 @@ chart.options({
     color: {
       type: 'ordinal',
       range: [
-        '#5B8FF9',  // 高饱和 - 类别 A
-        '#CDDDFD',  // 低饱和 - 类别 B
-        '#5AD8A6',  // 高饱和 - 类别 C（重要）
+        '#5B8FF9',  // High saturation - Category A
+        '#CDDDFD',  // Low saturation - Category B
+        '#5AD8A6',  // High saturation - Category C (important)
         // ...
       ],
     },
@@ -203,14 +202,14 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：类别超过 20 个
+### Error 1: More than 20 Categories
 
 ```javascript
-// ⚠️ 注意：超过 20 个类别会循环使用颜色
+// ⚠️ Note: More than 20 categories will reuse colors in a loop
 
-// ✅ 解决方案 1：自定义更多颜色
+// ✅ Solution 1: Customize more colors
 scale: {
   color: {
     type: 'ordinal',
@@ -218,20 +217,20 @@ scale: {
   }
 }
 
-// ✅ 解决方案 2：合并小类别
-// 将小类别合并为"其他"类别
+// ✅ Solution 2: Merge small categories
+// Merge small categories into an "Other" category
 ```
 
-### 错误 2：相邻颜色区分度不够
+### Error 2: Insufficient Distinction Between Adjacent Colors
 
 ```javascript
-// ⚠️ 注意：相邻的低饱和度颜色可能难以区分
+// ⚠️ Note: Adjacent low-saturation colors may be difficult to distinguish
 
-// ✅ 解决方案：调整 domain 顺序
+// ✅ Solution: Adjust the domain order
 scale: {
   color: {
     type: 'ordinal',
-    domain: ['A', 'C', 'E', 'B', 'D'],  // 交替高/低饱和度
+    domain: ['A', 'C', 'E', 'B', 'D'],  // Alternate high/low saturation
     range: 'category20'
   }
 }

@@ -69,11 +69,8 @@ T8 Syntax is a Markdown-like language for creating narrative text with semantic 
 Use standard Markdown heading syntax:
 
 ```
-
 # Level 1 Heading (Main Title)
-
 ## Level 2 Heading (Section)
-
 ### Level 3 Heading (Subsection)
 #### Level 4 Heading
 ##### Level 5 Heading
@@ -269,6 +266,7 @@ Additional context or breakdown data for chart rendering. Required for certain e
 - `[steady growth](trend_desc, detail=[100, 120, 145, 180, 210])`
 
 ---
+
 ## Data Requirements
 
 **Critical**: All data must be from publicly authentic sources:

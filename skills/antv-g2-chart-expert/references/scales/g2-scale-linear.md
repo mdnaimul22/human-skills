@@ -1,18 +1,18 @@
 ---
 id: "g2-scale-linear"
-title: "G2 线性比例尺（linear scale）"
+title: "G2 Linear Scale"
 description: |
-  G2 v5 线性比例尺用于连续数值字段的映射，通过 scale.y 或 scale.color 配置，
-  支持自定义 domain（数据范围）和 range（视觉范围），
-  nice/clamp/tickCount 控制轴刻度显示。
+  G2 v5 linear scale is used for mapping continuous numerical fields. It can be configured via scale.y or scale.color,
+  supporting custom domain (data range) and range (visual range).
+  nice/clamp/tickCount controls the display of axis ticks.
 library: "g2"
 version: "5.x"
 category: "scales"
 tags:
-  - "线性比例尺"
+  - "linear scale"
   - "linear"
-  - "连续"
-  - "数值"
+  - "continuous"
+  - "numerical"
   - "domain"
   - "range"
   - "spec"
@@ -23,9 +23,9 @@ related:
   - "g2-comp-annotation"
 
 use_cases:
-  - "控制 Y 轴的显示范围（不从 0 开始）"
-  - "设置颜色映射为连续色板"
-  - "clamp 截断超出范围的数据"
+  - "Control the display range of the Y-axis (not starting from 0)"
+  - "Set color mapping to a continuous color palette"
+  - "Clamp to truncate data exceeding the range"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,11 +35,11 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/scale"
 ---
 
-## 基本用法（自定义 Y 轴 domain）
+## Basic Usage (Custom Y-axis Domain)
 
-折线图默认 y 轴从 0 开始。使用 `scale.y.domain` 指定精确范围，让折线细节更清晰：
+By default, the y-axis of a line chart starts from 0. Use `scale.y.domain` to specify an exact range, making the line details clearer:
 
-> **注意**：`linear` 是数值字段的默认 scale 类型，**不需要手动指定 `type: 'linear'`**。
+> **Note**: `linear` is the default scale type for numerical fields, so **there is no need to manually specify `type: 'linear'`**.
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -63,8 +63,8 @@ chart.options({
   encode: { x: 'month', y: 'value' },
   scale: {
     y: {
-      domain: [3800, 5500],   // 显式指定 y 轴范围，不从 0 开始
-      nice: true,             // 自动扩展到"好看"的整数刻度
+      domain: [3800, 5500],   // Explicitly specify the y-axis range, not starting from 0
+      nice: true,             // Automatically extend to "nice" integer ticks
     },
   },
 });
@@ -72,9 +72,9 @@ chart.options({
 chart.render();
 ```
 
-## 对数比例尺（log scale）
+## Log Scale
 
-当数据跨越多个数量级时，使用 `type: 'log'` 将 y 轴压缩为对数尺度：
+When data spans multiple orders of magnitude, use `type: 'log'` to compress the y-axis into a logarithmic scale:
 
 ```javascript
 chart.options({
@@ -89,19 +89,19 @@ chart.options({
   encode: { x: 'year', y: 'revenue' },
   scale: {
     y: {
-      type: 'log',      // 对数比例尺，适合跨量级数据
-      base: 10,         // 对数底数，默认 10
+      type: 'log',      // Logarithmic scale, suitable for cross-order-of-magnitude data
+      base: 10,         // Logarithmic base, default is 10
       nice: true,
     },
   },
 });
 ```
 
-> 注意：log scale 不能包含 0 或负数，否则会导致渲染异常。
+> Note: Log scale cannot contain 0 or negative numbers, as it will result in rendering anomalies.
 
-## 颜色映射：连续色板（sequential color scale）
+## Color Mapping: Sequential Color Scale
 
-将数值字段映射为连续颜色，适合热力图或气泡图着色：
+Map numerical fields to a continuous color scale, suitable for heatmaps or bubble chart coloring:
 
 ```javascript
 chart.options({
@@ -117,143 +117,142 @@ chart.options({
   scale: {
     color: {
       type: 'linear',
-      domain: [0, 1],                           // 数据范围
-      range: ['#d0e8ff', '#0050b3'],            // 从浅蓝到深蓝
+      domain: [0, 1],                           // Data range
+      range: ['#d0e8ff', '#0050b3'],            // From light blue to dark blue
     },
   },
 });
 ```
 
-## 配置参考
+## Configuration Reference
 
-| 属性 | 类型 | 默认值 | 说明 |
+| Property | Type | Default Value | Description |
 |------|------|--------|------|
-| `type` | `'linear'` \| `'log'` \| `'pow'` \| `'sqrt'` | `'linear'` | 比例尺类型 |
-| `domain` | `[number, number]` | 数据的 min/max | 数据映射范围（输入域） |
-| `range` | `[number, number]` \| `string[]` | 取决于通道 | 视觉映射范围（输出域） |
-| `nice` | `boolean` | `false` | 自动将 domain 扩展到整数刻度 |
-| `clamp` | `boolean` | `false` | 超出 domain 的值截断到边界 |
-| `tickCount` | `number` | 自动 | 期望的刻度数量（近似值） |
-| `tickInterval` | `number` | 自动 | 相邻刻度的固定间隔 |
-| `tickMethod` | `function` | 内置方法 | 自定义刻度生成方法 |
-| `base` | `number` | `10` | 仅 `type: 'log'` 时有效，对数底数 |
-| `exponent` | `number` | `2` | 仅 `type: 'pow'` 时有效，指数 |
-| `zero` | `boolean` | `true` | 是否强制 domain 包含 0 |
+| `type` | `'linear'` \| `'log'` \| `'pow'` \| `'sqrt'` | `'linear'` | Scale type |
+| `domain` | `[number, number]` | Data's min/max | Data mapping range (input domain) |
+| `range` | `[number, number]` \| `string[]` | Depends on channel | Visual mapping range (output domain) |
+| `nice` | `boolean` | `false` | Automatically extend domain to integer ticks |
+| `clamp` | `boolean` | `false` | Clamp values outside domain to boundaries |
+| `tickCount` | `number` | Auto | Desired number of ticks (approximate) |
+| `tickInterval` | `number` | Auto | Fixed interval between adjacent ticks |
+| `tickMethod` | `function` | Built-in method | Custom tick generation method |
+| `base` | `number` | `10` | Only valid for `type: 'log'`, logarithmic base |
+| `exponent` | `number` | `2` | Only valid for `type: 'pow'`, exponent |
+| `zero` | `boolean` | `true` | Whether to force domain to include 0 |
 
 ```javascript
-// 完整配置示例
+// Complete configuration example
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'category', y: 'value' },
   scale: {
     y: {
-      // type: 'linear',  // 可省略，数值字段默认就是 linear
+      // type: 'linear',  // Can be omitted, numeric fields default to linear
       domain: [0, 1000],
       nice: true,
       clamp: true,
       tickCount: 5,
-      // tickInterval: 200,  // 与 tickCount 二选一
-      zero: false,           // 不强制从 0 开始
+      // tickInterval: 200,  // Either tickCount or tickInterval
+      zero: false,           // Do not force starting from 0
     },
   },
 });
 ```
 
-## tickMethod 自定义刻度
+## tickMethod Custom Tick
 
-`tickMethod` 用于自定义刻度生成，签名是 `(min, max, count) => number[]`：
+`tickMethod` is used for custom tick generation, with the signature `(min, max, count) => number[]`:
 
 ```javascript
 scale: {
   y: {
     tickCount: 5,
     tickMethod: (min, max, count) => {
-      // 参数说明：
-      // min - 数据最小值
-      // max - 数据最大值
-      // count - 推荐的刻度数量
+      // Parameter description:
+      // min - Minimum data value
+      // max - Maximum data value
+      // count - Recommended number of ticks
 
-      // 自定义刻度生成逻辑
+      // Custom tick generation logic
       const step = (max - min) / (count - 1);
       const ticks = [];
       for (let i = 0; i < count; i++) {
         ticks.push(min + i * step);
       }
-      return ticks;  // 返回数值数组
+      return ticks;  // Return a numeric array
     },
   },
 }
 ```
 
-**注意**：如果只需要格式化刻度标签文本，使用 `axis.labelFormatter`：
+**Note**: If you only need to format the tick label text, use `axis.labelFormatter`:
 
 ```javascript
 axis: {
   y: {
-    labelFormatter: (v) => `${v}万`,  // 格式化标签
+    labelFormatter: (v) => `${v}万`,  // Format label
   },
 }
 ```
+## Common Errors and Fixes
 
-## 常见错误与修正
-
-### 错误：忘记设置 `nice: true` 导致刻度不整齐
+### Error: Forgetting to Set `nice: true` Causes Uneven Ticks
 
 ```javascript
-// ❌ 刻度可能出现 3827、4183 等非整数
+// ❌ Ticks may appear as non-integers like 3827, 4183
 chart.options({
   scale: { y: { domain: [3827, 5243] } },
 });
 
-// ✅ nice: true 自动扩展为 3800、5400 等整数刻度
+// ✅ nice: true automatically extends to integer ticks like 3800, 5400
 chart.options({
   scale: { y: { domain: [3827, 5243], nice: true } },
 });
 ```
 
-### 错误：domain 最小值大于最大值（反转轴）
+### Error: Minimum value of domain is greater than the maximum value (reversed axis)
 
 ```javascript
-// ❌ domain 反转会导致轴方向翻转（通常不是预期效果）
+// ❌ Reversing the domain will cause the axis direction to flip (usually not the expected effect)
 chart.options({
   scale: { y: { domain: [1000, 0] } },
 });
 
-// ✅ 正确：最小值在前，最大值在后
+// ✅ Correct: Minimum value first, maximum value last
 chart.options({
   scale: { y: { domain: [0, 1000] } },
 });
 ```
 
-### 错误：对 0 或负值使用 log scale
+### Error: Using log scale with 0 or negative values
 
 ```javascript
-// ❌ log(0) = -Infinity，图表会出现渲染异常或空白
+// ❌ log(0) = -Infinity, causing rendering anomalies or blank charts
 chart.options({
   data: [{ x: 'A', y: 0 }, { x: 'B', y: 100 }],
   scale: { y: { type: 'log' } },
 });
 
-// ✅ 确保所有 y 值 > 0，或对数据做预处理过滤
+// ✅ Ensure all y values > 0, or preprocess data for filtering
 chart.options({
   data: data.filter(d => d.y > 0),
   scale: { y: { type: 'log', domain: [1, 1000000] } },
 });
 ```
 
-### 错误：tickCount 和 tickInterval 同时设置
+### Error: Both `tickCount` and `tickInterval` are set simultaneously
 
 ```javascript
-// ❌ 两者同时设置时 tickInterval 优先，tickCount 被忽略
+// ❌ When both are set, `tickInterval` takes precedence, and `tickCount` is ignored
 chart.options({
   scale: { y: { tickCount: 5, tickInterval: 200 } },
 });
 
-// ✅ 根据需求二选一
+// ✅ Choose one based on requirements
 chart.options({
-  scale: { y: { tickCount: 5 } },      // 约 5 个刻度
-  // 或
-  // scale: { y: { tickInterval: 200 } },  // 每隔 200 一个刻度
+  scale: { y: { tickCount: 5 } },      // Approximately 5 ticks
+  // or
+  // scale: { y: { tickInterval: 200 } },  // One tick every 200 units
 });
 ```

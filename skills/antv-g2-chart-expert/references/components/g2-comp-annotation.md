@@ -1,10 +1,10 @@
 ---
 id: "g2-comp-annotation"
-title: "G2 Annotation"
+title: "G2 标注（Annotation）"
 description: |
-  In G2 v5, annotations are implemented by overlaying additional Marks (text, line, image, etc.) on the chart.
-  Common types include text annotations, reference lines, and reference areas.
-  This article uses the Spec mode's view + children approach to combine annotations.
+  在 G2 v5 中，标注通过额外的 Mark（text、line、image 等）叠加在图表上实现，
+  常见的有文字标注、参考线（reference line）、参考区间（reference area）。
+  本文采用 Spec 模式的 view + children 方式组合标注。
 
 library: "g2"
 version: "5.x"
@@ -24,9 +24,9 @@ related:
   - "g2-comp-axis-config"
 
 use_cases:
-  - "Add average lines, target lines to charts"
-  - "Annotate special data points (max, min values)"
-  - "Add background color to reference areas"
+  - "在图表中添加平均线、目标线"
+  - "标注特殊数据点（最大值、最小值）"
+  - "添加参考区间背景色"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,7 +36,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/extra-topics/annotation"
 ---
 
-## Horizontal Reference Line (lineY)
+## 水平参考线（lineY）
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -47,12 +47,12 @@ chart.options({
   type: 'view',
   data,
   children: [
-    // Main Chart: Line Chart
+    // 主图：折线图
     {
       type: 'line',
       encode: { x: 'month', y: 'value' },
     },
-    // Annotation: Horizontal Reference Line at y=60
+    // 标注：y=60 的水平参考线
     {
       type: 'lineY',
       data: [60],
@@ -63,7 +63,7 @@ chart.options({
       },
       labels: [
         {
-          text: 'Target Value: 60',
+          text: '目标值: 60',
           position: 'right',
           style: { fill: '#f5222d', fontSize: 11 },
         },
@@ -75,21 +75,21 @@ chart.options({
 chart.render();
 ```
 
-## Vertical Reference Line (lineX)
+## 垂直参考线（lineX）
 
 ```javascript
-// Mark a specific time point
+// 标记某个特殊时间点
 {
   type: 'lineX',
   data: [new Date('2024-03-01')],
   style: { stroke: '#722ed1', strokeDasharray: '4 4', lineWidth: 1.5 },
   labels: [
-    { text: 'Version Release', position: 'top', style: { fill: '#722ed1' } },
+    { text: '版本发布', position: 'top', style: { fill: '#722ed1' } },
   ],
 }
 ```
 
-## Annotate Maximum Value Point
+## 标注最大值点
 
 ```javascript
 chart.options({
@@ -98,15 +98,15 @@ chart.options({
   children: [
     { type: 'line', encode: { x: 'month', y: 'value' } },
     {
-      // Use point + text to annotate the maximum value
+      // 用 point + text 标注最大值
       type: 'point',
       data,
       encode: { x: 'month', y: 'value' },
-      transform: [{ type: 'select', channel: 'y', selector: 'max' }],  // Select only the maximum value point
+      transform: [{ type: 'select', channel: 'y', selector: 'max' }],  // 只选最大值点
       style: { fill: '#f5222d', r: 5 },
       labels: [
         {
-          text: (d) => `Maximum\n${d.value}`,
+          text: (d) => `最大值\n${d.value}`,
           position: 'top',
           style: { fill: '#f5222d', fontSize: 11 },
         },
@@ -116,10 +116,10 @@ chart.options({
 });
 ```
 
-## Reference Range (rangeX / rangeY)
+## 参考区间（rangeX / rangeY）
 
 ```javascript
-// Highlight a specific y-value range (e.g., normal range)
+// 高亮某个 y 值范围（如正常区间）
 {
   type: 'rangeY',
   data: [{ y: [40, 80] }],
@@ -129,7 +129,7 @@ chart.options({
   },
   labels: [
     {
-      text: 'Normal Range',
+      text: '正常范围',
       position: 'right',
       style: { fill: '#52c41a', fontSize: 11 },
     },
@@ -137,13 +137,13 @@ chart.options({
 }
 ```
 
-## Text Mark (text mark)
+## 文字标注（text mark）
 
 ```javascript
-// Add text at specified coordinates
+// 在指定坐标处添加文字
 {
   type: 'text',
-  data: [{ x: 'Mar', y: 91, label: 'Highest point' }],
+  data: [{ x: 'Mar', y: 91, label: '最高点' }],
   encode: { x: 'x', y: 'y', text: 'label' },
   style: {
     textAlign: 'center',
@@ -155,10 +155,10 @@ chart.options({
 }
 ```
 
-## Image Mark (image mark)
+## 图片标注（image mark）
 
 ```javascript
-// Add an image mark at the center of the chart
+// 在图表中心添加图片标注
 {
   type: 'image',
   data: [{
@@ -180,15 +180,15 @@ chart.options({
 }
 ```
 
-## Common Errors and Fixes
+## 常见错误与修正
 
-### Error: Directly Overlaying Annotations in a Non-View Container
+### 错误：在非 view 容器中直接叠加标注
 ```javascript
-// ❌ Incorrect: Multiple chart.options() will overwrite each other
+// ❌ 错误：多个 chart.options() 会互相覆盖
 chart.options({ type: 'line', ... });
-chart.options({ type: 'lineY', ... });  // Overwrites the line chart!
+chart.options({ type: 'lineY', ... });  // 覆盖了折线图！
 
-// ✅ Correct: Use type: 'view' + children array for overlay
+// ✅ 正确：用 type: 'view' + children 数组叠加
 chart.options({
   type: 'view',
   data,
@@ -199,15 +199,15 @@ chart.options({
 });
 ```
 
-### Error: Incorrect Positioning and Encoding of Image Annotations
+### 错误：image 标注未正确设置位置和编码
 ```javascript
-// ❌ Error: Using a function to return fixed coordinates, not bound to data channels
+// ❌ 错误：使用函数返回固定坐标，未绑定到数据通道
 {
   type: 'image',
   data: [{ url: 'https://example.com/image.png' }],
   encode: {
-    x: () => 0, // Fixed at center
-    y: () => 0  // Fixed at center
+    x: () => 0, // 固定在中心
+    y: () => 0  // 固定在中心
   },
   style: {
     img: (d) => d.url,
@@ -216,7 +216,7 @@ chart.options({
   }
 }
 
-// ✅ Correct: Using relative percentage coordinates and correctly mapping the src channel
+// ✅ 正确：使用相对百分比坐标并正确映射 src 通道
 {
   type: 'image',
   data: [{

@@ -1,22 +1,20 @@
 ---
 id: "g2-scale-threshold"
-title: "G2 阈值比例尺（threshold）"
+title: "G2 Threshold Scale"
 description: |
-  阈值比例尺将连续数值按指定的阈值切分为若干区间，每个区间映射到一个离散输出（如颜色）。
-  常用于热力图、地图分级着色等场景，用几个关键阈值划分数据等级。
-  与 quantize（等分）不同，threshold 支持自定义不均匀的分割点。
+  The threshold scale divides continuous numerical values into several intervals based on specified thresholds, with each interval mapped to a discrete output (such as a color).
+  Commonly used in heatmaps, choropleth maps, and other scenarios where data is categorized into levels using a few key thresholds.
+  Unlike the quantize scale, the threshold scale supports custom, non-uniform division points.
 
 library: "g2"
 version: "5.x"
 category: "scales"
 tags:
   - "threshold"
-  - "阈值"
-  - "比例尺"
-  - "分级"
-  - "choropleth"
-  - "热力"
   - "scale"
+  - "categorization"
+  - "choropleth"
+  - "heatmap"
 
 related:
   - "g2-scale-linear"
@@ -24,9 +22,9 @@ related:
   - "g2-mark-cell-heatmap"
 
 use_cases:
-  - "地图分级着色（choropleth map）"
-  - "热力图数据分级（低/中/高/极高）"
-  - "自定义区间的颜色映射"
+  - "Choropleth map coloring"
+  - "Heatmap data categorization (Low/Medium/High/Very High)"
+  - "Custom interval color mapping"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,7 +34,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/scale/threshold"
 ---
 
-## 最小可运行示例（热力图分级着色）
+## Minimum Viable Example (Heatmap Graded Coloring)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -63,8 +61,8 @@ chart.options({
   scale: {
     color: {
       type: 'threshold',
-      domain: [30, 80, 150],          // 3 个阈值，划分为 4 个区间
-      range: ['#ebedf0', '#c6e48b', '#7bc96f', '#196127'],  // 对应 4 个颜色
+      domain: [30, 80, 150],          // 3 thresholds, dividing into 4 intervals
+      range: ['#ebedf0', '#c6e48b', '#7bc96f', '#196127'],  // corresponding 4 colors
     },
   },
   style: { lineWidth: 2, stroke: '#fff' },
@@ -73,60 +71,60 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 scale: {
   color: {
     type: 'threshold',
-    domain: [30, 80, 150],    // N 个阈值，产生 N+1 个区间
-    range: ['#low', '#mid-low', '#mid-high', '#high'],  // N+1 个输出值
+    domain: [30, 80, 150],    // N thresholds, generating N+1 intervals
+    range: ['#low', '#mid-low', '#mid-high', '#high'],  // N+1 output values
   },
 }
 ```
 
-## 风险等级着色示例
+## Risk Level Coloring Example
 
 ```javascript
-// 将连续风险分数映射到 4 个风险等级颜色
+// Map continuous risk scores to 4 risk level colors
 chart.options({
   scale: {
     color: {
       type: 'threshold',
-      domain: [25, 50, 75],     // 低/中/高/极高 分界线
+      domain: [25, 50, 75],     // Low/Medium/High/Extreme boundaries
       range: [
-        '#52c41a',  // 0~25：低风险（绿）
-        '#faad14',  // 25~50：中风险（黄）
-        '#ff7a45',  // 50~75：高风险（橙）
-        '#ff4d4f',  // 75+：极高风险（红）
+        '#52c41a',  // 0~25: Low Risk (Green)
+        '#faad14',  // 25~50: Medium Risk (Yellow)
+        '#ff7a45',  // 50~75: High Risk (Orange)
+        '#ff4d4f',  // 75+: Extreme Risk (Red)
       ],
     },
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：domain 和 range 数量不匹配
+### Error: Mismatch in the Number of Domain and Range
 ```javascript
-// ❌ 错误：2 个 domain 阈值产生 3 个区间，但只有 2 个 range 颜色
+// ❌ Error: 2 domain thresholds generate 3 intervals, but only 2 range colors are provided
 chart.options({
   scale: {
     color: {
       type: 'threshold',
-      domain: [50, 100],     // 2 个阈值 → 3 个区间
-      range: ['#green', '#red'],  // ❌ 只有 2 个颜色，应该是 3 个
+      domain: [50, 100],     // 2 thresholds → 3 intervals
+      range: ['#green', '#red'],  // ❌ Only 2 colors, should be 3
     },
   },
 });
 
-// ✅ 正确：domain N 个阈值 → range 需要 N+1 个颜色
+// ✅ Correct: N domain thresholds → range requires N+1 colors
 chart.options({
   scale: {
     color: {
       type: 'threshold',
       domain: [50, 100],
-      range: ['#52c41a', '#faad14', '#ff4d4f'],  // ✅ 3 个颜色
+      range: ['#52c41a', '#faad14', '#ff4d4f'],  // ✅ 3 colors
     },
   },
 });

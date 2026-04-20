@@ -1,30 +1,30 @@
 ---
 id: "g2-mark-liquid"
-title: "G2 水波图（liquid）"
+title: "G2 Liquid Chart"
 description: |
-  liquid mark 用波浪填充的圆形展示单一百分比数值，
-  常用于展示完成率、健康指标、KPI 达成率等。
-  数据为 0~1 的小数（百分比），内置波浪动画效果。
+  The liquid mark displays a single percentage value using a wave-filled circle,
+  commonly used to show completion rates, health metrics, KPI achievement rates, etc.
+  The data is a decimal between 0 and 1 (percentage), with a built-in wave animation effect.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
   - "liquid"
-  - "水波图"
-  - "进度"
-  - "百分比"
+  - "liquid chart"
+  - "progress"
+  - "percentage"
   - "KPI"
-  - "完成率"
+  - "completion rate"
 
 related:
   - "g2-mark-gauge"
   - "g2-core-chart-init"
 
 use_cases:
-  - "展示目标完成率 / KPI 达成率"
-  - "展示占比指标（如内存使用率）"
-  - "仪表盘中的核心指标可视化"
+  - "Displaying target completion rate / KPI achievement rate"
+  - "Showing proportion metrics (e.g., memory usage)"
+  - "Core metric visualization in dashboards"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,7 +34,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/other/#liquid"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -43,18 +43,18 @@ const chart = new Chart({ container: 'container', width: 300, height: 300 });
 
 chart.options({
   type: 'liquid',
-  data: 0.72,    // 0~1 之间的百分比数值
+  data: 0.72,    // Percentage value between 0 and 1
   style: {
-    outlineBorder: 4,       // 外框边框宽度
-    outlineDistance: 8,     // 外框与内圆的间距
-    waveLength: 128,        // 波浪长度
+    outlineBorder: 4,       // Outline border width
+    outlineDistance: 8,     // Distance between outline and inner circle
+    waveLength: 128,        // Wave length
   },
 });
 
 chart.render();
 ```
 
-## 自定义样式
+## Custom Styles
 
 ```javascript
 chart.options({
@@ -64,62 +64,62 @@ chart.options({
     outlineBorder: 4,
     outlineDistance: 8,
     waveLength: 128,
-    // 波浪颜色
+    // Wave color
     fill: '#5B8FF9',
     fillOpacity: 0.85,
-    // 背景圆颜色
+    // Background circle color
     background: {
       fill: '#E8F0FE',
     },
-    // 中心文字样式
+    // Center text style
     text: {
       style: {
         fontSize: 28,
         fontWeight: 'bold',
         fill: '#fff',
-        // 自定义文字内容（默认显示百分比）
+        // Custom text content (default displays percentage)
         formatter: (v) => `${(v * 100).toFixed(1)}%`,
       },
     },
   },
-  // 不显示坐标轴和图例
+  // Do not display axes and legend
   axis: false,
   legend: false,
   tooltip: false,
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：数值超出 0~1 范围——波浪位置异常
+### Error 1: Value Exceeds 0~1 Range—Abnormal Wave Position
 ```javascript
-// ❌ 错误：液位值是 72（应该是 0.72）
+// ❌ Error: Liquid value is 72 (should be 0.72)
 chart.options({
   type: 'liquid',
-  data: 72,   // ❌ 应该是 0.72
+  data: 72,   // ❌ Should be 0.72
 });
 
-// ✅ 正确：0~1 的小数
+// ✅ Correct: Decimal between 0~1
 chart.options({
   data: 0.72,  // ✅
 });
 ```
 
-### 错误 2：设置了坐标轴——坐标轴在水波图中无意义
+### Error 2: Axis is set—Axis is meaningless in liquid charts
 ```javascript
-// ❌ 液位图默认会显示坐标轴，通常需要关闭
+// ❌ Liquid charts display axes by default, which usually need to be turned off
 chart.options({
   type: 'liquid',
   data: 0.7,
-  // ❌ 没有关闭 axis/legend/tooltip
+  // ❌ Axis/legend/tooltip not disabled
 });
 
-// ✅ 推荐关闭多余组件
+// ✅ Recommended to disable unnecessary components
 chart.options({
   type: 'liquid',
   data: 0.7,
-  axis: false,     // ✅ 关闭坐标轴
-  legend: false,   // ✅ 关闭图例
-  tooltip: false,  // ✅ 关闭 tooltip
+  axis: false,     // ✅ Disable axis
+  legend: false,   // ✅ Disable legend
+  tooltip: false,  // ✅ Disable tooltip
 });
 ```

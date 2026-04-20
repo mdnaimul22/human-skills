@@ -1,21 +1,21 @@
 ---
 id: "g2-mark-cell-heatmap"
-title: "G2 热力图（Cell Mark）"
+title: "G2 Heatmap (Cell Mark)"
 description: |
-  使用 Cell Mark 创建矩阵热力图，通过颜色深浅表示两个分类维度交叉点的数值大小，
-  常用于相关性分析、时间-类别分布等场景。本文采用 Spec 模式。
+  Create a matrix heatmap using Cell Mark, where the color intensity represents the value at the intersection of two categorical dimensions.
+  Commonly used in correlation analysis, time-category distribution, and other scenarios. This article uses the Spec mode.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 subcategory: "cell"
 tags:
-  - "热力图"
+  - "heatmap"
   - "Cell"
   - "heatmap"
-  - "矩阵"
-  - "相关性"
-  - "颜色映射"
+  - "matrix"
+  - "correlation"
+  - "color mapping"
   - "spec"
 
 related:
@@ -24,12 +24,12 @@ related:
   - "g2-comp-legend-config"
 
 use_cases:
-  - "展示两个分类维度的交叉数值（如相关矩阵）"
-  - "时间热力图（如每周各天的活跃度）"
-  - "用户行为矩阵分析"
+  - "Displaying intersection values of two categorical dimensions (e.g., correlation matrix)"
+  - "Time heatmap (e.g., daily activity levels per week)"
+  - "User behavior matrix analysis"
 
 anti_patterns:
-  - "数据为连续型 x/y 时改用密度图或等值线图"
+  - "Use density plots or contour plots instead when data is continuous for x/y"
 
 difficulty: "beginner"
 completeness: "full"
@@ -39,7 +39,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/heatmap/basic"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -66,23 +66,23 @@ chart.options({
   encode: {
     x: 'week',
     y: 'hour',
-    color: 'value',    // 颜色深浅表示数值大小
+    color: 'value',    // Color intensity represents value magnitude
   },
   scale: {
     color: { 
-      type: 'sequential',   // 明确指定为顺序色阶
-      palette: 'YlOrRd'     // 连续色阶：YlOrRd | Blues | Viridis 等
+      type: 'sequential',   // Explicitly specify sequential color scale
+      palette: 'YlOrRd'     // Sequential palette: YlOrRd | Blues | Viridis, etc.
     },
   },
   style: {
-    inset: 1,    // 格子间距（px）
+    inset: 1,    // Cell spacing (px)
   },
 });
 
 chart.render();
 ```
 
-## 带数值标签的热力图
+## Heatmap with Numeric Labels
 
 ```javascript
 chart.options({
@@ -97,7 +97,7 @@ chart.options({
       text: 'value',
       style: {
         fontSize: 11,
-        fill: (d) => d.value > 60 ? 'white' : '#333',  // 深色背景用白字
+        fill: (d) => d.value > 60 ? 'white' : '#333',  // White text for dark backgrounds
       },
     },
   ],
@@ -105,13 +105,13 @@ chart.options({
 });
 ```
 
-## 相关系数矩阵
+## Correlation Coefficient Matrix
 
 ```javascript
-// 相关性分析热力图（-1 到 1 的发散色阶）
+// Correlation Analysis Heatmap (Diverging Color Scale from -1 to 1)
 chart.options({
   type: 'cell',
-  data: correlationData,  // [{ x: '变量A', y: '变量B', corr: 0.75 }, ...]
+  data: correlationData,  // [{ x: 'VariableA', y: 'VariableB', corr: 0.75 }, ...]
   encode: {
     x: 'x',
     y: 'y',
@@ -119,9 +119,9 @@ chart.options({
   },
   scale: {
     color: {
-      type: 'sequential',  // 明确指定为顺序色阶
-      palette: 'RdBu',     // 发散色阶：红-白-蓝
-      domain: [-1, 1],     // 固定数值范围
+      type: 'sequential',  // Explicitly specify as sequential color scale
+      palette: 'RdBu',     // Diverging color scale: Red-White-Blue
+      domain: [-1, 1],     // Fixed numerical range
     },
   },
   labels: [
@@ -133,16 +133,16 @@ chart.options({
 });
 ```
 
-## 日历热力图（GitHub 风格）
+## Calendar Heatmap (GitHub Style)
 
 ```javascript
-// 每天活跃度的日历视图
+// Daily activity calendar view
 chart.options({
   type: 'cell',
   data: dailyData,   // [{ date: '2024-01-01', weekday: 'Mon', week: 1, value: 5 }, ...]
   encode: {
-    x: 'week',      // 第几周（1-53）
-    y: 'weekday',   // 周几
+    x: 'week',      // Week number (1-53)
+    y: 'weekday',   // Day of the week
     color: 'value',
   },
   scale: {
@@ -159,17 +159,17 @@ chart.options({
 });
 ```
 
-## 地形高程热力图
+## Terrain Elevation Heatmap
 
 ```javascript
-// 模拟地形高程数据
+// Simulated terrain elevation data
 const terrainData = [];
 for (let x = 0; x <= 50; x += 2) {
   for (let y = 0; y <= 50; y += 2) {
-    // 模拟山峰地形：两个山峰的高程分布
+    // Simulated mountain terrain: elevation distribution of two peaks
     const elevation1 = 100 * Math.exp(-((x - 15) ** 2 + (y - 15) ** 2) / 200);
     const elevation2 = 80 * Math.exp(-((x - 35) ** 2 + (y - 35) ** 2) / 150);
-    const elevation = elevation1 + elevation2 + 10; // 基础海拔
+    const elevation = elevation1 + elevation2 + 10; // Base elevation
     terrainData.push({ x, y, elevation });
   }
 }
@@ -206,13 +206,13 @@ chart.options({
     },
   },
   tooltip: {
-    title: '海拔信息',
+    title: 'Elevation Information',
     items: [
-      { field: 'x', name: '经度' },
-      { field: 'y', name: '纬度' },
+      { field: 'x', name: 'Longitude' },
+      { field: 'y', name: 'Latitude' },
       {
         field: 'elevation',
-        name: '海拔',
+        name: 'Elevation',
         valueFormatter: (value) => `${Math.round(value)}m`,
       },
     ],
@@ -222,46 +222,46 @@ chart.options({
 chart.render();
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：color 通道缺少 scale 配置导致离散色
+### Error 1: Missing scale configuration in the color channel results in discrete colors
 ```javascript
-// ❌ 问题：color 默认使用离散色阶，不适合连续数值
+// ❌ Issue: color defaults to discrete color scale, unsuitable for continuous values
 chart.options({ type: 'cell', encode: { x: 'a', y: 'b', color: 'value' } });
-// value 是连续数值，却被映射到离散颜色
+// value is a continuous numerical value but is mapped to discrete colors
 
-// ✅ 正确：指定连续色阶 palette 并明确类型为 sequential
+// ✅ Correct: Specify a continuous color palette and explicitly set the type to sequential
 chart.options({
   type: 'cell',
   encode: { x: 'a', y: 'b', color: 'value' },
   scale: { 
     color: { 
-      type: 'sequential',   // 明确指定为顺序色阶
-      palette: 'Blues'      // 或 'YlOrRd'、'Viridis' 等
+      type: 'sequential',   // Explicitly specify as sequential color scale
+      palette: 'Blues'      // or 'YlOrRd', 'Viridis', etc.
     } 
   },
 });
 ```
 
-### 错误 2：格子大小不均匀
+### Error 2: Uneven Cell Size
 ```javascript
-// ❌ 问题：x/y 轴类别数量差异大时格子变形
-// ✅ 解决：设置 Chart 的宽高比接近 x/y 分类数量之比
+// ❌ Issue: Cell deformation when there is a large difference in the number of categories on the x/y axes
+// ✅ Solution: Set the aspect ratio of the Chart to be close to the ratio of the number of x/y categories
 const chart = new Chart({
   container: 'container',
-  width: xCategories.length * 40,    // 每格 40px
+  width: xCategories.length * 40,    // 40px per cell
   height: yCategories.length * 40,
 });
 ```
 
-### 错误 3：未正确使用 transform.group 导致数据重复或缺失
+### Error 3: Incorrect Use of transform.group Leading to Duplicate or Missing Data
 ```javascript
-// ❌ 问题：当 x/y 通道存在重复组合时，未使用 group 聚合会导致多个格子重叠或数据丢失
+// ❌ Issue: When there are duplicate combinations in the x/y channels, not using group aggregation will result in multiple overlapping cells or data loss
 chart.options({
   type: 'cell',
   data: [
     { day: 1, month: 0, temp: 10 },
-    { day: 1, month: 0, temp: 15 }, // 同一天同一月有两个温度记录
+    { day: 1, month: 0, temp: 15 }, // Two temperature records for the same day and month
   ],
   encode: {
     x: 'day',
@@ -269,9 +269,9 @@ chart.options({
     color: 'temp'
   }
 });
-// 上述代码可能只显示其中一个值，或出现多个重叠格子
+// The above code may only display one of the values or show multiple overlapping cells
 
-// ✅ 正确：使用 transform.group 对重复数据进行聚合（如取最大值、平均值等）
+// ✅ Correct: Use transform.group to aggregate duplicate data (e.g., take the maximum, average, etc.)
 chart.options({
   type: 'cell',
   data: [
@@ -285,77 +285,77 @@ chart.options({
   },
   transform: [{
     type: 'group',
-    color: 'max'  // 对相同 x/y 组合的数据，取 temp 的最大值
+    color: 'max'  // For data with the same x/y combination, take the maximum value of temp
   }]
 });
 ```
 
-### 错误 4：未正确设置 scale.type 为 sequential 导致颜色映射异常
+### Error 4: Abnormal color mapping due to incorrect setting of scale.type as sequential
 ```javascript
-// ❌ 问题：color 通道未显式设置 scale.type 为 'sequential'，可能导致颜色映射不符合预期
+// ❌ Issue: The color channel does not explicitly set scale.type to 'sequential', which may result in unexpected color mapping
 chart.options({
   type: 'cell',
   encode: { x: 'a', y: 'b', color: 'value' },
-  scale: { color: { palette: 'Blues' } } // 仅设置 palette，未设置 type
+  scale: { color: { palette: 'Blues' } } // Only palette is set, type is not specified
 });
 
-// ✅ 正确：明确指定 scale.type 为 'sequential'
+// ✅ Correct: Explicitly specify scale.type as 'sequential'
 chart.options({
   type: 'cell',
   encode: { x: 'a', y: 'b', color: 'value' },
   scale: { 
     color: { 
-      type: 'sequential',  // 明确指定为顺序色阶
+      type: 'sequential',  // Explicitly specified as sequential
       palette: 'Blues' 
     } 
   }
 });
 ```
 
-### 错误 5：调色板名称大小写敏感导致找不到调色板
+### Error 5: Palette Name Case Sensitivity Causes Palette Not Found
 ```javascript
-// ❌ 问题：调色板名称大小写不匹配，如 'gnBu' 实际应为 'GnBu'
+// ❌ Issue: Palette name case mismatch, e.g., 'gnBu' should actually be 'GnBu'
 chart.options({
   type: 'cell',
   data,
   encode: { x: 'day', y: 'month', color: 'temp' },
   scale: {
-    color: { type: 'sequential', palette: 'gnBu' } // 小写 g 不符合实际命名
+    color: { type: 'sequential', palette: 'gnBu' } // Lowercase g does not match actual naming
   }
 });
 
-// ✅ 正确：使用正确的调色板名称（注意大小写）
+// ✅ Correct: Use the correct palette name (note the case)
 chart.options({
   type: 'cell',
   data,
   encode: { x: 'day', y: 'month', color: 'temp' },
   scale: {
-    color: { type: 'sequential', palette: 'GnBu' } // 正确的大写 G
+    color: { type: 'sequential', palette: 'GnBu' } // Correct uppercase G
   }
 });
 ```
 
-### 错误 6：数据未定义或引用错误
+### Error 6: Data Undefined or Incorrectly Referenced
 ```javascript
-// ❌ 问题：使用了未定义的变量 'data'
+// ❌ Issue: Using an undefined variable 'data'
 const processedData = data.map(...);
 
-// ✅ 正确：确保使用的数据变量已正确定义
+// ✅ Correct: Ensure the data variable is properly defined
 const rawData = [...];
 const processedData = rawData.map(...);
 ```
 
-### 错误 7：动画配置语法错误
+### Error 7: Incorrect Animation Configuration Syntax
 ```javascript
-// ❌ 问题：animate.enter 应为对象而非字符串或其他类型
+// ❌ Issue: animate.enter should be an object, not a string or other type
 chart.options({
   type: 'cell',
   data,
   encode: { x: 'x', y: 'y', color: 'value' },
-  animate: 'fadeIn' // 错误的配置方式
+  animate: 'fadeIn' // Incorrect configuration
 });
 
-// ✅ 正确：使用标准的动画配置对象
+// ✅ Correct: Use the standard animation configuration object
 chart.options({
   type: 'cell',
   data,
