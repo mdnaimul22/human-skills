@@ -18,6 +18,7 @@ DIRS=(
     "src/providers"
     "src/schema"
     "src/services"
+    "src/routers"
     "tests"
     "$RULES_DIR"
 )
@@ -44,6 +45,7 @@ create_init "src/helpers/__init__.py" "Global utilities and stateless helpers us
 create_init "src/providers/__init__.py" "External service integrations (LLM, Database, API clients) only."
 create_init "src/schema/__init__.py" "Single source of truth for Pydantic models and data structures. No business logic allowed."
 create_init "src/services/__init__.py" "Fan-in point. Orchestrates core logic and external providers to serve the application requirements."
+create_init "src/routers/__init__.py" "FastAPI router definitions. Acts as the HTTP interface for the application services. No business logic allowed."
 create_init "tests/__init__.py" "Test suite for the project."
 
 # 3. Create basic files
