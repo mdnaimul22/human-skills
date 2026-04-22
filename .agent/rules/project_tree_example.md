@@ -12,8 +12,11 @@ project_root/
 ├── src/
 │   │
 │   ├── config/                       # ⚙️ LAYER 1 — Single Source of Truth (Like a Gear Box)
-│   │   ├── __init__.py
-│   │   └── settings.py               # API keys, timeouts, limits
+│   │   ├── __init__.py               # auto-loads dotenv, exports everything
+│   │   ├── paths.py                  # PROJECT_ROOT auto-detection
+│   │   ├── files.py                  # read/write/json/delete utilities
+│   │   ├── dotenv.py                 # load/set/get/remove .env values
+│   │   └── settings.py               # BaseProjectSettings — API keys, timeouts, limits
 │   │
 │   ├── schema/                       # 📐 LAYER 1 — Data Contracts (পরম সত্য)
 │   │   ├── __init__.py
@@ -121,9 +124,9 @@ epic-adb/
 ├── src/
 │   ├── api/
 │   │   ├── /src/api/__init__.py  # .routes
-│   │   └── /src/api/routes.py  # src.config, src.core, src.helpers.responses, src.providers, src.services
+│   │   └── /src/api/routes.py  # src.services, src.schema
 │   ├── config/
-│   │   ├── /src/config/__init__.py  # .settings, src.helpers.logger
+│   │   ├── /src/config/__init__.py  # .paths, .files, .dotenv, .settings
 │   │   └── /src/config/settings.py
 │   ├── core/
 │   │   ├── /src/core/__init__.py  # .commands
@@ -155,13 +158,13 @@ epic-adb/
 │   ├── /tests/test_adb_commands.py  # src.providers, src.schema.models, src.services
 │   ├── /tests/test_app.py  # src.main
 │   └── /tests/test_config.py  # src.config
-├── /main.py  # src.api, src.config, src.helpers.network
+├── /main.py  # src.config, src.api
 ├── /pyproject.toml
 ├── /README.md
 └── /tree.py
 ```
-
 ### Canonical Project Structure Example-3
+
 ```
 ClassLens/
 │
