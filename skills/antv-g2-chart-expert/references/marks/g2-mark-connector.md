@@ -1,21 +1,19 @@
 ---
 id: "g2-mark-connector"
-title: "G2 连接器标注（connector）"
+title: "G2 Connector Mark"
 description: |
-  connector mark 在两点之间绘制带折角的连接线，用于标注图表中两个数据点的关联或差异。
-  常用于标注两个柱之间的差值、两个数据点之间的变化，配合 text 或 labels 显示差值标注。
-  与 link mark 类似但更偏向标注用途，默认带直角折线。
+  The connector mark draws a cornered connecting line between two points, used to annotate the association or difference between two data points in a chart.
+  It is commonly used to annotate the difference between two bars, the change between two data points, and is often paired with text or labels to display difference annotations.
+  Similar to the link mark but more oriented towards annotation purposes, it defaults to a right-angled polyline.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
   - "connector"
-  - "连接器"
-  - "标注"
-  - "差值标注"
   - "annotation"
-  - "折线连接"
+  - "difference annotation"
+  - "polyline connection"
 
 related:
   - "g2-mark-link"
@@ -23,9 +21,9 @@ related:
   - "g2-comp-annotation"
 
 use_cases:
-  - "标注两个柱状图数值之间的差异"
-  - "连接两个数据点并显示差值"
-  - "折线图中标注起止点的变化量"
+  - "Annotating the difference between two bar chart values"
+  - "Connecting two data points and displaying the difference"
+  - "Annotating the change amount between start and end points in a line chart"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -34,8 +32,7 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/annotation/connector/"
 ---
-
-## 最小可运行示例（差值标注）
+## Minimum Viable Example (Difference Annotation)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -51,16 +48,16 @@ const chart = new Chart({ container: 'container', width: 640, height: 400 });
 chart.options({
   type: 'view',
   children: [
-    // 主柱状图
+    // Main bar chart
     {
       type: 'interval',
-       data,
+      data,
       encode: { x: 'month', y: 'value', color: 'month' },
     },
-    // connector：连接 Jan 和 Mar 两柱，标注差值
+    // connector: Connects the bars for Jan and Mar, annotating the difference
     {
       type: 'connector',
-       [{ x: 'Jan', y: 83, x1: 'Mar', y1: 95 }],
+      data: [{ x: 'Jan', y: 83, x1: 'Mar', y1: 95 }],
       encode: {
         x: 'x',
         y: 'y',
@@ -77,7 +74,7 @@ chart.options({
       style: {
         stroke: '#52c41a',
         lineWidth: 1.5,
-        offset: 16,   // 连接线相对于数据点的偏移量
+        offset: 16,   // Offset of the connector line relative to the data points
       },
     },
   ],
@@ -86,39 +83,39 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 chart.options({
   type: 'connector',
   data: [{ x: 'A', y: 100, x1: 'B', y1: 150 }],
   encode: {
-    x: 'x',    // 起点 x（与主图 x 轴对应）
-    y: 'y',    // 起点 y
-    x1: 'x1',  // 终点 x
-    y1: 'y1',  // 终点 y
+    x: 'x',    // Start point x (corresponds to the main chart's x-axis)
+    y: 'y',    // Start point y
+    x1: 'x1',  // End point x
+    y1: 'y1',  // End point y
   },
   style: {
     stroke: '#999',
     lineWidth: 1,
-    offset: 16,         // 连接线距离数据点的像素偏移，默认 16
-    endMarker: true,    // 是否显示终点标记
-    startMarker: false, // 是否显示起点标记
+    offset: 16,         // Pixel offset of the connector line from the data point, default is 16
+    endMarker: true,    // Whether to display the end marker
+    startMarker: false, // Whether to display the start marker
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：encode 中只写 x/y，没有 x1/y1——连接线无终点
+### Error: Only x/y are specified in encode, missing x1/y1—connector line has no endpoint
 ```javascript
-// ❌ 错误：connector 需要起点和终点
+// ❌ Error: connector requires both start and end points
 chart.options({
   type: 'connector',
-  encode: { x: 'x', y: 'y' },   // ❌ 缺少 x1/y1
+  encode: { x: 'x', y: 'y' },   // ❌ Missing x1/y1
 });
 
-// ✅ 正确：必须同时指定起点和终点
+// ✅ Correct: Both start and end points must be specified
 chart.options({
   type: 'connector',
   encode: { x: 'x', y: 'y', x1: 'x1', y1: 'y1' },  // ✅

@@ -1,21 +1,21 @@
 ---
 id: "g2-mark-area-basic"
-title: "G2 基础面积图（Area Mark）"
+title: "G2 Basic Area Chart (Area Mark)"
 description: |
-  使用 Area Mark 创建面积图，在折线图的基础上填充线下方区域，
-  强调数据的量级和趋势。本文采用 Spec 模式，涵盖单系列、渐变填充等用法。
+  Create an area chart using Area Mark, filling the area below the line in a line chart,
+  to emphasize the magnitude and trend of the data. This article uses the Spec mode, covering single series, gradient fill, and other usage scenarios.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 subcategory: "area"
 tags:
-  - "面积图"
+  - "area chart"
   - "Area"
   - "area chart"
-  - "趋势"
-  - "量级"
-  - "填充"
+  - "trend"
+  - "magnitude"
+  - "fill"
   - "spec"
 
 related:
@@ -24,12 +24,12 @@ related:
   - "g2-core-encode-channel"
 
 use_cases:
-  - "展示数值随时间的变化趋势，同时强调量级"
-  - "叠加折线时作为背景填充"
-  - "对比多个系列的总量分布"
+  - "Display the trend of numerical values over time while emphasizing magnitude"
+  - "Use as background fill when overlaying multiple lines"
+  - "Compare the total distribution of multiple series"
 
 anti_patterns:
-  - "多系列面积图（无堆叠）时各系列互相遮挡，改用堆叠面积图或折线图"
+  - "In multi-series area charts (without stacking), series may overlap each other; consider using stacked area charts or line charts instead"
 
 difficulty: "beginner"
 completeness: "full"
@@ -39,7 +39,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/area/basic"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -66,7 +66,7 @@ chart.options({
 chart.render();
 ```
 
-## 渐变填充面积图
+## Gradient Filled Area Chart
 
 ```javascript
 chart.options({
@@ -80,10 +80,10 @@ chart.options({
 });
 ```
 
-## 面积图 + 折线（叠加）
+## Area Chart + Line (Overlay)
 
 ```javascript
-// 面积提供背景量感，折线提供精确走势
+// Area provides background volume, line provides precise trend
 chart.options({
   type: 'view',
   data,
@@ -107,7 +107,7 @@ chart.options({
 });
 ```
 
-## 平滑曲线面积图
+## Smooth Curve Area Chart
 
 ```javascript
 chart.options({
@@ -116,13 +116,13 @@ chart.options({
   encode: {
     x: 'month',
     y: 'value',
-    shape: 'smooth',    // 平滑插值
+    shape: 'smooth',    // Smooth interpolation
   },
   style: { fillOpacity: 0.6 },
 });
 ```
 
-## 时间序列面积图
+## Time Series Area Chart
 
 ```javascript
 chart.options({
@@ -141,26 +141,26 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：多系列面积图不加 stackY 导致互相遮挡
+### Error: Multiple Series Area Charts Without stackY Result in Overlapping
 ```javascript
-// ❌ 问题：多系列面积相互覆盖，后面的系列遮挡前面的
+// ❌ Problem: Multiple series areas overlap, with later series obscuring earlier ones
 chart.options({
   type: 'area',
   data: multiSeriesData,
   encode: { x: 'month', y: 'value', color: 'type' },
-  // 没有 stackY，各系列从 y=0 开始叠加，互相遮盖
+  // Without stackY, each series starts stacking from y=0, causing mutual overlap
 });
 
-// ✅ 方案 1：堆叠面积图（见 g2-mark-area-stacked）
+// ✅ Solution 1: Stacked Area Chart (see g2-mark-area-stacked)
 chart.options({
   type: 'area',
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [{ type: 'stackY' }],
 });
 
-// ✅ 方案 2：改用折线图对比多系列
+// ✅ Solution 2: Switch to Line Chart for Multi-Series Comparison
 chart.options({
   type: 'line',
   encode: { x: 'month', y: 'value', color: 'type' },

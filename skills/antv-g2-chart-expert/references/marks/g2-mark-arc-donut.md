@@ -1,21 +1,20 @@
 ---
 id: "g2-mark-arc-donut"
-title: "G2 环形图（Donut Chart）"
+title: "G2 Donut Chart"
 description: |
-  在饼图基础上通过设置 coordinate.innerRadius 创建环形图（甜甜圈图），
-  中间空白区域可放置汇总数字或说明文字，在保留占比展示的同时减少视觉重量。
+  Based on the pie chart, a donut chart (ring chart) is created by setting coordinate.innerRadius,
+  leaving a blank area in the center where summary numbers or explanatory text can be placed. This reduces visual weight while retaining proportional representation.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 subcategory: "arc"
 tags:
-  - "环形图"
-  - "甜甜圈"
+  - "donut chart"
   - "donut"
   - "innerRadius"
-  - "占比"
-  - "饼图变体"
+  - "proportion"
+  - "pie chart variant"
   - "spec"
 
 related:
@@ -23,9 +22,9 @@ related:
   - "g2-transform-stacky"
 
 use_cases:
-  - "展示各类别占比，中心区域显示汇总数据"
-  - "比饼图更现代的占比展示方式"
-  - "KPI 卡片中的占比环"
+  - "Displaying category proportions with summary data in the center area"
+  - "A more modern way to show proportions compared to pie charts"
+  - "Proportional rings in KPI cards"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,7 +34,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/donut"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -49,32 +48,32 @@ const chart = new Chart({
 chart.options({
   type: 'interval',
   data: [
-    { type: '分类一', value: 27 },
-    { type: '分类二', value: 25 },
-    { type: '分类三', value: 18 },
-    { type: '分类四', value: 15 },
-    { type: '其他',   value: 15 },
+    { type: 'Category One', value: 27 },
+    { type: 'Category Two', value: 25 },
+    { type: 'Category Three', value: 18 },
+    { type: 'Category Four', value: 15 },
+    { type: 'Others', value: 15 },
   ],
   encode: { y: 'value', color: 'type' },
   transform: [{ type: 'stackY' }],
   coordinate: {
     type: 'theta',
     outerRadius: 0.8,
-    innerRadius: 0.5,    // 关键：设置内径产生空心效果
+    innerRadius: 0.5,    // Key: Set inner radius to create a hollow effect
   },
 });
 
 chart.render();
 ```
 
-## 带中心文字的环形图
+## Ring Chart with Center Text
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = [
-  { type: '已完成', value: 75 },
-  { type: '未完成', value: 25 },
+  { type: 'Completed', value: 75 },
+  { type: 'Uncompleted', value: 25 },
 ];
 const total = data.reduce((s, d) => s + d.value, 0);
 
@@ -85,7 +84,7 @@ chart.options({
   children: [
     {
       type: 'interval',
-       data,
+      data,
       encode: { y: 'value', color: 'type' },
       transform: [{ type: 'stackY' }],
       coordinate: { type: 'theta', outerRadius: 0.85, innerRadius: 0.6 },
@@ -95,9 +94,9 @@ chart.options({
       legend: false,
     },
     {
-      // 中心文字用 text mark 在极坐标中心绘制
+      // Center text is drawn at the polar coordinate center using the text mark
       type: 'text',
-       [{ value: data[0].value }],
+      data: [{ value: data[0].value }],
       encode: { text: (d) => `${d.value}%` },
       style: {
         x: '50%', y: '50%',
@@ -113,7 +112,7 @@ chart.options({
 chart.render();
 ```
 
-## 带外部标签的环形图
+## Donut Chart with External Labels
 
 ```javascript
 chart.options({
@@ -132,16 +131,16 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：innerRadius 大于 outerRadius
+### Error: innerRadius is greater than outerRadius
 ```javascript
-// ❌ 错误：内径大于外径，圆环消失
+// ❌ Error: Inner radius is greater than outer radius, causing the ring to disappear
 chart.options({
   coordinate: { type: 'theta', outerRadius: 0.5, innerRadius: 0.8 },
 });
 
-// ✅ 正确：innerRadius < outerRadius，推荐比例 0.5-0.7
+// ✅ Correct: innerRadius < outerRadius, recommended ratio 0.5-0.7
 chart.options({
   coordinate: { type: 'theta', outerRadius: 0.8, innerRadius: 0.5 },
 });

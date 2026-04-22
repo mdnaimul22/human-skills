@@ -1,22 +1,22 @@
 ---
 id: "g2-mark-point-scatter"
-title: "G2 散点图（Point Mark）"
+title: "G2 Scatter Plot (Point Mark)"
 description: |
-  使用 Point Mark 创建散点图，通过 x/y 位置展示两个数值变量的相关性。
-  本文采用 Spec 模式（chart.options({})），支持气泡图（size 通道）、分类着色、自定义形状等变体。
+  Create a scatter plot using Point Mark to display the correlation between two numerical variables through x/y positions.
+  This article uses the Spec mode (chart.options({})), supporting variants such as bubble charts (size channel), categorical coloring, and custom shapes.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 subcategory: "point"
 tags:
-  - "散点图"
-  - "气泡图"
+  - "scatter plot"
+  - "bubble chart"
   - "Point"
   - "scatter"
   - "bubble"
-  - "相关性"
-  - "分布"
+  - "correlation"
+  - "distribution"
   - "spec"
 
 related:
@@ -25,13 +25,13 @@ related:
   - "g2-interaction-tooltip"
 
 use_cases:
-  - "展示两个连续变量的相关性"
-  - "发现数据分布和异常值"
-  - "用气泡图展示三维数据（x/y/size）"
+  - "Display the correlation between two continuous variables"
+  - "Identify data distribution and outliers"
+  - "Use bubble charts to display three-dimensional data (x/y/size)"
 
 anti_patterns:
-  - "数据点超过 10000 个时性能较差，考虑使用密度图"
-  - "两轴都是分类变量时，散点图意义不大"
+  - "Performance is poor when there are more than 10,000 data points; consider using a density plot"
+  - "Scatter plots are less meaningful when both axes are categorical variables"
 
 difficulty: "beginner"
 completeness: "full"
@@ -41,7 +41,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/point/scatter"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -72,7 +72,7 @@ chart.options({
 chart.render();
 ```
 
-## 气泡图（三维数据）
+## Bubble Chart (Three-Dimensional Data)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -91,18 +91,18 @@ chart.options({
   encode: {
     x: 'income',
     y: 'lifeExpect',
-    size: 'population',    // 气泡大小 = 第三个维度
+    size: 'population',    // Bubble size = Third dimension
     color: 'country',
   },
   scale: {
-    size: { range: [10, 60] },    // 控制气泡大小范围
+    size: { range: [10, 60] },    // Control bubble size range
   },
   tooltip: {
     title: 'country',
     items: [
-      { field: 'income',     name: '人均收入' },
-      { field: 'lifeExpect', name: '预期寿命' },
-      { field: 'population', name: '人口（百万）' },
+      { field: 'income',     name: 'Income per capita' },
+      { field: 'lifeExpect', name: 'Life expectancy' },
+      { field: 'population', name: 'Population (millions)' },
     ],
   },
 });
@@ -110,7 +110,7 @@ chart.options({
 chart.render();
 ```
 
-## 自定义点形状
+## Custom Point Shapes
 
 ```javascript
 chart.options({
@@ -120,7 +120,7 @@ chart.options({
     x: 'x',
     y: 'y',
     color: 'type',
-    shape: 'type',    // 将 type 字段映射到形状通道
+    shape: 'type',    // Map the type field to the shape channel
   },
   scale: {
     shape: {
@@ -130,10 +130,10 @@ chart.options({
 });
 ```
 
-## 散点图 + 趋势线
+## Scatter Plot + Trend Line
 
 ```javascript
-// 用 type: 'view' + children 叠加散点和回归趋势线
+// Use type: 'view' + children to overlay scatter plot and regression trend line
 chart.options({
   type: 'view',
   data: [...],
@@ -152,26 +152,26 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：大数据量性能问题
+### Error 1: Performance Issues with Large Datasets
 ```javascript
-// ❌ 注意：十万个点会导致渲染缓慢
+// ❌ Note: 100,000 points will cause slow rendering
 chart.options({ type: 'point', data: hugeDataWith100000Points, encode: { x: 'x', y: 'y' } });
 
-// ✅ 优化方案 1：先在数据层面采样
-chart.options({ type: 'point',  sampledData, encode: { x: 'x', y: 'y' } });
+// ✅ Optimization 1: Sample the data first
+chart.options({ type: 'point', data: sampledData, encode: { x: 'x', y: 'y' } });
 
-// ✅ 优化方案 2：改用密度图展示分布
-chart.options({ type: 'density',  [...], encode: { x: 'x', y: 'y' } });
+// ✅ Optimization 2: Use a density chart to display distribution
+chart.options({ type: 'density', data: [...], encode: { x: 'x', y: 'y' } });
 ```
 
-### 错误 2：size 通道使用字符串常量
+### Error 2: Using String Literals in the `size` Channel
 ```javascript
-// ❌ 误解：size 传字符串会被当作字段名
-chart.options({ type: 'point', encode: { size: '10' } });  // 寻找名为 '10' 的字段
+// ❌ Misunderstanding: String in `size` is treated as a field name
+chart.options({ type: 'point', encode: { size: '10' } });  // Looks for a field named '10'
 
-// ✅ 正确：固定大小用数字，数据映射用字段名字符串
-chart.options({ type: 'point', encode: { size: 10 } });           // 固定大小 10
-chart.options({ type: 'point', encode: { size: 'population' } }); // 映射字段
+// ✅ Correct: Use numbers for fixed sizes, field name strings for data mapping
+chart.options({ type: 'point', encode: { size: 10 } });           // Fixed size 10
+chart.options({ type: 'point', encode: { size: 'population' } }); // Maps to the 'population' field
 ```

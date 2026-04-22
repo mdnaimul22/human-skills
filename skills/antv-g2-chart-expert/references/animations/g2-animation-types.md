@@ -1,11 +1,11 @@
 ---
 id: "g2-animation-types"
-title: "G2 内置动画类型详解（fadeIn/scaleIn/growIn/pathIn/waveIn/zoomIn/morphing）"
+title: "Detailed Explanation of G2 Built-in Animation Types (fadeIn/scaleIn/growIn/pathIn/waveIn/zoomIn/morphing)"
 description: |
-  G2 v5 内置多种动画类型，每种适用于不同的 Mark 和坐标系：
-  fadeIn/Out（渐显渐隐）、scaleInX/Y（缩放展开）、growInX/Y（生长入场）、
-  pathIn（路径绘制）、waveIn（极坐标波浪入场）、zoomIn/Out（缩放点入场）、morphing（形变过渡）。
-  通过 animate.enter.type 等配置使用。
+  G2 v5 includes multiple built-in animation types, each suitable for different Marks and coordinate systems:
+  fadeIn/Out (fade in/out), scaleInX/Y (scale in along X/Y axis), growInX/Y (grow in along X/Y axis),
+  pathIn (path drawing), waveIn (polar wave in), zoomIn/Out (zoom in/out point entry), morphing (shape transition).
+  These can be configured using animate.enter.type and similar settings.
 
 library: "g2"
 version: "5.x"
@@ -21,17 +21,17 @@ tags:
   - "zoomIn"
   - "zoomOut"
   - "morphing"
-  - "动画类型"
+  - "animation types"
 
 related:
   - "g2-animation-intro"
   - "g2-animation-keyframe"
 
 use_cases:
-  - "按图表类型选择最合适的入场动画"
-  - "折线图路径绘制动画"
-  - "饼图/玫瑰图波浪入场"
-  - "数据更新时的形变过渡"
+  - "Selecting the most appropriate entry animation based on chart type"
+  - "Line chart path drawing animation"
+  - "Pie/rose chart wave entry"
+  - "Shape transition during data updates"
 
 difficulty: "beginner"
 completeness: "full"
@@ -41,28 +41,28 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/animate"
 ---
 
-## 动画类型与适用场景
+## Animation Types and Applicable Scenarios
 
-| 动画名 | 方向 | 最适合 Mark | 特点 |
-|--------|------|------------|------|
-| `fadeIn` | - | 所有 Mark | 渐显，通用，最安全 |
-| `fadeOut` | - | 所有 Mark | 渐隐，退场通用 |
-| `scaleInX` | X 轴 | interval（柱状图） | 从左上角向右扩展 |
-| `scaleInY` | Y 轴 | interval（柱状图） | 从底部向上缩放 |
-| `scaleOutX` | X 轴 | interval | scaleInX 的退场版本 |
-| `scaleOutY` | Y 轴 | interval | scaleInY 的退场版本 |
-| `growInX` | X 轴 | line, area, interval（直角坐标） | 裁剪从左向右生长 |
-| `growInY` | Y 轴 | interval, area（直角坐标） | 裁剪从底部向上生长；**极坐标/helix 禁用** |
-| `pathIn` | 路径 | line, path, link | 路径线条逐步绘制 |
-| `waveIn` | 波浪 | interval（极坐标） | 极坐标专用扇形展开 |
-| `zoomIn` | 中心 | point, text | 从中心缩放放大 |
-| `zoomOut` | 中心 | point, text | 向中心缩小消失 |
-| `morphing` | 形变 | 所有 Mark | 形状平滑变形过渡 |
+| Animation Name | Direction | Best for Mark | Features |
+|----------------|-----------|---------------|----------|
+| `fadeIn` | - | All Marks | Fade in, universal, safest |
+| `fadeOut` | - | All Marks | Fade out, universal exit |
+| `scaleInX` | X-axis | interval (bar chart) | Expands from top-left to right |
+| `scaleInY` | Y-axis | interval (bar chart) | Scales up from bottom to top |
+| `scaleOutX` | X-axis | interval | Exit version of scaleInX |
+| `scaleOutY` | Y-axis | interval | Exit version of scaleInY |
+| `growInX` | X-axis | line, area, interval (Cartesian coordinates) | Clips and grows from left to right |
+| `growInY` | Y-axis | interval, area (Cartesian coordinates) | Clips and grows from bottom to top; **Disabled for polar/helix coordinates** |
+| `pathIn` | Path | line, path, link | Path lines drawn step by step |
+| `waveIn` | Wave | interval (polar coordinates) | Polar-specific sector expansion |
+| `zoomIn` | Center | point, text | Zooms in from the center |
+| `zoomOut` | Center | point, text | Zooms out to the center and disappears |
+| `morphing` | Morphing | All Marks | Smooth shape deformation transition |
 
-## fadeIn / fadeOut（渐显渐隐）
+## fadeIn / fadeOut
 
 ```javascript
-// 最通用的动画，适合任何 mark
+// The most versatile animation, suitable for any mark
 chart.options({
   type: 'point',
   data,
@@ -74,46 +74,46 @@ chart.options({
 });
 ```
 
-## scaleInY / growInY（柱状图入场）
+## scaleInY / growInY (Bar Chart Entrance)
 
 ```javascript
-// scaleInY：缩放展开（有缩放感）
-// growInY：裁剪生长（有"从地面长出来"的感觉，更自然）
+// scaleInY: Scale expansion (with a scaling effect)
+// growInY: Clip growth (with a "growing from the ground" feel, more natural)
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre', y: 'sold' },
   animate: {
-    // 方式一：缩放
+    // Method 1: Scale
     enter: { type: 'scaleInY', duration: 800, easing: 'ease-out' },
-    // 方式二：生长（推荐）
+    // Method 2: Growth (recommended)
     // enter: { type: 'growInY', duration: 800 },
   },
 });
 ```
 
-## pathIn（折线图路径绘制）
+## pathIn (Line Chart Path Drawing)
 
 ```javascript
-// pathIn：折线/路径从左向右逐步绘制
+// pathIn: Line/path gradually drawn from left to right
 chart.options({
   type: 'line',
   data: timeSeriesData,
   encode: { x: 'date', y: 'value', color: 'type' },
   animate: {
     enter: {
-      type: 'pathIn',      // 路径逐步绘制
+      type: 'pathIn',      // Path drawn gradually
       duration: 1500,
-      easing: 'linear',    // 匀速绘制效果更佳
+      easing: 'linear',    // Linear easing for better effect
     },
   },
 });
 ```
 
-## waveIn（极坐标/饼图专用）
+## waveIn (Exclusive to Polar/Pie Charts)
 
 ```javascript
-// waveIn：从外圈向内的波浪扫入，专为极坐标设计
+// waveIn: Wave sweep from the outer circle towards the center, designed specifically for polar coordinates
 chart.options({
   type: 'interval',
   data,
@@ -122,17 +122,17 @@ chart.options({
   coordinate: { type: 'theta', outerRadius: 0.8 },
   animate: {
     enter: {
-      type: 'waveIn',       // 极坐标专用
+      type: 'waveIn',       // Exclusive to polar coordinates
       duration: 1000,
     },
   },
 });
 ```
 
-## zoomIn / zoomOut（点图缩放）
+## zoomIn / zoomOut (Point Chart Zoom)
 
 ```javascript
-// zoomIn：散点从中心缩放出现
+// zoomIn: Scatter points zoom in from the center
 chart.options({
   type: 'point',
   data: scatterData,
@@ -144,23 +144,23 @@ chart.options({
 });
 ```
 
-## morphing（形变更新动画）
+## Morphing (Shape Transformation Animation)
 
 ```javascript
-// morphing：数据更新时图形平滑变形
+// morphing: Smooth shape transformation during data updates
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre', y: 'sold' },
   animate: {
     update: {
-      type: 'morphing',    // 数据更新时形变过渡
+      type: 'morphing',    // Shape transformation transition during data updates
       duration: 600,
     },
   },
 });
 
-// 也可以在 timingKeyframe 中自动触发形变
+// Morphing can also be automatically triggered in timingKeyframe
 chart.options({
   type: 'timingKeyframe',
   children: [
@@ -170,84 +170,84 @@ chart.options({
 });
 ```
 
-## 按图表类型推荐的动画
+## Recommended Animations by Chart Type
 
 ```javascript
-// 柱状图（推荐 growInY）
+// Bar Chart (Recommended: growInY)
 { type: 'interval', animate: { enter: { type: 'growInY', duration: 800 } } }
 
-// 条形图（推荐 growInX）
+// Column Chart (Recommended: growInX)
 { type: 'interval', coordinate: { transform: [{ type: 'transpose' }] },
   animate: { enter: { type: 'growInX', duration: 800 } } }
 
-// 折线图（推荐 pathIn）
+// Line Chart (Recommended: pathIn)
 { type: 'line', animate: { enter: { type: 'pathIn', duration: 1200 } } }
 
-// 散点图（推荐 zoomIn 或 fadeIn）
+// Scatter Plot (Recommended: zoomIn or fadeIn)
 { type: 'point', animate: { enter: { type: 'zoomIn', duration: 400 } } }
 
-// 饼图/环形图（推荐 waveIn）
+// Pie/Donut Chart (Recommended: waveIn)
 { type: 'interval', coordinate: { type: 'theta' },
   animate: { enter: { type: 'waveIn', duration: 1000 } } }
 
-// 面积图（推荐 fadeIn 或 growInX）
+// Area Chart (Recommended: fadeIn or growInX)
 { type: 'area', animate: { enter: { type: 'fadeIn', duration: 800 } } }
 
-// 螺旋图 helix 坐标系（必须用 fadeIn，禁止用 growInX/Y）
+// Helix Coordinate System (Must use fadeIn, growInX/Y is prohibited)
 { type: 'interval', coordinate: { type: 'helix', ... },
   animate: { enter: { type: 'fadeIn', duration: 800 } } }
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：在条形图（转置）上用 scaleInY
+### Error 1: Using scaleInY on a Transposed Bar Chart
 ```javascript
-// ❌ 条形图是水平方向，用 scaleInY（竖向缩放）效果不对
+// ❌ Bar charts are horizontal, so scaleInY (vertical scaling) is incorrect
 chart.options({
   type: 'interval',
   coordinate: { transform: [{ type: 'transpose' }] },
-  animate: { enter: { type: 'scaleInY' } },  // ❌ 应该用 growInX 或 scaleInX
+  animate: { enter: { type: 'scaleInY' } },  // ❌ Should use growInX or scaleInX
 });
 
-// ✅ 条形图用 X 方向动画
+// ✅ Use X-direction animation for bar charts
 chart.options({
   animate: { enter: { type: 'growInX', duration: 800 } },  // ✅
 });
 ```
 
-### 错误 2：在 helix（螺旋）坐标系上用 growInX/growInY
+### Error 2: Using growInX/growInY in the helix coordinate system
 
-`growInX` / `growInY` 的实现是沿直角坐标轴方向做 **clipPath 裁剪**。在 `helix` 坐标系中，坐标轴被重映射为螺旋路径，屏幕上不存在"底部"或"左侧"基线，裁剪矩形会横穿螺旋形，导致部分螺旋区域被切掉或渲染残缺，动画结束后图表也可能显示不完整。
+The implementation of `growInX` / `growInY` involves **clipPath clipping** along the Cartesian coordinate axes. In the `helix` coordinate system, the axes are remapped to a spiral path, and there is no "bottom" or "left" baseline on the screen. The clipping rectangle crosses the spiral, causing parts of the spiral area to be cut off or rendered incompletely. After the animation ends, the chart may also appear incomplete.
 
-**同样问题适用于所有非直角坐标系**（`polar`、`theta`、`helix`）——这些坐标系均应使用 `waveIn`（极坐标专用）或 `fadeIn`（通用），不能使用 `growInX/Y`。
+**The same issue applies to all non-Cartesian coordinate systems** (`polar`, `theta`, `helix`)—these systems should use `waveIn` (polar-specific) or `fadeIn` (general-purpose) instead of `growInX/Y`.
 
 ```javascript
-// ❌ 错误：helix 坐标系用 growInY → 裁剪矩形横穿螺旋，图表渲染残缺
+// ❌ Error: Using growInY in helix coordinate system → Clipping rectangle crosses the spiral, rendering incomplete chart
 chart.options({
   type: 'interval',
   coordinate: { type: 'helix', startAngle: 0, endAngle: Math.PI * 6 },
   animate: {
-    enter: { type: 'growInY', duration: 2000 },  // ❌ 螺旋被裁剪，部分区域缺失
+    enter: { type: 'growInY', duration: 2000 },  // ❌ Spiral is clipped, some areas are missing
   },
 });
 
-// ✅ 正确：helix 坐标系用 fadeIn
+// ✅ Correct: Using fadeIn in helix coordinate system
 chart.options({
   type: 'interval',
   coordinate: { type: 'helix', startAngle: 0, endAngle: Math.PI * 6 },
   animate: {
-    enter: { type: 'fadeIn', duration: 1000 },   // ✅ 渐显，无裁剪副作用
+    enter: { type: 'fadeIn', duration: 1000 },   // ✅ Fades in, no clipping side effects
   },
 });
 
-// ✅ 极坐标（theta/polar）用 waveIn
+// ✅ Using waveIn in polar coordinates (theta/polar)
 chart.options({
   type: 'interval',
   coordinate: { type: 'theta' },
   animate: {
-    enter: { type: 'waveIn', duration: 1000 },   // ✅ 极坐标专用扇形展开
+    enter: { type: 'waveIn', duration: 1000 },   // ✅ Polar-specific sector expansion
   },
 });
 ```
 
-**根本原因**：`growInX/Y` 假设存在固定的直角基线（X=0 或 Y=0）作为裁剪起点，这在笛卡尔坐标系中成立；但 `helix` / `polar` 将坐标重映射到极坐标或螺旋路径后，该基线不再对应可见边界，裁剪结果是任意截断螺旋形状。
+**Root Cause**: `growInX/Y` assumes the existence of a fixed Cartesian baseline (X=0 or Y=0) as the clipping starting point, which holds true in the Cartesian coordinate system. However, in `helix` / `polar` coordinates, where the axes are remapped to polar or spiral paths, this baseline no longer corresponds to a visible boundary, resulting in arbitrary truncation of the spiral shape.

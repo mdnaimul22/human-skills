@@ -1,29 +1,29 @@
 ---
 id: "g2-data-ema"
-title: "G2 EMA 指数移动平均"
+title: "G2 EMA Exponential Moving Average"
 description: |
-  EMA（Exponential Moving Average）数据变换对数据进行指数移动平均平滑处理。
-  通过对最近的数据点赋予更高的权重，减少数据波动性，更清晰地观察趋势。
-  配置在 data.transform 中。
+  EMA (Exponential Moving Average) data transformation applies exponential moving average smoothing to the data.
+  By assigning higher weights to more recent data points, it reduces data volatility and allows for clearer trend observation.
+  Configured in data.transform.
 
 library: "g2"
 version: "5.x"
 category: "data"
 tags:
   - "ema"
-  - "指数移动平均"
-  - "平滑"
-  - "趋势"
-  - "数据变换"
+  - "exponential moving average"
+  - "smoothing"
+  - "trend"
+  - "data transformation"
   - "data transform"
 
 related:
   - "g2-mark-line"
 
 use_cases:
-  - "时间序列数据平滑"
-  - "金融数据技术分析"
-  - "训练指标平滑展示"
+  - "Time series data smoothing"
+  - "Financial data technical analysis"
+  - "Training metric smoothing display"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -33,21 +33,21 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/data/ema"
 ---
 
-## 核心概念
+## Core Concepts
 
-**EMA 是数据变换（Data Transform），不是标记变换（Mark Transform）**
+**EMA is a Data Transform, not a Mark Transform**
 
-- 数据变换配置在 `data.transform` 中
-- 指数移动平均是一种数据平滑算法
+- Data transform configurations are set in `data.transform`
+- Exponential Moving Average (EMA) is a data smoothing algorithm
 
-**公式**：EMA_t = α × P_t + (1 - α) × EMA_{t-1}
+**Formula**: EMA_t = α × P_t + (1 - α) × EMA_{t-1}
 
-**注意事项**：
-- G2 中 `alpha` 越接近 1，平滑效果越明显
-- `alpha` 越接近 0，EMA 越接近原始数据
-- `field` 字段必须为数值型
+**Notes**:
+- In G2, the closer `alpha` is to 1, the more pronounced the smoothing effect
+- The closer `alpha` is to 0, the closer EMA is to the original data
+- The `field` must be of numeric type
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -68,15 +68,15 @@ chart.options({
   children: [
     {
       type: 'line',
-       {
+      data: {
         type: 'inline',
         value: data,
         transform: [
           {
             type: 'ema',
-            field: 'y',      // 要平滑的字段
-            alpha: 0.6,      // 平滑因子
-            as: 'emaY',      // 输出字段名
+            field: 'y',      // Field to smooth
+            alpha: 0.6,      // Smoothing factor
+            as: 'emaY',      // Output field name
           },
         ],
       },
@@ -85,7 +85,7 @@ chart.options({
     },
     {
       type: 'line',
-       { type: 'inline', value: data },
+      data: { type: 'inline', value: data },
       encode: { x: 't', y: 'y' },
       style: { stroke: '#ccc', lineDash: [4, 2] },
     },
@@ -95,15 +95,15 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
-| 属性  | 描述                                 | 类型     | 默认值     | 必选 |
-| ----- | ------------------------------------ | -------- | ---------- | ---- |
-| field | 需要平滑的字段名                     | `string` | `'y'`      | ✓    |
-| alpha | 平滑因子，控制平滑程度（越大越平滑） | `number` | `0.6`      |      |
-| as    | 生成的新字段名，若不指定将覆盖原字段 | `string` | 同 `field` |      |
+| Property | Description                                      | Type     | Default Value | Required |
+| -------- | ------------------------------------------------ | -------- | ------------- | -------- |
+| field    | The field name that needs to be smoothed         | `string` | `'y'`         | ✓        |
+| alpha    | Smoothing factor, controls the degree of smoothing (larger values result in smoother curves) | `number` | `0.6`         |          |
+| as       | The name of the new generated field, if not specified, it will overwrite the original field | `string` | Same as `field` |          |
 
-## 金融行情平滑
+## Financial Market Smoothing
 
 ```javascript
 chart.options({
@@ -136,55 +136,55 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：ema 放在 mark transform 中
+### Error 1: Placing EMA in Mark Transform
 
 ```javascript
-// ❌ 错误：ema 是数据变换，不能放在 mark 的 transform 中
+// ❌ Incorrect: EMA is a data transformation and cannot be placed in the mark's transform
 chart.options({
   type: 'line',
   data,
-  transform: [{ type: 'ema', field: 'y' }],  // ❌ 错误位置
+  transform: [{ type: 'ema', field: 'y' }],  // ❌ Incorrect location
 });
 
-// ✅ 正确：ema 放在 data.transform 中
+// ✅ Correct: EMA should be placed in data.transform
 chart.options({
   type: 'line',
-   {
+  data: {
     type: 'inline',
     value: data,
-    transform: [{ type: 'ema', field: 'y', as: 'emaY' }],  // ✅ 正确
+    transform: [{ type: 'ema', field: 'y', as: 'emaY' }],  // ✅ Correct
   },
 });
 ```
 
-### 错误 2：字段不是数值型
+### Error 2: Field is not numeric
 
 ```javascript
-// ❌ 错误：field 字段必须为数值型
+// ❌ Error: The field must be numeric
  {
-  transform: [{ type: 'ema', field: 'name' }],  // ❌ name 是字符串
+  transform: [{ type: 'ema', field: 'name' }],  // ❌ name is a string
 }
 
-// ✅ 正确：使用数值型字段
+// ✅ Correct: Use a numeric field
  {
   transform: [{ type: 'ema', field: 'value' }],
 }
 ```
 
-### 错误 3：忘记设置 as 字段
+### Error 3: Forgetting to Set the `as` Field
 
 ```javascript
-// ⚠️ 注意：不设置 as 会覆盖原字段
+// ⚠️ Caution: Not setting `as` will overwrite the original field
 data: {
-  transform: [{ type: 'ema', field: 'y' }],  // y 字段会被覆盖
+  transform: [{ type: 'ema', field: 'y' }],  // The `y` field will be overwritten
 }
-encode: { y: 'y' },  // 使用的是平滑后的数据
+encode: { y: 'y' },  // Uses the smoothed data
 
-// ✅ 推荐：设置 as 保留原字段
+// ✅ Recommended: Set `as` to preserve the original field
  {
   transform: [{ type: 'ema', field: 'y', as: 'emaY' }],
 }
-// 可以同时展示原始数据和平滑数据
+// Can display both original and smoothed data simultaneously
 ```

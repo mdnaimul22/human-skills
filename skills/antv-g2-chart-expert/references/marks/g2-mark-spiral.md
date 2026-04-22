@@ -1,34 +1,34 @@
 ---
 id: "g2-mark-spiral"
-title: "G2 螺旋图（spiral）"
+title: "G2 Spiral Plot"
 description: |
-  螺旋图使用 helix 坐标系（coordinate.type: 'helix'）将时间序列数据绘制成螺旋形状，
-  从中心向外延伸。适合展示大量时间序列数据的周期性规律和变化趋势（通常 100+ 数据点）。
+  The spiral plot uses the helix coordinate system (coordinate.type: 'helix') to render time series data in a spiral shape,
+  extending outward from the center. It is suitable for displaying the periodic patterns and trends of large amounts of time series data (typically 100+ data points).
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "螺旋图"
+  - "spiral plot"
   - "spiral"
   - "helix"
-  - "时间序列"
-  - "周期性"
-  - "大数据量"
+  - "time series"
+  - "periodicity"
+  - "large datasets"
 
 related:
   - "g2-mark-line-basic"
   - "g2-mark-interval-basic"
 
 use_cases:
-  - "大量时间序列数据的趋势展示（100+ 数据点）"
-  - "周期性数据规律识别（如年度季节性）"
-  - "基因表达时间序列"
+  - "Trend visualization for large time series datasets (100+ data points)"
+  - "Identification of periodic patterns in data (e.g., annual seasonality)"
+  - "Gene expression time series"
 
 anti_patterns:
-  - "少量数据（< 30 条）不适合，改用折线图"
-  - "需要精确数值对比不适合，螺旋非线性坐标难以精确读值"
-  - "animate.enter 不能使用 growInX/growInY，会导致螺旋渲染残缺，必须用 fadeIn"
+  - "Not suitable for small datasets (< 30 points), use line charts instead"
+  - "Not suitable for precise value comparison, as the non-linear spiral coordinates make exact value reading difficult"
+  - "animate.enter cannot use growInX/growInY, as it will cause incomplete spiral rendering; must use fadeIn"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -38,18 +38,18 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/spiral"
 ---
 
-## 核心概念
+## Core Concepts
 
-**螺旋图 = interval/line mark + `coordinate: { type: 'helix', startAngle, endAngle }`**
+**Helix Chart = interval/line mark + `coordinate: { type: 'helix', startAngle, endAngle }`**
 
-- `coordinate.type: 'helix'`：阿基米德螺旋坐标系
-- `startAngle`：螺旋起始角（弧度），`Math.PI / 2` ≈ 从顶部开始
-- `endAngle`：螺旋结束角，值越大螺旋圈数越多
-- **数据量要求**：通常需要 100 条以上才能形成完整螺旋
+- `coordinate.type: 'helix'`：Archimedean spiral coordinate system
+- `startAngle`：Spiral start angle (in radians), `Math.PI / 2` ≈ starts from the top
+- `endAngle`：Spiral end angle, larger values result in more spiral loops
+- **Data Volume Requirement**：Typically requires 100 or more data points to form a complete spiral
 
-**角度与圈数关系**：`圈数 = (endAngle - startAngle) / (2 * Math.PI)`
+**Relationship Between Angle and Loops**：`loops = (endAngle - startAngle) / (2 * Math.PI)`
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -67,7 +67,7 @@ chart.options({
       { time: '2025.07.11', value: 35 },
       { time: '2025.07.12', value: 30 },
       { time: '2025.07.13', value: 55 },
-      // ... 更多数据（100+ 条）
+      // ... more data (100+ entries)
     ],
   },
   encode: { x: 'time', y: 'value', color: 'value' },
@@ -76,8 +76,8 @@ chart.options({
   },
   coordinate: {
     type: 'helix',
-    startAngle: Math.PI / 2,              // 从顶部开始
-    endAngle: Math.PI / 2 + 6 * Math.PI, // 转3圈（每圈 2π）
+    startAngle: Math.PI / 2,              // Start from the top
+    endAngle: Math.PI / 2 + 6 * Math.PI, // Rotate 3 times (2π per rotation)
   },
   animate: { enter: { type: 'fadeIn' } },
   tooltip: { title: 'time' },
@@ -86,24 +86,24 @@ chart.options({
 chart.render();
 ```
 
-## 常用角度配置
+## Common Angle Configurations
 
 ```javascript
-// 标准螺旋（约6圈，适合一年每周数据）
+// Standard Helix (approximately 6 turns, suitable for weekly data over a year)
 coordinate: {
   type: 'helix',
   startAngle: 1.5707963267948966,   // Math.PI / 2
-  endAngle: 39.269908169872416,     // Math.PI / 2 + 12 * Math.PI（6圈）
+  endAngle: 39.269908169872416,     // Math.PI / 2 + 12 * Math.PI (6 turns)
 }
 
-// 少圈数（约3圈，适合季度数据）
+// Fewer Turns (approximately 3 turns, suitable for quarterly data)
 coordinate: {
   type: 'helix',
   startAngle: Math.PI / 2,
   endAngle: Math.PI / 2 + 6 * Math.PI,
 }
 
-// 带内半径（圆环螺旋）
+// With Inner Radius (Annular Helix)
 coordinate: {
   type: 'helix',
   startAngle: 0.2 * Math.PI,
@@ -112,7 +112,7 @@ coordinate: {
 }
 ```
 
-## 按类别分组螺旋图
+## Grouped Spiral Chart by Category
 
 ```javascript
 chart.options({
@@ -123,8 +123,8 @@ chart.options({
   },
   encode: {
     x: 'time',
-    y: 'group',     // 用 Y 轴区分类别
-    color: 'value', // 用颜色映射数值
+    y: 'group',     // Use Y-axis to categorize groups
+    color: 'value', // Use color to map values
   },
   scale: {
     color: {
@@ -141,19 +141,19 @@ chart.options({
   tooltip: {
     title: 'time',
     items: [
-      { field: 'group', name: '组别' },
-      { field: 'value', name: '数值' },
+      { field: 'group', name: 'Group' },
+      { field: 'value', name: 'Value' },
     ],
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：数据量太少
+### Error 1: Insufficient Data Volume
 
 ```javascript
-// ❌ 问题：5 条数据无法形成螺旋，效果极差
+// ❌ Issue: 5 data points cannot form a helix, resulting in poor visualization
 chart.options({
   type: 'interval',
   data: {
@@ -168,7 +168,7 @@ chart.options({
   coordinate: { type: 'helix', startAngle: Math.PI / 2, endAngle: 40 },
 });
 
-// ✅ 改用折线图处理少量数据
+// ✅ Use a line chart instead for handling small datasets
 chart.options({
   type: 'line',
   data,
@@ -176,67 +176,67 @@ chart.options({
 });
 ```
 
-### 错误 2：coordinate 类型名错误
+### Error 2: Incorrect coordinate type name
 
 ```javascript
-// ❌ 错误：没有 'spiral' 类型，应该是 'helix'
-coordinate: { type: 'spiral' }   // ❌ 不存在
+// ❌ Error: No 'spiral' type exists, should be 'helix'
+coordinate: { type: 'spiral' }   // ❌ Does not exist
 
-// ✅ 正确：使用 helix
+// ✅ Correct: Use helix
 coordinate: { type: 'helix', startAngle: Math.PI / 2, endAngle: 40 }  // ✅
 ```
 
-### 错误 3：角度单位混淆
+### Error 3: Confusion Between Angle Units
 
 ```javascript
-// ❌ 错误：使用角度（度数）而非弧度
+// ❌ Incorrect: Using degrees instead of radians
 coordinate: {
   type: 'helix',
-  startAngle: 90,   // ❌ 90° 不是弧度，应该是 Math.PI / 2
-  endAngle: 2250,   // ❌ 应该是弧度值
+  startAngle: 90,   // ❌ 90° is not in radians, should be Math.PI / 2
+  endAngle: 2250,   // ❌ Should be in radians
 }
 
-// ✅ 正确：使用弧度
+// ✅ Correct: Using radians
 coordinate: {
   type: 'helix',
-  startAngle: Math.PI / 2,           // ✅ 90° = π/2 弧度
-  endAngle: Math.PI / 2 + 12 * Math.PI,  // ✅ 6圈
+  startAngle: Math.PI / 2,           // ✅ 90° = π/2 radians
+  endAngle: Math.PI / 2 + 12 * Math.PI,  // ✅ 6 turns
 }
 ```
 
-### 错误 4：data 格式错误（行内数据需要 value 包裹）
+### Error 4: Incorrect data format (inline data requires value wrapping)
 
 ```javascript
-// ❌ 错误：行内数组数据需要放在 data.value 中
+// ❌ Incorrect: Inline array data must be placed in data.value
 chart.options({
-  data: [{ time: '2025.01', value: 35 }, ...],  // ❌ 直接数组
+  data: [{ time: '2025.01', value: 35 }, ...],  // ❌ Direct array
   coordinate: { type: 'helix', ... },
 });
 
-// ✅ 正确：行内数据用 { value: [...] } 包裹
+// ✅ Correct: Inline data wrapped with { value: [...] }
 chart.options({
-   {
+  data: {
     value: [{ time: '2025.01', value: 35 }, ...],  // ✅
   },
   coordinate: { type: 'helix', ... },
 });
 ```
 
-### 错误 5：animate.enter 使用 growInY/growInX 导致螺旋渲染残缺
+### Error 5: Using growInY/growInX with animate.enter Causes Incomplete Spiral Rendering
 
-`growInX/Y` 通过沿直角坐标轴方向裁剪（clipPath）实现动画。helix 坐标系已将坐标重映射到螺旋路径，不存在"底部基线"，裁剪矩形会横穿螺旋，导致部分螺旋区域被切掉，动画结束后图表仍显示不完整。
+`growInX/Y` implements animations by clipping along the axes of a Cartesian coordinate system (clipPath). In the helix coordinate system, coordinates are remapped to a spiral path, and there is no "bottom baseline." The clipping rectangle crosses the spiral, causing parts of the spiral area to be cut off, resulting in an incomplete chart display after the animation ends.
 
 ```javascript
-// ❌ 错误：growInY 在 helix 坐标系下裁剪矩形横穿螺旋 → 图表渲染残缺
+// ❌ Error: growInY clips the rectangle across the spiral in helix coordinates → Incomplete chart rendering
 chart.options({
   type: 'interval',
   coordinate: { type: 'helix', startAngle: 0, endAngle: Math.PI * 6 },
   animate: {
-    enter: { type: 'growInY', duration: 2000 },  // ❌ 螺旋被截断
+    enter: { type: 'growInY', duration: 2000 },  // ❌ Spiral is truncated
   },
 });
 
-// ✅ 正确：helix 坐标系必须用 fadeIn（或不设置动画）
+// ✅ Correct: Helix coordinates must use fadeIn (or no animation)
 chart.options({
   type: 'interval',
   coordinate: { type: 'helix', startAngle: 0, endAngle: Math.PI * 6 },
@@ -246,12 +246,12 @@ chart.options({
 });
 ```
 
-## 与折线图的选择
+## Selection Compared to Line Charts
 
-| 场景 | 推荐图表 |
+| Scenario | Recommended Chart |
 |------|---------|
-| 数据量 < 50 条 | 折线图 |
-| 数据量 100+ 条，观察趋势 | 螺旋图或折线图 |
-| 需要发现周期性规律 | **螺旋图**（当每圈周期对齐时效果最佳）|
-| 需要精确读取数值 | 折线图 |
-| 大屏展示视觉效果 | **螺旋图** |
+| Data volume < 50 entries | Line Chart |
+| Data volume 100+ entries, observing trends | Spiral Chart or Line Chart |
+| Need to discover periodic patterns | **Spiral Chart** (best when each cycle aligns) |
+| Need to precisely read values | Line Chart |
+| Visual effect for large screen display | **Spiral Chart** |

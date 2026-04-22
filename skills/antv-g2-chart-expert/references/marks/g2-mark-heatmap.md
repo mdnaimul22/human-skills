@@ -1,21 +1,21 @@
 ---
 id: "g2-mark-heatmap"
-title: "G2 渐变热力图（heatmap mark）"
+title: "G2 Gradient Heatmap (heatmap mark)"
 description: |
-  heatmap mark（区别于 cell mark 的色块热力图）使用高斯核密度渐变绘制热力分布，
-  每个点产生向外扩散的热晕效果，适合展示地理空间密度或二维密度分布。
-  通过 color 通道指定强度，size 控制热晕半径。
+  The heatmap mark (distinct from the cell mark color block heatmap) uses Gaussian kernel density gradients to render heat distribution,
+  with each point generating an outward-diffusing heat halo effect. It is suitable for displaying geospatial density or two-dimensional density distributions.
+  The intensity is specified through the color channel, and the size controls the heat halo radius.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
   - "heatmap"
-  - "热力图"
-  - "密度热力"
-  - "渐变热力"
-  - "高斯核"
-  - "空间密度"
+  - "heatmap"
+  - "density heatmap"
+  - "gradient heatmap"
+  - "Gaussian kernel"
+  - "spatial density"
 
 related:
   - "g2-mark-cell-heatmap"
@@ -23,9 +23,9 @@ related:
   - "g2-mark-point-scatter"
 
 use_cases:
-  - "地图上的用户点击/访问热力图"
-  - "二维空间中的密度分布可视化"
-  - "大量重叠点的密度展示（比散点图更清晰）"
+  - "User click/visit heatmap on maps"
+  - "Density distribution visualization in two-dimensional space"
+  - "Density display of a large number of overlapping points (clearer than scatter plots)"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -34,13 +34,12 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/heatmap/"
 ---
-
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 带密度权重的二维数据
+// Two-dimensional data with density weights
 const data = Array.from({ length: 500 }, () => ({
   x: Math.random() * 100 + (Math.random() > 0.5 ? 20 : 60),
   y: Math.random() * 100 + (Math.random() > 0.5 ? 20 : 70),
@@ -50,13 +49,13 @@ const data = Array.from({ length: 500 }, () => ({
 const chart = new Chart({ container: 'container', width: 600, height: 500 });
 
 chart.options({
-  type: 'heatmap',   // 渐变热力图（不是 cell 热力图）
+  type: 'heatmap',   // Gradient heatmap (not cell heatmap)
   data,
   encode: {
     x: 'x',
     y: 'y',
-    color: 'weight',  // 热力强度（0~1）
-    size: 30,         // 热晕半径（px），固定值或字段名
+    color: 'weight',  // Heat intensity (0~1)
+    size: 30,         // Heat radius (px), fixed value or field name
   },
   style: {
     opacity: 0.8,
@@ -64,7 +63,7 @@ chart.options({
   scale: {
     color: {
       type: 'sequential',
-      palette: ['blue', 'cyan', 'lime', 'yellow', 'red'],  // 冷色→热色
+      palette: ['blue', 'cyan', 'lime', 'yellow', 'red'],  // Cold to warm colors
     },
   },
   axis: false,
@@ -74,7 +73,7 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 chart.options({
@@ -83,48 +82,48 @@ chart.options({
   encode: {
     x: 'lng',
     y: 'lat',
-    color: 'intensity',    // 强度字段（默认 0~1）
-    size: 'radius',        // 热晕半径，可以是字段名或固定数字
-                           // 默认 40（px）
+    color: 'intensity',    // Intensity field (default 0~1)
+    size: 'radius',        // Heat radius, can be a field name or a fixed number
+                           // Default 40 (px)
   },
   style: {
-    opacity: 1,            // 整体透明度
+    opacity: 1,            // Overall opacity
   },
 });
 ```
 
-## heatmap vs cell 热力图
+## heatmap vs cell Heatmap
 
 ```javascript
-// heatmap mark：高斯渐变，连续热晕效果，适合点数据密度
+// heatmap mark: Gaussian gradient, continuous heat halo effect, suitable for point data density
 chart.options({ type: 'heatmap', ... });
 
-// cell mark：离散色块，适合矩阵数据（如时间×类别的二维表格）
+// cell mark: Discrete color blocks, suitable for matrix data (e.g., time × category two-dimensional tables)
 chart.options({ type: 'cell', ... });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：color 通道值域不在 0~1——热力颜色映射异常
+### Error 1: Color Channel Value Range Not in 0~1—Heatmap Color Mapping Anomaly
 ```javascript
-// ❌ 如果 color 值是原始计数（如 500、1000），颜色映射可能不准确
+// ❌ If the color value is a raw count (e.g., 500, 1000), the color mapping may be inaccurate
 chart.options({
-  encode: { color: 'rawCount' },  // ⚠️  rawCount 值可能是 0~10000
+  encode: { color: 'rawCount' },  // ⚠️ rawCount values may range from 0~10000
 });
 
-// ✅ 归一化到 0~1，或设置 scale.color.domain
+// ✅ Normalize to 0~1, or set scale.color.domain
 chart.options({
-  encode: { color: 'intensity' },  // intensity 已归一化为 0~1
-  // 或配置 domain
-  scale: { color: { domain: [0, 1000] } },  // 显式指定范围
+  encode: { color: 'intensity' },  // intensity is already normalized to 0~1
+  // or configure domain
+  scale: { color: { domain: [0, 1000] } },  // Explicitly specify the range
 });
 ```
 
-### 错误 2：与 cell mark 混淆——cell 是矩阵格子，heatmap 是连续渐变
+### Error 2: Confusion with Cell Mark—Cell is a Matrix Grid, Heatmap is Continuous Gradient
 ```javascript
-// ❌ 用 cell 展示空间密度——格子状，缺乏连续渐变感
+// ❌ Using cell to display spatial density—grid-like, lacks continuous gradient effect
 chart.options({ type: 'cell', encode: { x: 'lng', y: 'lat', color: 'density' } });
 
-// ✅ 空间密度用 heatmap（连续渐变热晕效果）
+// ✅ Spatial density using heatmap (continuous gradient heat halo effect)
 chart.options({ type: 'heatmap', encode: { x: 'lng', y: 'lat', color: 'density', size: 30 } });
 ```

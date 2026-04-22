@@ -1,18 +1,18 @@
 ---
 id: "g2-data-sort"
-title: "G2 Sort 数据排序"
+title: "G2 Data Sorting"
 description: |
-  sort 数据变换对数据进行排序，类似于 Array.prototype.sort。
-  配置在 data.transform 中，在渲染前预处理数据顺序。
-  常用于饼图、排行榜条形图等需要按数据大小排列的场景。
+  The sort data transformation orders the data, similar to Array.prototype.sort.
+  It is configured in data.transform and pre-processes the data order before rendering.
+  Commonly used in scenarios such as pie charts, bar charts for rankings, where data needs to be arranged by size.
 
 library: "g2"
 version: "5.x"
 category: "data"
 tags:
   - "sort"
-  - "排序"
-  - "数据顺序"
+  - "sorting"
+  - "data order"
   - "data transform"
 
 related:
@@ -22,9 +22,9 @@ related:
   - "g2-transform-sorty"
 
 use_cases:
-  - "饼图按大小排列扇区"
-  - "条形图按数值排序"
-  - "排行榜数据展示"
+  - "Pie chart sectors arranged by size"
+  - "Bar chart sorted by value"
+  - "Ranking data display"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,19 +34,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/data/sort"
 ---
 
-## 核心概念
+## Core Concepts
 
-**sort 是数据变换（Data Transform），不是标记变换（Mark Transform）**
+**sort is a Data Transform, not a Mark Transform**
 
-- 数据变换配置在 `data.transform` 中
-- 使用 callback 比较函数（类似 Array.sort）
-- 在数据加载阶段执行，影响所有使用该数据的标记
+- Data transform configurations are set in `data.transform`
+- Uses a callback comparison function (similar to Array.sort)
+- Executed during the data loading phase, affecting all marks using the data
 
-**与 mark transform sortX/sortY/sortColor 的区别：**
-- 数据 sort：直接对原始数据数组排序
-- mark sortX/sortY/sortColor：按视觉通道值排序，可聚合后排序
+**Difference from mark transform sortX/sortY/sortColor:**
+- Data sort: Directly sorts the original data array
+- Mark sortX/sortY/sortColor: Sorts by visual channel values, can sort after aggregation
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -66,7 +66,7 @@ chart.options({
     transform: [
       {
         type: 'sort',
-        callback: (a, b) => b.value - a.value,  // 降序排列
+        callback: (a, b) => b.value - a.value,  // Descending order
       },
     ],
   },
@@ -76,18 +76,18 @@ chart.options({
 chart.render();
 ```
 
-## 升序排列
+## Ascending Order
 
 ```javascript
 chart.options({
   type: 'interval',
-   {
+  {
     type: 'inline',
     value: data,
     transform: [
       {
         type: 'sort',
-        callback: (a, b) => a.value - b.value,  // 升序
+        callback: (a, b) => a.value - b.value,  // Ascending
       },
     ],
   },
@@ -95,7 +95,7 @@ chart.options({
 });
 ```
 
-## 饼图按大小排序
+## Pie Chart Sorted by Size
 
 ```javascript
 chart.options({
@@ -110,7 +110,7 @@ chart.options({
     transform: [
       {
         type: 'sort',
-        callback: (a, b) => b.count - a.count,  // 从大到小
+        callback: (a, b) => b.count - a.count,  // Descending order
       },
     ],
   },
@@ -120,25 +120,25 @@ chart.options({
 });
 ```
 
-## 与其他数据变换组合
+## Combine with Other Data Transformations
 
 ```javascript
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: rawData,
     transform: [
-      { type: 'filter', callback: (d) => d.value > 0 },  // 先过滤
-      { type: 'sort', callback: (a, b) => b.value - a.value },  // 再排序
-      { type: 'slice', start: 0, end: 10 },  // 取前 10 条
+      { type: 'filter', callback: (d) => d.value > 0 },  // Filter first
+      { type: 'sort', callback: (a, b) => b.value - a.value },  // Then sort
+      { type: 'slice', start: 0, end: 10 },  // Take the first 10 items
     ],
   },
   encode: { x: 'category', y: 'value' },
 });
 ```
 
-## 按字符串排序
+## Sort by String
 
 ```javascript
 chart.options({
@@ -149,7 +149,7 @@ chart.options({
     transform: [
       {
         type: 'sort',
-        callback: (a, b) => a.name.localeCompare(b.name),  // 按名称字母排序
+        callback: (a, b) => a.name.localeCompare(b.name),  // Sort alphabetically by name
       },
     ],
   },
@@ -157,92 +157,92 @@ chart.options({
 });
 ```
 
-## 配置项
+## Configuration Options
 
-| 属性     | 描述                                               | 类型                         | 默认值        |
+| Property | Description                                               | Type                         | Default Value        |
 | -------- | -------------------------------------------------- | ---------------------------- | ------------- |
-| callback | Array.sort 的 comparator，返回 1，0，-1 代表 > = < | `(a: any, b: any) => number` | `(a, b) => 0` |
+| callback | Comparator for Array.sort, returns 1, 0, -1 representing > = < | `(a: any, b: any) => number` | `(a, b) => 0` |
 
-## 与 Mark Transform sortX/sortY 的对比
+## Comparison with Mark Transform sortX/sortY
 
-| 特性 | 数据 sort | mark sortX/sortY |
+| Feature | Data sort | Mark sortX/sortY |
 |------|----------|------------------|
-| 配置位置 | `data.transform` | `transform` (mark 层级) |
-| 排序依据 | 原始数据字段 | 视觉通道值 |
-| 聚合支持 | 不支持 | 支持按聚合值排序 |
-| 切片支持 | 需配合 slice | 内置 slice 参数 |
+| Configuration Location | `data.transform` | `transform` (mark level) |
+| Sorting Basis | Original data field | Visual channel value |
+| Aggregation Support | Not supported | Supports sorting by aggregated value |
+| Slice Support | Requires slice | Built-in slice parameter |
 
 ```javascript
-// 数据 sort：直接对数据排序
+// Data sort: Directly sorts the data
 data: {
   transform: [{ type: 'sort', callback: (a, b) => b.value - a.value }],
 }
 
-// mark sortX：按 Y 通道聚合值排序
+// Mark sortX: Sorts by Y channel aggregated value
 transform: [{ type: 'sortX', by: 'y', reducer: 'sum' }]
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：sort 放在 mark transform 中
+### Error 1: Placing `sort` in `mark` transform
 
 ```javascript
-// ❌ 错误：数据 sort 不能放在 mark 的 transform 中
+// ❌ Incorrect: Data `sort` should not be placed in `mark`'s transform
 chart.options({
   data: myData,
-  transform: [{ type: 'sort', callback: (a, b) => b.value - a.value }],  // ❌ 错误位置
+  transform: [{ type: 'sort', callback: (a, b) => b.value - a.value }],  // ❌ Incorrect location
 });
 
-// ✅ 正确：sort 放在 data.transform 中
+// ✅ Correct: `sort` should be placed in `data.transform`
 chart.options({
-   {
+  {
     type: 'inline',
     value: myData,
-    transform: [{ type: 'sort', callback: (a, b) => b.value - a.value }],  // ✅ 正确
+    transform: [{ type: 'sort', callback: (a, b) => b.value - a.value }],  // ✅ Correct
   },
 });
 ```
 
-### 错误 2：混淆数据 sort 和 mark sortX
+### Error 2: Confusing Data Sort and Mark SortX
 
 ```javascript
-// ❌ 错误：数据 sort 不支持 channel/by/reducer 参数
+// ❌ Incorrect: Data sort does not support channel/by/reducer parameters
 data: {
-  transform: [{ type: 'sort', channel: 'x', by: 'value' }],  // ❌ 这是 mark transform 语法
+  transform: [{ type: 'sort', channel: 'x', by: 'value' }],  // ❌ This is mark transform syntax
 }
 
-// ✅ 正确：数据 sort 使用 callback
+// ✅ Correct: Data sort uses a callback
  {
   transform: [{ type: 'sort', callback: (a, b) => b.value - a.value }],
 }
 
-// 如果需要按聚合值排序，应使用 mark transform
+// If sorting by aggregated values is needed, use mark transform
 transform: [{ type: 'sortX', by: 'y', reducer: 'sum' }]
 ```
 
-### 错误 3：callback 返回值错误
+### Error 3: Incorrect Callback Return Value
 
 ```javascript
-// ❌ 错误：返回布尔值
-callback: (a, b) => a.value > b.value  // ❌ 返回布尔值
+// ❌ Incorrect: Returns a boolean
+callback: (a, b) => a.value > b.value  // ❌ Returns a boolean
 
-// ✅ 正确：返回数字（正数、负数、零）
-callback: (a, b) => a.value - b.value  // ✅ 升序
-callback: (a, b) => b.value - a.value  // ✅ 降序
+// ✅ Correct: Returns a number (positive, negative, or zero)
+callback: (a, b) => a.value - b.value  // ✅ Ascending order
+callback: (a, b) => b.value - a.value  // ✅ Descending order
 ```
 
-### 错误 4：简写 data 无法配置 transform
+### Error 4: Shorthand data Cannot Configure transform
 
 ```javascript
-// ❌ 错误：简写 data 无法配置 transform
+// ❌ Error: Shorthand data cannot configure transform
 chart.options({
-  data: myData,  // 简写形式
-  // 无法添加 sort transform
+  data: myData,  // Shorthand form
+  // Unable to add sort transform
 });
 
-// ✅ 正确：使用完整 data 配置
+// ✅ Correct: Use full data configuration
 chart.options({
-   {
+  {
     type: 'inline',
     value: myData,
     transform: [{ type: 'sort', callback: (a, b) => b.value - a.value }],

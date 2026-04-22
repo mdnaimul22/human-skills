@@ -1,19 +1,18 @@
 ---
 id: "g2-mark-text"
-title: "G2 文字标注（text Mark）"
+title: "G2 Text Mark"
 description: |
-  G2 v5 内置 text Mark，用于在图表中绘制自定义文字标注，
-  encode.x/y 确定位置，encode.text 或 style.text 提供内容，
-  常与其他 Mark 叠加使用，实现数据标签、阈值标注和图表标题等效果。
+  G2 v5 comes with a built-in text Mark for rendering custom text annotations in charts.
+  The position is determined by `encode.x/y`, and the content is provided by `encode.text` or `style.text`.
+  It is often used in conjunction with other Marks to achieve effects such as data labels, threshold annotations, and chart titles.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "文字标注"
+  - "text annotation"
   - "text"
-  - "标签"
-  - "注释"
+  - "label"
   - "annotation"
   - "spec"
 
@@ -24,10 +23,10 @@ related:
   - "g2-comp-annotation"
 
 use_cases:
-  - "在柱状图顶部显示数值标签"
-  - "标注图表中的特殊事件或阈值"
-  - "添加自定义图表标题或说明文字"
-  - "高亮某个数据点的文字描述"
+  - "Displaying value labels at the top of bar charts"
+  - "Annotating special events or thresholds in charts"
+  - "Adding custom chart titles or explanatory text"
+  - "Highlighting text descriptions for specific data points"
 
 difficulty: "beginner"
 completeness: "full"
@@ -37,7 +36,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/annotation/annotation/#text"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -49,11 +48,11 @@ const chart = new Chart({
 });
 
 const data = [
-  { month: '1月', value: 120 },
-  { month: '2月', value: 180 },
-  { month: '3月', value: 150 },
-  { month: '4月', value: 210 },
-  { month: '5月', value: 170 },
+  { month: 'January', value: 120 },
+  { month: 'February', value: 180 },
+  { month: 'March', value: 150 },
+  { month: 'April', value: 210 },
+  { month: 'May', value: 170 },
 ];
 
 chart.options({
@@ -69,11 +68,11 @@ chart.options({
       encode: {
         x: 'month',
         y: 'value',
-        text: 'value',   // 数据字段名 → 显示该字段的值
+        text: 'value',   // Data field name → Display the value of this field
       },
       style: {
         textAlign: 'center',
-        dy: -8,           // 向上偏移
+        dy: -8,           // Offset upwards
         fontSize: 12,
         fill: '#333',
       },
@@ -84,10 +83,10 @@ chart.options({
 chart.render();
 ```
 
-## 固定位置文字标注（不绑定数据）
+## Fixed Position Text Annotation (Not Bound to Data)
 
 ```javascript
-// 在图表固定位置添加一行文字（如阈值说明）
+// Add a line of text at a fixed position on the chart (e.g., threshold description)
 chart.options({
   type: 'view',
   data,
@@ -97,9 +96,9 @@ chart.options({
       encode: { x: 'month', y: 'value' },
     },
     {
-      // 固定位置文字，使用单条数据
+      // Fixed position text, using a single data point
       type: 'text',
-       [{ x: '3月', y: 200, label: '达标线' }],
+      data: [{ x: 'March', y: 200, label: 'Threshold' }],
       encode: { x: 'x', y: 'y', text: 'label' },
       style: {
         fill: '#ff4d4f',
@@ -112,10 +111,10 @@ chart.options({
 });
 ```
 
-## 结合 lineY 标注水平阈值线
+## Combining lineY to Annotate Horizontal Threshold Lines
 
 ```javascript
-// lineY + text 组合：标注阈值线
+// lineY + text combination: annotating threshold lines
 chart.options({
   type: 'view',
   data,
@@ -126,16 +125,16 @@ chart.options({
       style: { fill: '#1890ff' },
     },
     {
-      // 水平阈值线
+      // Horizontal threshold line
       type: 'lineY',
       data: [{ y: 160 }],
       encode: { y: 'y' },
       style: { stroke: '#ff4d4f', lineDash: [4, 4], lineWidth: 1.5 },
     },
     {
-      // 阈值标注文字
+      // Threshold annotation text
       type: 'text',
-       [{ month: '5月', value: 160, label: '目标 160' }],
+      data: [{ month: 'May', value: 160, label: 'Target 160' }],
       encode: { x: 'month', y: 'value', text: 'label' },
       style: {
         fill: '#ff4d4f',
@@ -148,51 +147,51 @@ chart.options({
 });
 ```
 
-## 完整配置项
+## Complete Configuration Options
 
 ```javascript
 chart.options({
   type: 'text',
   data,
   encode: {
-    x: 'xField',      // x 位置（对应坐标轴字段）
-    y: 'yField',      // y 位置（对应坐标轴字段）
-    text: 'textField', // 显示的文字内容字段
-    color: 'series',  // 按系列着色（可选）
+    x: 'xField',      // x position (corresponding to the axis field)
+    y: 'yField',      // y position (corresponding to the axis field)
+    text: 'textField', // displayed text content field
+    color: 'series',  // color by series (optional)
   },
   style: {
-    // 文字样式
+    // Text style
     fontSize: 12,
     fontWeight: 'normal',
     fill: '#333',
     textAlign: 'center',    // 'left' | 'center' | 'right'
     textBaseline: 'bottom', // 'top' | 'middle' | 'bottom'
 
-    // 位置偏移
-    dx: 0,    // 水平偏移（px）
-    dy: -8,   // 垂直偏移（px，负值向上）
+    // Position offset
+    dx: 0,    // horizontal offset (px)
+    dy: -8,   // vertical offset (px, negative value moves up)
 
-    // 背景框（可选）
+    // Background box (optional)
     background: true,
     backgroundFill: 'rgba(255,255,255,0.8)',
     backgroundPadding: [2, 4],
     backgroundRadius: 3,
 
-    // 旋转
-    rotate: 0,   // 旋转角度（度）
+    // Rotation
+    rotate: 0,   // rotation angle (degrees)
   },
 });
 ```
 
-## 散点图数据点标签
+## Scatter Plot Data Point Labels
 
 ```javascript
 const scatterData = [
-  { x: 10, y: 80, name: '产品A' },
-  { x: 20, y: 60, name: '产品B' },
-  { x: 35, y: 90, name: '产品C' },
-  { x: 50, y: 40, name: '产品D' },
-  { x: 65, y: 75, name: '产品E' },
+  { x: 10, y: 80, name: 'Product A' },
+  { x: 20, y: 60, name: 'Product B' },
+  { x: 35, y: 90, name: 'Product C' },
+  { x: 50, y: 40, name: 'Product D' },
+  { x: 65, y: 75, name: 'Product E' },
 ];
 
 chart.options({
@@ -218,82 +217,81 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：text Mark 独立使用时没有数据
+### Error 1: Text Mark Used Independently Without Data
 
 ```javascript
-// ❌ 错误：text Mark 需要 data 或者从父 view 继承数据
+// ❌ Incorrect: Text Mark requires data or inherits data from a parent view
 chart.options({
   type: 'text',
-  // 缺少 data，且无父 view 提供数据
+  // Missing data, and no parent view provides data
   encode: { x: 'month', y: 'value', text: 'label' },
 });
 
-// ✅ 正确方式一：在父 view 中提供数据
+// ✅ Correct Approach 1: Provide data in the parent view
 chart.options({
   type: 'view',
-  data,               // 父 view 提供数据，子 mark 自动继承
+  data,               // Parent view provides data, child marks inherit automatically
   children: [
     { type: 'interval', encode: { x: 'month', y: 'value' } },
     { type: 'text', encode: { x: 'month', y: 'value', text: 'value' } },
   ],
 });
 
-// ✅ 正确方式二：text Mark 自带数据（用于固定标注）
+// ✅ Correct Approach 2: Text Mark includes its own data (for fixed annotations)
 chart.options({
   type: 'text',
-  data: [{ x: '3月', y: 200, label: '特殊标注' }],
+  data: [{ x: 'March', y: 200, label: 'Special Annotation' }],
   encode: { x: 'x', y: 'y', text: 'label' },
 });
 ```
 
-### 错误 2：encode.text 写成了字面量字符串而非字段名
+### Error 2: `encode.text` is written as a literal string instead of a field name
 
 ```javascript
-// ❌ 错误：encode.text 应该是数据中的字段名，不能写固定文字
+// ❌ Incorrect: `encode.text` should be a field name from the data, not a fixed string
 chart.options({
   type: 'text',
   encode: {
     x: 'month',
     y: 'value',
-    text: '固定文字',   // ❌ 这里写的是字面量，但数据中没有叫 '固定文字' 的字段
+    text: 'fixed text',   // ❌ This is a literal string, but there is no field named 'fixed text' in the data
   },
 });
 
-// ✅ 正确：固定文字应用 style.text 或 transform 函数
+// ✅ Correct: Fixed text should be applied using `style.text` or a `transform` function
 chart.options({
   type: 'text',
   encode: { x: 'month', y: 'value' },
   style: {
-    text: (d) => `${d.value}`,   // ✅ 通过函数返回文字内容
+    text: (d) => `${d.value}`,   // ✅ Use a function to return the text content
     textAlign: 'center',
     dy: -8,
   },
 });
 
-// 或者在 encode 中用函数
+// Alternatively, use a function in `encode`
 chart.options({
   type: 'text',
   encode: {
     x: 'month',
     y: 'value',
-    text: (d) => d.value,   // ✅ encode.text 可以是函数
+    text: (d) => d.value,   // ✅ `encode.text` can be a function
   },
 });
 ```
-
-### 错误 3：text 与 interval 叠加时忘记共用 view
+### Error 3: Forgetting to Share the View When Overlaying Text and Interval
 
 ```javascript
-// ❌ 错误：两个独立 chart 无法叠加
+// ❌ Incorrect: Two independent charts cannot be overlaid
 const chart1 = new Chart({ container: 'c1' });
 chart1.options({ type: 'interval', data, encode: { x: 'month', y: 'value' } });
 
 const chart2 = new Chart({ container: 'c2' });
 chart2.options({ type: 'text', data, encode: { x: 'month', y: 'value', text: 'value' } });
 
-// ✅ 正确：用 view 的 children 叠加
+// ✅ Correct: Overlay using view's children
 chart.options({
   type: 'view',
   data,

@@ -1,23 +1,23 @@
 ---
 id: "g2-data-transform-patterns"
-title: "G2 数据转换模式"
+title: "G2 Data Transformation Patterns"
 description: |
-  G2 可视化前最常用的数据预处理模式：宽转长（fold）、分组聚合、
-  百分比计算、排名/排序、数据过滤、时间粒度聚合。
-  这些模式既可在 JavaScript 前端完成，也可使用 G2 的内置 data transform。
+  The most commonly used data preprocessing patterns before G2 visualization: wide-to-long (fold), group aggregation,
+  percentage calculation, ranking/sorting, data filtering, and time granularity aggregation.
+  These patterns can be completed either in JavaScript frontend or using G2's built-in data transform.
 
 library: "g2"
 version: "5.x"
 category: "data"
 tags:
-  - "数据转换"
-  - "数据处理"
-  - "宽转长"
+  - "data transformation"
+  - "data processing"
+  - "wide-to-long"
   - "fold"
-  - "分组聚合"
-  - "百分比"
-  - "排序"
-  - "时间聚合"
+  - "group aggregation"
+  - "percentage"
+  - "sorting"
+  - "time aggregation"
 
 related:
   - "g2-data-fold"
@@ -26,9 +26,9 @@ related:
   - "g2-data-slice"
 
 use_cases:
-  - "将 API 返回的宽表转为 G2 需要的长表"
-  - "前端对数据进行聚合、排名、百分比计算"
-  - "为不同图表类型准备对应格式的数据"
+  - "Convert wide table returned by API to long table required by G2"
+  - "Perform aggregation, ranking, and percentage calculation on data in the frontend"
+  - "Prepare data in corresponding formats for different chart types"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -37,22 +37,22 @@ updated: "2025-03-27"
 author: "antv-team"
 ---
 
-## 核心概念
+## Core Concepts
 
-**数据转换有两种方式**：
+**There are two ways to transform data**:
 
-1. **JavaScript 前端预处理**：在传入 G2 之前用 JS 函数处理
-2. **G2 内置 data transform**：配置在 `data.transform` 中，声明式处理
+1. **JavaScript Frontend Preprocessing**: Process data using JS functions before passing it to G2.
+2. **G2 Built-in Data Transform**: Configured in `data.transform`, declarative processing.
 
-**推荐**：优先使用 G2 内置 transform，代码更简洁、可序列化。
+**Recommendation**: Prioritize using G2's built-in transform for more concise and serializable code.
 
-## 模式 1：宽表转长表（Wide to Long）
+## Pattern 1: Wide to Long Table Transformation
 
-**场景**：后端返回每列一个指标的宽表，需转为每行一个观测值的长表
+**Scenario**: The backend returns a wide table with one metric per column, which needs to be transformed into a long table with one observation per row.
 
-**JavaScript 方式**：
+**JavaScript Method**:
 ```javascript
-// 输入：宽表
+// Input: Wide table
 const wideData = [
   { month: 'Jan', 北京: 3.6, 上海: 4.3, 广州: 2.8 },
   { month: 'Feb', 北京: 3.8, 上海: 4.5, 广州: 3.0 },
@@ -69,7 +69,7 @@ function wideToLong(data, idCols, valueCols, keyName = 'key', valueName = 'value
 }
 
 const longData = wideToLong(wideData, ['month'], ['北京', '上海', '广州'], 'city', 'gdp');
-// 输出：
+// Output:
 // [
 //   { month: 'Jan', city: '北京', gdp: 3.6 },
 //   { month: 'Jan', city: '上海', gdp: 4.3 },
@@ -77,7 +77,7 @@ const longData = wideToLong(wideData, ['month'], ['北京', '上海', '广州'],
 // ]
 ```
 
-**G2 内置方案**（推荐）：
+**G2 Built-in Solution** (Recommended):
 ```javascript
 chart.options({
   type: 'interval',
@@ -95,18 +95,18 @@ chart.options({
 });
 ```
 
-## 模式 2：分组聚合（Group + Aggregate）
+## Pattern 2: Group + Aggregate
 
-**场景**：按某字段分组，对另一字段求和/均值/计数
+**Scenario**: Group by a field and calculate the sum/mean/count of another field.
 
-**JavaScript 方式**：
+**JavaScript Approach**:
 ```javascript
-// 输入：明细数据
+// Input: Detailed data
 const orderData = [
-  { month: 'Jan', region: '华东', amount: 1200 },
-  { month: 'Jan', region: '华东', amount: 800 },
-  { month: 'Jan', region: '华南', amount: 950 },
-  { month: 'Feb', region: '华东', amount: 1500 },
+  { month: 'Jan', region: 'East China', amount: 1200 },
+  { month: 'Jan', region: 'East China', amount: 800 },
+  { month: 'Jan', region: 'South China', amount: 950 },
+  { month: 'Feb', region: 'East China', amount: 1500 },
 ];
 
 function groupSum(data, groupKeys, sumKey) {
@@ -124,29 +124,29 @@ function groupSum(data, groupKeys, sumKey) {
 }
 
 const aggregated = groupSum(orderData, ['month', 'region'], 'amount');
-// 输出：
+// Output:
 // [
-//   { month: 'Jan', region: '华东', amount: 2000 },
-//   { month: 'Jan', region: '华南', amount: 950 },
-//   { month: 'Feb', region: '华东', amount: 1500 },
+//   { month: 'Jan', region: 'East China', amount: 2000 },
+//   { month: 'Jan', region: 'South China', amount: 950 },
+//   { month: 'Feb', region: 'East China', amount: 1500 },
 // ]
 ```
 
-**G2 内置方案**（使用 mark transform）：
+**G2 Built-in Solution** (using mark transform):
 ```javascript
 chart.options({
   type: 'interval',
-   orderData,
+  data: orderData,
   encode: { x: 'month', y: 'amount', color: 'region' },
-  transform: [{ type: 'groupX', y: 'sum' }],  // 按 x 分组求和
+  transform: [{ type: 'groupX', y: 'sum' }],  // Group by x and calculate sum
 });
 ```
 
-## 模式 3：百分比计算
+## Pattern 3: Percentage Calculation
 
-**场景**：计算每个类别占总量的百分比（饼图标签、百分比柱状图）
+**Scenario**: Calculate the percentage of each category relative to the total (pie chart labels, percentage bar chart)
 
-**JavaScript 方式**：
+**JavaScript Approach**:
 ```javascript
 function addPercentage(data, valueKey, pctKey = 'pct') {
   const total = data.reduce((sum, d) => sum + (d[valueKey] || 0), 0);
@@ -157,23 +157,23 @@ function addPercentage(data, valueKey, pctKey = 'pct') {
 }
 
 const dataWithPct = addPercentage(
-  [{ city: '北京', gdp: 3.6 }, { city: '上海', gdp: 4.3 }, { city: '广州', gdp: 2.8 }],
+  [{ city: 'Beijing', gdp: 3.6 }, { city: 'Shanghai', gdp: 4.3 }, { city: 'Guangzhou', gdp: 2.8 }],
   'gdp'
 );
-// 输出：[{ city: '北京', gdp: 3.6, pct: '33.6' }, ...]
+// Output: [{ city: 'Beijing', gdp: 3.6, pct: '33.6' }, ...]
 ```
 
-**G2 内置方案**（百分比柱状图）：
+**G2 Built-in Solution** (Percentage Bar Chart):
 ```javascript
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'city', y: 'gdp', color: 'city' },
-  transform: [{ type: 'normalizeY' }],  // Y 轴归一化为百分比
+  transform: [{ type: 'normalizeY' }],  // Normalize Y-axis to percentage
 });
 ```
 
-**在饼图标签中使用百分比**：
+**Using Percentage in Pie Chart Labels**:
 ```javascript
 const total = data.reduce((sum, d) => sum + d.value, 0);
 
@@ -190,11 +190,11 @@ chart.options({
 });
 ```
 
-## 模式 4：排名 / Top N
+## Pattern 4: Ranking / Top N
 
-**场景**：取数值最大/最小的 N 条数据，用于排名图
+**Scenario**: Retrieve the top/bottom N data points by value, used for ranking charts
 
-**JavaScript 方式**：
+**JavaScript Approach**:
 ```javascript
 function topN(data, valueKey, n, ascending = false) {
   return [...data]
@@ -205,7 +205,7 @@ function topN(data, valueKey, n, ascending = false) {
 const top5Cities = topN(cityData, 'gdp', 5);
 ```
 
-**G2 内置方案**：
+**G2 Built-in Solution**:
 ```javascript
 chart.options({
   type: 'interval',
@@ -213,21 +213,21 @@ chart.options({
     type: 'inline',
     value: cityData,
     transform: [
-      { type: 'sortBy', fields: [['gdp', false]] },  // 按 gdp 降序
-      { type: 'slice', end: 5 },                      // 只取前 5 条
+      { type: 'sortBy', fields: [['gdp', false]] },  // Sort by gdp in descending order
+      { type: 'slice', end: 5 },                      // Take only the top 5
     ],
   },
   encode: { x: 'city', y: 'gdp' },
 });
 ```
 
-## 模式 5：时间粒度聚合
+## Pattern 5: Time Granularity Aggregation
 
-**场景**：日粒度数据聚合为周/月/季度
+**Scenario**: Daily granularity data aggregated into weekly/monthly/quarterly
 
-**JavaScript 方式**：
+**JavaScript Approach**:
 ```javascript
-// 日粒度 → 月粒度聚合
+// Daily granularity → Monthly granularity aggregation
 function aggregateByMonth(data, dateKey, valueKey) {
   const map = new Map();
   data.forEach(d => {
@@ -249,7 +249,7 @@ function aggregateByMonth(data, dateKey, valueKey) {
     .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-// 月粒度 → 季度粒度
+// Monthly granularity → Quarterly granularity
 function aggregateByQuarter(data, monthKey, valueKey) {
   return data.reduce((acc, d) => {
     const [year, month] = d[monthKey].split('-');
@@ -265,11 +265,11 @@ function aggregateByQuarter(data, monthKey, valueKey) {
 }
 ```
 
-## 模式 6：数据过滤与条件筛选
+## Pattern 6: Data Filtering and Conditional Selection
 
-**场景**：根据维度/时间范围筛选数据
+**Scenario**: Filter data based on dimensions/time ranges
 
-**JavaScript 方式**：
+**JavaScript Approach**:
 ```javascript
 function filterData(data, conditions) {
   return data.filter(d =>
@@ -288,12 +288,12 @@ function filterData(data, conditions) {
 }
 
 const filtered = filterData(data, [
-  { key: 'region', op: 'in',  value: ['华东', '华南'] },
+  { key: 'region', op: 'in',  value: ['East China', 'South China'] },
   { key: 'sales',  op: 'gt',  value: 1000 },
 ]);
 ```
 
-**G2 内置方案**：
+**G2 Built-in Solution**:
 ```javascript
 chart.options({
   type: 'interval',
@@ -301,14 +301,14 @@ chart.options({
     type: 'inline',
     value: data,
     transform: [
-      { type: 'filter', callback: (d) => ['华东', '华南'].includes(d.region) && d.sales > 1000 },
+      { type: 'filter', callback: (d) => ['East China', 'South China'].includes(d.region) && d.sales > 1000 },
     ],
   },
   encode: { x: 'region', y: 'sales' },
 });
 ```
 
-**联动过滤示例**：
+**Interactive Filtering Example**:
 ```javascript
 document.getElementById('region-select').addEventListener('change', (e) => {
   const region = e.target.value;
@@ -319,13 +319,13 @@ document.getElementById('region-select').addEventListener('change', (e) => {
 });
 ```
 
-## 模式 7：数据归一化（0-1 标准化）
+## Pattern 7: Data Normalization (0-1 Standardization)
 
-**场景**：多指标对比时，将不同量级的数据归一化到相同范围
+**Scenario**: When comparing multiple metrics, normalize data of different scales to the same range.
 
-**JavaScript 方式**：
+**JavaScript Approach**:
 ```javascript
-// Min-Max 归一化
+// Min-Max Normalization
 function normalize(data, valueKey, normalizedKey = 'normalized') {
   const values = data.map(d => d[valueKey]);
   const min = Math.min(...values);
@@ -337,18 +337,18 @@ function normalize(data, valueKey, normalizedKey = 'normalized') {
   }));
 }
 
-// 多指标分别归一化（雷达图/平行坐标准备）
+// Normalize Multiple Metrics Separately (Preparation for Radar Chart/Parallel Coordinates)
 function normalizeMultiple(data, keys) {
   return keys.reduce((acc, key) => normalize(acc, key, `${key}_norm`), data);
 }
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：fold 后字段名与 encode 不匹配
+### Error 1: Field names after fold do not match encode
 
 ```javascript
-// ❌ fold 配置了 key='city', value='gdp'，但 encode 还用原字段名
+// ❌ fold is configured with key='city', value='gdp', but encode still uses the original field names
 chart.options({
   type: 'interval',
   data: {
@@ -356,10 +356,10 @@ chart.options({
     value: wideData,
     transform: [{ type: 'fold', fields: ['北京', '上海'], key: 'city', value: 'gdp' }],
   },
-  encode: { color: '北京' },  // ❌ '北京' 字段已被 fold 消除
+  encode: { color: '北京' },  // ❌ The '北京' field has been eliminated by fold
 });
 
-// ✅ encode 要用 fold 生成的新字段名
+// ✅ encode should use the new field names generated by fold
 chart.options({
   type: 'interval',
   data: {
@@ -367,21 +367,21 @@ chart.options({
     value: wideData,
     transform: [{ type: 'fold', fields: ['北京', '上海'], key: 'city', value: 'gdp' }],
   },
-  encode: { y: 'gdp', color: 'city' },  // ✅ 使用 key/value 配置的字段名
+  encode: { y: 'gdp', color: 'city' },  // ✅ Use the field names configured by key/value
 });
 ```
 
-### 错误 2：data transform 与 mark transform 混淆
+### Error 2: Confusion between data transform and mark transform
 
 ```javascript
-// ❌ 错误：fold 是数据变换，不应放在 mark transform
+// ❌ Incorrect: fold is a data transformation and should not be placed in mark transform
 chart.options({
   type: 'interval',
-   wideData,
-  transform: [{ type: 'fold', fields: ['北京', '上海'] }],  // ❌ 错误位置
+  wideData,
+  transform: [{ type: 'fold', fields: ['北京', '上海'] }],  // ❌ Incorrect position
 });
 
-// ✅ 正确：fold 放在 data.transform 中
+// ✅ Correct: fold is placed in data.transform
 chart.options({
   type: 'interval',
   data: {

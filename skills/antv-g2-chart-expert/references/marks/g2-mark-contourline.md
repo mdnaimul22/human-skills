@@ -1,34 +1,34 @@
 ---
 id: "g2-mark-contourline"
-title: "G2 等高线图（contour line）"
+title: "G2 Contour Line Chart"
 description: |
-  等高线图通过 type: 'cell' 或 type: 'line' 实现，
-  用颜色渐变网格或线条展示二维平面上的连续数据分布（如地形高程、温度分布）。
-  G2 无内置等高线算法，通常用 cell + sequential 色阶模拟等高线效果。
+  Contour line charts are implemented using `type: 'cell'` or `type: 'line'`,
+  displaying continuous data distribution on a two-dimensional plane (e.g., terrain elevation, temperature distribution) through color gradient grids or lines.
+  G2 does not have a built-in contour line algorithm; typically, `cell + sequential` color scales are used to simulate contour line effects.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "等高线图"
+  - "contour line chart"
   - "contour"
-  - "地形图"
-  - "热力图"
-  - "连续数据"
-  - "二维分布"
+  - "terrain map"
+  - "heatmap"
+  - "continuous data"
+  - "2D distribution"
 
 related:
   - "g2-mark-cell-heatmap"
   - "g2-mark-point-scatter"
 
 use_cases:
-  - "地形海拔可视化"
-  - "气象数据分布（温度、气压）"
-  - "二维连续数据的空间分布"
+  - "Terrain elevation visualization"
+  - "Meteorological data distribution (temperature, pressure)"
+  - "Spatial distribution of 2D continuous data"
 
 anti_patterns:
-  - "离散分类数据不适合等高线图"
-  - "时间序列数据不适合"
+  - "Discrete categorical data is not suitable for contour line charts"
+  - "Time series data is not suitable"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -38,21 +38,21 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/contourline"
 ---
 
-## 核心概念
+## Core Concepts
 
-G2 中等高线图有两种实现方式：
+There are two implementation methods for contour plots in G2:
 
-1. **网格色块模拟等高线**：`type: 'cell'` + `sequential` 色阶，颜色深浅代表数值高低
-2. **等高线轮廓**：`type: 'line'` + 按数值级别分组，绘制闭合等值线
+1. **Grid color blocks simulating contour lines**: `type: 'cell'` + `sequential` color gradient, where color depth represents numerical value height
+2. **Contour line outlines**: `type: 'line'` + grouping by numerical value levels, drawing closed isovalues
 
-**网格密度越高，等高线效果越细腻**（需要数据覆盖均匀的网格点）
+**The higher the grid density, the more refined the contour line effect** (requires evenly distributed grid points in the data)
 
-## 网格色块模拟等高线（最常用）
+## Grid Color Blocks Simulating Contour Lines (Most Commonly Used)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 生成地形数据
+// Generate terrain data
 const terrainData = [];
 for (let x = 0; x <= 50; x += 2) {
   for (let y = 0; y <= 50; y += 2) {
@@ -95,13 +95,13 @@ chart.options({
     },
   },
   tooltip: {
-    title: '海拔信息',
+    title: 'Elevation Information',
     items: [
-      { field: 'x', name: '经度' },
-      { field: 'y', name: '纬度' },
+      { field: 'x', name: 'Longitude' },
+      { field: 'y', name: 'Latitude' },
       {
         field: 'elevation',
-        name: '海拔',
+        name: 'Elevation',
         valueFormatter: (value) => `${Math.round(value)}m`,
       },
     ],
@@ -111,14 +111,14 @@ chart.options({
 chart.render();
 ```
 
-## 等高线轮廓（折线实现）
+## Contour Lines (Implemented with Line Charts)
 
-按数值级别预处理数据，每条线绘制一个等值级别：
+Preprocess data by value levels, drawing one isopleth for each level:
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 预先计算各等高线级别的点
+// Pre-calculate points for each contour line level
 const generateContourLines = () => {
   const lines = [];
   const levels = [20, 40, 60, 80, 100];
@@ -151,7 +151,7 @@ chart.options({
     x: 'x',
     y: 'y',
     color: 'level',
-    series: 'lineId',   // 每条等高线独立成一个系列
+    series: 'lineId',   // Each contour line is an independent series
   },
   style: {
     lineWidth: 2,
@@ -164,30 +164,30 @@ chart.options({
     },
   },
   axis: {
-    x: { title: '距离 (km)' },
-    y: { title: '距离 (km)' },
+    x: { title: 'Distance (km)' },
+    y: { title: 'Distance (km)' },
   },
   legend: {
-    color: { title: '海拔高度 (m)' },
+    color: { title: 'Elevation (m)' },
   },
 });
 
 chart.render();
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：data 关键字缺失
+### Error 1: Missing `data` Keyword
 
 ```javascript
-// ❌ 错误：data 关键字必须写明
+// ❌ Incorrect: The `data` keyword must be explicitly written
 chart.options({
   type: 'cell',
-  terrainData,   // ❌ 孤立对象字面量，缺少 data: 键
+  terrainData,   // ❌ Isolated object literal, missing `data:` key
   encode: { x: 'x', y: 'y', color: 'elevation' },
 });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({
   type: 'cell',
   data: terrainData,
@@ -195,10 +195,10 @@ chart.options({
 });
 ```
 
-### 错误 2：等高线轮廓缺少 series 分组
+### Error 2: Contour Lines Missing Series Grouping
 
 ```javascript
-// ❌ 错误：没有 series，所有等高线点连成一条线
+// ❌ Incorrect: Without series, all contour points are connected into a single line
 chart.options({
   type: 'line',
   data,
@@ -206,11 +206,11 @@ chart.options({
     x: 'x',
     y: 'y',
     color: 'level',
-    // ❌ 缺少 series: 'lineId'
+    // ❌ Missing series: 'lineId'
   },
 });
 
-// ✅ 正确：每条等高线用 series 独立分组
+// ✅ Correct: Each contour line is grouped independently using series
 chart.options({
   type: 'line',
   data,
@@ -218,26 +218,26 @@ chart.options({
     x: 'x',
     y: 'y',
     color: 'level',
-    series: 'lineId',  // ✅ 确保每条线独立绘制
+    series: 'lineId',  // ✅ Ensures each line is drawn independently
   },
 });
 ```
 
-### 错误 3：色阶类型不匹配
+### Error 3: Mismatched Color Scale Type
 
 ```javascript
-// ❌ 错误：连续数据用 ordinal 色阶，颜色过少
-scale: { color: { type: 'ordinal' } }  // ❌ 适合离散类别
+// ❌ Error: Using ordinal color scale for continuous data, insufficient colors
+scale: { color: { type: 'ordinal' } }  // ❌ Suitable for discrete categories
 
-// ✅ 正确：连续数据用 sequential 色阶
+// ✅ Correct: Using sequential color scale for continuous data
 scale: { color: { type: 'sequential', palette: 'viridis' } }  // ✅
 ```
 
-## cell 等高线与 heatmap 的区别
+## Contour Cell vs. Heatmap
 
-| 特性 | 等高线 cell | 热力图 heatmap |
+| Feature | Contour Cell | Heatmap |
 |------|------------|--------------|
-| 坐标 | 二维均匀网格（x, y 均离散） | 二维均匀网格 |
-| 颜色 | sequential 连续渐变 | 通常 sequential |
-| 用途 | 地形、连续场分布 | 频率、密度可视化 |
-| 数据 | 三维（x, y, z） | 通常频次聚合 |
+| Coordinates | Uniform 2D grid (discrete x, y) | Uniform 2D grid |
+| Color | Sequential gradient | Typically sequential |
+| Use Case | Terrain, continuous field distribution | Frequency, density visualization |
+| Data | 3D (x, y, z) | Typically frequency aggregation |

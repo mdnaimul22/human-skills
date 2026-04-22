@@ -1,21 +1,21 @@
 ---
 id: "g2-mark-area-stacked"
-title: "G2 堆叠面积图"
+title: "G2 Stacked Area Chart"
 description: |
-  使用 Area Mark 配合 stackY Transform 创建堆叠面积图，
-  同时展示各系列的变化趋势和总量的积累效果，各系列的面积从上一个系列顶端开始填充。
+  Use Area Mark with stackY Transform to create a stacked area chart,
+  simultaneously displaying the trend changes of each series and the cumulative effect of the total amount. The area of each series starts filling from the top of the previous series.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 subcategory: "area"
 tags:
-  - "堆叠面积图"
+  - "stacked area chart"
   - "stacked area"
   - "stackY"
-  - "多系列"
-  - "趋势"
-  - "总量"
+  - "multi-series"
+  - "trend"
+  - "total amount"
   - "spec"
 
 related:
@@ -24,13 +24,13 @@ related:
   - "g2-mark-interval-stacked"
 
 use_cases:
-  - "展示多个系列的总量随时间的变化"
-  - "同时关注各系列趋势和总体规模"
-  - "流量来源、收入构成等场景"
+  - "Display the total amount changes of multiple series over time"
+  - "Focus on both individual series trends and overall scale"
+  - "Scenarios like traffic sources, revenue composition, etc."
 
 anti_patterns:
-  - "系列超过 5 个时颜色难以区分"
-  - "需要精确对比单个系列的变化时（基准线不统一），改用折线图"
+  - "Colors become difficult to distinguish when there are more than 5 series"
+  - "Switch to line charts when precise comparison of individual series changes is needed (non-unified baselines)"
 
 difficulty: "beginner"
 completeness: "full"
@@ -39,8 +39,7 @@ updated: "2025-03-01"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/area/stacked"
 ---
-
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -71,7 +70,7 @@ chart.options({
 chart.render();
 ```
 
-## 平滑堆叠面积图
+## Smooth Stacked Area Chart
 
 ```javascript
 chart.options({
@@ -88,7 +87,7 @@ chart.options({
 });
 ```
 
-## 堆叠面积 + 折线描边
+## Stacked Area + Line Stroke
 
 ```javascript
 chart.options({
@@ -111,7 +110,7 @@ chart.options({
 });
 ```
 
-## 百分比堆叠面积图
+## Percentage Stacked Area Chart
 
 ```javascript
 chart.options({
@@ -128,19 +127,19 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：忘记 stackY 导致系列互相遮挡
+### Error: Forgetting stackY causes series to overlap each other
 ```javascript
-// ❌ 错误：各系列面积都从 y=0 起，相互覆盖
+// ❌ Error: Each series area starts from y=0, overlapping each other
 chart.options({
   type: 'area',
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
-  // 没有 transform！
+  // No transform!
 });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({
   type: 'area',
   data,

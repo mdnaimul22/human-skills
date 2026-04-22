@@ -1,23 +1,23 @@
 ---
 id: "g2-mark-box-boxplot"
-title: "G2 箱线图（Box Mark）"
+title: "G2 Box Plot (Box Mark)"
 description: |
-  使用 Box Mark 创建箱线图（又称盒须图），展示数据的分位数分布：
-  最小值、Q1（25%分位）、中位数、Q3（75%分位）、最大值及异常值。
-  本文采用 Spec 模式。
+  Create a box plot (also known as a box-and-whisker plot) using the Box Mark to display the quantile distribution of data:
+  minimum, Q1 (25th percentile), median, Q3 (75th percentile), maximum, and outliers.
+  This article uses the Spec mode.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 subcategory: "box"
 tags:
-  - "箱线图"
-  - "盒须图"
+  - "box plot"
+  - "box-and-whisker plot"
   - "Box"
   - "boxplot"
-  - "分布"
-  - "分位数"
-  - "异常值"
+  - "distribution"
+  - "quantile"
+  - "outliers"
   - "spec"
 
 related:
@@ -25,13 +25,13 @@ related:
   - "g2-core-encode-channel"
 
 use_cases:
-  - "展示数值数据的分布形态和离散程度"
-  - "对比多个分类的数据分布差异"
-  - "识别异常值（outliers）"
+  - "Display the distribution and dispersion of numerical data"
+  - "Compare distribution differences across multiple categories"
+  - "Identify outliers"
 
 anti_patterns:
-  - "数据量极少（< 5 个点）时箱线图无统计意义"
-  - "需要展示具体数据点分布时，改用小提琴图或散点图"
+  - "Box plots have no statistical significance with very small datasets (< 5 points)"
+  - "Use a violin plot or scatter plot instead when needing to display the distribution of specific data points"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -41,18 +41,18 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/statistics/boxplot"
 ---
 
-## 核心概念
+## Core Concepts
 
-Box Mark 需要 5 个数值通道：
-- `y`：中位数（Q2）
-- `y1`：Q1（25% 分位数）
-- `y2`：Q3（75% 分位数）
-- `y3`：下须（最小非异常值）
-- `y4`：上须（最大非异常值）
+Box Mark requires 5 numerical channels:
+- `y`: Median (Q2)
+- `y1`: Q1 (25th percentile)
+- `y2`: Q3 (75th percentile)
+- `y3`: Lower whisker (minimum non-outlier value)
+- `y4`: Upper whisker (maximum non-outlier value)
 
-**数据格式**：数据需预先计算分位数后传入，或使用原始数据配合 `boxplot` transform 自动计算。
+**Data Format**: Data must be pre-calculated with percentiles or use raw data with the `boxplot` transform for automatic calculation.
 
-## 使用 boxplot transform 自动计算（推荐）
+## Use boxplot transform for automatic calculation (recommended)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -63,7 +63,7 @@ const chart = new Chart({
   height: 480,
 });
 
-// 原始数据，每个分类有多个观测值
+// Raw data, each category has multiple observations
 const rawData = [
   { category: 'A', value: 10 },
   { category: 'A', value: 25 },
@@ -71,7 +71,7 @@ const rawData = [
   { category: 'A', value: 45 },
   { category: 'A', value: 50 },
   { category: 'A', value: 55 },
-  { category: 'A', value: 80 },   // 异常值
+  { category: 'A', value: 80 },   // Outlier
   { category: 'B', value: 20 },
   { category: 'B', value: 35 },
   { category: 'B', value: 40 },
@@ -81,7 +81,7 @@ const rawData = [
 ];
 
 chart.options({
-  type: 'boxplot',          // boxplot 是 box mark + boxplot transform 的组合快捷方式
+  type: 'boxplot',          // boxplot is a shortcut combination of box mark + boxplot transform
   data: rawData,
   encode: {
     x: 'category',
@@ -97,10 +97,10 @@ chart.options({
 chart.render();
 ```
 
-## 预计算分位数数据
+## Pre-calculated Quantile Data
 
 ```javascript
-// 数据已包含分位数字段
+// Data already includes quantile fields
 chart.options({
   type: 'box',
   data: [
@@ -110,11 +110,11 @@ chart.options({
   ],
   encode: {
     x: 'category',
-    y: 'median',     // 中位数
-    y1: 'q1',        // 下四分位
-    y2: 'q3',        // 上四分位
-    y3: 'min',       // 下须
-    y4: 'max',       // 上须
+    y: 'median',     // Median
+    y1: 'q1',        // Lower quartile
+    y2: 'q3',        // Upper quartile
+    y3: 'min',       // Lower whisker
+    y4: 'max',       // Upper whisker
   },
   style: {
     fill: '#1890ff',
@@ -125,7 +125,7 @@ chart.options({
 });
 ```
 
-## 箱线图 + 散点（显示原始数据点）
+## Boxplot + Scatter (Displaying Raw Data Points)
 
 ```javascript
 chart.options({
@@ -138,26 +138,26 @@ chart.options({
       style: { fill: '#1890ff', fillOpacity: 0.2, stroke: '#1890ff' },
     },
     {
-      // 叠加原始数据点
+      // Overlay raw data points
       type: 'point',
       encode: { x: 'category', y: 'value' },
-      transform: [{ type: 'jitter' }],   // jitter 避免点重叠
+      transform: [{ type: 'jitter' }],   // jitter to avoid point overlap
       style: { fill: '#1890ff', fillOpacity: 0.5, r: 3 },
     },
   ],
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：box mark 缺少 y1/y2/y3/y4 通道
+### Error: Box Mark Missing y1/y2/y3/y4 Channels
 ```javascript
-// ❌ 错误：box mark 需要 5 个 y 通道，缺少会渲染异常
+// ❌ Error: Box mark requires 5 y channels, missing channels will cause rendering anomalies
 chart.options({
   type: 'box',
-  encode: { x: 'category', y: 'median' },  // 缺少 y1-y4！
+  encode: { x: 'category', y: 'median' },  // Missing y1-y4!
 });
 
-// ✅ 正确：使用 boxplot（自动计算）或补全所有通道
+// ✅ Correct: Use boxplot (auto-calculation) or complete all channels
 chart.options({ type: 'boxplot', encode: { x: 'category', y: 'value' } });
 ```

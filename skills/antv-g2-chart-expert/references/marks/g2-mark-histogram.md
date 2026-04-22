@@ -2,29 +2,28 @@
 id: "g2-mark-histogram"
 title: "G2 Histogram Mark"
 description: |
-  直方图 Mark。使用 rect 标记配合 binX 转换，展示连续数值数据的分布情况。
-  适用于统计分析、数据分布探索等场景。
+  Histogram Mark. Uses the rect mark in conjunction with the binX transform to display the distribution of continuous numerical data.
+  Suitable for statistical analysis, data distribution exploration, and other scenarios.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "直方图"
   - "histogram"
-  - "分布"
-  - "统计"
+  - "distribution"
+  - "statistics"
 
 related:
   - "g2-mark-boxplot"
   - "g2-transform-binx"
 
 use_cases:
-  - "数据分布分析"
-  - "统计分析"
-  - "频数统计"
+  - "Data distribution analysis"
+  - "Statistical analysis"
+  - "Frequency statistics"
 
 anti_patterns:
-  - "分类数据比较应使用柱状图"
+  - "Bar charts should be used for categorical data comparison"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -34,19 +33,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/histogram"
 ---
 
-## 核心概念
+## Core Concepts
 
-直方图用于展示连续数值数据的分布情况。与柱状图不同：
-- 直方图使用 `rect` 标记，支持 `x` 和 `x1` 通道表示区间
-- 必须配合 `binX` 转换，自动分箱统计
-- 柱子之间无间隔，表示数据连续
+Histograms are used to display the distribution of continuous numerical data. Unlike bar charts:
+- Histograms use the `rect` mark, supporting `x` and `x1` channels to represent intervals
+- They must be used with the `binX` transform for automatic binning and statistics
+- There are no gaps between bars, indicating continuous data
 
-**关键要素：**
-- `rect` 标记：支持区间表示
-- `binX` 转换：自动分箱统计
-- `x1` 通道：表示区间结束位置
+**Key Elements:**
+- `rect` mark: Supports interval representation
+- `binX` transform: Automatic binning and statistics
+- `x1` channel: Represents the end position of the interval
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -78,9 +77,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 指定分箱数量
+### Specify the Number of Bins
 
 ```javascript
 chart.options({
@@ -88,12 +87,12 @@ chart.options({
   data,
   encode: { x: 'value', y: 'count' },
   transform: [
-    { type: 'binX', y: 'count', thresholds: 30 },  // 指定分箱数量
+    { type: 'binX', y: 'count', thresholds: 30 },  // Specify the number of bins
   ],
 });
 ```
 
-### 多分布对比
+### Multi-Distribution Comparison
 
 ```javascript
 chart.options({
@@ -111,7 +110,7 @@ chart.options({
 });
 ```
 
-### 带坐标轴标题
+### With Axis Titles
 
 ```javascript
 chart.options({
@@ -120,67 +119,67 @@ chart.options({
   encode: { x: 'carat', y: 'count' },
   transform: [{ type: 'binX', y: 'count' }],
   axis: {
-    x: { title: '钻石重量（克拉）' },
-    y: { title: '频数' },
+    x: { title: 'Diamond Weight (Carat)' },
+    y: { title: 'Frequency' },
   },
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface HistogramOptions {
   type: 'rect';
   encode: {
-    x: string;           // 连续数值字段
-    y: 'count';          // 统计数量
-    color?: string;      // 分组字段
+    x: string;           // Continuous numerical field
+    y: 'count';          // Count statistic
+    color?: string;      // Grouping field
   };
   transform: [
     {
       type: 'binX';
       y: 'count';
-      thresholds?: number;  // 分箱数量
-      groupBy?: string[];   // 分组字段
+      thresholds?: number;  // Number of bins
+      groupBy?: string[];   // Grouping field
     }
   ];
 }
 ```
 
-## 直方图 vs 柱状图
+## Histogram vs Bar Chart
 
-| 特性 | 直方图 | 柱状图 |
-|------|--------|--------|
-| 数据类型 | 连续数值 | 分类数据 |
-| Mark 类型 | `rect` | `interval` |
-| 柱子间隔 | 无间隔 | 有间隔 |
-| X 轴 | 连续区间 | 离散类别 |
+| Feature | Histogram | Bar Chart |
+|---------|----------|----------|
+| Data Type | Continuous Numerical | Categorical Data |
+| Mark Type | `rect` | `interval` |
+| Bar Spacing | No Spacing | With Spacing |
+| X-Axis | Continuous Range | Discrete Categories |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：使用 interval 标记
+### Error 1: Using the `interval` Mark
 
 ```javascript
-// ❌ 问题：interval 不支持区间表示
+// ❌ Issue: `interval` does not support range representation
 type: 'interval'
 
-// ✅ 正确：使用 rect 标记
+// ✅ Correct: Use the `rect` mark
 type: 'rect'
 ```
 
-### 错误 2：缺少 binX 转换
+### Error 2: Missing binX Transformation
 
 ```javascript
-// ❌ 问题：没有分箱统计
+// ❌ Problem: No binning statistics
 encode: { x: 'value', y: 'count' }
 
-// ✅ 正确：添加 binX 转换
+// ✅ Correct: Add binX transformation
 transform: [{ type: 'binX', y: 'count' }]
 ```
 
-### 错误 3：数据量过少
+### Error 3: Insufficient Data Volume
 
 ```javascript
-// ⚠️ 注意：直方图需要足够的数据量
-// 建议数据量 >= 50 条
+// ⚠️ Note: Histograms require a sufficient amount of data
+// It is recommended to have at least 50 data points
 ```

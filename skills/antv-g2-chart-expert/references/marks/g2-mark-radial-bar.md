@@ -2,30 +2,29 @@
 id: "g2-mark-radial-bar"
 title: "G2 Radial Bar Chart Mark"
 description: |
-  玉珏图/径向柱状图 Mark。使用 interval 标记配合 radial 坐标系，以环形方式展示分类数据对比。
-  适用于审美需求较高的数据展示场景。
+  Radial Bar Chart Mark. Uses the interval mark with a radial coordinate system to display categorical data comparisons in a circular manner.
+  Suitable for data visualization scenarios with high aesthetic requirements.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "玉珏图"
-  - "径向柱状图"
-  - "radial bar"
-  - "环形柱状图"
+  - "Radial Bar Chart"
+  - "Radial Bar"
+  - "Circular Bar Chart"
 
 related:
   - "g2-mark-interval-basic"
   - "g2-mark-rose"
 
 use_cases:
-  - "分类数据对比"
-  - "美观展示"
-  - "大屏可视化"
+  - "Categorical data comparison"
+  - "Aesthetic display"
+  - "Large screen visualization"
 
 anti_patterns:
-  - "精确数值对比应使用柱状图"
-  - "数据必须排序"
+  - "Precise numerical comparisons should use bar charts"
+  - "Data must be sorted"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,19 +34,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/radial-bar"
 ---
 
-## 核心概念
+## Core Concepts
 
-玉珏图（径向柱状图）是柱状图在极坐标系下的变换：
-- 使用 `interval` 标记
-- 配合 `radial` 坐标系
-- 以弧长表示数值大小
+The Jade Ring Chart (Radial Bar Chart) is a transformation of the bar chart in a polar coordinate system:
+- Uses the `interval` mark
+- Combined with the `radial` coordinate system
+- Represents numerical values with arc length
 
-**注意事项：**
-- 存在半径反馈效应，外圈看起来更大
-- 数据必须排序
-- 更适合审美展示而非精确对比
+**Notes:**
+- There is a radius feedback effect, making the outer circle appear larger
+- Data must be sorted
+- More suitable for aesthetic display rather than precise comparison
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -60,9 +59,9 @@ const chart = new Chart({
 chart.options({
   type: 'interval',
   data: [
-    { question: '台海关系', percent: 0.21 },
-    { question: '军事力量', percent: 0.47 },
-    { question: '环境影响', percent: 0.49 },
+    { question: 'Cross-Strait Relations', percent: 0.21 },
+    { question: 'Military Power', percent: 0.47 },
+    { question: 'Environmental Impact', percent: 0.49 },
   ],
   coordinate: { type: 'radial', innerRadius: 0.2 },
   encode: {
@@ -79,9 +78,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 指定角度范围
+### Specify Angle Range
 
 ```javascript
 chart.options({
@@ -97,7 +96,7 @@ chart.options({
 });
 ```
 
-### 带标签
+### With Labels
 
 ```javascript
 chart.options({
@@ -115,7 +114,7 @@ chart.options({
 });
 ```
 
-### 配合交互
+### Interaction Integration
 
 ```javascript
 chart.options({
@@ -129,98 +128,98 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface RadialBarOptions {
   type: 'interval';
   coordinate: {
     type: 'radial';
-    innerRadius?: number;    // 内半径
-    startAngle?: number;     // 起始角度
-    endAngle?: number;       // 结束角度
+    innerRadius?: number;    // Inner radius
+    startAngle?: number;     // Start angle
+    endAngle?: number;       // End angle
   };
   encode: {
-    x: string;    // 分类字段（映射到角度）
-    y: string;    // 数值字段（映射到半径）
+    x: string;    // Category field (mapped to angle)
+    y: string;    // Numerical field (mapped to radius)
     color?: string;
   };
 }
 ```
 
-## 玉珏图 vs 柱状图
+## Radial Bar Chart vs. Column Chart
 
-| 特性 | 玉珏图 | 柱状图 |
-|------|--------|--------|
-| 坐标系 | 极坐标 | 直角坐标 |
-| 视觉效果 | 更美观 | 更精确 |
-| 数据对比 | 有半径效应 | 准确对比 |
+| Feature | Radial Bar Chart | Column Chart |
+|---------|---------------|---------------|
+| Coordinate System | Polar | Cartesian |
+| Visual Effect | More Aesthetic | More Precise |
+| Data Comparison | Radial Effect | Accurate Comparison |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：数据未排序
+### Error 1: Unsorted Data
 
 ```javascript
-// ❌ 问题：未排序会导致视觉误导
+// ❌ Issue: Unsorted data can lead to visual misinterpretation
 data: [{ category: 'A', value: 100 }, { category: 'B', value: 50 }]
 
-// ✅ 正确：数据按值排序
+// ✅ Correct: Data sorted by value
 data: [{ category: 'B', value: 50 }, { category: 'A', value: 100 }]
 ```
 
-### 错误 2：使用 polar 坐标系
+### Error 2: Using `polar` Coordinate System
 
 ```javascript
-// ❌ 问题：polar 是玫瑰图坐标系
+// ❌ Issue: `polar` is the coordinate system for rose charts
 coordinate: { type: 'polar' }
 
-// ✅ 正确：使用 radial 坐标系
+// ✅ Correct: Use `radial` coordinate system
 coordinate: { type: 'radial' }
 ```
 
-### 错误 3：分类过多
+### Error 3: Excessive Categories
 
 ```javascript
-// ⚠️ 注意：分类数量建议不超过 15 个
-// 过多分类会导致环形过窄
+// ⚠️ Note: It is recommended to have no more than 15 categories
+// Excessive categories can result in an overly narrow ring
 ```
 
-### 错误 4：encode 通道映射错误
+### Error 4: Incorrect Encoding Channel Mapping
 
 ```javascript
-// ❌ 问题：x 映射数值字段，y 映射分类字段，这在 radial 坐标系中是错误的
+// ❌ Issue: x maps to a numerical field, y maps to a categorical field, which is incorrect in a radial coordinate system
 encode: {
-  x: 'value',       // x 应该映射分类字段
-  y: 'category',    // y 应该映射数值字段
+  x: 'value',       // x should map to a categorical field
+  y: 'category',    // y should map to a numerical field
 }
 
-// ✅ 正确：x 映射分类字段，y 映射数值字段
+// ✅ Correct: x maps to a categorical field, y maps to a numerical field
 encode: {
-  x: 'category',    // x 映射分类字段（对应角度）
-  y: 'value',       // y 映射数值字段（对应半径）
+  x: 'category',    // x maps to a categorical field (corresponds to angle)
+  y: 'value',       // y maps to a numerical field (corresponds to radius)
 }
 ```
 
-### 错误 5：transform 排序方式错误
+### Error 5: Incorrect Sorting Method in transform
 
 ```javascript
-// ❌ 问题：使用了 transform 排序但方向错误
+// ❌ Issue: Used transform sorting but with incorrect direction
 transform: [
   {
     type: 'sortX',
     by: 'value',
-    reverse: false,   // 应该为 true 才能实现由内向外递增
+    reverse: false,   // Should be true to achieve increment from inside to outside
   },
 ],
 
-// ✅ 正确：使用正确的排序方向
+// ✅ Correct: Use the correct sorting direction
 transform: [
   {
     type: 'sortX',
     by: 'value',
-    reverse: true,   // 由内向外递增
+    reverse: true,   // Increment from inside to outside
   },
 ],
-// 或者更推荐的方式是在数据层面预先排序
+// Or a more recommended approach is to pre-sort at the data level
 data: rawData.sort((a, b) => b.value - a.value)
 ```

@@ -2,30 +2,30 @@
 id: "g2-mark-sunburst"
 title: "G2 Sunburst Chart Mark"
 description: |
-  旭日图 Mark。使用 sunburst 标记展示多层级层次化数据，通过同心圆形式展示层级关系。
-  适用于组织架构、文件系统、预算分配等场景。
+  Sunburst Mark. Use the sunburst mark to display multi-level hierarchical data in a concentric circle format, showcasing hierarchical relationships.
+  Suitable for organizational structures, file systems, budget allocation, and other scenarios.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "旭日图"
+  - "Sunburst"
   - "sunburst"
-  - "层次结构"
-  - "多层级"
+  - "Hierarchy"
+  - "Multi-level"
 
 related:
   - "g2-mark-treemap"
   - "g2-mark-arc-pie"
 
 use_cases:
-  - "组织架构展示"
-  - "文件系统分析"
-  - "预算分配"
+  - "Organizational Structure Display"
+  - "File System Analysis"
+  - "Budget Allocation"
 
 anti_patterns:
-  - "层级过深（>4层）应使用矩形树图"
-  - "类别过多不适合"
+  - "Too many hierarchy levels (>4) should use a treemap instead"
+  - "Not suitable for too many categories"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,14 +35,14 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/sunburst"
 ---
 
-## 核心概念
+## Core Concepts
 
-旭日图通过同心圆展示多层级数据：
-- 每个层级用一个环表示
-- 环的内外半径表示层级深度
-- 角度大小表示数值大小
+The radial chart displays multi-level data through concentric circles:
+- Each level is represented by a ring
+- The inner and outer radii of the ring indicate the level depth
+- The angle size represents the numerical value
 
-**需要引入扩展：**
+**Required Extension:**
 ```javascript
 import { plotlib } from '@antv/g2-extension-plot';
 import { Runtime, corelib, extend } from '@antv/g2';
@@ -50,7 +50,7 @@ import { Runtime, corelib, extend } from '@antv/g2';
 const Chart = extend(Runtime, { ...corelib(), ...plotlib() });
 ```
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { plotlib } from '@antv/g2-extension-plot';
@@ -78,39 +78,39 @@ chart.options({
 chart.render();
 ```
 
-## 数据配置形式说明
+## Data Configuration Format Explanation
 
-**为什么 sunburst 使用 ` { value: data }` 或 ` { type: 'fetch', value: 'url' }` 而不是 `data`？**
+**Why does sunburst use `{ value: data }` or `{ type: 'fetch', value: 'url' }` instead of `data`?**
 
-层次数据是**对象**（包含 name/children），不是数组，必须使用完整形式：
+Hierarchical data is an **object** (containing name/children), not an array, and must use the full form:
 
 ```javascript
-// ❌ 错误：层次数据不是数组，不能用简写
+// ❌ Error: Hierarchical data is not an array, cannot use shorthand
 chart.options({
   type: 'sunburst',
-  data: hierarchyData,  // ❌ 不工作
+  data: hierarchyData,  // ❌ Does not work
 });
 
-// ✅ 正确：层次数据必须用完整形式
+// ✅ Correct: Hierarchical data must use the full form
 chart.options({
   type: 'sunburst',
-  data: { value: hierarchyData },  // ✅ 内联数据
+  data: { value: hierarchyData },  // ✅ Inline data
 });
 
-// ✅ 正确：远程数据
+// ✅ Correct: Remote data
 chart.options({
   type: 'sunburst',
   data: { type: 'fetch', value: 'https://example.com/data.json' },
 });
 ```
 
-**简写形式仅适用于数组数据**（满足三个条件：内联、是数组、无 transform）。
+**Shorthand form is only applicable to array data** (meeting three conditions: inline, is an array, and no transform).
 
 ---
 
-## 常用变体
+## Common Variants
 
-### 带标签
+### With Labels
 
 ```javascript
 chart.options({
@@ -126,7 +126,7 @@ chart.options({
 });
 ```
 
-### 自定义颜色
+### Custom Colors
 
 ```javascript
 chart.options({
@@ -138,7 +138,7 @@ chart.options({
 });
 ```
 
-### 带下钻交互
+### Drill-Down Interaction
 
 ```javascript
 chart.options({
@@ -148,22 +148,22 @@ chart.options({
   interaction: {
     drillDown: {
       breadCrumb: {
-        rootText: '起始',
+        rootText: 'Root',
       },
     },
   },
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface SunburstOptions {
   type: 'sunburst';
-   { value: HierarchyData } | { type: 'fetch'; value: string };
+  data: { value: HierarchyData } | { type: 'fetch'; value: string };
   encode: {
-    value: string;                          // 数值字段（字符串可用，有专项处理）
-    color?: (d: HierarchyNode) => unknown;  // ⚠️ 颜色必须用回调，不能用字符串
+    value: string;                          // Numerical field (string is acceptable, with special handling)
+    color?: (d: HierarchyNode) => unknown;  // ⚠️ Color must use a callback, cannot be a string
   };
   labels?: Array<{
     text: string;
@@ -179,49 +179,49 @@ interface SunburstOptions {
 }
 ```
 
-## 旭日图 vs 矩形树图
+## Radial Chart vs. Rectangle Tree Map
 
-| 特性 | 旭日图 | 矩形树图 |
-|------|--------|----------|
-| 布局 | 圆形 | 矩形 |
-| 空间利用 | 较低 | 较高 |
-| 层级展示 | 同心圆 | 嵌套矩形 |
-| 适用层级 | ≤4 层 | 更深层级 |
+| Feature       | Radial Chart | Rectangle Tree Map |
+|---------------|--------------||--------------------|
+| Layout        | Circular     | Rectangular        |
+| Space Utilization | Low      | High               |
+| Hierarchy Display | Concentric Circles | Nested Rectangles  |
+| Suitable Hierarchy Levels | ≤4 Levels | Deeper Levels      |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：未引入扩展
+### Error 1: Extension Not Imported
 
 ```javascript
-// ❌ 问题：sunburst 需要扩展库
+// ❌ Issue: sunburst requires an extension library
 import { Chart } from '@antv/g2';
 
-// ✅ 正确：引入 plotlib 扩展
+// ✅ Correct: Import the plotlib extension
 import { plotlib } from '@antv/g2-extension-plot';
 import { Runtime, corelib, extend } from '@antv/g2';
 const Chart = extend(Runtime, { ...corelib(), ...plotlib() });
 ```
 
-### 错误 2：层级过深
+### Error 2: Hierarchy Too Deep
 
 ```javascript
-// ⚠️ 注意：层级超过 4 层时，外层扇形过小
-// 建议使用矩形树图替代
+// ⚠️ Note: When the hierarchy exceeds 4 levels, the outer sectors become too small
+// It is recommended to use a rectangular tree map instead
 ```
 
-### 错误 3：数据格式错误
+### Error 3: Incorrect Data Format
 
 ```javascript
-// ❌ 问题：层次数据不能用简写形式
+// ❌ Issue: Hierarchical data cannot be in shorthand form
 chart.options({
   type: 'sunburst',
-   [{ name: 'A', value: 100 }],  // ❌ 数组格式，不是层次结构
+  [{ name: 'A', value: 100 }],  // ❌ Array format, not hierarchical structure
 });
 
-// ✅ 正确：使用完整形式 + 层级嵌套结构
+// ✅ Correct: Use full form + nested hierarchical structure
 chart.options({
   type: 'sunburst',
-   {
+  {
     value: {
       name: 'Root',
       children: [
@@ -236,92 +236,91 @@ chart.options({
 
 ---
 
-## 节点数据访问规则（重要！）
+## Node Data Access Rules (Important!)
 
-层次结构图中，回调函数接收到的参数 `d` **不是原始数据对象**，而是 G2 用 d3-hierarchy 包装后的层次节点，**原始数据在 `d.data` 中**。
+In the hierarchical chart, the parameter `d` received by the callback function **is not the original data object**, but rather a hierarchical node wrapped by G2 using d3-hierarchy. **The original data is stored in `d.data`**.
 
-### 为什么 `encode.color: 'label'` 不起作用？
+### Why doesn’t `encode.color: 'label'` work?
 
-**根本原因**：当 encode 是字符串时，G2 内部做的是 `datum[fieldName]`，直接访问层次节点属性。层次节点上没有 `label` 属性，返回 `undefined`，导致所有扇形显示相同颜色。
+**Root Cause**: When `encode` is a string, G2 internally performs `datum[fieldName]`, directly accessing the hierarchical node's property. Since the hierarchical node does not have a `label` property, it returns `undefined`, causing all sectors to display the same color.
 
 ```
-d['label']        → undefined  ❌（层次节点没有 label 属性）
-d.data['label']   → 'A类'      ✅（原始数据在 d.data 上）
+d['label']        → undefined  ❌ (Hierarchical node has no label property)
+d.data['label']   → 'A类'      ✅ (Original data is on d.data)
 ```
 
-**特例**：`encode.value: 'sum'` 字符串可以工作，因为 G2 对层次 mark 的 `value` 通道做了**专项处理**。其他通道（`color`、`shape` 等）无此特殊处理，必须用回调。
-
-### 回调参数 d 的结构
+**Special Case**: `encode.value: 'sum'` works as a string because G2 applies **special handling** to the `value` channel for hierarchical marks. Other channels (`color`, `shape`, etc.) do not have this special handling and must use a callback.
+### Structure of Callback Parameter d
 
 ```javascript
-// d 是 d3-hierarchy 节点，结构如下：
+// d is a d3-hierarchy node with the following structure:
 {
-  value: 100,              // 节点数值（d3 计算的子树总和）
-  depth: 2,                // 层级深度（0 = 根节点）
-  height: 0,               // 子树高度（叶子节点为 0）
-   {                  // ← 原始数据在这里！
-    name: '前端',
+  value: 100,              // Node value (sum of subtree calculated by d3)
+  depth: 2,                // Hierarchy depth (0 = root node)
+  height: 0,               // Subtree height (0 for leaf nodes)
+  data: {                  // ← Original data is here!
+    name: 'Frontend',
     sum: 120,
-    label: 'A类',
-    // ... 其它自定义字段
+    label: 'Category A',
+    // ... other custom fields
   },
-  path: ['root', '技术', '前端'],
+  path: ['root', 'Technology', 'Frontend'],
 }
 ```
 
-### encode 中访问字段
+### Accessing Fields in encode
 
 ```javascript
-// ❌ 错误：字符串字段名对 color 通道不起作用
+// ❌ Incorrect: String field names do not work for the color channel
 encode: {
-  value: 'sum',    // ✅ value 通道有专项处理
-  color: 'label',  // ❌ d['label'] = undefined → 所有扇形颜色相同
+  value: 'sum',    // ✅ value channel has special handling
+  color: 'label',  // ❌ d['label'] = undefined → all sectors have the same color
 }
 
-// ✅ 正确：color 必须用回调函数
+// ✅ Correct: color must use a callback function
 encode: {
   value: 'sum',
   color: (d) => d.data?.label,  // ✅
 }
 ```
 
-### 常用着色策略
+### Common Coloring Strategies
 
 ```javascript
-// 按第二层父节点着色（推荐，同门类同色）
+// Color by second-level parent node (recommended, same category, same color)
 color: (d) => d.path?.[1] || d.data?.name
 
-// 按层级深度着色
+// Color by hierarchy depth
 color: (d) => d.depth
 
-// 按自定义字段着色
+// Color by custom field
 color: (d) => d.data?.label
 color: (d) => d.data?.category
 
-// 按数值着色（连续色板）
+// Color by numerical value (continuous color palette)
 color: (d) => d.value
 ```
 
-### 错误 4：encode.color 使用字符串字段名导致所有扇形颜色相同
+### Error 4: Using a string field name in encode.color results in all sectors having the same color
 
 ```javascript
-// ❌ 错误：color: 'label' 等价于 d['label']，层次节点上没有此属性 → undefined
+// ❌ Incorrect: color: 'label' is equivalent to d['label'], which does not exist on hierarchical nodes → undefined
 chart.options({
   type: 'sunburst',
   data: { value: data },
   encode: {
     value: 'sum',
-    color: 'label',  // ❌ → 所有扇形相同颜色
+    color: 'label',  // ❌ → All sectors have the same color
   },
 });
 
-// ✅ 正确：color 必须用回调，通过 d.data 访问原始字段
+// ✅ Correct: color must use a callback to access the original field via d.data
 chart.options({
   type: 'sunburst',
   data: { value: data },
   encode: {
     value: 'sum',
-    color: (d) => d.path?.[1] || d.data?.name,  // ✅ 按父节点着色
+    color: (d) => d.path?.[1] || d.data?.name,  // ✅ Color by parent node
   },
 });
 ```

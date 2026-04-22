@@ -2,29 +2,29 @@
 id: "g2-mark-bullet"
 title: "G2 Bullet Chart Mark"
 description: |
-  子弹图 Mark。使用 view 组合 interval 和 point 实现，展示实际值与目标值的对比。
-  适用于业绩监控、KPI 展示、进度跟踪等场景。
+  Bullet Chart Mark. Implemented using a combination of interval and point in a view, it compares actual values with target values.
+  Suitable for performance monitoring, KPI display, progress tracking, and other scenarios.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "子弹图"
+  - "bullet chart"
   - "bullet"
   - "KPI"
-  - "进度"
+  - "progress"
 
 related:
   - "g2-mark-interval-basic"
   - "g2-mark-gauge"
 
 use_cases:
-  - "业绩指标监控"
-  - "KPI 仪表盘"
-  - "预算执行跟踪"
+  - "Performance metric monitoring"
+  - "KPI dashboard"
+  - "Budget execution tracking"
 
 anti_patterns:
-  - "时间趋势分析应使用折线图"
+  - "Time trend analysis should use line charts"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -34,19 +34,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/bullet"
 ---
 
-## 核心概念
+## Core Concepts
 
-子弹图（Bullet Chart）是一种紧凑的指标展示图表，同时显示：
-- **实际值条形**：当前实际达到的数值
-- **目标值标记**：需要达成的目标
-- **表现区间**：背景色带表示差/良/优等级
+A Bullet Chart is a compact visualization for performance metrics, displaying:
+- **Actual Value Bar**: The current achieved value
+- **Target Marker**: The desired target value
+- **Performance Bands**: Background color bands indicating poor/average/good levels
 
-**适用场景：**
-- 仪表盘 KPI 展示
-- 业绩指标监控
-- 资源利用率监控
+**Applicable Scenarios:**
+- Dashboard KPI display
+- Performance metric monitoring
+- Resource utilization monitoring
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -57,7 +57,7 @@ const chart = new Chart({
 });
 
 const data = [
-  { title: '销售完成率', ranges: 100, measures: 80, target: 85 },
+  { title: 'Sales Completion Rate', ranges: 100, measures: 80, target: 85 },
 ];
 
 chart.options({
@@ -93,15 +93,15 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 多指标子弹图
+### Multi-Metric Bullet Chart
 
 ```javascript
 const multiData = [
-  { metric: 'CPU使用率', ranges: 100, measures: 65, target: 80 },
-  { metric: '内存使用率', ranges: 100, measures: 45, target: 70 },
-  { metric: '磁盘使用率', ranges: 100, measures: 88, target: 85 },
+  { metric: 'CPU Usage', ranges: 100, measures: 65, target: 80 },
+  { metric: 'Memory Usage', ranges: 100, measures: 45, target: 70 },
+  { metric: 'Disk Usage', ranges: 100, measures: 88, target: 85 },
 ];
 
 chart.options({
@@ -115,13 +115,13 @@ chart.options({
 });
 ```
 
-### 带表现区间
+### With Performance Range
 
 ```javascript
 const transformedData = [
-  { title: '项目进度', value: 40, level: '差' },
-  { title: '项目进度', value: 30, level: '良' },
-  { title: '项目进度', value: 30, level: '优' },
+  { title: 'Project Progress', value: 40, level: 'Poor' },
+  { title: 'Project Progress', value: 30, level: 'Good' },
+  { title: 'Project Progress', value: 30, level: 'Excellent' },
 ];
 
 chart.options({
@@ -134,20 +134,20 @@ chart.options({
       encode: { x: 'title', y: 'value', color: 'level' },
       transform: [{ type: 'stackY' }],
       scale: {
-        color: { domain: ['差', '良', '优'], range: ['#ffebee', '#fff3e0', '#e8f5e8'] },
+        color: { domain: ['Poor', 'Good', 'Excellent'], range: ['#ffebee', '#fff3e0', '#e8f5e8'] },
       },
     },
-    // ... 实际值和目标值
+    // ... actual value and target value
   ],
 });
 ```
 
-### 垂直子弹图
+### Vertical Bullet Chart
 
 ```javascript
 chart.options({
   type: 'view',
-  // 不使用 transpose
+  // Do not use transpose
   children: [
     { type: 'interval', data, encode: { x: 'metric', y: 'ranges', color: '#f0f0f0' } },
     { type: 'interval', data, encode: { x: 'metric', y: 'measures', color: '#52c41a' } },
@@ -156,48 +156,48 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface BulletData {
-  title: string;      // 指标名称
-  ranges: number;     // 背景范围（通常为 100）
-  measures: number;   // 实际值
-  target: number;     // 目标值
+  title: string;      // Metric name
+  ranges: number;     // Background range (usually 100)
+  measures: number;   // Actual value
+  target: number;     // Target value
 }
 
-// 子弹图由三个图层组成：
-// 1. interval - 背景区间
-// 2. interval - 实际值条形
-// 3. point (shape: 'line') - 目标值标记
+// A bullet chart consists of three layers:
+// 1. interval - Background range
+// 2. interval - Actual value bar
+// 3. point (shape: 'line') - Target marker
 ```
 
-## 子弹图 vs 仪表盘
+## Bullet Chart vs Gauge
 
-| 特性 | 子弹图 | 仪表盘 |
-|------|--------|--------|
-| 空间占用 | 紧凑 | 较大 |
-| 信息量 | 多指标 | 单指标 |
-| 适用场景 | 仪表盘 | 大屏展示 |
+| Feature | Bullet Chart | Gauge |
+|---------|----------------|----------------|
+| Space Occupancy | Compact | Larger |
+| Information Volume | Multi-indicator | Single-indicator |
+| Applicable Scenarios | Dashboard | Large Screen Display |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：缺少 transpose
+### Error 1: Missing transpose
 
 ```javascript
-// ❌ 问题：默认是垂直方向
+// ❌ Problem: Default is vertical direction
 coordinate: {}
 
-// ✅ 正确：水平子弹图需要 transpose
+// ✅ Correct: Horizontal bullet chart requires transpose
 coordinate: { transform: [{ type: 'transpose' }] }
 ```
 
-### 错误 2：目标值标记不明显
+### Error 2: Target Value Markers Not Prominent
 
 ```javascript
-// ❌ 问题：目标值使用默认 point 形状
+// ❌ Issue: Target value uses default point shape
 encode: { shape: 'point' }
 
-// ✅ 正确：使用 line 形状
+// ✅ Correct: Use line shape
 encode: { shape: 'line', size: 8 }
 ```

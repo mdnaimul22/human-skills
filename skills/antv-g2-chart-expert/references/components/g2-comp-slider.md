@@ -1,21 +1,21 @@
 ---
 id: "g2-comp-slider"
-title: "G2 缩略轴 / 滑条（slider）"
+title: "G2 Slider / Thumbnail Axis"
 description: |
-  slider（缩略轴）让用户通过拖拽两端控制手柄来调整图表的数据显示范围。
-  常见于时间序列图表的时间范围筛选，可配置在 x 轴（sliderX）或 y 轴（sliderY）方向。
-  支持设置初始值（values）、联动交互（sliderFilter interaction）。
+  The slider (thumbnail axis) allows users to adjust the data display range of a chart by dragging the control handles at both ends.
+  Commonly used for time range filtering in time series charts, it can be configured on the x-axis (sliderX) or y-axis (sliderY).
+  Supports setting initial values (values) and linked interactions (sliderFilter interaction).
 
 library: "g2"
 version: "5.x"
 category: "components"
 tags:
   - "slider"
-  - "缩略轴"
+  - "thumbnail axis"
   - "sliderX"
   - "sliderY"
-  - "时间筛选"
-  - "范围选择"
+  - "time filtering"
+  - "range selection"
   - "component"
 
 related:
@@ -24,13 +24,13 @@ related:
   - "g2-scale-time"
 
 use_cases:
-  - "时间序列图表的时间范围交互筛选"
-  - "数值范围的动态调整查看"
-  - "大数据集的局部数据探索"
+  - "Time range interactive filtering in time series charts"
+  - "Dynamic adjustment and viewing of numerical ranges"
+  - "Partial data exploration in large datasets"
 
 anti_patterns:
-  - "分类轴几乎不使用缩略轴"
-  - "数据量少时不需要缩略轴"
+  - "Thumbnail axes are rarely used with categorical axes"
+  - "Thumbnail axes are not needed for small datasets"
 
 difficulty: "beginner"
 completeness: "full"
@@ -40,7 +40,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/component/slider"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -57,7 +57,7 @@ chart.options({
   data,
   encode: { x: 'date', y: 'value' },
   slider: {
-    x: true,   // 启用 X 轴缩略轴（默认显示全部范围）
+    x: true,   // Enable X-axis slider (default shows full range)
   },
 });
 
@@ -66,22 +66,22 @@ chart.render();
 
 ---
 
-## 增量修改配置
+## Incremental Configuration Modification
 
-如果已有图表，只想修改某个配置项（如手柄颜色），可以使用以下方式：
+If you already have a chart and only want to modify a specific configuration item (such as the handle color), you can use the following methods:
 
 ```javascript
-// 方式一：重新调用 options，只传需要修改的配置
+// Method 1: Re-call options, passing only the configuration to be modified
 chart.options({
   slider: {
     x: {
-      handleIconFill: 'red',  // 只修改手柄图标填充色
+      handleIconFill: 'red',  // Only modify the handle icon fill color
     },
   },
 });
-chart.render();  // 需要重新渲染
+chart.render();  // Re-rendering is required
 
-// 方式二：完整配置后，在 render 前修改
+// Method 2: Modify after complete configuration, before render
 const options = {
   type: 'line',
   data,
@@ -90,7 +90,7 @@ const options = {
 };
 chart.options(options);
 
-// 后续修改
+// Subsequent modification
 options.slider = { x: { handleIconFill: 'red' } };
 chart.options(options);
 chart.render();
@@ -98,127 +98,127 @@ chart.render();
 
 ---
 
-## 完整配置项参考
+## Complete Configuration Options Reference
 
-### 基础配置
+### Basic Configuration
 
-| 属性 | 描述 | 类型 | 默认值 |
+| Property | Description | Type | Default Value |
 |------|------|------|--------|
-| `values` | 初始选区范围，位于 0~1 区间 | `[number, number]` | `[0, 1]` |
-| `slidable` | 是否允许拖动选取和手柄 | `boolean` | `true` |
-| `brushable` | 是否启用刷选 | `boolean` | `true` |
-| `labelFormatter` | 拖动手柄标签格式化 | `(value) => string` | - |
-| `showHandle` | 是否显示拖动手柄 | `boolean` | `true` |
-| `showLabel` | 是否显示拖动手柄文本 | `boolean` | `true` |
-| `showLabelOnInteraction` | 在调整手柄或刷选时才显示手柄文本 | `boolean` | `false` |
-| `autoFitLabel` | 是否自动调整拖动手柄文本位置 | `boolean` | `true` |
-| `padding` | 缩略轴内边距 | `number \| number[]` | - |
+| `values` | Initial selection range, within the interval 0~1 | `[number, number]` | `[0, 1]` |
+| `slidable` | Whether to allow dragging selection and handles | `boolean` | `true` |
+| `brushable` | Whether to enable brushing | `boolean` | `true` |
+| `labelFormatter` | Handle label formatting during dragging | `(value) => string` | - |
+| `showHandle` | Whether to display drag handles | `boolean` | `true` |
+| `showLabel` | Whether to display drag handle text | `boolean` | `true` |
+| `showLabelOnInteraction` | Display handle text only when adjusting handles or brushing | `boolean` | `false` |
+| `autoFitLabel` | Whether to automatically adjust drag handle text position | `boolean` | `true` |
+| `padding` | Inner padding of the thumbnail axis | `number \| number[]` | - |
 
-### 选区样式（selection）
+### Selection Style (selection)
 
-| 属性 | 描述 | 类型 | 默认值 |
+| Property | Description | Type | Default Value |
 |------|------|------|--------|
-| `selectionFill` | 选区填充色 | `string` | `#1783FF` |
-| `selectionFillOpacity` | 选区填充透明度 | `number` | `0.15` |
-| `selectionStroke` | 选区描边 | `string` | - |
-| `selectionStrokeOpacity` | 选区描边透明度 | `number` | - |
-| `selectionLineWidth` | 选区描边宽度 | `number` | - |
-| `selectionLineDash` | 选区描边虚线配置 | `[number, number]` | - |
-| `selectionOpacity` | 选区整体透明度 | `number` | - |
-| `selectionShadowColor` | 选区阴影颜色 | `string` | - |
-| `selectionShadowBlur` | 选区阴影模糊系数 | `number` | - |
-| `selectionShadowOffsetX` | 阴影水平偏移 | `number` | - |
-| `selectionShadowOffsetY` | 阴影垂直偏移 | `number` | - |
-| `selectionCursor` | 选区鼠标样式 | `string` | `default` |
+| `selectionFill` | Selection fill color | `string` | `#1783FF` |
+| `selectionFillOpacity` | Selection fill opacity | `number` | `0.15` |
+| `selectionStroke` | Selection stroke color | `string` | - |
+| `selectionStrokeOpacity` | Selection stroke opacity | `number` | - |
+| `selectionLineWidth` | Selection stroke width | `number` | - |
+| `selectionLineDash` | Selection stroke dash configuration | `[number, number]` | - |
+| `selectionOpacity` | Overall selection opacity | `number` | - |
+| `selectionShadowColor` | Selection shadow color | `string` | - |
+| `selectionShadowBlur` | Selection shadow blur factor | `number` | - |
+| `selectionShadowOffsetX` | Shadow horizontal offset | `number` | - |
+| `selectionShadowOffsetY` | Shadow vertical offset | `number` | - |
+| `selectionCursor` | Selection cursor style | `string` | `default` |
 
-### 滑轨样式（track）
+### Track Style (track)
 
-| 属性 | 描述 | 类型 | 默认值 |
+| Property | Description | Type | Default Value |
 |------|------|------|--------|
-| `trackLength` | 滑轨长度 | `number` | - |
-| `trackSize` | 滑轨尺寸 | `number` | `16` |
-| `trackFill` | 滑轨填充色 | `string` | `#416180` |
-| `trackFillOpacity` | 滑轨填充透明度 | `number` | `1` |
-| `trackStroke` | 滑轨描边 | `string` | - |
-| `trackStrokeOpacity` | 滑轨描边透明度 | `number` | - |
-| `trackLineWidth` | 滑轨描边宽度 | `number` | - |
-| `trackLineDash` | 滑轨描边虚线配置 | `[number, number]` | - |
-| `trackOpacity` | 滑轨整体透明度 | `number` | - |
-| `trackShadowColor` | 滑轨阴影颜色 | `string` | - |
-| `trackShadowBlur` | 滑轨阴影模糊系数 | `number` | - |
-| `trackShadowOffsetX` | 阴影水平偏移 | `number` | - |
-| `trackShadowOffsetY` | 阴影垂直偏移 | `number` | - |
-| `trackCursor` | 滑轨鼠标样式 | `string` | `default` |
+| `trackLength` | Track length | `number` | - |
+| `trackSize` | Track size | `number` | `16` |
+| `trackFill` | Track fill color | `string` | `#416180` |
+| `trackFillOpacity` | Track fill opacity | `number` | `1` |
+| `trackStroke` | Track stroke | `string` | - |
+| `trackStrokeOpacity` | Track stroke opacity | `number` | - |
+| `trackLineWidth` | Track stroke width | `number` | - |
+| `trackLineDash` | Track stroke dash configuration | `[number, number]` | - |
+| `trackOpacity` | Overall track opacity | `number` | - |
+| `trackShadowColor` | Track shadow color | `string` | - |
+| `trackShadowBlur` | Track shadow blur factor | `number` | - |
+| `trackShadowOffsetX` | Shadow horizontal offset | `number` | - |
+| `trackShadowOffsetY` | Shadow vertical offset | `number` | - |
+| `trackCursor` | Track cursor style | `string` | `default` |
 
-### 手柄图标样式（handleIcon）
+### Handle Icon Style (handleIcon)
 
-| 属性 | 描述 | 类型 | 默认值 |
+| Property | Description | Type | Default Value |
 |------|------|------|--------|
-| `handleIconSize` | 手柄图标尺寸 | `number` | `10` |
-| `handleIconRadius` | 手柄图标圆角 | `number` | `2` |
-| `handleIconShape` | 手柄图标形状 | `string \| (type) => DisplayObject` | - |
-| `handleIconFill` | **手柄图标填充色** | `string` | `#f7f7f7` |
-| `handleIconFillOpacity` | 手柄图标填充透明度 | `number` | `1` |
-| `handleIconStroke` | 手柄图标描边 | `string` | `#1D2129` |
-| `handleIconStrokeOpacity` | 手柄图标描边透明度 | `number` | `0.25` |
-| `handleIconLineWidth` | 手柄图标描边宽度 | `number` | `1` |
-| `handleIconLineDash` | 手柄图标描边虚线配置 | `[number, number]` | - |
-| `handleIconOpacity` | 手柄图标整体透明度 | `number` | - |
-| `handleIconShadowColor` | 手柄图标阴影颜色 | `string` | - |
-| `handleIconShadowBlur` | 手柄图标阴影模糊系数 | `number` | - |
-| `handleIconShadowOffsetX` | 阴影水平偏移 | `number` | - |
-| `handleIconShadowOffsetY` | 阴影垂直偏移 | `number` | - |
-| `handleIconCursor` | 手柄图标鼠标样式 | `string` | `default` |
+| `handleIconSize` | Handle icon size | `number` | `10` |
+| `handleIconRadius` | Handle icon border radius | `number` | `2` |
+| `handleIconShape` | Handle icon shape | `string \| (type) => DisplayObject` | - |
+| `handleIconFill` | **Handle icon fill color** | `string` | `#f7f7f7` |
+| `handleIconFillOpacity` | Handle icon fill opacity | `number` | `1` |
+| `handleIconStroke` | Handle icon stroke color | `string` | `#1D2129` |
+| `handleIconStrokeOpacity` | Handle icon stroke opacity | `number` | `0.25` |
+| `handleIconLineWidth` | Handle icon stroke width | `number` | `1` |
+| `handleIconLineDash` | Handle icon stroke dash configuration | `[number, number]` | - |
+| `handleIconOpacity` | Overall handle icon opacity | `number` | - |
+| `handleIconShadowColor` | Handle icon shadow color | `string` | - |
+| `handleIconShadowBlur` | Handle icon shadow blur factor | `number` | - |
+| `handleIconShadowOffsetX` | Shadow horizontal offset | `number` | - |
+| `handleIconShadowOffsetY` | Shadow vertical offset | `number` | - |
+| `handleIconCursor` | Handle icon cursor style | `string` | `default` |
 
-### 手柄标签样式（handleLabel）
+### Handle Label Style (handleLabel)
 
-| 属性 | 描述 | 类型 | 默认值 |
+| Property | Description | Type | Default Value |
 |------|------|------|--------|
-| `handleLabelFontSize` | 标签文字大小 | `number` | `12` |
-| `handleLabelFontFamily` | 标签文字字体 | `string` | - |
-| `handleLabelFontWeight` | 标签字体粗细 | `number` | `normal` |
-| `handleLabelLineHeight` | 标签文字行高 | `number` | - |
-| `handleLabelTextAlign` | 标签水平对齐方式 | `string` | `start` |
-| `handleLabelTextBaseline` | 标签垂直基线 | `string` | `bottom` |
-| `handleLabelFill` | 标签文字填充色 | `string` | `#1D2129` |
-| `handleLabelFillOpacity` | 标签文字填充透明度 | `number` | `0.45` |
-| `handleLabelStroke` | 标签文字描边 | `string` | - |
-| `handleLabelStrokeOpacity` | 标签文字描边透明度 | `number` | - |
-| `handleLabelLineWidth` | 标签文字描边宽度 | `number` | - |
-| `handleLabelLineDash` | 标签文字描边虚线配置 | `[number, number]` | - |
-| `handleLabelOpacity` | 标签整体透明度 | `number` | - |
-| `handleLabelShadowColor` | 标签阴影颜色 | `string` | - |
-| `handleLabelShadowBlur` | 标签阴影模糊系数 | `number` | - |
-| `handleLabelShadowOffsetX` | 阴影水平偏移 | `number` | - |
-| `handleLabelShadowOffsetY` | 阴影垂直偏移 | `number` | - |
-| `handleLabelCursor` | 标签鼠标样式 | `string` | `default` |
-| `handleLabelDx` | 标签水平偏移量 | `number` | `0` |
-| `handleLabelDy` | 标签垂直偏移量 | `number` | `0` |
+| `handleLabelFontSize` | Label font size | `number` | `12` |
+| `handleLabelFontFamily` | Label font family | `string` | - |
+| `handleLabelFontWeight` | Label font weight | `number` | `normal` |
+| `handleLabelLineHeight` | Label line height | `number` | - |
+| `handleLabelTextAlign` | Label horizontal alignment | `string` | `start` |
+| `handleLabelTextBaseline` | Label vertical baseline | `string` | `bottom` |
+| `handleLabelFill` | Label fill color | `string` | `#1D2129` |
+| `handleLabelFillOpacity` | Label fill opacity | `number` | `0.45` |
+| `handleLabelStroke` | Label stroke color | `string` | - |
+| `handleLabelStrokeOpacity` | Label stroke opacity | `number` | - |
+| `handleLabelLineWidth` | Label stroke width | `number` | - |
+| `handleLabelLineDash` | Label stroke dash configuration | `[number, number]` | - |
+| `handleLabelOpacity` | Overall label opacity | `number` | - |
+| `handleLabelShadowColor` | Label shadow color | `string` | - |
+| `handleLabelShadowBlur` | Label shadow blur | `number` | - |
+| `handleLabelShadowOffsetX` | Shadow horizontal offset | `number` | - |
+| `handleLabelShadowOffsetY` | Shadow vertical offset | `number` | - |
+| `handleLabelCursor` | Label cursor style | `string` | `default` |
+| `handleLabelDx` | Label horizontal offset | `number` | `0` |
+| `handleLabelDy` | Label vertical offset | `number` | `0` |
 
-### 迷你图样式（sparkline）
+### Sparkline Style
 
-| 属性 | 描述 | 类型 | 默认值 |
+| Property | Description | Type | Default Value |
 |------|------|------|--------|
-| `sparklineType` | 迷你图类型 | `'line' \| 'column'` | `'line'` |
-| `sparklineIsStack` | 是否堆叠 | `boolean` | `false` |
-| `sparklineRange` | 值范围 | `[number, number]` | - |
-| `sparklineColor` | 颜色 | `string \| string[]` | - |
-| `sparklineSmooth` | 平滑曲线 | `boolean` | `false` |
-| `sparklineLineStroke` | 折线颜色 | `string` | - |
-| `sparklineLineStrokeOpacity` | 折线透明度 | `number` | - |
-| `sparklineLineLineDash` | 折线虚线配置 | `[number, number]` | - |
-| `sparklineAreaFill` | 填充区域颜色 | `string` | - |
-| `sparklineAreaFillOpacity` | 填充区域透明度 | `number` | - |
-| `sparklineColumnFill` | 直方图条形颜色 | `string` | - |
-| `sparklineColumnFillOpacity` | 直方图条形透明度 | `number` | - |
-| `sparklineIsGroup` | 是否分组显示 | `boolean` | `false` |
-| `sparklineSpacing` | 分组直方间距 | `number` | `0` |
+| `sparklineType` | Sparkline type | `'line' \| 'column'` | `'line'` |
+| `sparklineIsStack` | Whether to stack | `boolean` | `false` |
+| `sparklineRange` | Value range | `[number, number]` | - |
+| `sparklineColor` | Color | `string \| string[]` | - |
+| `sparklineSmooth` | Smooth curve | `boolean` | `false` |
+| `sparklineLineStroke` | Line color | `string` | - |
+| `sparklineLineStrokeOpacity` | Line opacity | `number` | - |
+| `sparklineLineLineDash` | Line dash configuration | `[number, number]` | - |
+| `sparklineAreaFill` | Fill area color | `string` | - |
+| `sparklineAreaFillOpacity` | Fill area opacity | `number` | - |
+| `sparklineColumnFill` | Column color | `string` | - |
+| `sparklineColumnFillOpacity` | Column opacity | `number` | - |
+| `sparklineIsGroup` | Whether to display in groups | `boolean` | `false` |
+| `sparklineSpacing` | Group column spacing | `number` | `0` |
 
 ---
 
-## 常用配置示例
+## Common Configuration Examples
 
-### 设置初始显示范围
+### Set Initial Display Range
 
 ```javascript
 chart.options({
@@ -227,13 +227,13 @@ chart.options({
   encode: { x: 'date', y: 'value' },
   slider: {
     x: {
-      values: [0.5, 1.0],  // 初始显示后 50% 的数据
+      values: [0.5, 1.0],  // Display the last 50% of the data initially
     },
   },
 });
 ```
 
-### 修改手柄图标为红色
+### Change the Handle Icon to Red
 
 ```javascript
 chart.options({
@@ -247,7 +247,7 @@ chart.options({
 });
 ```
 
-### 自定义手柄图标形状
+### Customizing Handle Icon Shape
 
 ```javascript
 import { Circle } from '@antv/g';
@@ -256,7 +256,7 @@ chart.options({
   slider: {
     x: {
       handleIconShape: (type) => {
-        // type 为 'start' 或 'end'，分别表示左右手柄
+        // type is either 'start' or 'end', representing the left or right handle respectively
         return new Circle({
           style: {
             r: 8,
@@ -272,25 +272,25 @@ chart.options({
 });
 ```
 
-### 完整样式配置
+### Complete Style Configuration
 
 ```javascript
 chart.options({
   slider: {
     x: {
       values: [0.3, 0.7],
-      // 选区样式
+      // Selection area style
       selectionFill: '#1890ff',
       selectionFillOpacity: 0.2,
-      // 滑轨样式
+      // Track style
       trackFill: '#f0f0f0',
       trackSize: 20,
-      // 手柄图标样式
+      // Handle icon style
       handleIconFill: '#fff',
       handleIconStroke: '#1890ff',
       handleIconSize: 14,
       handleIconRadius: 4,
-      // 手柄标签样式
+      // Handle label style
       handleLabelFill: '#333',
       handleLabelFontSize: 12,
     },
@@ -300,34 +300,34 @@ chart.options({
 
 ---
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：values 超出 [0, 1] 范围
+### Error 1: values Exceed the [0, 1] Range
 
 ```javascript
-// ❌ values 必须在 [0, 1] 区间
+// ❌ values must be within the [0, 1] range
 chart.options({ slider: { x: { values: [50, 100] } } });
 
-// ✅ values 是数据比例（0~1）
+// ✅ values represent data proportions (0~1)
 chart.options({ slider: { x: { values: [0.5, 1.0] } } });
 ```
 
-### 错误 2：样式属性名错误
+### Error 2: Incorrect Style Property Name
 
 ```javascript
-// ❌ 错误的属性名
-slider: { x: { handleFill: 'red' } }  // 不存在
+// ❌ Incorrect property name
+slider: { x: { handleFill: 'red' } }  // Does not exist
 
-// ✅ 正确的属性名（带前缀）
-slider: { x: { handleIconFill: 'red' } }  // 正确
+// ✅ Correct property name (with prefix)
+slider: { x: { handleIconFill: 'red' } }  // Correct
 ```
 
-### 错误 3：与 scrollbar 混淆
+### Error 3: Confusion with scrollbar
 
 ```javascript
-// slider：两端手柄可分别拖动，窗口大小可变
+// slider: Handles at both ends can be dragged separately, window size is variable
 slider: { x: { values: [0.3, 0.7] } }
 
-// scrollbar：固定窗口大小，只能整体滑动
+// scrollbar: Fixed window size, can only be slid as a whole
 scrollbar: { x: { ratio: 0.4 } }
 ```

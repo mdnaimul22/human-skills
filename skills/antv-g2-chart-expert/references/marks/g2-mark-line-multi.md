@@ -1,21 +1,21 @@
 ---
 id: "g2-mark-line-multi"
-title: "G2 多系列折线图"
+title: "G2 Multi-Series Line Chart"
 description: |
-  通过 color 通道编码分类字段实现多系列折线图，每条线代表一个类别。
-  G2 会自动为每个 color 值生成独立的折线。
-  常用于趋势对比、多指标随时间变化的展示。
+  Implement multi-series line charts by encoding categorical fields through the color channel, where each line represents a category.
+  G2 automatically generates independent lines for each color value.
+  Commonly used for trend comparisons and displaying multiple metrics over time.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "折线图"
-  - "多系列"
+  - "line chart"
+  - "multi-series"
   - "line"
-  - "时间序列"
-  - "趋势对比"
-  - "多折线"
+  - "time series"
+  - "trend comparison"
+  - "multi-line"
 
 related:
   - "g2-mark-line-basic"
@@ -23,9 +23,9 @@ related:
   - "g2-transform-select"
 
 use_cases:
-  - "多个产品的销售趋势对比"
-  - "多地区气温随时间变化"
-  - "多指标 KPI 折线对比"
+  - "Sales trend comparison for multiple products"
+  - "Temperature changes over time across multiple regions"
+  - "Multi-metric KPI line comparison"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,24 +35,24 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/line/"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = [
-  { month: 'Jan', city: '北京', temp: -3 },
-  { month: 'Feb', city: '北京', temp: 0 },
-  { month: 'Mar', city: '北京', temp: 9 },
-  { month: 'Apr', city: '北京', temp: 18 },
-  { month: 'Jan', city: '上海', temp: 5 },
-  { month: 'Feb', city: '上海', temp: 7 },
-  { month: 'Mar', city: '上海', temp: 13 },
-  { month: 'Apr', city: '上海', temp: 20 },
-  { month: 'Jan', city: '广州', temp: 15 },
-  { month: 'Feb', city: '广州', temp: 16 },
-  { month: 'Mar', city: '广州', temp: 21 },
-  { month: 'Apr', city: '广州', temp: 26 },
+  { month: 'Jan', city: 'Beijing', temp: -3 },
+  { month: 'Feb', city: 'Beijing', temp: 0 },
+  { month: 'Mar', city: 'Beijing', temp: 9 },
+  { month: 'Apr', city: 'Beijing', temp: 18 },
+  { month: 'Jan', city: 'Shanghai', temp: 5 },
+  { month: 'Feb', city: 'Shanghai', temp: 7 },
+  { month: 'Mar', city: 'Shanghai', temp: 13 },
+  { month: 'Apr', city: 'Shanghai', temp: 20 },
+  { month: 'Jan', city: 'Guangzhou', temp: 15 },
+  { month: 'Feb', city: 'Guangzhou', temp: 16 },
+  { month: 'Mar', city: 'Guangzhou', temp: 21 },
+  { month: 'Apr', city: 'Guangzhou', temp: 26 },
 ];
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
@@ -63,7 +63,7 @@ chart.options({
   encode: {
     x: 'month',
     y: 'temp',
-    color: 'city',   // 关键：按城市分色，自动生成多条折线
+    color: 'city',   // Key: Color by city, automatically generating multiple lines
   },
   style: { lineWidth: 2 },
   legend: { color: { position: 'top' } },
@@ -72,7 +72,7 @@ chart.options({
 chart.render();
 ```
 
-## 折线 + 散点组合（突出数据点）
+## Line + Scatter Combination (Highlighting Data Points)
 
 ```javascript
 chart.options({
@@ -93,7 +93,7 @@ chart.options({
 });
 ```
 
-## 折线 + 末端标签
+## Line + End Label
 
 ```javascript
 chart.options({
@@ -101,26 +101,26 @@ chart.options({
   children: [
     {
       type: 'line',
-       data,
+      data,
       encode: { x: 'month', y: 'value', color: 'city' },
     },
     {
       type: 'text',
-       data,
+      data,
       encode: {
         x: 'month',
         y: 'value',
         color: 'city',
         text: 'city',
       },
-      transform: [{ type: 'selectX', selector: 'last' }],  // 只取每条线末端
+      transform: [{ type: 'selectX', selector: 'last' }],  // Only select the end of each line
       style: { textAnchor: 'start', dx: 6, fontSize: 12 },
     },
   ],
 });
 ```
 
-## 平滑曲线
+## Smooth Curve
 
 ```javascript
 chart.options({
@@ -129,28 +129,28 @@ chart.options({
   encode: { x: 'month', y: 'value', color: 'type' },
   style: {
     lineWidth: 2,
-    shape: 'smooth',   // 平滑曲线（代替折线）
+    shape: 'smooth',   // Smooth curve (replaces line segments)
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：多系列数据使用宽表格式——应使用长表格式
+### Error: Multiple Series Data Using Wide Table Format - Should Use Long Table Format
 ```javascript
-// ❌ 错误：宽表格式，G2 无法自动按系列分色
+// ❌ Wrong: Wide table format, G2 cannot automatically color by series
 const wrongData = [
   { month: 'Jan', 北京: -3, 上海: 5, 广州: 15 },
   { month: 'Feb', 北京: 0,  上海: 7, 广州: 16 },
 ];
 
-// ✅ 正确：长表格式（每条记录一个系列的一个数据点）
+// ✅ Correct: Long table format (one data point per series per record)
 const correctData = [
   { month: 'Jan', city: '北京', value: -3 },
   { month: 'Jan', city: '上海', value: 5 },
   // ...
 ];
 chart.options({
-  encode: { x: 'month', y: 'value', color: 'city' },  // ✅ color 绑定分类字段
+  encode: { x: 'month', y: 'value', color: 'city' },  // ✅ color binds to categorical field
 });
 ```

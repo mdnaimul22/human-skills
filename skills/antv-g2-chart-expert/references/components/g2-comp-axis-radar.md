@@ -1,17 +1,17 @@
 ---
 id: "g2-comp-axis-radar"
-title: "G2 雷达图坐标轴（AxisRadar）"
+title: "G2 Radar Chart Axis (AxisRadar)"
 description: |
-  雷达图专用的坐标轴组件。在极坐标系中显示多个维度的轴线和刻度，
-  是雷达图的核心组件之一。
+  A dedicated axis component for radar charts. It displays multiple dimension axes and scales in a polar coordinate system,
+  and is one of the core components of radar charts.
 
 library: "g2"
 version: "5.x"
 category: "components"
 tags:
-  - "坐标轴"
-  - "雷达图"
-  - "极坐标"
+  - "axis"
+  - "radar chart"
+  - "polar coordinates"
   - "axis"
 
 related:
@@ -20,12 +20,12 @@ related:
   - "g2-comp-axis-config"
 
 use_cases:
-  - "雷达图的多维度展示"
-  - "极坐标系下的坐标轴"
-  - "性能评估图表"
+  - "Multi-dimensional display of radar charts"
+  - "Axis in polar coordinate system"
+  - "Performance evaluation charts"
 
 anti_patterns:
-  - "直角坐标系图表不适用"
+  - "Not applicable to Cartesian coordinate system charts"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,19 +35,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/component/axis"
 ---
 
-## 核心概念
+## Core Concepts
 
-AxisRadar 是雷达图专用的坐标轴组件：
-- 在极坐标系中显示放射状的轴线
-- 支持多个维度的轴标签
-- 自动计算轴的角度和位置
+AxisRadar is a specialized coordinate axis component for radar charts:
+- Displays radial axes in a polar coordinate system
+- Supports axis labels for multiple dimensions
+- Automatically calculates axis angles and positions
 
-**特点：**
-- 自动连接各轴形成网格
-- 支持自定义轴样式
-- 与极坐标系配合使用
+**Features:**
+- Automatically connects axes to form a grid
+- Supports custom axis styles
+- Works in conjunction with the polar coordinate system
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -74,15 +74,15 @@ chart.options({
   },
   axis: {
     x: {
-      // 雷达图 X 轴配置
+      // Radar chart X-axis configuration
       title: false,
       tickLine: null,
     },
     y: {
-      // 雷达图 Y 轴（放射状轴）
+      // Radar chart Y-axis (radial axis)
       title: 'Score',
       grid: true,
-      gridConnect: 'line',  // 网格连接方式
+      gridConnect: 'line',  // Grid connection method
     },
   },
 });
@@ -90,9 +90,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 自定义网格样式
+### Custom Grid Style
 
 ```javascript
 chart.options({
@@ -112,7 +112,7 @@ chart.options({
 });
 ```
 
-### 隐藏轴线
+### Hide Axis Lines
 
 ```javascript
 chart.options({
@@ -127,7 +127,7 @@ chart.options({
 });
 ```
 
-### 自定义标签
+### Custom Labels
 
 ```javascript
 chart.options({
@@ -147,50 +147,50 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface AxisRadarOptions {
-  // 基础配置
+  // Basic Configuration
   title?: string | { text: string; style?: object };
   tickLine?: null | { length?: number; style?: object };
   line?: null | { style?: object };
 
-  // 标签配置
+  // Label Configuration
   labelFormatter?: string | ((val: any) => string);
   labelSpacing?: number;
   labelStyle?: object;
 
-  // 网格配置
+  // Grid Configuration
   grid?: boolean;
-  gridConnect?: 'line' | 'curve';  // 网格连接方式
+  gridConnect?: 'line' | 'curve';  // Grid connection method
   gridLineWidth?: number;
   gridStroke?: string;
   gridType?: 'line' | 'circle';
 
-  // 雷达图特有
+  // Radar Chart Specific
   radar?: {
-    count: number;   // 轴的数量
-    index: number;   // 当前轴的索引
+    count: number;   // Number of axes
+    index: number;   // Index of the current axis
   };
 }
 ```
 
-## 与普通坐标轴的区别
+## Differences from Ordinary Axes
 
-| 特性 | 普通坐标轴 | 雷达图坐标轴 |
-|------|-----------|-------------|
-| 坐标系 | 直角坐标 | 极坐标 |
-| 轴方向 | 水平/垂直 | 放射状 |
-| 网格 | 矩形 | 多边形/圆形 |
-| 标签位置 | 轴两端 | 轴末端外侧 |
+| Feature | Ordinary Axes | Radar Chart Axes |
+|---------|----------------|------------------|
+| Coordinate System | Cartesian | Polar |
+| Axis Direction | Horizontal/Vertical | Radial |
+| Grid | Rectangular | Polygonal/Circular |
+| Label Position | Both ends of the axis | Outer side of the axis end |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：未使用极坐标系
+### Error 1: Failure to Use Polar Coordinate System
 
 ```javascript
-// ❌ 错误：雷达图轴需要极坐标系
+// ❌ Incorrect: Radar chart axes require a polar coordinate system
 chart.options({
   type: 'line',
   data,
@@ -198,7 +198,7 @@ chart.options({
   axis: { y: { gridConnect: 'line' } },
 });
 
-// ✅ 正确：添加极坐标系
+// ✅ Correct: Add polar coordinate system
 chart.options({
   type: 'line',
   coordinate: { type: 'polar' },
@@ -208,12 +208,12 @@ chart.options({
 });
 ```
 
-### 错误 2：gridConnect 参数错误
+### Error 2: Incorrect `gridConnect` Parameter
 
 ```javascript
-// ❌ 错误：gridConnect 只支持 'line' 或 'curve'
+// ❌ Error: `gridConnect` only supports 'line' or 'curve'
 axis: { y: { gridConnect: 'polygon' } }
 
-// ✅ 正确
+// ✅ Correct
 axis: { y: { gridConnect: 'line' } }
 ```

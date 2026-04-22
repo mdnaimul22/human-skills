@@ -1,10 +1,10 @@
 ---
 id: "g2-mark-tree"
-title: "G2 树形图（tree）"
+title: "G2 Tree Chart"
 description: |
-  tree mark 将层级数据（树状 JSON）渲染为树形结构，
-  自动布局节点（point mark）和连线（link mark），
-  支持横向/纵向/径向布局，适合组织架构图、决策树、层级分类展示。
+  The tree mark renders hierarchical data (tree-like JSON) into a tree structure,
+  automatically laying out nodes (point marks) and links (link marks),
+  supporting horizontal/vertical/radial layouts. It is suitable for organizational charts, decision trees, and hierarchical classification displays.
 
 library: "g2"
 version: "5.x"
@@ -23,10 +23,10 @@ related:
   - "g2-mark-sankey"
 
 use_cases:
-  - "组织架构图展示"
-  - "决策树可视化"
-  - "文件目录树形展示"
-  - "分类层级结构可视化"
+  - "Organizational chart display"
+  - "Decision tree visualization"
+  - "File directory tree display"
+  - "Categorical hierarchy visualization"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,36 +35,35 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/hierarchy/tree/"
 ---
-
-## 最小可运行示例（横向树形图）
+## Minimum Viable Example (Horizontal Tree Chart)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 树形数据（嵌套 JSON 格式）
+// Tree data (nested JSON format)
 const treeData = {
-  name: '总公司',
+  name: 'Headquarters',
   children: [
     {
-      name: '研发部',
+      name: 'R&D Department',
       children: [
-        { name: '前端组', value: 10 },
-        { name: '后端组', value: 15 },
-        { name: '算法组', value: 8 },
+        { name: 'Frontend Team', value: 10 },
+        { name: 'Backend Team', value: 15 },
+        { name: 'Algorithm Team', value: 8 },
       ],
     },
     {
-      name: '市场部',
+      name: 'Marketing Department',
       children: [
-        { name: '品牌组', value: 6 },
-        { name: '运营组', value: 9 },
+        { name: 'Brand Team', value: 6 },
+        { name: 'Operations Team', value: 9 },
       ],
     },
     {
-      name: '产品部',
+      name: 'Product Department',
       children: [
-        { name: 'B端产品', value: 7 },
-        { name: 'C端产品', value: 5 },
+        { name: 'B2B Products', value: 7 },
+        { name: 'B2C Products', value: 5 },
       ],
     },
   ],
@@ -76,17 +75,17 @@ chart.options({
   type: 'tree',
   data: treeData,
   layout: {
-    // 布局方向：false=纵向（上→下），true=横向（左→右）
-    // G2 tree 使用 d3-hierarchy tidy tree 布局
+    // Layout direction: false=vertical (top→bottom), true=horizontal (left→right)
+    // G2 tree uses d3-hierarchy tidy tree layout
   },
   encode: {
-    value: 'value',  // 节点大小编码字段（可选）
+    value: 'value',  // Node size encoding field (optional)
   },
-  // 节点样式
+  // Node style
   nodeLabels: [
     { text: 'name', style: { fontSize: 12, dx: 6 } },
   ],
-  // 连线样式
+  // Link style
   style: {
     nodeSize: 5,
     nodeFill: '#5B8FF9',
@@ -98,13 +97,13 @@ chart.options({
 chart.render();
 ```
 
-## 纵向树形图（自上而下）
+## Vertical Tree Chart (Top-Down)
 
 ```javascript
 chart.options({
   type: 'tree',
   data: treeData,
-  coordinate: { transform: [{ type: 'transpose' }] },  // 转置为纵向
+  coordinate: { transform: [{ type: 'transpose' }] },  // Transpose to vertical
   nodeLabels: [
     {
       text: 'name',
@@ -114,18 +113,18 @@ chart.options({
   style: {
     nodeFill: '#52c41a',
     nodeSize: 6,
-    linkShape: 'smooth',  // 连线使用平滑曲线
+    linkShape: 'smooth',  // Use smooth curves for links
   },
 });
 ```
 
-## 径向树形图（放射状）
+## Radial Tree Chart (Radial)
 
 ```javascript
 chart.options({
   type: 'tree',
   data: treeData,
-  coordinate: { type: 'polar', innerRadius: 0.1 },  // 极坐标 = 径向布局
+  coordinate: { type: 'polar', innerRadius: 0.1 },  // Polar coordinate = radial layout
   style: {
     nodeFill: '#ff7875',
     nodeSize: 4,
@@ -142,94 +141,94 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：传入扁平数据而非嵌套 JSON
+### Error: Passing Flat Data Instead of Nested JSON
 ```javascript
-// ❌ tree mark 需要嵌套 JSON（children 字段），不接受扁平数组
+// ❌ tree mark requires nested JSON (children field), does not accept flat arrays
 chart.options({
   type: 'tree',
   data: [
-    { id: 1, parent: null, name: '根' },
-    { id: 2, parent: 1, name: '子' },
-  ],  // ❌ 扁平数据不能直接使用
+    { id: 1, parent: null, name: 'Root' },
+    { id: 2, parent: 1, name: 'Child' },
+  ],  // ❌ Flat data cannot be used directly
 });
 
-// ✅ 需要嵌套格式
+// ✅ Nested format is required
 chart.options({
   type: 'tree',
-   { name: '根', children: [{ name: '子' }] },  // ✅ 嵌套 JSON
+  data: { name: 'Root', children: [{ name: 'Child' }] },  // ✅ Nested JSON
 });
 ```
 
-### 错误：tree 与 treemap 混淆
+### Error: Confusion between Tree and Treemap
 ```javascript
-// tree：展示层级结构关系（节点+连线，强调层次和连接）
+// Tree: Displays hierarchical relationships (nodes + lines, emphasizing hierarchy and connections)
 chart.options({ type: 'tree',  data: { value: hierarchyData } });
 
-// treemap：按面积展示层级数据占比（矩形嵌套，强调大小和比例）
+// Treemap: Displays hierarchical data proportions by area (nested rectangles, emphasizing size and ratio)
 chart.options({ type: 'treemap',  data: { value: hierarchyData } });
 ```
 
 ---
 
-## 节点数据访问规则（重要！）
+## Node Data Access Rules (Important!)
 
-层次结构图中，回调函数接收到的参数 `d` **不是原始数据对象**，而是 G2 用 d3-hierarchy 包装后的层次节点，**原始数据在 `d.data` 中**。
+In the hierarchical chart, the parameter `d` received by the callback function **is not the original data object**, but rather a hierarchical node wrapped by G2 using d3-hierarchy. **The original data is stored in `d.data`**.
 
-### 回调参数 d 的结构
+### Callback Parameter d Structure
 
 ```javascript
-// d 是 d3-hierarchy 节点，结构如下：
+// d is a d3-hierarchy node, with the following structure:
 {
-  value: 10,               // 节点数值（d3 计算的子树总和）
-  depth: 2,                // 层级深度（0 = 根节点）
-  height: 0,               // 子树高度（叶子节点为 0）
-  data: {                  // ← 原始数据在这里！
-    name: '前端组',
+  value: 10,               // Node value (sum of subtree calculated by d3)
+  depth: 2,                // Hierarchy depth (0 = root node)
+  height: 0,               // Subtree height (0 for leaf nodes)
+  data: {                  // ← Original data is here!
+    name: 'Frontend Team',
     value: 10,
-    // ... 其它自定义字段
+    // ... other custom fields
   },
-  path: ['根', '研发部', '前端组'],
+  path: ['Root', 'R&D Department', 'Frontend Team'],
 }
 ```
 
-### nodeLabels 中访问字段
+### Accessing Fields in nodeLabels
 
-tree mark 的 `nodeLabels` 使用字符串 `'name'` 时，G2 内部会查找 `d.data['name']`（有专项处理），所以字符串形式可以工作。但如需访问计算属性（`depth`、`height`）或条件渲染，必须使用回调：
+When the `nodeLabels` of the tree mark uses the string `'name'`, G2 internally looks up `d.data['name']` (with special handling), so the string form works. However, to access computed properties (`depth`, `height`) or for conditional rendering, a callback must be used:
 
 ```javascript
-// ✅ 字符串形式（tree 的 nodeLabels 对 data 字段有专项处理）
+// ✅ String form (tree's nodeLabels has special handling for data fields)
 nodeLabels: [
   { text: 'name', style: { fontSize: 12 } },
 ]
 
-// ✅ 回调形式（需要条件判断或访问节点属性时）
+// ✅ Callback form (required for conditional logic or accessing node properties)
 nodeLabels: [
   {
     text: (d) => {
-      if (d.height > 0) return d.data?.name;  // 父节点显示名称
-      return `${d.data?.name}\n(${d.value})`;  // 叶节点显示名称+数值
+      if (d.height > 0) return d.data?.name;  // Parent nodes display name
+      return `${d.data?.name}\n(${d.value})`;  // Leaf nodes display name + value
     },
     style: { fontSize: 12 },
   },
 ]
 ```
 
-### encode.color 必须用回调
+### encode.color Must Use Callback
 
-与其他层次 mark 一样，`encode.color` 字符串对 tree 也**不起作用**：
+Like other mark levels, the `encode.color` string does **not work** for trees:
 
 ```javascript
-// ❌ 错误：color: 'type' 等价于 d['type'] = undefined
+// ❌ Wrong: color: 'type' is equivalent to d['type'] = undefined
 encode: {
   value: 'value',
-  color: 'type',  // ❌ → undefined → 所有节点相同颜色
+  color: 'type',  // ❌ → undefined → all nodes have the same color
 }
 
-// ✅ 正确：必须用回调
+// ✅ Correct: Must use callback
 encode: {
   value: 'value',
-  color: (d) => d.data?.type,  // ✅ 通过 d.data 访问原始字段
+  color: (d) => d.data?.type,  // ✅ Access original field via d.data
 }
 ```

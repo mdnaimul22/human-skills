@@ -1,10 +1,10 @@
 ---
 id: "g2-mark-linex-liney"
-title: "G2 LineX / LineY 参考线"
+title: "G2 LineX / LineY Reference Lines"
 description: |
-  lineX 绘制垂直参考线（指定 x 值），lineY 绘制水平参考线（指定 y 值）。
-  常用于标注均值线、目标线、阈值线等，
-  通常与主图放在同一 view 的 children 中。
+  lineX draws vertical reference lines (specified by x values), lineY draws horizontal reference lines (specified by y values).
+  Commonly used for annotating mean lines, target lines, threshold lines, etc.,
+  typically placed in the same view's children as the main chart.
 
 library: "g2"
 version: "5.x"
@@ -12,11 +12,11 @@ category: "marks"
 tags:
   - "lineX"
   - "lineY"
-  - "参考线"
-  - "均值线"
-  - "目标线"
+  - "reference lines"
+  - "mean lines"
+  - "target lines"
   - "annotation"
-  - "标注"
+  - "marking"
 
 related:
   - "g2-comp-annotation"
@@ -24,9 +24,9 @@ related:
   - "g2-mark-line-basic"
 
 use_cases:
-  - "在散点图中绘制 X/Y 均值线"
-  - "添加目标值水平参考线"
-  - "标注阈值警戒线"
+  - "Drawing X/Y mean lines in scatter plots"
+  - "Adding target value horizontal reference lines"
+  - "Marking threshold warning lines"
 
 difficulty: "beginner"
 completeness: "full"
@@ -36,7 +36,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/annotation/line/"
 ---
 
-## 最小可运行示例（均值参考线）
+## Minimum Viable Example (Mean Reference Line)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -57,24 +57,24 @@ chart.options({
   type: 'view',
   data,
   children: [
-    // 主柱状图
+    // Main bar chart
     {
       type: 'interval',
       encode: { x: 'month', y: 'value', color: 'month' },
     },
-    // 水平均值参考线
+    // Horizontal mean reference line
     {
       type: 'lineY',
-       [{ y: avg }],    // 参考线的 y 值
+      data: [{ y: avg }],  // Reference line's y value
       encode: { y: 'y' },
       style: {
         stroke: '#F4664A',
         lineWidth: 1.5,
-        lineDash: [6, 3],   // 虚线样式
+        lineDash: [6, 3],  // Dashed line style
       },
       labels: [
         {
-          text: `均值: ${avg.toFixed(1)}`,
+          text: `Mean: ${avg.toFixed(1)}`,
           position: 'right',
           style: { fill: '#F4664A', fontSize: 12 },
         },
@@ -86,10 +86,10 @@ chart.options({
 chart.render();
 ```
 
-## lineX（垂直参考线）
+## lineX (Vertical Reference Line)
 
 ```javascript
-// 在散点图中添加 X 轴均值线
+// Add X-axis mean line in a scatter plot
 const meanX = data.reduce((sum, d) => sum + d.x, 0) / data.length;
 
 {
@@ -101,71 +101,71 @@ const meanX = data.reduce((sum, d) => sum + d.x, 0) / data.length;
 }
 ```
 
-## 目标线（固定数值）
+## Target Line (Fixed Value)
 
 ```javascript
 {
   type: 'lineY',
-  data: [{ y: 100 }],    // 固定目标值 100
+  data: [{ y: 100 }],    // Fixed target value 100
   encode: { y: 'y' },
   style: {
     stroke: '#52c41a',
     lineWidth: 2,
   },
   labels: [
-    { text: '目标线 100', position: 'right', style: { fill: '#52c41a' } },
+    { text: 'Target Line 100', position: 'right', style: { fill: '#52c41a' } },
   ],
 }
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### ❌ 错误：使用不存在的 ruleX / ruleY 类型
+### ❌ Error: Using Non-existent `ruleX` / `ruleY` Types
 ```javascript
-// ❌ 错误：ruleX、ruleY 是 Vega-Lite 的概念，G2 中不存在
+// ❌ Error: `ruleX`, `ruleY` are Vega-Lite concepts and do not exist in G2
 chart.options({ type: 'ruleX', ... });
 chart.options({ type: 'ruleY', ... });
 
-// ✅ 正确：G2 中用 lineX / lineY
+// ✅ Correct: Use `lineX` / `lineY` in G2
 chart.options({ type: 'lineX', data: [{ x: 5 }], encode: { x: 'x' } });
 chart.options({ type: 'lineY', data: [{ y: 100 }], encode: { y: 'y' } });
 ```
 
-### 错误：data 中 y 字段名与 encode.y 不一致
+### Error: Inconsistent y field name in data and encode.y
 ```javascript
-// ❌ 错误：数据中字段是 'value'，但 encode.y 写的是 'y'
+// ❌ Error: The field in the data is 'value', but encode.y is written as 'y'
 chart.options({
   type: 'lineY',
   data: [{ value: 100 }],
-  encode: { y: 'y' },     // ❌ 字段名不对，找不到 'y' 字段
+  encode: { y: 'y' },     // ❌ Incorrect field name, cannot find 'y' field
 });
 
-// ✅ 正确：字段名与数据一致
+// ✅ Correct: Field name matches the data
 chart.options({
   type: 'lineY',
   data: [{ value: 100 }],
   encode: { y: 'value' }, // ✅
 });
-// 或者直接用 'y' 字段名：
+// Or use 'y' field name directly:
 chart.options({
   type: 'lineY',
   data: [{ y: 100 }],
-  encode: { y: 'y' },     // ✅ 字段名统一
+  encode: { y: 'y' },     // ✅ Consistent field name
 });
 ```
 
-### 错误：lineY 放在 view 外部——与主图比例尺不共享，位置偏移
+### Error: lineY placed outside the view - does not share the main chart scale, causing position offset
 ```javascript
-// ❌ 参考线与主图不在同一 view，y 轴范围不共享
+// ❌ The reference line is not in the same view as the main chart, and the y-axis range is not shared
 chart.options({
   type: 'view',
   children: [
     { type: 'interval', encode: { x: 'month', y: 'sales' } },
   ],
 });
-// 单独添加 lineY（不在 children 中）——这样无法工作
+// Adding lineY separately (not in children) - this will not work
 
-// ✅ 参考线必须放在同一 view 的 children 数组中
+// ✅ The reference line must be placed in the children array of the same view
 chart.options({
   type: 'view',
   children: [

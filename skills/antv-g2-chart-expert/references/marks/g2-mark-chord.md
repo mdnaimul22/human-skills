@@ -1,19 +1,19 @@
 ---
 id: "g2-mark-chord"
-title: "G2 和弦图（Chord Mark）"
+title: "G2 Chord Mark"
 description: |
-  使用 Chord Mark 创建和弦图。和弦图用于展示节点之间的流向关系，
-  常见于贸易流向、迁移数据、资金流动等场景。
+  Create a chord diagram using Chord Mark. Chord diagrams are used to display flow relationships between nodes,
+  commonly seen in scenarios such as trade flows, migration data, and capital flows.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "和弦图"
+  - "Chord Diagram"
   - "Chord"
-  - "关系图"
-  - "流向图"
-  - "矩阵可视化"
+  - "Relationship Diagram"
+  - "Flow Diagram"
+  - "Matrix Visualization"
 
 related:
   - "g2-mark-sankey"
@@ -21,15 +21,15 @@ related:
   - "g2-coord-polar"
 
 use_cases:
-  - "展示国家/地区间的贸易流向"
-  - "可视化人口迁移数据"
-  - "分析资金流动关系"
-  - "展示部门间的协作关系"
+  - "Display trade flows between countries/regions"
+  - "Visualize population migration data"
+  - "Analyze capital flow relationships"
+  - "Show collaboration relationships between departments"
 
 anti_patterns:
-  - "节点过多（>20个）时可视化效果差"
-  - "不适合展示单向简单关系（改用 Sankey）"
-  - "不适合展示层级结构数据"
+  - "Poor visualization with too many nodes (>20)"
+  - "Not suitable for displaying simple one-way relationships (use Sankey instead)"
+  - "Not suitable for displaying hierarchical data"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -39,20 +39,20 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/relationship/chord"
 ---
 
-## 核心概念
+## Core Concepts
 
-Chord Mark 是 G2 v5 中用于绘制和弦图的复合标记：
-- **节点（Node）**：圆弧上的多边形，表示实体
-- **连线（Link）**：连接节点的带状区域，表示流向关系
-- **布局**：自动计算节点位置和连线形状
+Chord Mark is a composite mark in G2 v5 used for drawing chord diagrams:
+- **Node**: Polygons on the arc, representing entities
+- **Link**: Banded areas connecting nodes, representing flow relationships
+- **Layout**: Automatically calculates node positions and link shapes
 
-**关键配置：**
-- `encode.source`：边的起始节点字段
-- `encode.target`：边的目标节点字段
-- `encode.value`：边的权重字段
-- `layout`：布局配置（节点宽度、间距等）
+**Key Configurations:**
+- `encode.source`: Source node field of the edge
+- `encode.target`: Target node field of the edge
+- `encode.value`: Weight field of the edge
+- `layout`: Layout configuration (node width, spacing, etc.)
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -63,12 +63,12 @@ const chart = new Chart({
   height: 480,
 });
 
-// 和弦图数据：节点 + 边
+// Chord diagram data: nodes + edges
 const data = {
   nodes: [
-    { key: 'A', name: '产品A' },
-    { key: 'B', name: '产品B' },
-    { key: 'C', name: '产品C' },
+    { key: 'A', name: 'Product A' },
+    { key: 'B', name: 'Product B' },
+    { key: 'C', name: 'Product C' },
   ],
   links: [
     { source: 'A', target: 'B', value: 100 },
@@ -92,9 +92,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 带节点标签
+### With Node Labels
 
 ```javascript
 chart.options({
@@ -106,7 +106,7 @@ chart.options({
     source: 'source',
     target: 'target',
     value: 'value',
-    nodeKey: 'key',  // 节点标识字段
+    nodeKey: 'key',  // Node identifier field
   },
   nodeLabels: [
     { text: 'name', position: 'outside', fontSize: 12 },
@@ -114,7 +114,7 @@ chart.options({
 });
 ```
 
-### 自定义布局
+### Custom Layout
 
 ```javascript
 chart.options({
@@ -128,14 +128,14 @@ chart.options({
     value: 'value',
   },
   layout: {
-    nodeWidthRatio: 0.05,    // 节点宽度比例 (0, 1)
-    nodePaddingRatio: 0.1,   // 节点间距比例 [0, 1)
-    sortBy: 'weight',        // 排序方式: 'id' | 'weight' | 'frequency' | null
+    nodeWidthRatio: 0.05,    // Node width ratio (0, 1)
+    nodePaddingRatio: 0.1,   // Node padding ratio [0, 1)
+    sortBy: 'weight',        // Sorting method: 'id' | 'weight' | 'frequency' | null
   },
 });
 ```
 
-### 自定义样式
+### Custom Styles
 
 ```javascript
 chart.options({
@@ -147,8 +147,8 @@ chart.options({
     source: 'source',
     target: 'target',
     value: 'value',
-    nodeColor: 'key',        // 节点颜色映射
-    linkColor: 'source',     // 连线颜色映射
+    nodeColor: 'key',        // Node color mapping
+    linkColor: 'source',     // Link color mapping
   },
   style: {
     node: {
@@ -163,7 +163,7 @@ chart.options({
 });
 ```
 
-### 带 Tooltip
+### With Tooltip
 
 ```javascript
 chart.options({
@@ -189,50 +189,50 @@ chart.options({
 });
 ```
 
-## Spec 完整结构速查
+## Spec Complete Structure Quick Reference
 
 ```javascript
 chart.options({
   type: 'chord',
   data: {
-    // 数据（nodes + links 结构）
+    // Data (nodes + links structure)
     value: {
       nodes: [...],
       links: [...],
     },
   },
-  // 通道映射
+  // Channel mapping
   encode: {
-    source: 'source',        // 边的起始节点
-    target: 'target',        // 边的目标节点
-    value: 'value',          // 边的权重
-    nodeKey: 'key',          // 节点标识字段
-    nodeColor: 'key',        // 节点颜色
-    linkColor: 'source',     // 连线颜色
+    source: 'source',        // Source node of the edge
+    target: 'target',        // Target node of the edge
+    value: 'value',          // Weight of the edge
+    nodeKey: 'key',          // Node identifier field
+    nodeColor: 'key',        // Node color
+    linkColor: 'source',     // Link color
   },
 
-  // 布局配置
+  // Layout configuration
   layout: {
     nodeWidthRatio: 0.05,
     nodePaddingRatio: 0.1,
     sortBy: null,            // 'id' | 'weight' | 'frequency' | function
   },
 
-  // 样式
+  // Style
   style: {
     node: { opacity: 1, lineWidth: 1 },
     link: { opacity: 0.5, lineWidth: 1 },
     label: { fontSize: 10 },
   },
 
-  // 标签
+  // Labels
   nodeLabels: [{ text: 'name', position: 'outside' }],
   linkLabels: [],
 
   // Tooltip
   tooltip: { ... },
 
-  // 动画
+  // Animation
   animate: {
     node: { enter: { type: 'fadeIn' } },
     link: { enter: { type: 'fadeIn' } },
@@ -240,7 +240,7 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface ChordSpec {
@@ -276,12 +276,12 @@ interface ChordSpec {
 }
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：数据格式不正确
+### Error 1: Incorrect Data Format
 
 ```javascript
-// ❌ 错误：使用扁平数组
+// ❌ Incorrect: Using a flat array
 chart.options({
   type: 'chord',
   data: [
@@ -289,7 +289,7 @@ chart.options({
   ],
 });
 
-// ✅ 正确：使用 nodes + links 结构
+// ✅ Correct: Using nodes + links structure
 chart.options({
   type: 'chord',
   data: {
@@ -302,26 +302,26 @@ chart.options({
 });
 ```
 
-### 错误 2：节点 key 不匹配
+### Error 2: Mismatched Node Keys
 
 ```javascript
-// ❌ 错误：links 中的 source/target 与 nodes 的 key 不匹配
+// ❌ Error: source/target in links do not match keys in nodes
 const data = {
   nodes: [{ key: 'ProductA' }],
   links: [{ source: 'A', target: 'B', value: 100 }],  // 'A' ≠ 'ProductA'
 };
 
-// ✅ 正确：确保 key 一致
+// ✅ Correct: Ensure consistent keys
 const data = {
   nodes: [{ key: 'A' }, { key: 'B' }],
   links: [{ source: 'A', target: 'B', value: 100 }],
 };
 ```
 
-### 错误 3：缺少 value 编码
+### Error 3: Missing Value Encoding
 
 ```javascript
-// ❌ 错误：没有指定权重字段
+// ❌ Incorrect: Weight field not specified
 chart.options({
   type: 'chord',
   data: {
@@ -330,7 +330,7 @@ chart.options({
   encode: { source: 'source', target: 'target' },
 });
 
-// ✅ 正确：指定 value 字段
+// ✅ Correct: Value field specified
 chart.options({
   type: 'chord',
   data: {

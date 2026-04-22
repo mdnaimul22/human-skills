@@ -1,22 +1,22 @@
 ---
 id: "g2-mark-shape"
-title: "G2 shape 自定义图形 Mark"
+title: "G2 Shape Custom Graphic Mark"
 description: |
-  shape mark 是 G2 v5 中用于绘制完全自定义图形的 Mark，
-  通过注册自定义 Shape 函数来渲染任意 SVG/Canvas 图形。
-  与 image mark（使用图片）不同，shape mark 使用代码绘制矢量图形，
-  可响应状态变化（高亮、选中等）。
-  适用于需要特殊图形符号、自定义标记的可视化场景。
+  The shape mark is a feature in G2 v5 used for drawing fully custom graphics,
+  rendering any SVG/Canvas graphics by registering custom Shape functions.
+  Unlike the image mark (which uses images), the shape mark draws vector graphics using code,
+  and can respond to state changes (highlight, select, etc.).
+  It is suitable for visualization scenarios requiring special graphic symbols or custom markers.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
   - "shape"
-  - "自定义图形"
+  - "custom graphic"
   - "register"
   - "custom shape"
-  - "矢量图形"
+  - "vector graphic"
 
 related:
   - "g2-mark-image"
@@ -24,9 +24,9 @@ related:
   - "g2-core-chart-init"
 
 use_cases:
-  - "散点图中使用自定义图标代替默认圆形"
-  - "地图上绘制自定义地标符号"
-  - "特殊业务场景的定制化图形标记"
+  - "Using custom icons instead of default circles in scatter plots"
+  - "Drawing custom landmark symbols on maps"
+  - "Customized graphic markers for specific business scenarios"
 
 difficulty: "advanced"
 completeness: "full"
@@ -36,22 +36,22 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/extra-topics/custom-mark"
 ---
 
-## 核心概念
+## Core Concepts
 
-`shape` mark 需要先用 `register('shape.xxx', renderFn)` 注册自定义图形，
-再在 mark 的 `style.shape` 中指定图形名称。
+The `shape` mark requires custom shapes to be registered first using `register('shape.xxx', renderFn)`,
+then specify the shape name in `style.shape` of the mark.
 
-自定义 Shape 渲染函数接收 `(style, context)` 参数：
-- `style`：包含 x/y 坐标、颜色、大小等样式属性
-- `context`：G 渲染上下文，包含 document 等
+The custom Shape rendering function receives `(style, context)` parameters:
+- `style`: Contains style properties such as x/y coordinates, color, size, etc.
+- `context`: G rendering context, includes document, etc.
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart, register } from '@antv/g2';
 import { Circle } from '@antv/g';
 
-// 1. 注册自定义图形（绘制带十字的圆）
+// 1. Register a custom shape (draw a circle with a cross)
 register('shape.crossCircle', (style, context) => {
   const { x, y, r = 10, fill, stroke } = style;
   const group = new context.document.createElement('g', {});
@@ -60,7 +60,7 @@ register('shape.crossCircle', (style, context) => {
   return group;
 });
 
-// 2. 使用自定义图形
+// 2. Use the custom shape
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
 
 chart.options({
@@ -68,24 +68,24 @@ chart.options({
   data,
   encode: { x: 'x', y: 'y', color: 'category', size: 'value' },
   style: {
-    shape: 'crossCircle',   // 使用注册的自定义图形名
+    shape: 'crossCircle',   // Use the registered custom shape name
   },
 });
 
 chart.render();
 ```
 
-## 完整自定义形状（使用 @antv/g 图形）
+## Fully Custom Shapes (Using @antv/g Graphics)
 
 ```javascript
 import { Chart, register } from '@antv/g2';
 import { Path, Group } from '@antv/g';
 
-// 注册星形图标
+// Register star shape
 register('shape.star', (style, context) => {
   const { x, y, r = 10, fill = '#1890ff', opacity = 1 } = style;
 
-  // 计算五角星的路径
+  // Calculate star path
   const path = [];
   for (let i = 0; i < 5; i++) {
     const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
@@ -120,18 +120,18 @@ chart.options({
 chart.render();
 ```
 
-## 与 image mark 的选择
+## Selection with image mark
 
 ```javascript
-// 使用图片文件作为标记点
+// Use image file as marker
 chart.options({
   type: 'image',
   data,
-  encode: { x: 'x', y: 'y', src: 'iconUrl' },  // src 为图片 URL
+  encode: { x: 'x', y: 'y', src: 'iconUrl' },  // src is the image URL
   style: { width: 24, height: 24 },
 });
 
-// 使用代码绘制矢量图形
+// Draw vector graphics using code
 register('shape.myIcon', (style) => { /* ... */ });
 chart.options({
   type: 'point',
@@ -141,18 +141,18 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：使用自定义图形前忘记注册
+### Error: Forgot to Register Before Using Custom Shape
 ```javascript
-// ❌ 错误：未注册就使用，图形不会渲染
+// ❌ Error: Using without registration, the shape will not render
 chart.options({
   type: 'point',
-  style: { shape: 'myCustomShape' },  // ❌ myCustomShape 未注册
+  style: { shape: 'myCustomShape' },  // ❌ myCustomShape is not registered
 });
 
-// ✅ 先注册再使用
-register('shape.myCustomShape', (style) => { /* 返回 G 图形 */ });
+// ✅ Register first, then use
+register('shape.myCustomShape', (style) => { /* Return G shape */ });
 chart.options({
   type: 'point',
   style: { shape: 'myCustomShape' },  // ✅

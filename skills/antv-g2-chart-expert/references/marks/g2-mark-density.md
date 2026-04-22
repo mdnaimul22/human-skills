@@ -1,21 +1,21 @@
 ---
 id: "g2-mark-density"
-title: "G2 密度图（density）"
+title: "G2 Density Plot (density)"
 description: |
-  density mark 通过核密度估计（KDE）将散点分布转换为连续的密度分布曲线或面积图，
-  展示数据的概率密度。必须配合 KDE 数据变换（data.transform）预处理，
-  适合大量重叠点的分布可视化。
+  The density mark transforms scatter distributions into continuous density distribution curves or area charts using Kernel Density Estimation (KDE),
+  visualizing the probability density of the data. It must be used in conjunction with the KDE data transformation (data.transform) for preprocessing,
+  and is suitable for visualizing distributions with a large number of overlapping points.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
   - "density"
-  - "密度图"
+  - "Density Plot"
   - "KDE"
-  - "分布"
-  - "核密度"
-  - "violin"
+  - "Distribution"
+  - "Kernel Density"
+  - "Violin"
 
 related:
   - "g2-mark-boxplot"
@@ -23,9 +23,9 @@ related:
   - "g2-data-kde"
 
 use_cases:
-  - "展示连续数值数据的分布形状"
-  - "小提琴图（density + 极坐标 + 对称变换）"
-  - "与箱线图对比展示数据分布"
+  - "Displaying the distribution shape of continuous numerical data"
+  - "Violin plot (density + polar coordinates + symmetric transformation)"
+  - "Comparing data distributions with box plots"
 
 difficulty: "advanced"
 completeness: "full"
@@ -35,34 +35,34 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/density"
 ---
 
-## 核心概念
+## Core Concepts
 
-**density mark 必须配合 KDE 数据变换使用**：
+**Density mark must be used in conjunction with KDE data transformation**:
 
-- KDE 是**数据变换（Data Transform）**，配置在 `data.transform` 中
-- density mark 需要的 encode 通道：`x`、`y`、`size`、`series`（均必选）
+- KDE is a **Data Transform**, configured in `data.transform`
+- Encode channels required for density mark: `x`, `y`, `size`, `series` (all required)
 
-**关键配置结构**：
+**Key Configuration Structure**:
 ```javascript
 chart.options({
   type: 'density',
   data: {
-    type: 'fetch',  // 或 'inline'
+    type: 'fetch',  // or 'inline'
     value: '...',
     transform: [{ type: 'kde', field: 'y', groupBy: ['x', 'species'] }],
   },
   encode: {
     x: 'x',
-    y: 'y',       // ← KDE 输出字段（默认 'y'），不是原始 field 名！
-    size: 'size', // ← KDE 输出字段（默认 'size'）
-    series: 'species', // 必选：系列分组
+    y: 'y',       // ← KDE output field (default 'y'), not the original field name!
+    size: 'size', // ← KDE output field (default 'size')
+    series: 'species', // Required: series grouping
   },
 });
 ```
 
-**⚠️ `encode.y` 必须对应 KDE 的输出字段（默认 `'y'`），而非原始字段名**：无论 `field` 叫什么（`'value'`、`'score'` 等），KDE 输出都固定写入 `as` 指定的字段（默认 `['y', 'size']`）。
+**⚠️ `encode.y` must correspond to the KDE output field (default `'y'`), not the original field name**: Regardless of what `field` is named (e.g., `'value'`, `'score'`), KDE output is always written to the field specified by `as` (default `['y', 'size']`).
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -79,9 +79,9 @@ chart.options({
     value: 'https://assets.antv.antgroup.com/g2/species.json',
     transform: [
       {
-        type: 'kde',           // KDE 数据变换
-        field: 'y',            // 做核密度估计的字段
-        groupBy: ['x', 'species'],  // 分组字段
+        type: 'kde',           // KDE data transformation
+        field: 'y',            // Field for kernel density estimation
+        groupBy: ['x', 'species'],  // Grouping fields
       },
     ],
   },
@@ -89,8 +89,8 @@ chart.options({
     x: 'x',
     y: 'y',
     color: 'species',
-    size: 'size',      // 必选：映射密度大小
-    series: 'species', // 必选：系列分组
+    size: 'size',      // Required: Maps density size
+    series: 'species', // Required: Series grouping
   },
   tooltip: false,
 });
@@ -98,7 +98,7 @@ chart.options({
 chart.render();
 ```
 
-## 分组密度图（多类别对比）
+## Grouped Density Plot (Multi-Category Comparison)
 
 ```javascript
 chart.options({
@@ -110,8 +110,8 @@ chart.options({
       {
         type: 'kde',
         field: 'y',
-        groupBy: ['x'],  // 按 x 分组
-        size: 20,        // 带宽参数
+        groupBy: ['x'],  // Group by x
+        size: 20,        // Bandwidth parameter
       },
     ],
   },
@@ -126,7 +126,7 @@ chart.options({
 });
 ```
 
-## 极坐标密度图
+## Polar Coordinate Density Chart
 
 ```javascript
 chart.options({
@@ -145,82 +145,82 @@ chart.options({
     size: 'size',
     series: 'species',
   },
-  coordinate: { type: 'polar' },  // 极坐标系
+  coordinate: { type: 'polar' },  // Polar coordinate system
   tooltip: false,
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：kde 配置位置错误
+### Error 1: Incorrect Position of kde Configuration
 
 ```javascript
-// ❌ 错误：kde 不是 data.type，而是 data.transform
+// ❌ Incorrect: kde is not data.type, but data.transform
 chart.options({
   type: 'density',
   data: {
-    type: 'kde',  // ❌ 错误！kde 不是数据连接器类型
+    type: 'kde',  // ❌ Incorrect! kde is not a data connector type
     field: 'value',
   },
 });
 
-// ✅ 正确：kde 是数据变换，放在 data.transform 中
+// ✅ Correct: kde is a data transformation, placed in data.transform
 chart.options({
   type: 'density',
   data: {
     type: 'fetch',
     value: 'https://example.com/data.json',
-    transform: [{ type: 'kde', field: 'y', groupBy: ['x'] }],  // ✅ 正确
+    transform: [{ type: 'kde', field: 'y', groupBy: ['x'] }],  // ✅ Correct
   },
 });
 ```
 
-### 错误 2：缺少必选的 encode 通道
+### Error 2: Missing Required Encode Channels
 
 ```javascript
-// ❌ 错误：缺少 size 和 series 通道
+// ❌ Error: Missing size and series channels
 chart.options({
   type: 'density',
   data: { /* ... */ },
-  encode: { x: 'x', y: 'y' },  // ❌ 缺少 size 和 series
+  encode: { x: 'x', y: 'y' },  // ❌ Missing size and series
 });
 
-// ✅ 正确：包含所有必选通道
+// ✅ Correct: Includes all required channels
 chart.options({
   type: 'density',
   data: { /* ... */ },
   encode: {
     x: 'x',
     y: 'y',
-    size: 'size',      // 必选
-    series: 'species', // 必选
+    size: 'size',      // Required
+    series: 'species', // Required
   },
 });
 ```
 
-### 错误 3：encode.y 使用了原始字段名而非 KDE 输出字段名
+### Error 3: `encode.y` Uses the Original Field Name Instead of the KDE Output Field Name
 
-最常见的命名混淆：原始字段叫 `value`，误以为 encode 也写 `y: 'value'`。
+The most common naming confusion: the original field is named `value`, but mistakenly assuming `encode` also uses `y: 'value'`.
 
 ```javascript
-// ❌ 错误：field: 'value' 是 KDE 的输入；但 encode.y 要用 KDE 的输出字段
+// ❌ Error: `field: 'value'` is the input for KDE; however, `encode.y` should use the KDE output field
 chart.options({
   type: 'density',
   data: {
     type: 'inline',
     value: rawData,
     transform: [{ type: 'kde', field: 'value', groupBy: ['group'] }],
-    //                                ↑ 原始字段叫 'value'
+    //                                ↑ The original field is named 'value'
   },
   encode: {
     x: 'group',
-    y: 'value',  // ❌ 'value' 是原始标量，不是 KDE 输出的密度数组
+    y: 'value',  // ❌ 'value' is the original scalar, not the KDE output density array
     size: 'size',
     series: 'group',
   },
 });
 
-// ✅ 正确：encode.y 对应 KDE 输出字段（默认 as[0] = 'y'）
+// ✅ Correct: `encode.y` corresponds to the KDE output field (default `as[0] = 'y'`)
 chart.options({
   type: 'density',
   data: {
@@ -230,52 +230,52 @@ chart.options({
   },
   encode: {
     x: 'group',
-    y: 'y',      // ✅ KDE 默认输出字段名是 'y'，不是 'value'
+    y: 'y',      // ✅ The default KDE output field name is 'y', not 'value'
     size: 'size',
     series: 'group',
   },
 });
 ```
 
-**记忆规则**：`field` 是 KDE 的**输入**，`as`（默认 `['y', 'size']`）是 KDE 的**输出**，encode 必须用**输出字段名**。
+**Memory Rule**: `field` is the **input** for KDE, `as` (default `['y', 'size']`) is the **output** of KDE, and encode must use the **output field name**.
 
-### 错误 4：数据零方差或单点组导致 KDE 退化（图表空白）
+### Error 4: Zero Variance or Single-Point Groups Cause KDE Degeneration (Blank Chart)
 
-当某分组数据只有 1 个点，或所有值完全相同（方差 = 0）时，KDE 内部 min=max，出现除以零，产生 NaN，该组密度图不渲染。
+When a group has only 1 data point or all values are identical (variance = 0), the internal KDE calculation results in min=max, leading to division by zero and NaN values. Consequently, the density plot for that group is not rendered.
 
 ```javascript
-// ❌ 问题数据：零方差 / 单点，KDE 静默失败
+// ❌ Problematic Data: Zero Variance / Single Point, KDE Fails Silently
 const data = [
-  { group: '低负荷', value: 0 },           // 只有 1 个点
-  { group: '中负荷', value: 20 },
-  { group: '中负荷', value: 20 },          // 9 个完全相同的值
+  { group: 'Low Load', value: 0 },           // Only 1 point
+  { group: 'Medium Load', value: 20 },
+  { group: 'Medium Load', value: 20 },          // 9 identical values
   // ...
 ];
 
-// ✅ 解决方案1：指定 min/max 扩展 KDE 范围，避免零区间
+// ✅ Solution 1: Specify min/max to Expand KDE Range, Avoiding Zero Interval
 transform: [{
   type: 'kde',
   field: 'value',
   groupBy: ['group'],
-  min: -10,   // 手动指定范围，确保 min ≠ max
+  min: -10,   // Manually set range to ensure min ≠ max
   max: 50,
 }]
 
-// ✅ 解决方案2：数据点太少时，改用箱线图或散点图代替密度图
-// KDE 建议每组至少 5-10 个不同值才能产生有意义的密度曲线
+// ✅ Solution 2: Use Box Plot or Scatter Plot Instead of Density Plot for Insufficient Data
+// KDE requires at least 5-10 distinct values per group to produce meaningful density curves
 ```
 
-### 错误 5：直接使用原始数据
+### Error 5: Directly Using Raw Data
 
 ```javascript
-// ❌ 错误：原始数据没有经过 KDE 变换，没有 size 字段
+// ❌ Incorrect: Raw data is not transformed by KDE, missing size field
 chart.options({
   type: 'density',
-  data: rawPoints,  // ❌ 需要先经过 kde 变换
+  data: rawPoints,  // ❌ Requires KDE transformation first
   encode: { x: 'x', y: 'y', size: 'size' },
 });
 
-// ✅ 正确：使用 data.transform 进行 KDE 预处理
+// ✅ Correct: Using data.transform for KDE preprocessing
 chart.options({
   type: 'density',
   data: {
@@ -287,30 +287,30 @@ chart.options({
 });
 ```
 
-### 错误 6：在组合视图中未正确传递数据
+### Error 6: Incorrect Data Passing in Composite Views
 
-在组合视图 (`type: 'view'`) 中，如果 `children` 子图没有显式声明 `data`，会继承父级数据。但若子图需要特定的数据变换（如 KDE），必须显式声明自己的 `data` 配置。
+In composite views (`type: 'view'`), if the `children` sub-charts do not explicitly declare `data`, they will inherit the parent's data. However, if a sub-chart requires specific data transformations (such as KDE), it must explicitly declare its own `data` configuration.
 
 ```javascript
-// ❌ 错误：子图未声明 data，无法应用 KDE 变换
+// ❌ Incorrect: Sub-chart does not declare data, KDE transformation cannot be applied
 chart.options({
   type: 'view',
   data: rawData,
   children: [{
     type: 'density',
-    // 缺少 data 配置，transform 无效
+    // Missing data configuration, transform is invalid
     encode: { x: 'x', y: 'y', size: 'size', series: 'species' },
   }]
 });
 
-// ✅ 正确：子图显式声明 data 并应用 KDE 变换
+// ✅ Correct: Sub-chart explicitly declares data and applies KDE transformation
 chart.options({
   type: 'view',
   data: rawData,
   children: [{
     type: 'density',
     data: {
-      // 显式声明 data，即使与父级相同
+      // Explicitly declare data, even if it is the same as the parent
       type: 'inline',
       value: rawData,
       transform: [{ type: 'kde', field: 'y', groupBy: ['x', 'species'] }],
@@ -320,12 +320,12 @@ chart.options({
 });
 ```
 
-### 错误 7：KDE 分组字段配置不当导致数据不足
+### Error 7: Insufficient Data Due to Improper KDE Grouping Field Configuration
 
-当 `groupBy` 字段划分过细，导致某些分组内的数据点过少（如小于等于1个），KDE 无法计算有效的密度分布，该分组不会被渲染。
+When the `groupBy` field is too granular, resulting in too few data points within certain groups (e.g., less than or equal to 1), KDE cannot compute an effective density distribution, and the group will not be rendered.
 
 ```javascript
-// ❌ 错误：groupBy 包含过多字段，导致某些分组只有一个数据点
+// ❌ Error: groupBy includes too many fields, causing some groups to have only one data point
 chart.options({
   type: 'density',
   data: {
@@ -334,13 +334,13 @@ chart.options({
     transform: [{ 
       type: 'kde', 
       field: 'y', 
-      groupBy: ['x', 'species', 'extraCategory'] // 分组过细，可能造成某些组只有一个点
+      groupBy: ['x', 'species', 'extraCategory'] // Overly granular grouping, may result in groups with only one point
     }],
   },
   encode: { x: 'x', y: 'y', size: 'size', series: 'species' },
 });
 
-// ✅ 正确：合理选择 groupBy 字段，保证每组有足够的数据点
+// ✅ Correct: Reasonably select groupBy fields to ensure sufficient data points in each group
 chart.options({
   type: 'density',
   data: {
@@ -349,19 +349,19 @@ chart.options({
     transform: [{ 
       type: 'kde', 
       field: 'y', 
-      groupBy: ['x', 'species'] // 合理分组，保证每组数据充足
+      groupBy: ['x', 'species'] // Reasonable grouping, ensuring sufficient data in each group
     }],
   },
   encode: { x: 'x', y: 'y', size: 'size', series: 'species' },
 });
 ```
 
-### 错误 8：KDE 输出字段名与 encode 映射不一致导致图表空白
+### Error 8: Blank Chart Due to Mismatch Between KDE Output Field Names and encode Mapping
 
-在 KDE 变换中使用 `as` 自定义输出字段名时，必须确保 `encode` 中的 `y` 和 `size` 通道引用的是正确的自定义字段名。
+When using `as` to customize output field names in KDE transformations, ensure that the `y` and `size` channels in `encode` reference the correct custom field names.
 
 ```javascript
-// ❌ 错误：KDE 输出字段名为 density_x 和 density_y，但 encode 引用了默认字段名
+// ❌ Error: KDE output field names are density_x and density_y, but encode references default field names
 chart.options({
   type: 'density',
   data: {
@@ -376,13 +376,13 @@ chart.options({
   },
   encode: {
     x: 'x',
-    y: 'y',       // ❌ 应为 'density_x'
-    size: 'size', // ❌ 应为 'density_y'
+    y: 'y',       // ❌ Should be 'density_x'
+    size: 'size', // ❌ Should be 'density_y'
     series: 'x'
   }
 });
 
-// ✅ 正确：encode 中引用 KDE 输出的自定义字段名
+// ✅ Correct: encode references custom field names from KDE output
 chart.options({
   type: 'density',
   data: {
@@ -397,19 +397,19 @@ chart.options({
   },
   encode: {
     x: 'x',
-    y: 'density_x',  // ✅ 正确引用自定义字段名
-    size: 'density_y', // ✅ 正确引用自定义字段名
+    y: 'density_x',  // ✅ Correct reference to custom field name
+    size: 'density_y', // ✅ Correct reference to custom field name
     series: 'x'
   }
 });
 ```
 
-### 错误 9：KDE 分组后每组样本数过少导致图表空白
+### Error 9: Insufficient Samples per Group After KDE Grouping Causes Blank Chart
 
-KDE 算法要求每组数据具有足够的样本点（建议每组至少 5~10 个不同值）才能有效计算密度分布。若分组后每组样本数过少，可能导致图表渲染为空白。
+The KDE algorithm requires each group to have enough sample points (it is recommended that each group has at least 5~10 different values) to effectively calculate the density distribution. If there are too few samples per group after grouping, it may cause the chart to render as blank.
 
 ```javascript
-// ❌ 错误：分组后每组样本数过少
+// ❌ Error: Insufficient samples per group after grouping
 const insufficientData = [
   { group: 'A', value: 1 },
   { group: 'A', value: 1 },
@@ -427,7 +427,7 @@ chart.options({
   encode: { x: 'group', y: 'y', size: 'size', series: 'group' }
 });
 
-// ✅ 解决方案：合并分组或增加样本数，或改用其他图表类型
+// ✅ Solution: Merge groups or increase sample size, or use a different chart type
 const sufficientData = [
   { group: 'A', value: 1 }, { group: 'A', value: 1.1 }, { group: 'A', value: 1.2 },
   { group: 'A', value: 1.3 }, { group: 'A', value: 1.4 }, { group: 'B', value: 2 },
@@ -436,22 +436,22 @@ const sufficientData = [
 ];
 ```
 
-## 配置项
+## Configuration Options
 
-### encode 通道
+### encode Channel
 
-| 属性   | 描述                                     | 必选 |
-|--------|------------------------------------------|------|
-| x      | X 轴字段，时间或有序分类字段             | ✓    |
-| y      | Y 轴字段，数值字段（KDE 输出字段）       | ✓    |
-| size   | 密度大小字段（KDE 变换后生成）           | ✓    |
-| series | 系列分组字段                             | ✓    |
-| color  | 颜色映射字段                            |      |
+| Property | Description                                      | Required |
+|----------|--------------------------------------------------|----------|
+| x        | X-axis field, time or ordered categorical field  | ✓        |
+| y        | Y-axis field, numerical field (KDE output field) | ✓        |
+| size     | Density size field (generated after KDE transformation) | ✓        |
+| series   | Series grouping field                           | ✓        |
+| color    | Color mapping field                             |          |
 
-### coordinate 坐标系
+### Coordinate System
 
-| 坐标系     | 类型         | 用途             |
-|------------|--------------|------------------|
-| 直角坐标系 | `'cartesian'` | 默认，和密度图等 |
-| 极坐标系   | `'polar'`     | 极坐标小提琴图等 |
-| 对称坐标系 | `'transpose'` | 对称小提琴图等   |
+| Coordinate System | Type         | Usage               |
+|-------------------|--------------|---------------------|
+| Cartesian         | `'cartesian'` | Default, used in density plots, etc. |
+| Polar             | `'polar'`     | Polar violin plots, etc. |
+| Symmetric         | `'transpose'` | Symmetric violin plots, etc. |

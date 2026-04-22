@@ -1,20 +1,19 @@
 ---
 id: "g2-comp-title"
-title: "G2 图表标题配置（title）"
+title: "G2 Chart Title Configuration (title)"
 description: |
-  G2 v5 通过顶层 title 字段为图表添加标题和副标题。
-  支持自定义标题文本、字体样式、对齐方式和与绘图区的间距。
-  title 字段可在 Chart 构造函数或 options 中配置。
+  G2 v5 adds titles and subtitles to charts through the top-level title field.
+  It supports customizing title text, font style, alignment, and spacing from the plotting area.
+  The title field can be configured in the Chart constructor or options.
 
 library: "g2"
 version: "5.x"
 category: "components"
 tags:
   - "title"
-  - "图表标题"
+  - "chart title"
   - "subtitle"
-  - "副标题"
-  - "标题样式"
+  - "title style"
 
 related:
   - "g2-core-chart-init"
@@ -22,9 +21,9 @@ related:
   - "g2-comp-legend-config"
 
 use_cases:
-  - "为图表添加主标题和副标题"
-  - "自定义标题字体、颜色和大小"
-  - "控制标题对齐方式（左对齐/居中/右对齐）"
+  - "Add main title and subtitle to a chart"
+  - "Customize title font, color, and size"
+  - "Control title alignment (left/center/right)"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,7 +33,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/component/title"
 ---
 
-## 基本用法
+## Basic Usage
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -46,15 +45,15 @@ chart.options({
   data,
   encode: { x: 'month', y: 'value' },
   title: {
-    title: '月度销售额',        // 主标题
-    subtitle: '单位：万元',     // 副标题
+    title: 'Monthly Sales',        // Main Title
+    subtitle: 'Unit: Ten Thousand Yuan', // Subtitle
   },
 });
 
 chart.render();
 ```
 
-## 完整配置项
+## Complete Configuration Options
 
 ```javascript
 chart.options({
@@ -62,23 +61,23 @@ chart.options({
   data,
   encode: { x: 'month', y: 'value' },
   title: {
-    // ── 文本内容 ────────────────────────────
-    title: '月度销售趋势分析',        // 主标题文本
-    subtitle: '数据来源：2024年度报告',  // 副标题文本（可选）
+    // ── Text Content ────────────────────────────
+    title: 'Monthly Sales Trend Analysis',        // Main title text
+    subtitle: 'Data Source: 2024 Annual Report',  // Subtitle text (optional)
 
-    // ── 对齐 ─────────────────────────────────
-    align: 'left',    // 'left'（默认）| 'center' | 'right'
+    // ── Alignment ─────────────────────────────────
+    align: 'left',    // 'left' (default) | 'center' | 'right'
 
-    // ── 间距 ─────────────────────────────────
-    spacing: 4,       // 主标题与副标题之间的间距，默认 2
+    // ── Spacing ─────────────────────────────────
+    spacing: 4,       // Spacing between main title and subtitle, default 2
 
-    // ── 主标题样式 ────────────────────────────
+    // ── Main Title Style ────────────────────────────
     titleFontSize: 16,
     titleFontWeight: 'bold',
     titleFill: '#1d1d1d',
-    titleSpacing: 8,     // 标题与图表内容区域之间的间距
+    titleSpacing: 8,     // Spacing between title and chart content area
 
-    // ── 副标题样式 ────────────────────────────
+    // ── Subtitle Style ────────────────────────────
     subtitleFontSize: 12,
     subtitleFill: '#8c8c8c',
     subtitleFontWeight: 'normal',
@@ -86,14 +85,14 @@ chart.options({
 });
 ```
 
-## 居中标题
+## Centered Title
 
 ```javascript
 chart.options({
   title: {
-    title: '季度对比报告',
-    subtitle: 'Q1-Q4 各季度销售数据',
-    align: 'center',          // 居中对齐
+    title: 'Quarterly Comparison Report',
+    subtitle: 'Q1-Q4 Quarterly Sales Data',
+    align: 'center',          // Center alignment
     titleFontSize: 18,
     titleFontWeight: 600,
     subtitleFontSize: 13,
@@ -102,48 +101,48 @@ chart.options({
 });
 ```
 
-## 在构造函数中配置
+## Configuration in the Constructor
 
 ```javascript
-// title 也可以在 Chart 构造函数的选项中配置
+// title can also be configured in the options of the Chart constructor
 const chart = new Chart({
   container: 'container',
   width: 640,
   height: 480,
   title: {
-    title: '销售趋势',
+    title: 'Sales Trend',
     align: 'center',
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：title 写成字符串而不是对象
+### Error: title is written as a string instead of an object
 ```javascript
-// ❌ 错误：title 字段必须是配置对象，不能直接写字符串
+// ❌ Error: The title field must be a configuration object and cannot be a direct string
 chart.options({
-  title: '月度销售额',   // ❌ 不支持字符串
+  title: 'Monthly Sales',   // ❌ String not supported
 });
 
-// ✅ 正确：title 字段是对象，主标题文本在 title.title 中
+// ✅ Correct: The title field is an object, with the main title text in title.title
 chart.options({
   title: {
-    title: '月度销售额',   // ✅ 正确写法
+    title: 'Monthly Sales',   // ✅ Correct usage
   },
 });
 ```
 
-### 错误：把图表标题与坐标轴标题混淆
+### Error: Confusing Chart Title with Axis Title
 ```javascript
-// ❌ 错误：在 axis 里写整体图表标题
+// ❌ Incorrect: Placing the overall chart title within the axis
 chart.options({
-  axis: { x: { title: '月度销售额' } },  // ❌ 这是 X 轴标题，不是图表标题
+  axis: { x: { title: 'Monthly Sales' } },  // ❌ This is the X-axis title, not the chart title
 });
 
-// ✅ 图表标题用顶层 title 字段
+// ✅ Correct: Use the top-level title field for the chart title
 chart.options({
-  title: { title: '月度销售额' },     // ✅ 图表标题
-  axis: { x: { title: '月份' } },     // ✅ X 轴标题
+  title: { title: 'Monthly Sales' },     // ✅ Chart title
+  axis: { x: { title: 'Month' } },       // ✅ X-axis title
 });
 ```

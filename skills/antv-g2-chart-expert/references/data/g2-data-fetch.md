@@ -1,19 +1,19 @@
 ---
 id: "g2-data-fetch"
-title: "G2 Fetch 远程数据获取"
+title: "G2 Fetch Remote Data Acquisition"
 description: |
-  Fetch 数据连接器从远程接口获取数据，支持 JSON、CSV 等格式解析。
-  通过设置 data.type 为 'fetch' 启用，让数据源具备动态性。
+  The Fetch data connector retrieves data from remote interfaces, supporting parsing of formats such as JSON and CSV.
+  Enable it by setting data.type to 'fetch', making the data source dynamic.
 
 library: "g2"
 version: "5.x"
 category: "data"
 tags:
   - "fetch"
-  - "远程数据"
+  - "remote data"
   - "JSON"
   - "CSV"
-  - "数据连接器"
+  - "data connector"
   - "connector"
 
 related:
@@ -21,9 +21,9 @@ related:
   - "g2-data-fold"
 
 use_cases:
-  - "从 API 获取动态数据"
-  - "加载远程 CSV 文件"
-  - "大屏监控数据展示"
+  - "Fetching dynamic data from APIs"
+  - "Loading remote CSV files"
+  - "Large screen monitoring data display"
 
 difficulty: "beginner"
 completeness: "full"
@@ -33,15 +33,15 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/data/fetch"
 ---
 
-## 核心概念
+## Core Concepts
 
-**Fetch 是数据连接器（Data Connector），不是数据变换**
+**Fetch is a Data Connector, not a Data Transformer**
 
-- 通过设置 `data.type: 'fetch'` 启用
-- 支持 JSON、CSV 格式自动解析
-- 远程地址不能设置鉴权
+- Enabled by setting `data.type: 'fetch'`
+- Supports automatic parsing of JSON and CSV formats
+- Remote URLs cannot be configured with authentication
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -50,7 +50,7 @@ const chart = new Chart({ container: 'container', width: 700, height: 400 });
 
 chart.options({
   type: 'point',
-   {
+  data: {
     type: 'fetch',
     value: 'https://gw.alipayobjects.com/os/antvdemo/assets/data/scatter.json',
   },
@@ -64,27 +64,27 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
-| 属性      | 描述                                              | 类型               | 默认值                         |
-| --------- | ------------------------------------------------- | ------------------ | ------------------------------ |
-| value     | fetch 请求的网络地址                              | `string`           | -                              |
-| format    | 远程文件的数据格式类型，决定用什么方式解析        | `'json' \| 'csv'`  | 默认取 value 末尾 `.` 后的后缀 |
-| delimiter | 如果是 csv 文件，解析的时候分割符                 | `string`           | `,`                            |
-| autoType  | 如果是 csv 文件，解析的时候是否自动判断列数据类型 | `boolean`          | `true`                         |
-| transform | 对加载后的数据进行变换操作                        | `DataTransform[]`  | `[]`                           |
+| Property | Description                                              | Type               | Default Value                         |
+| -------- | -------------------------------------------------------- | ------------------ | ------------------------------------- |
+| value    | Network address for the fetch request                    | `string`           | -                                     |
+| format   | Data format type of the remote file, determines parsing method | `'json' \| 'csv'`  | Default is the suffix after the last `.` in `value` |
+| delimiter | If it's a CSV file, the delimiter used during parsing    | `string`           | `,`                                   |
+| autoType | If it's a CSV file, whether to automatically determine column data types during parsing | `boolean`          | `true`                                |
+| transform | Transformation operations applied to the loaded data     | `DataTransform[]`  | `[]`                                  |
 
-## 加载 CSV 文件
+## Load CSV File
 
 ```javascript
 chart.options({
   type: 'line',
-   {
+  {
     type: 'fetch',
     value: 'https://example.com/data.csv',
-    format: 'csv',           // 指定格式
-    delimiter: ',',          // 分隔符
-    autoType: true,          // 自动推断类型
+    format: 'csv',           // Specify format
+    delimiter: ',',          // Delimiter
+    autoType: true,          // Automatically infer type
     transform: [
       { type: 'filter', callback: (d) => d.value > 0 },
     ],
@@ -93,12 +93,12 @@ chart.options({
 });
 ```
 
-## 结合 transform 使用
+## Using with transform
 
 ```javascript
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'fetch',
     value: 'https://example.com/sales.json',
     transform: [
@@ -111,57 +111,57 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：远程地址需要鉴权
+### Error 1: Remote Address Requires Authentication
 
 ```javascript
-// ❌ 错误：G2 fetch 不支持鉴权
+// ❌ Error: G2 fetch does not support authentication
 data: {
   type: 'fetch',
-  value: 'https://api.example.com/private-data',  // 需要 token
+  value: 'https://api.example.com/private-data',  // Requires token
 }
 
-// ✅ 正确：使用公开的 API 或在服务端代理
+// ✅ Correct: Use a public API or server-side proxy
  {
   type: 'fetch',
-  value: 'https://public-api.example.com/data',  // 无需鉴权
+  value: 'https://public-api.example.com/data',  // No authentication required
 }
 ```
 
-### 错误 2：format 与文件格式不匹配
+### Error 2: Mismatch Between `format` and File Format
 
 ```javascript
-// ❌ 错误：format 与实际格式不匹配
+// ❌ Error: `format` does not match the actual file format
 data: {
   type: 'fetch',
   value: 'https://example.com/data.json',
-  format: 'csv',  // ❌ 实际是 JSON
+  format: 'csv',  // ❌ Actual format is JSON
 }
 
-// ✅ 正确：让 G2 自动推断或指定正确格式
- {
+// ✅ Correct: Let G2 infer or specify the correct format
+{
   type: 'fetch',
   value: 'https://example.com/data.json',
-  // format 默认根据后缀推断为 'json'
+  // format defaults to 'json' based on the file extension
 }
 
-// 或显式指定
- {
+// Or explicitly specify
+{
   type: 'fetch',
-  value: 'https://example.com/api/data',  // 无后缀
-  format: 'json',  // 显式指定
+  value: 'https://example.com/api/data',  // No file extension
+  format: 'json',  // Explicitly specified
 }
 ```
 
-### 错误 3：CORS 问题
+### Error 3: CORS Issue
 
 ```javascript
-// ❌ 错误：跨域请求被阻止
-// 浏览器控制台会显示 CORS 错误
+// ❌ Error: Cross-origin request blocked
+// The browser console will display a CORS error
 
-// ✅ 解决方案：
-// 1. 服务端配置 CORS 头
-// 2. 使用同源请求
-// 3. 使用代理服务器
+// ✅ Solution:
+// 1. Configure CORS headers on the server
+// 2. Use same-origin requests
+// 3. Use a proxy server
 ```

@@ -2,30 +2,30 @@
 id: "g2-mark-gantt"
 title: "G2 Gantt Chart Mark"
 description: |
-  甘特图 Mark。使用 interval 标记配合 transpose 坐标系，展示项目任务的时间安排。
-  适用于项目管理、任务调度、进度跟踪等场景。
+  Gantt Chart Mark. Uses interval marks with a transpose coordinate system to display the scheduling of project tasks.
+  Suitable for project management, task scheduling, progress tracking, and other scenarios.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "甘特图"
+  - "Gantt Chart"
   - "gantt"
-  - "项目管理"
-  - "进度"
+  - "Project Management"
+  - "Progress"
 
 related:
   - "g2-mark-interval-basic"
   - "g2-comp-slider"
 
 use_cases:
-  - "项目进度管理"
-  - "任务调度"
-  - "资源管理"
+  - "Project Progress Management"
+  - "Task Scheduling"
+  - "Resource Management"
 
 anti_patterns:
-  - "非时间维度数据不适合"
-  - "连续数值变化应使用折线图"
+  - "Not suitable for non-time dimension data"
+  - "Continuous numerical changes should use line charts"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,19 +35,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/gantt"
 ---
 
-## 核心概念
+## Core Concepts
 
-甘特图展示项目任务的时间安排：
-- 使用 `interval` 标记
-- 配合 `transpose` 坐标变换
-- `y` 和 `y1` 表示开始和结束时间
+Gantt charts display the scheduling of project tasks:
+- Use `interval` marks
+- Combine with `transpose` coordinate transformation
+- `y` and `y1` represent start and end times
 
-**关键要素：**
-- 任务名称：映射到横轴
-- 开始时间：映射到 `y`
-- 结束时间：映射到 `y1`
+**Key Elements:**
+- Task Name: Mapped to the horizontal axis
+- Start Time: Mapped to `y`
+- End Time: Mapped to `y1`
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -61,9 +61,9 @@ chart.options({
   type: 'interval',
   autoFit: true,
   data: [
-    { name: '活动策划', startTime: 1, endTime: 4 },
-    { name: '场地规划', startTime: 3, endTime: 13 },
-    { name: '选择供应商', startTime: 5, endTime: 8 },
+    { name: 'Event Planning', startTime: 1, endTime: 4 },
+    { name: 'Venue Planning', startTime: 3, endTime: 13 },
+    { name: 'Vendor Selection', startTime: 5, endTime: 8 },
   ],
   encode: {
     x: 'name',
@@ -79,29 +79,29 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 带项目阶段
+### With Project Phases
 
 ```javascript
 chart.options({
   type: 'interval',
   data: [
-    { name: '需求分析', startTime: 1, endTime: 5, phase: '规划' },
-    { name: '系统设计', startTime: 4, endTime: 10, phase: '设计' },
-    { name: '前端开发', startTime: 8, endTime: 20, phase: '开发' },
+    { name: 'Requirement Analysis', startTime: 1, endTime: 5, phase: 'Planning' },
+    { name: 'System Design', startTime: 4, endTime: 10, phase: 'Design' },
+    { name: 'Front-end Development', startTime: 8, endTime: 20, phase: 'Development' },
   ],
   encode: {
     x: 'name',
     y: 'startTime',
     y1: 'endTime',
-    color: 'phase',  // 按阶段着色
+    color: 'phase',  // Color by phase
   },
   coordinate: { transform: [{ type: 'transpose' }] },
 });
 ```
 
-### 带时序动画
+### With Timing Animation
 
 ```javascript
 chart.options({
@@ -119,7 +119,7 @@ chart.options({
 });
 ```
 
-### 带里程碑
+### With Milestones
 
 ```javascript
 chart.options({
@@ -146,23 +146,23 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface GanttData {
-  name: string;        // 任务名称
-  startTime: number;   // 开始时间
-  endTime: number;     // 结束时间
-  phase?: string;      // 项目阶段
+  name: string;        // Task name
+  startTime: number;   // Start time
+  endTime: number;     // End time
+  phase?: string;      // Project phase
 }
 
 interface GanttOptions {
   type: 'interval';
   encode: {
-    x: string;         // 任务名称字段
-    y: string;         // 开始时间字段
-    y1: string;        // 结束时间字段
-    color?: string;    // 颜色字段
+    x: string;         // Task name field
+    y: string;         // Start time field
+    y1: string;        // End time field
+    color?: string;    // Color field
   };
   coordinate: {
     transform: [{ type: 'transpose' }];
@@ -170,39 +170,39 @@ interface GanttOptions {
 }
 ```
 
-## 甘特图 vs 柱状图
+## Gantt Chart vs Bar Chart
 
-| 特性 | 甘特图 | 柱状图 |
-|------|--------|--------|
-| 用途 | 任务时间安排 | 数值对比 |
-| 数据维度 | 时间区间 | 单一数值 |
-| 视觉形式 | 水平条形 | 垂直柱形 |
+| Feature | Gantt Chart | Bar Chart |
+|---------|----------------|----------------|
+| Purpose | Task Scheduling | Numerical Comparison |
+| Data Dimension | Time Interval | Single Value |
+| Visual Form | Horizontal Bar | Vertical Bar |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：缺少 transpose
+### Error 1: Missing transpose
 
 ```javascript
-// ❌ 问题：默认是垂直方向
+// ❌ Problem: Default is vertical direction
 coordinate: {}
 
-// ✅ 正确：添加 transpose
+// ✅ Correct: Add transpose
 coordinate: { transform: [{ type: 'transpose' }] }
 ```
 
-### 错误 2：缺少 y1 编码
+### Error 2: Missing y1 Encoding
 
 ```javascript
-// ❌ 问题：只有开始时间
+// ❌ Problem: Only start time is encoded
 encode: { x: 'name', y: 'startTime' }
 
-// ✅ 正确：添加结束时间
+// ✅ Correct: Add end time
 encode: { x: 'name', y: 'startTime', y1: 'endTime' }
 ```
 
-### 错误 3：任务过多
+### Error 3: Too Many Tasks
 
 ```javascript
-// ⚠️ 注意：任务数量建议不超过 20 个
-// 过多任务会导致图表拥挤
+// ⚠️ Note: It is recommended to have no more than 20 tasks
+// Excessive tasks can lead to chart congestion
 ```

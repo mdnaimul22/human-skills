@@ -1,21 +1,21 @@
 ---
 id: "g2-mark-radar"
-title: "G2 雷达图（polar 坐标 + area/line）"
+title: "G2 Radar Chart (Polar Coordinate + Area/Line)"
 description: |
-  G2 v5 雷达图通过 coordinate: { type: 'polar' } + area + line Mark 组合实现，
-  数据采用长表格式，encode.x 映射维度字段，encode.y 映射数值字段，
-  encode.color 区分多个系列。
+  G2 v5 radar chart is implemented using coordinate: { type: 'polar' } + area + line Mark combination,
+  Data uses long table format, encode.x maps dimension fields, encode.y maps numerical fields,
+  encode.color distinguishes multiple series.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "雷达图"
+  - "radar chart"
   - "radar"
   - "polar"
-  - "极坐标"
-  - "蜘蛛网图"
-  - "多维度"
+  - "polar coordinate"
+  - "spider chart"
+  - "multi-dimensional"
   - "spec"
 
 related:
@@ -24,13 +24,13 @@ related:
   - "g2-mark-line-basic"
 
 use_cases:
-  - "多维度能力/指标对比（如 KPI 雷达图）"
-  - "多个对象的综合评分对比"
-  - "运动员/产品多维评测"
+  - "Multi-dimensional capability/indicator comparison (e.g., KPI radar chart)"
+  - "Comprehensive score comparison of multiple objects"
+  - "Multi-dimensional evaluation of athletes/products"
 
 anti_patterns:
-  - "维度超过 8 个时，标签会重叠，改用平行坐标图"
-  - "各维度量纲差异过大时，需先归一化"
+  - "When dimensions exceed 8, labels will overlap, switch to parallel coordinate chart"
+  - "When dimension scales differ significantly, normalization is required first"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -40,7 +40,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/radar"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -52,22 +52,22 @@ const chart = new Chart({
 });
 
 const data = [
-  { item: '设计', type: '产品A', score: 70 },
-  { item: '开发', type: '产品A', score: 60 },
-  { item: '营销', type: '产品A', score: 50 },
-  { item: '运营', type: '产品A', score: 80 },
-  { item: '服务', type: '产品A', score: 90 },
-  { item: '设计', type: '产品B', score: 40 },
-  { item: '开发', type: '产品B', score: 75 },
-  { item: '营销', type: '产品B', score: 85 },
-  { item: '运营', type: '产品B', score: 55 },
-  { item: '服务', type: '产品B', score: 65 },
+  { item: 'Design', type: 'Product A', score: 70 },
+  { item: 'Development', type: 'Product A', score: 60 },
+  { item: 'Marketing', type: 'Product A', score: 50 },
+  { item: 'Operations', type: 'Product A', score: 80 },
+  { item: 'Service', type: 'Product A', score: 90 },
+  { item: 'Design', type: 'Product B', score: 40 },
+  { item: 'Development', type: 'Product B', score: 75 },
+  { item: 'Marketing', type: 'Product B', score: 85 },
+  { item: 'Operations', type: 'Product B', score: 55 },
+  { item: 'Service', type: 'Product B', score: 65 },
 ];
 
 chart.options({
   type: 'view',
   data,
-  coordinate: { type: 'polar' },   // 关键：极坐标
+  coordinate: { type: 'polar' },   // Key: Polar coordinate
   scale: {
     x: { padding: 0.5, align: 0 },
     y: { tickCount: 5, domainMin: 0, domainMax: 100 },
@@ -93,7 +93,7 @@ chart.options({
 chart.render();
 ```
 
-## 带数据点的雷达图
+## Radar Chart with Data Points
 
 ```javascript
 chart.options({
@@ -106,7 +106,7 @@ chart.options({
   },
   axis: {
     x: { grid: true, labelFontSize: 13 },
-    y: { zIndex: 1, title: false, label: false },  // 隐藏 y 轴标签（只显示网格）
+    y: { zIndex: 1, title: false, label: false },  // Hide y-axis labels (show grid only)
   },
   children: [
     {
@@ -130,16 +130,16 @@ chart.options({
 });
 ```
 
-## 单系列雷达图（纯色填充）
+## Single Series Radar Chart (Solid Color Fill)
 
 ```javascript
 const singleData = [
-  { item: '攻击', score: 85 },
-  { item: '防御', score: 72 },
-  { item: '速度', score: 90 },
-  { item: '魔法', score: 60 },
-  { item: '体力', score: 78 },
-  { item: '运气', score: 66 },
+  { item: 'Attack', score: 85 },
+  { item: 'Defense', score: 72 },
+  { item: 'Speed', score: 90 },
+  { item: 'Magic', score: 60 },
+  { item: 'Stamina', score: 78 },
+  { item: 'Luck', score: 66 },
 ];
 
 chart.options({
@@ -175,55 +175,55 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：忘记设置 polar 坐标，变成普通面积折线图
+### Error 1: Forgetting to Set Polar Coordinates, Resulting in a Regular Area Line Chart
 ```javascript
-// ❌ 缺少 coordinate，渲染出的是普通折线图而非雷达图
+// ❌ Missing coordinate, renders a regular line chart instead of a radar chart
 chart.options({
   type: 'view',
   data,
-  // 忘记了 coordinate: { type: 'polar' }
+  // Forgot coordinate: { type: 'polar' }
   children: [{ type: 'area', ... }],
 });
 
-// ✅ 正确：必须声明 polar 坐标
+// ✅ Correct: Must declare polar coordinates
 chart.options({
   type: 'view',
   data,
-  coordinate: { type: 'polar' },   // ✅ 关键
+  coordinate: { type: 'polar' },   // ✅ Key
   children: [{ type: 'area', ... }],
 });
 ```
 
-### 错误 2：数据格式使用宽表
+### Error 2: Using Wide Table Data Format
 
 ```javascript
-// ❌ 宽表格式无法直接用 color 区分系列
+// ❌ Wide table format cannot directly use color to distinguish series
 const wrongData = [
-  { item: '设计', A: 70, B: 40 },
-  { item: '开发', A: 60, B: 75 },
+  { item: 'Design', A: 70, B: 40 },
+  { item: 'Development', A: 60, B: 75 },
 ];
 
-// ✅ 正确：使用长表格式（每行一个数据点 + 系列字段）
+// ✅ Correct: Use long table format (one data point per row + series field)
 const correctData = [
-  { item: '设计', type: 'A', score: 70 },
-  { item: '设计', type: 'B', score: 40 },
-  { item: '开发', type: 'A', score: 60 },
-  { item: '开发', type: 'B', score: 75 },
+  { item: 'Design', type: 'A', score: 70 },
+  { item: 'Design', type: 'B', score: 40 },
+  { item: 'Development', type: 'A', score: 60 },
+  { item: 'Development', type: 'B', score: 75 },
 ];
 ```
 
-### 错误 3：各维度量纲不统一导致视觉失真
+### Error 3: Inconsistent Measurement Scales Across Dimensions Leading to Visual Distortion
 
 ```javascript
-// ❌ 不同维度量级差异大（0-100 vs 0-10000），图形严重失真
+// ❌ Large differences in measurement scales across dimensions (0-100 vs 0-10000), causing severe visual distortion
 const data = [
-  { item: '销售额', score: 8500 },   // 万元
-  { item: '评分',   score: 85 },     // 百分制
+  { item: 'Sales', score: 8500 },   // Ten thousand yuan
+  { item: 'Rating', score: 85 },    // Percentage
 ];
 
-// ✅ 先归一化到 0-100 再绘制
+// ✅ Normalize to 0-100 before rendering
 const normalized = data.map(d => ({
   ...d,
   score: (d.score / maxScores[d.item]) * 100,

@@ -2,30 +2,29 @@
 id: "g2-mark-arc-diagram"
 title: "G2 Arc Diagram Mark"
 description: |
-  弧长连接图 Mark。使用 line 和 point 组合展示节点之间的链接关系。
-  适用于关系网络分析、社交网络、知识图谱等场景。
+  Arc diagram mark. Uses a combination of line and point to display the link relationship between nodes.
+  Suitable for relationship network analysis, social networks, knowledge graphs, and other scenarios.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "弧长连接图"
   - "arc diagram"
-  - "关系图"
-  - "网络"
+  - "relationship graph"
+  - "network"
 
 related:
   - "g2-mark-chord"
   - "g2-mark-sankey"
 
 use_cases:
-  - "关系网络分析"
-  - "社交网络"
-  - "知识图谱"
+  - "Relationship network analysis"
+  - "Social networks"
+  - "Knowledge graphs"
 
 anti_patterns:
-  - "层次结构应使用树图"
-  - "节点过多不适合"
+  - "Hierarchical structures should use tree diagrams"
+  - "Not suitable for too many nodes"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,19 +34,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/arc-diagram"
 ---
 
-## 核心概念
+## Core Concepts
 
-弧长连接图展示节点之间的链接关系：
-- 节点沿线性轴或环形排列
-- 用弧线表示节点之间的连接
-- 支持线性布局和环形布局
+The arc-link diagram visualizes the connections between nodes:
+- Nodes are arranged along a linear axis or in a circular layout
+- Arcs represent connections between nodes
+- Supports both linear and circular layouts
 
-**关键特点：**
-- 一维布局方式
-- 清晰呈现环和桥结构
-- 节点排序影响视觉效果
+**Key Features:**
+- One-dimensional layout approach
+- Clearly presents ring and bridge structures
+- Node ordering affects visual appearance
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -57,7 +56,7 @@ const chart = new Chart({
   theme: 'classic',
 });
 
-// 数据预处理：计算弧线坐标
+// Data preprocessing: Calculate arc coordinates
 const processData = (nodes, links) => {
   const arcData = [];
   const nodePositions = {};
@@ -85,21 +84,21 @@ const processData = (nodes, links) => {
 
 chart.options({
   type: 'view',
-   data: { type: 'fetch', value: 'relationship.json' },
-  // ... 数据处理和渲染
+  data: { type: 'fetch', value: 'relationship.json' },
+  // ... Data processing and rendering
 });
 
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 环形布局
+### Circular Layout
 
 ```javascript
 chart.options({
   type: 'view',
-  coordinate: { type: 'polar' },  // 极坐标系
+  coordinate: { type: 'polar' },  // Polar coordinate system
   data,
   children: [
     {
@@ -114,7 +113,7 @@ chart.options({
 });
 ```
 
-### 带节点标签
+### With Node Labels
 
 ```javascript
 chart.options({
@@ -122,12 +121,12 @@ chart.options({
   children: [
     { type: 'line', data: arcData, encode: { x: 'x', y: 'y', series: 'linkId' } },
     { type: 'point', data: nodeData, encode: { x: 'x', y: 'y', color: 'group' } },
-    { type: 'text',  nodeData, encode: { x: 'x', y: 'y', text: 'name' } },
+    { type: 'text', data: nodeData, encode: { x: 'x', y: 'y', text: 'name' } },
   ],
 });
 ```
 
-### 带交互高亮
+### With Interactive Highlighting
 
 ```javascript
 chart.options({
@@ -147,7 +146,7 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface ArcDiagramData {
@@ -155,42 +154,42 @@ interface ArcDiagramData {
   links: Array<{ source: string; target: string; value?: number }>;
 }
 
-// 弧长连接图由多个图层组成：
-// 1. line - 弧线连接
-// 2. point - 节点
-// 3. text - 标签（可选）
+// Arc diagrams consist of multiple layers:
+// 1. line - arc connections
+// 2. point - nodes
+// 3. text - labels (optional)
 ```
 
-## 弧长连接图 vs 和弦图
+## Arc-Length Linkage Chart vs Chord Chart
 
-| 特性 | 弧长连接图 | 和弦图 |
+| Feature | Arc-Length Linkage Chart | Chord Chart |
 |------|------------|--------|
-| 节点布局 | 线性/环形 | 环形 |
-| 连线方式 | 弧线重叠 | 平铺不重叠 |
-| 适用场景 | 关系展示 | 流向展示 |
+| Node Layout | Linear/Circular | Circular |
+| Linking Method | Arcs Overlapping | Tiled, Non-Overlapping |
+| Applicable Scenarios | Relationship Display | Flow Display |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：节点未排序
+### Error 1: Nodes Not Sorted
 
 ```javascript
-// ⚠️ 注意：节点排序影响视觉效果
-// 建议按社区或度数排序
+// ⚠️ Note: Node sorting affects visual effects
+// It is recommended to sort by community or degree
 ```
 
-### 错误 2：连线过多
+### Error 2: Excessive Connections
 
 ```javascript
-// ⚠️ 注意：连线过多会导致视觉混乱
-// 建议过滤或聚合部分连线
+// ⚠️ Note: Excessive connections can lead to visual clutter
+// It is recommended to filter or aggregate some connections
 ```
 
-### 错误 3：缺少数据预处理
+### Error 3: Missing Data Preprocessing
 
 ```javascript
-// ❌ 问题：直接使用原始数据
+// ❌ Problem: Directly using raw data
  { nodes: [...], links: [...] }
 
-// ✅ 正确：预处理计算坐标
+// ✅ Correct: Preprocess to calculate coordinates
 data: { transform: [{ type: 'custom', callback: processData }] }
 ```

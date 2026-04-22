@@ -1,29 +1,29 @@
 ---
 id: "g2-mark-polygon"
-title: "G2 多边形图（polygon）"
+title: "G2 Polygon Mark"
 description: |
-  polygon mark 根据多个 x/y 通道坐标绘制任意多边形，
-  每条记录对应一个多边形，坐标点通过 x、x1、x2...和 y、y1、y2...通道传入。
-  常用于地图区域着色、Voronoi 图等自定义形状场景。
+  The polygon mark renders arbitrary polygons based on multiple x/y channel coordinates.
+  Each record corresponds to one polygon, with coordinates passed through x, x1, x2... and y, y1, y2... channels.
+  Commonly used in scenarios such as map area coloring, Voronoi diagrams, and custom shapes.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
   - "polygon"
-  - "多边形"
+  - "polygon"
   - "Voronoi"
-  - "地图"
-  - "自定义形状"
+  - "map"
+  - "custom shape"
 
 related:
   - "g2-mark-image"
   - "g2-mark-path"
 
 use_cases:
-  - "Voronoi 图（自然邻域分区）"
-  - "自定义形状的区域着色"
-  - "地理区域多边形着色（非标准地图）"
+  - "Voronoi Diagram (Natural Neighbor Partitioning)"
+  - "Custom Shape Area Coloring"
+  - "Geographic Area Polygon Coloring (Non-Standard Maps)"
 
 difficulty: "advanced"
 completeness: "full"
@@ -32,14 +32,13 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/other/#polygon"
 ---
-
-## 最小可运行示例（Voronoi 图）
+## Minimum Viable Example (Voronoi Diagram)
 
 ```javascript
 import { Chart } from '@antv/g2';
 import { Delaunay } from 'd3-delaunay';
 
-// 随机生成点，计算 Voronoi 分区
+// Randomly generate points and calculate Voronoi diagram
 const points = Array.from({ length: 30 }, () => [
   Math.random() * 600,
   Math.random() * 400,
@@ -48,7 +47,7 @@ const points = Array.from({ length: 30 }, () => [
 const delaunay = Delaunay.from(points);
 const voronoi = delaunay.voronoi([0, 0, 600, 400]);
 
-// 将 Voronoi 多边形转换为 G2 数据格式
+// Convert Voronoi polygons to G2 data format
 const polygonData = Array.from({ length: points.length }, (_, i) => {
   const cell = voronoi.cellPolygon(i);
   if (!cell) return null;
@@ -65,12 +64,12 @@ chart.options({
   type: 'polygon',
   data: polygonData,
   encode: {
-    x: 'x',    // 多边形各顶点的 x 坐标数组
-    y: 'y',    // 多边形各顶点的 y 坐标数组
+    x: 'x',    // Array of x-coordinates for polygon vertices
+    y: 'y',    // Array of y-coordinates for polygon vertices
     color: 'index',
   },
   scale: {
-    x: { domain: [0, 600] },   // 指定坐标范围（type 默认为 linear）
+    x: { domain: [0, 600] },   // Specify coordinate range (type defaults to linear)
     y: { domain: [0, 400] },
     color: { type: 'ordinal' },
   },
@@ -86,18 +85,18 @@ chart.options({
 chart.render();
 ```
 
-## 数据格式说明
+## Data Format Description
 
 ```javascript
-// polygon mark 的数据格式：每条记录的 x/y 字段是数组（多边形顶点序列）
+// Data format for polygon mark: Each record's x/y field is an array (sequence of polygon vertices)
 const data = [
   {
-    x: [10, 50, 90, 10],   // 多边形顶点 x 坐标（按顺序，首尾自动闭合）
-    y: [10, 80, 10, 10],   // 多边形顶点 y 坐标
+    x: [10, 50, 90, 10],   // Polygon vertex x-coordinates (in order, automatically closed)
+    y: [10, 80, 10, 10],   // Polygon vertex y-coordinates
     category: 'A',
   },
   {
-    x: [100, 150, 200],    // 三角形
+    x: [100, 150, 200],    // Triangle
     y: [20, 100, 20],
     category: 'B',
   },
@@ -110,21 +109,21 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：x/y 传入单个数值而不是数组
+### Error: x/y passed as a single value instead of an array
 ```javascript
-// ❌ 错误：polygon 的 x/y 必须是坐标数组，不是单个值
+// ❌ Error: x/y for polygon must be an array of coordinates, not a single value
 chart.options({
   type: 'polygon',
-  data: [{ x: 100, y: 200, ... }],  // ❌ x/y 是单值，只是一个点
+  data: [{ x: 100, y: 200, ... }],  // ❌ x/y are single values, only one point
   encode: { x: 'x', y: 'y' },
 });
 
-// ✅ 正确：x/y 是坐标数组
+// ✅ Correct: x/y are arrays of coordinates
 chart.options({
   type: 'polygon',
-  data: [{ x: [10, 50, 90], y: [10, 80, 10], ... }],  // ✅ 数组
+  data: [{ x: [10, 50, 90], y: [10, 80, 10], ... }],  // ✅ Arrays
   encode: { x: 'x', y: 'y' },
 });
 ```

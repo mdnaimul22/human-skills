@@ -1,26 +1,26 @@
 ---
 id: "g2-data-log"
-title: "G2 Log 数据日志"
+title: "G2 Log Data"
 description: |
-  Log 数据变换将当前数据变换流中的数据打印到控制台，用于调试。
-  配置在 data.transform 中，不影响数据流。
+  The Log data transform prints the current data in the data transform stream to the console for debugging purposes.
+  It is configured in `data.transform` and does not affect the data flow.
 
 library: "g2"
 version: "5.x"
 category: "data"
 tags:
   - "log"
-  - "调试"
-  - "日志"
-  - "数据变换"
+  - "debugging"
+  - "logging"
+  - "data transform"
   - "data transform"
 
 related:
   - "g2-data-filter"
 
 use_cases:
-  - "调试数据处理流程"
-  - "检查中间数据状态"
+  - "Debugging data processing flow"
+  - "Inspecting intermediate data states"
 
 difficulty: "beginner"
 completeness: "full"
@@ -30,15 +30,15 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/data/log"
 ---
 
-## 核心概念
+## Core Concepts
 
-**Log 是数据变换（Data Transform），不是标记变换（Mark Transform）**
+**Log is a Data Transform, not a Mark Transform**
 
-- 数据变换配置在 `data.transform` 中
-- 用于调试，将数据打印到控制台
-- 不影响数据流，数据会原样传递给下一个 transform
+- Data transform configuration is in `data.transform`
+- Used for debugging, prints data to the console
+- Does not affect the data flow, data is passed as is to the next transform
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -53,23 +53,23 @@ const data = [
 
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: data,
     transform: [
-      { type: 'slice', start: 1 },  // 先切片
-      { type: 'log' },               // 打印中间结果（调试用）
-      { type: 'filter', callback: (d) => d.a < 5 },  // 再过滤
+      { type: 'slice', start: 1 },  // Slice first
+      { type: 'log' },               // Log intermediate result (for debugging)
+      { type: 'filter', callback: (d) => d.a < 5 },  // Filter next
     ],
   },
   encode: { x: 'a', y: 'b' },
 });
 
 chart.render();
-// 控制台会输出 slice 后的数据
+// The console will output the data after slicing
 ```
 
-## 调试数据处理流程
+## Debugging Data Processing Flow
 
 ```javascript
 chart.options({
@@ -78,63 +78,63 @@ chart.options({
     value: 'https://example.com/data.json',
     transform: [
       { type: 'filter', callback: (d) => d.value > 100 },
-      { type: 'log' },  // 检查过滤后的数据
+      { type: 'log' },  // Check filtered data
       { type: 'sort', callback: (a, b) => b.value - a.value },
-      { type: 'log' },  // 检查排序后的数据
+      { type: 'log' },  // Check sorted data
       { type: 'slice', end: 10 },
     ],
   },
 });
 ```
 
-## 配置项
+## Configuration Options
 
-Log 变换没有配置项，直接使用即可。
+The Log transformation has no configuration options and can be used directly.
 
 ```javascript
 { type: 'log' }
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：log 放在 mark transform 中
+### Error 1: Placing `log` in `mark transform`
 
 ```javascript
-// ❌ 错误：log 是数据变换，不能放在 mark 的 transform 中
+// ❌ Incorrect: `log` is a data transformation and cannot be placed in `mark`'s `transform`
 chart.options({
   type: 'interval',
   data,
-  transform: [{ type: 'log' }],  // ❌ 错误位置
+  transform: [{ type: 'log' }],  // ❌ Incorrect location
 });
 
-// ✅ 正确：log 放在 data.transform 中
+// ✅ Correct: Place `log` in `data.transform`
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: data,
-    transform: [{ type: 'log' }],  // ✅ 正确
+    transform: [{ type: 'log' }],  // ✅ Correct
   },
 });
 ```
 
-### 注意事项
+### Notes
 
 ```javascript
-// ⚠️ 注意：生产环境应移除 log 变换，避免不必要的控制台输出
-// 开发环境
+// ⚠️ Note: Remove log transformation in production environment to avoid unnecessary console output
+// Development environment
  {
   transform: [
     { type: 'filter', callback: (d) => d.value > 0 },
-    { type: 'log' },  // 调试用
+    { type: 'log' },  // For debugging
   ],
 }
 
-// 生产环境
+// Production environment
  {
   transform: [
     { type: 'filter', callback: (d) => d.value > 0 },
-    // 移除 log
+    // Remove log
   ],
 }
 ```

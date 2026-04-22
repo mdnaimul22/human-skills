@@ -9,7 +9,7 @@ You are an expert in AntV G2 v5 charting library. Generate accurate, runnable co
 
 ---
 
-## 1. Core Constraints (MUST follow)
+## 1. Core Constraints / 核心约束 (MUST follow)
 
 1. **`container` is mandatory**: `new Chart({ container: 'container', ... })`
 2. **Use Spec Mode ONLY**: `chart.options({ type: 'interval', data, encode: {...} })` (See Forbidden Patterns for V4 chained API)
@@ -22,16 +22,16 @@ You are an expert in AntV G2 v5 charting library. Generate accurate, runnable co
    - `transpose` is a **transformation**, not a coordinate type, and must be written in the `transform` array: `coordinate: { transform: [{ type: 'transpose' }] }`
    - ❌ Prohibited: `coordinate: { type: 'transpose' }`
 8. **Range encoding** (Gantt chart, candlestick, etc.): `encode: { y: 'start', y1: 'end' }`, prohibit `y: ['start', 'end']`
-9. **Style principles**: Styles mentioned in the user description (radius, fillOpacity, color, fontSize, etc.) must be fully preserved; decorative styles not mentioned by the user (shadowBlur, shadowColor, shadowOffsetX/Y, etc.) should not be added
-10. **`animate` rules**: Do not add `animate` configuration when the user does not explicitly require animation (G2 has default animations), only add when the user explicitly describes animation requirements
+9. **Style principles**: Styles mentioned in the user description (radius, fillOpacity, color, fontSize, etc.) must be fully preserved; decorative styles not mentioned by the user (shadowBlur, shadowColor, shadowOffsetX/Y, etc.) should not be added manually
+10. **`animate` rules**: Do not add `animate` configuration when the user does not explicitly request animation (G2 has default animations built-in), only add when the user explicitly describes animation requirements
 11. **`scale.color.palette` can only use valid values**: Palette is looked up through d3-scale-chromatic, invalid names will throw an `Unknown palette` error. **Do not infer or create non-existent names** (e.g., `'blueOrange'`, `'redGreen'`, `'hot'`, `'jet'`, `'coolwarm'` are all invalid). Common valid values: sequential color scales `'blues'|'greens'|'reds'|'ylOrRd'|'viridis'|'plasma'|'turbo'`; diverging color scales `'rdBu'|'rdYlGn'|'spectral'`; when in doubt, use `range: ['#startColor', '#endColor']` for custom alternatives
-12. **Prohibit using `d3.*` in user code**: G2 uses d3 internally, but the `d3` object is not exposed to the user code scope, calling `d3.sum()` etc. will throw `ReferenceError: d3 is not defined`. For aggregation, prioritize using G2 built-in options (e.g., `sortX`'s `reducer: 'sum'`), when custom aggregation is necessary, use native JS: `d3.sum(arr, d=>d.v)` → `arr.reduce((s,d)=>s+d.v,0)`; `d3.max(arr, d=>d.v)` → `Math.max(...arr.map(d=>d.v))`
-13. **When the user does not specify a color scheme, prohibit using white or near-white as the shape fill color**: `style: { fill: '#fff' }`, `style: { fill: 'white' }`, `style: { fill: '#ffffff' }` etc. will make the shape completely invisible on a white background. When no color scheme is specified, rely on G2's `encode.color` to automatically assign theme colors, or use colors with clear visual distinction (e.g., `'#5B8FF9'`). The following are valid exceptions: label text `fill: '#fff'` (labels within dark backgrounds), separator lines `stroke: '#fff'` (white separator lines in stacked/pack/treemap)
-14. **When the user does not specify a container**: `container` defaults to `'container'`, do not create it using `document.createElement('div')`, the code must end with `chart.render();`
+12. **Prohibit using `d3.*` in user code**: G2 internally uses d3, but the `d3` object is not exposed to the user code scope, calling `d3.sum()` etc. will throw `ReferenceError: d3 is not defined`. For aggregation, prioritize using G2 built-in options (e.g., `sortX`'s `reducer: 'sum'`), when custom aggregation is necessary, use native JS: `d3.sum(arr, d=>d.v)` → `arr.reduce((s,d)=>s+d.v,0)`; `d3.max(arr, d=>d.v)` → `Math.max(...arr.map(d=>d.v))`
+13. **When the user does not specify a color scheme, prohibit using white or near-white as the shape fill color**: `style: { fill: '#fff' }`, `style: { fill: 'white' }`, `style: { fill: '#ffffff' }` etc. will make the shape completely invisible on a white background. When no color scheme is specified, rely on G2's `encode.color` to automatically assign theme colors, or use colors with clear visual distinction (e.g., `'#5B8FF9'`). The following are valid exceptions: label text `fill: '#fff'` (labels within dark backgrounds), separator line `stroke: '#fff'` (white separator lines in stacked/pack/treemap)
+14. **When the user does not specify a container**: `container` defaults to `'container'`, do not create it via `document.createElement('div')`, the code must end with `chart.render();`
 
 ### 1.1 Forbidden Patterns
 
-**Forbidden: V4 Syntax**, Must Use V5 Spec Mode:
+**Forbidden: Using V4 Syntax**, Must Use V5 Spec Mode:
 
 ```javascript
 // ❌ Forbidden: V4 createView
@@ -109,7 +109,7 @@ chart.options({
   ],
 });
 
-// ✅ Simpler Approach: Single view + negative value trick (data in one array)
+// ✅ Simpler Approach: Single view + negative value trick (data can be in one array)
 chart.options({
   type: 'interval',
   data: combinedData,                              // Combined data, using negative values to distinguish direction
@@ -131,7 +131,7 @@ chart.options({
 
 ### 1.2 Prohibited Hallucinated Mark Types
 
-The following types are from other charting libraries (such as ECharts, Vega) and **do not exist in G2**. Using them will result in runtime errors:
+The following types are from other chart libraries (such as ECharts, Vega) and **do not exist in G2**. Using them will result in runtime errors:
 
 | ❌ Incorrect Usage | ✅ Correct Replacement |
 |------------|-----------|
@@ -141,14 +141,14 @@ The following types are from other charting libraries (such as ECharts, Vega) an
 | `type: 'regionY'` | `type: 'rangeY'` (Y-axis range highlight) |
 | `type: 'venn'` | `type: 'path'` + `data.transform: [{ type: 'venn' }]` |
 
-**Complete List of Valid Mark Types in G2** (do not create other types):  
-- Basic: `interval`, `line`, `area`, `point`, `rect`, `cell`, `text`, `image`, `path`, `polygon`, `shape`  
-- Connections: `link`, `connector`, `vector`  
-- Reference Lines/Areas: `lineX`, `lineY`, `rangeX`, `rangeY`; `range` (rarely used, only when both x/y need to define a 2D rectangle, and the x/y fields in the data must be `[start, end]` arrays)  
-- Statistical: `box`, `boxplot`, `density`, `heatmap`, `beeswarm`  
-- Hierarchical/Relational: `treemap`, `pack`, `partition`, `tree`, `sankey`, `chord`, `forceGraph`  
-- Special: `wordCloud`, `gauge`, `liquid`  
-- Requires Extension Package: `sunburst` (requires `@antv/g2-extension-plot`, see [Sunburst Chart](references/marks/g2-mark-sunburst.md))  
+**Complete List of Valid Mark Types in G2** (do not create other types arbitrarily):
+- Basic: `interval`, `line`, `area`, `point`, `rect`, `cell`, `text`, `image`, `path`, `polygon`, `shape`
+- Connection: `link`, `connector`, `vector`
+- Reference Lines/Areas: `lineX`, `lineY`, `rangeX`, `rangeY`; `range` (rarely used, only when both x/y need to define a 2D rectangle, and the x/y fields of the data must be `[start, end]` arrays)
+- Statistical: `box`, `boxplot`, `density`, `heatmap`, `beeswarm`
+- Hierarchy/Relationship: `treemap`, `pack`, `partition`, `tree`, `sankey`, `chord`, `forceGraph`
+- Special: `wordCloud`, `gauge`, `liquid`
+- Requires Extension Package: `sunburst` (requires `@antv/g2-extension-plot`, see [Sunburst Chart](references/marks/g2-mark-sunburst.md))
 ---
 
 ## 2. Common Mistakes
@@ -200,7 +200,7 @@ chart.options({
   ],
 });
 
-// ⚠️ Multi-mark combination rules:
+// ⚠️ Multiple mark combination rules:
 // 1. Only use children, do not use marks, layers, etc.
 // 2. Children cannot be nested (children cannot contain children)
 // 3. Use spaceLayer/spaceFlex for complex combinations
@@ -368,18 +368,18 @@ Select the appropriate chart type based on data characteristics and visualizatio
 
 > **Detailed Documentation**: [Chart Selection Guide](references/concepts/g2-concept-chart-selection.md)
 
-### 5.2 Visual Channels
+### 5.2 Visual Channels / Visual Channels
 
 Visual channels are the mapping methods from data to visual attributes:
 
 | Channel Type | Suitable Data | Perceptual Accuracy |
 |--------------|---------------|---------------------|
 | Position     | Continuous/Discrete | Highest |
-| Length       | Continuous     | High     |
-| Color (Hue)  | Discrete       | Medium   |
-| Color (Luminance) | Continuous | Medium   |
+| Length       | Continuous     | High    |
+| Color (Hue)  | Discrete       | Medium  |
+| Color (Luminance) | Continuous | Medium  |
 | Size         | Continuous     | Medium-Low |
-| Shape        | Discrete       | Low      |
+| Shape        | Discrete       | Low     |
 
 > **Detailed Documentation**: [Visual Channels](references/concepts/g2-concept-visual-channels.md)
 
@@ -387,10 +387,10 @@ Visual channels are the mapping methods from data to visual attributes:
 
 Selecting an appropriate color scheme enhances chart readability:
 
-| Scenario | Recommended Scheme | Example |
-|----------|--------------------|---------|
-| Categorical Data | Discrete Palette | `category10`, `category20` |
-| Continuous Data | Sequential Palette | `Blues`, `RdYlBu` |
+| Scenario       | Recommended Scheme | Examples          |
+|----------------|--------------------|-------------------|
+| Categorical Data | Discrete Palette   | `category10`, `category20` |
+| Sequential Data | Sequential Palette | `Blues`, `RdYlBu` |
 | Positive/Negative Contrast | Diverging Palette | `RdYlGn` |
 
 > **Detailed Documentation**: [Color Theory](references/concepts/g2-concept-color-theory.md)
@@ -403,7 +403,7 @@ Marks are the core visualization elements in G2, determining the visual represen
 
 ### 6.1 Bar Chart Series / Interval
 
-Bar charts are used to compare the magnitude of categorical data and are one of the most commonly used chart types. Basic bar charts use the `interval` mark, stacked bar charts require the `stackY` transform, and grouped bar charts use the `dodgeX` transform.
+Bar charts are used to compare the magnitude of categorical data and are one of the most commonly used chart types. Basic bar charts use the `interval` mark, stacked bar charts require the addition of the `stackY` transform, and grouped bar charts use the `dodgeX` transform.
 
 | Type | Mark | Key Configuration |
 |------|------|----------|
@@ -430,7 +430,7 @@ Line charts are used to display the trend of data changes over time or ordered c
 
 ### 6.3 Area Series / Area
 
-Area charts build upon line charts by filling the area beneath the line, emphasizing the magnitude of change over time. Stacked area charts are used to show the contribution of each part to the whole.
+Area charts build upon line charts by filling the area beneath the line, emphasizing the degree of change in quantity over time. Stacked area charts are used to show the contribution of each part to the whole.
 
 | Type | Mark | Key Configuration |
 |------|------|----------|
@@ -441,7 +441,7 @@ Area charts build upon line charts by filling the area beneath the line, emphasi
 
 ### 6.4 Pie Chart/Donut Chart / Arc (Pie/Donut)
 
-Pie charts are used to display the proportion of each part to the whole. They are implemented using the `theta` coordinate system in conjunction with the `interval` mark.
+Pie charts are used to display the proportional relationship of each part to the whole. They are implemented using the `theta` coordinate system in conjunction with the `interval` mark.
 
 | Type | Mark | Key Configuration |
 |------|------|----------|
@@ -450,7 +450,7 @@ Pie charts are used to display the proportion of each part to the whole. They ar
 
 > **Detailed Documentation**: [Pie Chart](references/marks/g2-mark-arc-pie.md) | [Donut Chart](references/marks/g2-mark-arc-donut.md)
 
-### 6.5 Scatter Plot/Bubble Plot / Point
+### 6.5 Scatter Plot / Bubble Plot / Point
 
 Scatter plots are used to display the relationship between two numerical variables, while bubble plots use the size of the points to represent a third dimension.
 
@@ -503,16 +503,16 @@ Charts that display relationships between data, suitable for network analysis an
 
 | Type | Mark | Use Case |
 |------|------|----------|
-| Sankey Diagram | `sankey` | Flow/Transfer Relationships |
-| Chord Diagram | `chord` | Matrix Flow Relationships |
-| Venn Diagram | `path` + venn data transform | Set Intersection Relationships (venn is a data transform, not a mark type) |
-| Arc Diagram | `line` + `point` | Node Link Relationships |
+| Sankey Diagram | `sankey` | Flow/transfer relationships |
+| Chord Diagram | `chord` | Matrix flow relationships |
+| Venn Diagram | `path` + venn data transform | Set intersection relationships (venn is a data transform, not a mark type) |
+| Arc Diagram | `line` + `point` | Node link relationships |
 
 > **Detailed Documentation**: [Sankey Diagram](references/marks/g2-mark-sankey.md) | [Chord Diagram](references/marks/g2-mark-chord.md) | [Venn Diagram](references/marks/g2-mark-venn.md) | [Arc Diagram](references/marks/g2-mark-arc-diagram.md)
 
-### 6.10 Project Management Charts / Project
+### 6.10 Project Management Chart / Project
 
-Charts suitable for project management and progress tracking.
+Suitable for project management and progress tracking.
 
 | Type | Mark | Usage |
 |------|------|------|
@@ -531,7 +531,7 @@ Professional charts for financial data analysis.
 
 > **Detailed Documentation**: [K-line Chart](references/marks/g2-mark-k-chart.md)
 
-### 6.12 Multivariate Data Chart / Multivariate
+### 6.12 Multivariate Charts
 
 Charts for displaying multivariate data relationships.
 
@@ -546,8 +546,8 @@ Charts for displaying multivariate data relationships.
 
 Suitable for data comparison.
 
-| Type | Mark | Usage |
-|------|------|------|
+| Type | Mark | Use Case |
+|------|------|----------|
 | Bi-directional Bar Chart | `interval` | Positive and negative data comparison |
 
 > **Detailed Documentation**: [Bi-directional Bar Chart](references/marks/g2-mark-bi-directional-bar.md)
@@ -585,7 +585,7 @@ The range mark is used to display the interval range of data.
 
 | Type | Mark | Usage |
 |------|------|------|
-| Beeswarm Plot | `point` + `pack` | Closely arranged data points to display distribution |
+| Beeswarm Plot | `point` + `pack` | Tightly arranged data points to display distribution |
 | Pack Layout | `pack` | Circular packing of hierarchical data |
 
 > **Detailed Documentation**: [Beeswarm Plot](references/marks/g2-mark-beeswarm.md) | [Pack Layout](references/marks/g2-mark-pack.md)
@@ -611,9 +611,9 @@ Charts for displaying hierarchical data, representing numerical proportions thro
 | Density Heatmap | `heatmap` | Continuous density heatmap |
 | Gauge | `gauge` | Metric progress display |
 | Word Cloud | `wordCloud` | Text frequency visualization |
-| Liquid Fill Gauge | `liquid` | Percentage progress |
+| Liquid Chart | `liquid` | Percentage progress |
 
-> **Detailed Documentation**: [Heatmap](references/marks/g2-mark-cell-heatmap.md) | [Density Heatmap](references/marks/g2-mark-heatmap.md) | [Gauge](references/marks/g2-mark-gauge.md) | [Word Cloud](references/marks/g2-mark-wordcloud.md) | [Liquid Fill Gauge](references/marks/g2-mark-liquid.md)
+> **Detailed Documentation**: [Heatmap](references/marks/g2-mark-cell-heatmap.md) | [Density Heatmap](references/marks/g2-mark-heatmap.md) | [Gauge](references/marks/g2-mark-gauge.md) | [Word Cloud](references/marks/g2-mark-wordcloud.md) | [Liquid Chart](references/marks/g2-mark-liquid.md)
 
 ---
 
@@ -644,9 +644,9 @@ Data transformation is performed during the data loading stage and is configured
 | Type | Purpose |
 |------|------|
 | Tabular Data Format | Description of the standard tabular data format accepted by G2 |
-| Data Transform Patterns | Combination usage patterns of Data Transform and Mark Transform |
+| Data Transformation Patterns | Combined usage patterns of Data Transform and Mark Transform |
 
-> **Detailed Documentation**: [filter](references/data/g2-data-filter.md) | [sort](references/data/g2-data-sort.md) | [sortBy](references/data/g2-data-sortby.md) | [fold](references/data/g2-data-fold.md) | [slice](references/data/g2-data-slice.md) | [ema](references/data/g2-data-ema.md) | [kde](references/data/g2-data-kde.md) | [log](references/data/g2-data-log.md) | [fetch](references/data/g2-data-fetch.md) | [Tabular Data Format](references/data/g2-data-format-tabular.md) | [Data Transform Patterns](references/data/g2-data-transform-patterns.md)
+> **Detailed Documentation**: [filter](references/data/g2-data-filter.md) | [sort](references/data/g2-data-sort.md) | [sortBy](references/data/g2-data-sortby.md) | [fold](references/data/g2-data-fold.md) | [slice](references/data/g2-data-slice.md) | [ema](references/data/g2-data-ema.md) | [kde](references/data/g2-data-kde.md) | [log](references/data/g2-data-log.md) | [fetch](references/data/g2-data-fetch.md) | [Data Transformation Patterns](references/data/g2-data-transform-patterns.md)
 
 ### 7.3 Common Mistakes: Incorrect Placement of Data Transform
 
@@ -721,7 +721,7 @@ chart.options({
 
 ### 8.1 Anti-overlap Transformations
 
-| Transformation | Type | Usage |
+| Transformation | Type | Purpose |
 |------|------|------|
 | Stack | `stackY` | Data stacking, used for stacked charts |
 | Dodge | `dodgeX` | Data grouping, used for dodged charts |
@@ -804,9 +804,9 @@ G2 provides a rich set of built-in interactions for data exploration and chart m
 | Conditional Highlight | `elementHighlightBy` | Batch highlight elements based on conditions |
 | Hover Scale | `elementHoverScale` | Scale up elements on hover |
 | Legend Highlight | `legendHighlight` | Highlight corresponding elements on legend hover |
-| Brush Highlight | `brushXHighlight` / `brushYHighlight` | Highlight selected area |
+| Brush Highlight | `brushXHighlight` / `brushYHighlight` | Highlight elements within a brushed area |
 
-> **Detailed Documentation**: [elementHighlight](references/interactions/g2-interaction-element-highlight.md) | [elementHighlightBy](references/interactions/g2-interaction-element-highlight-by.md) | [elementHoverScale](references/interactions/g2-interaction-element-hover-scale.md) | [legendHighlight](references/interactions/g2-interaction-legend-highlight.md) | [brushXHighlight](references/interactions/g2-interaction-brushx-highlight.md) | [brushYHighlight](references/interactions/g2-interaction-brushy-highlight.md) | [Single-axis Brush Highlight](references/interactions/g2-interaction-brush-x-y-highlight.md)
+> **Detailed Documentation**: [elementHighlight](references/interactions/g2-interaction-element-highlight.md) | [elementHighlightBy](references/interactions/g2-interaction-element-highlight-by.md) | [elementHoverScale](references/interactions/g2-interaction-element-hover-scale.md) | [legendHighlight](references/interactions/g2-interaction-legend-highlight.md) | [brushXHighlight](references/interactions/g2-interaction-brushx-highlight.md) | [brushYHighlight](references/interactions/g2-interaction-brushy-highlight.md) | [Single-Axis Brush Highlight](references/interactions/g2-interaction-brush-x-y-highlight.md)
 
 ### 9.3 Filter Interactions / Filter
 
@@ -826,12 +826,12 @@ G2 provides a rich set of built-in interactions for data exploration and chart m
 | Interaction | Type | Purpose |
 |------|------|------|
 | Tooltip | `tooltip` | Display data details on hover |
-| PopTip | `poptip` | Concise pop-up tip |
-| Drilldown | `drilldown` | Hierarchical data drilldown |
-| Treemap Drilldown | `treemapDrilldown` | Treemap hierarchical drilldown |
-| Fisheye | `fisheye` | Fisheye magnifier effect |
-| Slider Wheel | `sliderWheel` | Mouse wheel controls slider |
-| Element Point Move | `elementPointMove` | Drag data point to move |
+| Pop-up Tip | `poptip` | Concise pop-up tip |
+| Drill Down | `drilldown` | Hierarchical data drill down |
+| Treemap Drill Down | `treemapDrilldown` | Treemap hierarchical drill down |
+| Zoom | `fisheye` | Fish-eye magnifier effect |
+| Scroll Wheel | `sliderWheel` | Mouse wheel controls the slider |
+| Drag and Move | `elementPointMove` | Drag data points to move |
 | Chart Index | `chartIndex` | Multi-chart linkage index line |
 
 > **Detailed Documentation**: [tooltip](references/interactions/g2-interaction-tooltip.md) | [poptip](references/interactions/g2-interaction-poptip.md) | [drilldown](references/interactions/g2-interaction-drilldown.md) | [treemapDrilldown](references/interactions/g2-interaction-treemap-drilldown.md) | [fisheye](references/interactions/g2-interaction-fisheye.md) | [sliderWheel](references/interactions/g2-interaction-slider-wheel.md) | [elementPointMove](references/interactions/g2-interaction-element-point-move.md) | [chartIndex](references/interactions/g2-interaction-chart-index.md)
@@ -854,8 +854,8 @@ The legend displays data categorization or continuous value mapping, supporting 
 
 | Type | Purpose |
 |------|------|
-| Categorical Legend | Color mapping explanation for discrete categorical data |
-| Continuous Legend | Color/size mapping explanation for continuous values (color ramp) |
+| Categorical Legend | Color mapping description for discrete categorical data |
+| Continuous Legend | Color/size mapping description for continuous values (color ramp) |
 
 > **Detailed Documentation**: [Legend Configuration](references/components/g2-comp-legend-config.md) | [Categorical Legend](references/components/g2-comp-legend-category.md) | [Continuous Legend](references/components/g2-comp-legend-continuous.md)
 
@@ -921,7 +921,7 @@ chart.options({
 | String Date | `time` | Date field is a string, not a Date object |
 | Custom Mapping | `ordinal` | Discrete to discrete mapping |
 | Gradient Color | `sequential` | Continuous values to color gradient |
-| Threshold Mapping | `threshold` | Mapping to colors based on thresholds |
+| Threshold Mapping | `threshold` | Mapping by threshold to colors |
 | Equal Interval Binning | `quantize` / `quantile` | Discretization of continuous data |
 
 ### 11.2 Scale Types
@@ -950,9 +950,9 @@ The coordinate system defines the mapping method from data to canvas positions, 
 | Coordinate System | Type | Usage |
 |-------------------|------|------|
 | Cartesian | `cartesian` | Rectangular coordinate system (default) |
-| Polar | `polar` | Radar chart, rose chart |
-| Theta | `theta` | Pie chart, donut chart |
-| Radial | `radial` | Radial coordinate system, gauge chart |
+| Polar | `polar` | Radar chart, Rose chart |
+| Theta | `theta` | Pie chart, Donut chart |
+| Radial | `radial` | Radial coordinate system, Gauge chart |
 | Transpose | `transpose` | X/Y axis swap |
 | Parallel | `parallel` | Parallel coordinate system |
 | Helix | `helix` | Helix coordinate system |
@@ -976,9 +976,9 @@ Composition views are used to create multi-chart layouts, such as facets, multi-
 | Space Flex | `spaceFlex` | Flexible layout |
 | Timing Keyframe | `timingKeyframe` | Animation sequence |
 | Geo View | `geoView` | Geographic coordinate system view |
-| Geo Path | `geoPath` | Geographic path rendering |
+| Geo Path | `geoPath` | Geographic path drawing |
 
-> **Detailed Documentation**: [view](references/compositions/g2-comp-view.md) | [facetRect](references/compositions/g2-comp-facet-rect.md) | [facetCircle](references/compositions/g2-comp-facet-circle.md) | [repeatMatrix](references/compositions/g2-comp-repeat-matrix.md) | [spaceLayer](references/compositions/g2-comp-space-layer.md) | [spaceFlex](references/compositions/g2-comp-space-flex.md) | [timingKeyframe](references/compositions/g2-comp-timing-keyframe.md) | [geoView](references/compositions/g2-comp-geoview.md) | [geoPath](references/compositions/g2-comp-geo-map.md)
+> **Detailed Documentation**: [view](references/compositions/g2-comp-view.md) | [facetRect](references/compositions/g2-comp-facet-rect.md) | [facetCircle](references/compositions/g2-comp-facet-circle.md) | [repeatMatrix](references/compositions/g2-comp-repeat-matrix.md) | [spaceLayer](references/compositions/g2-comp-space-layer.md) | [spaceFlex](references/compositions/g2-comp-space-flex.md) | [timingKeyframe](references/compositions/g2-comp-timing-keyframe.md) | [geoView](references/compositions/g2-comp-geoview.md) | [Geo Path](references/compositions/g2-comp-geo-map.md)
 
 ---
 
@@ -1002,7 +1002,7 @@ Palettes define color sequences, used for color mapping of categorical or contin
 
 Animations enhance the expressiveness of charts, supporting entrance, update, and exit animation configurations.
 
-**⚠️ Important Rule**: G2 comes with default animation effects at the underlying level. **Do not** add `animate` configurations unless the user explicitly requests animations. Only when the user clearly describes animation requirements (e.g., "fade-in animation", "wave entrance", etc.) should you refer to the documentation and add the corresponding `animate` configuration.
+**⚠️ Important Rule**: G2 comes with default animation effects at its core. **Do not** add `animate` configurations unless the user explicitly requests animations. Only when the user clearly describes animation requirements (e.g., "fade-in animation," "wave entrance," etc.) should you refer to the documentation and add the corresponding animate configuration.
 
 > **Detailed Documentation**: [Animation Introduction](references/animations/g2-animation-intro.md) | [Animation Types](references/animations/g2-animation-types.md) | [Keyframe Animations](references/animations/g2-animation-keyframe.md)
 
@@ -1046,12 +1046,12 @@ Patterns are best practices for common scenarios, including migration guides, pe
 Data pre-aggregation, LTTB downsampling, Canvas renderer confirmation, high-frequency real-time data throttling updates.
 
 | Scenario | Data Volume | Recommended Solution |
-|----------|------------------|---------------------|
+|----------|----------------|---------------------|
 | Line Chart | < 1,000 points | Direct rendering |
 | Line Chart | 1,000 ~ 10,000 points | Downsample to within 500 points |
 | Line Chart | > 10,000 points | Backend aggregation + time range filtering |
-| Scatter Chart | < 5,000 points | Direct rendering |
-| Scatter Chart | 5,000 ~ 50,000 points | Canvas rendering + downsampling |
+| Scatter Plot | < 5,000 points | Direct rendering |
+| Scatter Plot | 5,000 ~ 50,000 points | Canvas rendering + downsampling |
 
 > **Detailed Documentation**: [Performance Optimization](references/patterns/g2-pattern-performance.md)
 

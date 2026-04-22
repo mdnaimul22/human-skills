@@ -1,17 +1,15 @@
 ---
 id: "g2-comp-legend-category"
-title: "G2 分类图例（LegendCategory）"
+title: "G2 Category Legend (LegendCategory)"
 description: |
-  分类图例组件，用于展示离散类别的图例项。
-  是最常用的图例类型，适用于分类数据的可视化。
+  Category legend component, used to display discrete category legend items.
+  It is the most commonly used legend type, suitable for the visualization of categorical data.
 
 library: "g2"
 version: "5.x"
 category: "components"
 tags:
-  - "图例"
   - "legend"
-  - "分类"
   - "category"
 
 related:
@@ -20,12 +18,12 @@ related:
   - "g2-interaction-legend-filter"
 
 use_cases:
-  - "柱状图的分类图例"
-  - "折线图的系列图例"
-  - "散点图的分组图例"
+  - "Category legend for bar charts"
+  - "Series legend for line charts"
+  - "Group legend for scatter plots"
 
 anti_patterns:
-  - "连续数据应使用连续图例（LegendContinuous）"
+  - "Continuous data should use continuous legend (LegendContinuous)"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,19 +33,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/component/legend"
 ---
 
-## 核心概念
+## Core Concepts
 
-LegendCategory 是分类图例组件：
-- 显示离散类别的图例项
-- 每项包含图标和标签
-- 支持交互（点击筛选、hover 高亮）
+LegendCategory is a categorical legend component:
+- Displays discrete category legend items
+- Each item contains an icon and a label
+- Supports interactions (click to filter, hover to highlight)
 
-**特点：**
-- 自动从 color/shape 通道推断
-- 支持水平和垂直布局
-- 支持自定义图标
+**Features:**
+- Automatically infers from color/shape channels
+- Supports horizontal and vertical layouts
+- Supports custom icons
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -84,9 +82,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 垂直布局
+### Vertical Layout
 
 ```javascript
 chart.options({
@@ -104,7 +102,7 @@ chart.options({
 });
 ```
 
-### 自定义标签格式
+### Custom Label Format
 
 ```javascript
 chart.options({
@@ -113,13 +111,13 @@ chart.options({
   encode: { x: 'category', y: 'value', color: 'type' },
   legend: {
     color: {
-      labelFormatter: (val) => `类型: ${val}`,
+      labelFormatter: (val) => `Type: ${val}`,
     },
   },
 });
 ```
 
-### 添加标题
+### Add Title
 
 ```javascript
 chart.options({
@@ -128,14 +126,14 @@ chart.options({
   encode: { x: 'category', y: 'value', color: 'type' },
   legend: {
     color: {
-      title: '类型',
+      title: 'Type',
       position: 'top',
     },
   },
 });
 ```
 
-### 自定义图标
+### Customizing Chart Icons
 
 ```javascript
 chart.options({
@@ -151,7 +149,7 @@ chart.options({
 });
 ```
 
-### 网格布局
+### Grid Layout
 
 ```javascript
 chart.options({
@@ -160,14 +158,14 @@ chart.options({
   encode: { x: 'category', y: 'value', color: 'type' },
   legend: {
     color: {
-      cols: 3,  // 每行显示 3 项
+      cols: 3,  // Display 3 items per row
       layout: { justifyContent: 'center' },
     },
   },
 });
 ```
 
-### 禁用交互
+### Disable Interaction
 
 ```javascript
 chart.options({
@@ -180,75 +178,75 @@ chart.options({
     },
   },
   interaction: {
-    legendFilter: false,  // 禁用点击筛选
+    legendFilter: false,  // Disable click filtering
   },
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface LegendCategoryOptions {
-  // 位置和布局
+  // Position and Layout
   position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
   layout?: {
     flexDirection?: 'row' | 'column';
     justifyContent?: 'flex-start' | 'center' | 'flex-end';
     flexWrap?: 'wrap' | 'nowrap';
   };
-  cols?: number;  // 网格布局列数
+  cols?: number;  // Number of columns in grid layout
 
-  // 标题
+  // Title
   title?: string | string[];
 
-  // 图标
+  // Icon
   itemMarker?: string | ((id: any, index: number) => string);
   itemMarkerSize?: number;
   itemMarkerLineWidth?: number;
   itemSpacing?: number;
 
-  // 标签
+  // Label
   labelFormatter?: string | ((val: any) => string);
   maxItemWidth?: number;
 
-  // 样式
+  // Style
   style?: {
     fill?: string;
     fontSize?: number;
-    // 更多样式...
+    // More styles...
   };
 
-  // 其他
+  // Other
   dx?: number;
   dy?: number;
 }
 ```
 
-## 与连续图例的区别
+## Differences from Continuous Legends
 
-| 特性 | 分类图例 | 连续图例 |
+| Feature | Categorical Legend | Continuous Legend |
 |------|---------|---------|
-| 数据类型 | 离散类别 | 连续数值 |
-| 显示方式 | 图标 + 标签列表 | 色带 + 刻度 |
-| 交互 | 点击筛选 | 无筛选 |
-| 适用场景 | 分类数据 | 数值映射 |
+| Data Type | Discrete Categories | Continuous Values |
+| Display Method | Icon + Label List | Color Ramp + Scale |
+| Interaction | Click to Filter | No Filtering |
+| Applicable Scenarios | Categorical Data | Numerical Mapping |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：position 参数错误
+### Error 1: Incorrect `position` Parameter
 
 ```javascript
-// ❌ 错误：position 应该是预定义值
+// ❌ Incorrect: `position` should be a predefined value
 legend: { color: { position: 'top-left' } }
 
-// ✅ 正确
+// ✅ Correct
 legend: { color: { position: 'top' } }
 ```
 
-### 错误 2：未映射 color 通道
+### Error 2: Unmapped Color Channel
 
 ```javascript
-// ❌ 错误：没有 color 通道，图例不会显示
+// ❌ Incorrect: No color channel, legend will not display
 chart.options({
   type: 'interval',
   data,
@@ -256,7 +254,7 @@ chart.options({
   legend: { color: { position: 'top' } },
 });
 
-// ✅ 正确：添加 color 通道
+// ✅ Correct: Add color channel
 chart.options({
   type: 'interval',
   data,
@@ -265,14 +263,14 @@ chart.options({
 });
 ```
 
-### 错误 3：itemMarker 类型错误
+### Error 3: Incorrect itemMarker Type
 
 ```javascript
-// ❌ 错误：itemMarker 应该是预定义形状名或函数
+// ❌ Error: itemMarker should be a predefined shape name or a function
 legend: { color: { itemMarker: 'triangle-up' } }
 
-// ✅ 正确：使用支持的形状
+// ✅ Correct: Use a supported shape
 legend: { color: { itemMarker: 'triangle' } }
-// 或
+// or
 legend: { color: { itemMarker: (id, i) => i === 0 ? 'circle' : 'square' } }
 ```

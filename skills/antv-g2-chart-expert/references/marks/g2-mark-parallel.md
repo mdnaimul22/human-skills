@@ -2,30 +2,30 @@
 id: "g2-mark-parallel"
 title: "G2 Parallel Coordinates Mark"
 description: |
-  平行坐标系 Mark。使用 line 标记配合 parallel 坐标系，展示多维数据之间的关系。
-  适用于多维数据关系分析、数据聚类识别等场景。
+  Parallel Coordinates Mark. Uses the line mark in conjunction with the parallel coordinate system to display relationships between multi-dimensional data.
+  Suitable for scenarios such as multi-dimensional data relationship analysis and data clustering identification.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "平行坐标系"
+  - "Parallel Coordinates"
   - "parallel"
-  - "多维数据"
-  - "关系分析"
+  - "Multi-dimensional Data"
+  - "Relationship Analysis"
 
 related:
   - "g2-mark-radar"
   - "g2-mark-sankey"
 
 use_cases:
-  - "多维数据关系分析"
-  - "数据聚类识别"
-  - "特征工程"
+  - "Multi-dimensional Data Relationship Analysis"
+  - "Data Clustering Identification"
+  - "Feature Engineering"
 
 anti_patterns:
-  - "维度 <3 应使用散点图"
-  - "数据量过大（>1000）不适合"
+  - "Dimensions < 3 should use scatter plots"
+  - "Not suitable for large datasets (>1000)"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,19 +35,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/parallel"
 ---
 
-## 核心概念
+## Core Concepts
 
-平行坐标系展示多维数据关系：
-- 使用 `line` 标记
-- 配合 `parallel` 坐标系
-- 每条线代表一个数据记录的多个维度值
+Parallel coordinate systems display multi-dimensional data relationships:
+- Use `line` marks
+- Combined with `parallel` coordinate systems
+- Each line represents multiple dimension values of a data record
 
-**关键特点：**
-- 每个轴代表不同维度
-- 轴之间没有因果关系
-- 轴顺序可以调整
+**Key Features:**
+- Each axis represents a different dimension
+- There is no causal relationship between axes
+- Axis order can be adjusted
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -83,9 +83,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 水平布局
+### Horizontal Layout
 
 ```javascript
 chart.options({
@@ -101,7 +101,7 @@ chart.options({
 });
 ```
 
-### 带交互刷选
+### With Interactive Brushing
 
 ```javascript
 chart.options({
@@ -122,7 +122,7 @@ chart.options({
 });
 ```
 
-### 平滑曲线
+### Smooth Curve
 
 ```javascript
 chart.options({
@@ -132,12 +132,12 @@ chart.options({
   encode: {
     position: ['A', 'B', 'C'],
     color: 'category',
-    shape: 'smooth',  // 平滑曲线
+    shape: 'smooth',  // Smooth Curve
   },
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface ParallelOptions {
@@ -147,8 +147,8 @@ interface ParallelOptions {
     transform?: [{ type: 'transpose' }];
   };
   encode: {
-    position: string[];  // 多个维度字段
-    color?: string;      // 分类字段
+    position: string[];  // Multiple dimension fields
+    color?: string;      // Categorical field
   };
   style: {
     lineWidth?: number;
@@ -157,39 +157,39 @@ interface ParallelOptions {
 }
 ```
 
-## 平行坐标 vs 折线图
+## Parallel Coordinates vs. Line Chart
 
-| 特性 | 平行坐标系 | 折线图 |
+| Feature | Parallel Coordinates | Line Chart |
 |------|------------|--------|
-| 用途 | 多维关系 | 时间趋势 |
-| 轴含义 | 不同维度 | 时间序列 |
-| 线含义 | 一条记录 | 一个指标 |
+| Use Case | Multi-dimensional Relationships | Time Trends |
+| Axis Meaning | Different Dimensions | Time Series |
+| Line Meaning | One Record | One Metric |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：使用错误坐标系
+### Error 1: Using the Wrong Coordinate System
 
 ```javascript
-// ❌ 问题：使用默认坐标系
+// ❌ Problem: Using the default coordinate system
 coordinate: {}
 
-// ✅ 正确：使用 parallel 坐标系
+// ✅ Correct: Using the parallel coordinate system
 coordinate: { type: 'parallel' }
 ```
 
-### 错误 2：position 编码错误
+### Error 2: Incorrect position encoding
 
 ```javascript
-// ❌ 问题：使用 x/y 编码
+// ❌ Problem: Using x/y encoding
 encode: { x: 'dim1', y: 'dim2' }
 
-// ✅ 正确：使用 position 数组
+// ✅ Correct: Using position array
 encode: { position: ['dim1', 'dim2', 'dim3'] }
 ```
 
-### 错误 3：维度过少
+### Error 3: Insufficient Dimensions
 
 ```javascript
-// ⚠️ 注意：维度数量建议 >= 4
-// 2-3 个维度应使用散点图
+// ⚠️ Note: It is recommended to have >= 4 dimensions
+// 2-3 dimensions should use a scatter plot
 ```

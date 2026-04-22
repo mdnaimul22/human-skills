@@ -1,21 +1,20 @@
 ---
 id: "g2-mark-treemap"
-title: "G2 矩形树图（treemap）"
+title: "G2 Treemap"
 description: |
-  G2 v5 内置 treemap Mark，用矩形面积表示层级数据中各节点的占比，
-  数据采用嵌套的 children 树形结构，通过 encode.value 映射叶节点数值，
-  支持多种 tile 布局算法和层级钻取交互。
+  G2 v5 comes with a built-in treemap Mark, which uses rectangular areas to represent the proportion of each node in hierarchical data.
+  The data adopts a nested children tree structure, and leaf node values are mapped via encode.value.
+  It supports various tile layout algorithms and hierarchical drill-down interactions.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "矩形树图"
   - "treemap"
-  - "层级数据"
-  - "占比"
+  - "hierarchical data"
+  - "proportion"
   - "hierarchy"
-  - "树形"
+  - "tree"
   - "spec"
 
 related:
@@ -24,9 +23,9 @@ related:
   - "g2-core-chart-init"
 
 use_cases:
-  - "展示文件目录/磁盘占用大小"
-  - "产品类别的销售额占比（多层级）"
-  - "证券市场板块涨跌热力图"
+  - "Displaying file directory/disk usage size"
+  - "Sales proportion by product category (multi-level)"
+  - "Stock market sector heatmap of gains and losses"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,7 +35,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/graph/hierarchy/#treemap"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -47,27 +46,27 @@ const chart = new Chart({
   height: 500,
 });
 
-// 树形嵌套数据
+// Hierarchical nested data
 const data = {
   name: 'root',
   children: [
     {
-      name: '技术',
+      name: 'Technology',
       children: [
-        { name: '前端', value: 120 },
-        { name: '后端', value: 180 },
-        { name: '算法', value: 80 },
+        { name: 'Frontend', value: 120 },
+        { name: 'Backend', value: 180 },
+        { name: 'Algorithm', value: 80 },
       ],
     },
     {
-      name: '产品',
+      name: 'Product',
       children: [
-        { name: '移动端', value: 95 },
+        { name: 'Mobile', value: 95 },
         { name: 'Web', value: 60 },
       ],
     },
     {
-      name: '设计',
+      name: 'Design',
       children: [
         { name: 'UI', value: 70 },
         { name: 'UX', value: 45 },
@@ -82,11 +81,11 @@ chart.options({
     value: data
   },
   encode: {
-    value: 'value',   // 叶节点数值字段
+    value: 'value',   // Leaf node value field
   },
   layout: {
-    tile: 'treemapSquarify',    // 布局算法（默认）
-    paddingInner: 2,            // 矩形间距
+    tile: 'treemapSquarify',    // Layout algorithm (default)
+    paddingInner: 2,            // Rectangle spacing
   },
   style: {
     labelText: (d) => d.data?.name || '',
@@ -100,31 +99,31 @@ chart.options({
 chart.render();
 ```
 
-## 数据配置形式说明
+## Data Configuration Format Explanation
 
-**为什么 treemap 使用 ` { value: data }` 而不是 `data`？**
+**Why does treemap use `{ value: data }` instead of `data`?**
 
-层次数据是**对象**（包含 name/children），不是数组，必须使用完整形式：
+Hierarchical data is an **object** (containing name/children), not an array, and must use the full form:
 
 ```javascript
-// ❌ 错误：层次数据不是数组，不能用简写
+// ❌ Error: Hierarchical data is not an array, cannot use shorthand
 chart.options({
   type: 'treemap',
-  data: hierarchyData,  // ❌ 不工作
+  data: hierarchyData,  // ❌ Does not work
 });
 
-// ✅ 正确：层次数据必须用完整形式
+// ✅ Correct: Hierarchical data must use the full form
 chart.options({
   type: 'treemap',
   data: { value: hierarchyData },  // ✅
 });
 ```
 
-**简写形式仅适用于数组数据**（满足三个条件：内联、是数组、无 transform）。
+**Shorthand form is only applicable to array data** (meeting three conditions: inline, is an array, and has no transform).
 
 ---
 
-## 完整配置项
+## Complete Configuration Options
 
 ```javascript
 chart.options({
@@ -133,28 +132,28 @@ chart.options({
     value: hierarchicalData
   },
   encode: {
-    value: 'value',   // 叶节点数值字段（决定矩形面积）
+    value: 'value',   // Leaf node value field (determines rectangle area)
   },
   layout: {
-    // tile 算法选择：
-    // 'treemapSquarify'（默认，接近正方形）
-    // 'treemapBinary'（二叉分割）
-    // 'treemapDice'（横向分割）
-    // 'treemapSlice'（纵向分割）
-    // 'treemapSliceDice'（交替分割）
+    // Tile algorithm selection:
+    // 'treemapSquarify' (default, close to square)
+    // 'treemapBinary' (binary partition)
+    // 'treemapDice' (horizontal partition)
+    // 'treemapSlice' (vertical partition)
+    // 'treemapSliceDice' (alternating partition)
     tile: 'treemapSquarify',
-    paddingInner: 2,      // 同层矩形间距（px）
-    paddingOuter: 4,      // 外边距
-    paddingTop: 20,       // 顶部留白（用于父节点标签）
-    ratio: 1.618,         // 黄金比例（treemapSquarify 专用）
-    ignoreParentValue: true,  // 忽略父节点自身 value
+    paddingInner: 2,      // Spacing between rectangles at the same level (px)
+    paddingOuter: 4,      // Outer margin
+    paddingTop: 20,       // Top padding (for parent node labels)
+    ratio: 1.618,         // Golden ratio (treemapSquarify specific)
+    ignoreParentValue: true,  // Ignore parent node's own value
   },
   style: {
-    // 矩形标签
+    // Rectangle labels
     labelText: (d) => d.data?.name,
     labelFill: '#fff',
     labelFontSize: 12,
-    labelPosition: 'top-left',  // 标签位置
+    labelPosition: 'top-left',  // Label position
     fillOpacity: 0.8,
     stroke: '#fff',
     lineWidth: 1,
@@ -162,7 +161,7 @@ chart.options({
 });
 ```
 
-## 多层级标签（父节点 + 叶节点）
+## Multi-Level Labels (Parent Node + Leaf Node)
 
 ```javascript
 chart.options({
@@ -174,15 +173,15 @@ chart.options({
   layout: {
     tile: 'treemapSquarify',
     paddingInner: 3,
-    paddingTop: 24,       // 为父节点标题留空间
+    paddingTop: 24,       // Reserve space for parent node titles
   },
   style: {
-    // 叶节点显示名称
+    // Display name for leaf nodes
     labelText: (d) => {
-      // path 是从根到当前节点的路径数组
+      // path is the array path from root to current node
       return d.depth > 1 ? d.data?.name : '';
     },
-    // 父节点（depth=1）用大标签
+    // Use large labels for parent nodes (depth=1)
     labelFontSize: (d) => d.depth === 1 ? 14 : 11,
     labelFontWeight: (d) => d.depth === 1 ? 'bold' : 'normal',
     labelFill: '#fff',
@@ -191,25 +190,25 @@ chart.options({
 });
 ```
 
-## 股票板块热力图（市场涨跌）
+## Stock Sector Heatmap (Market Rise and Fall)
 
 ```javascript
 const marketData = {
-  name: 'A股',
+  name: 'A-shares',
   children: [
     {
-      name: '科技',
+      name: 'Technology',
       children: [
-        { name: '华为', value: 1200, change: 3.5 },
-        { name: '腾讯', value: 980,  change: -1.2 },
-        { name: '阿里', value: 850,  change: 0.8 },
+        { name: 'Huawei', value: 1200, change: 3.5 },
+        { name: 'Tencent', value: 980,  change: -1.2 },
+        { name: 'Alibaba', value: 850,  change: 0.8 },
       ],
     },
     {
-      name: '金融',
+      name: 'Finance',
       children: [
-        { name: '工行', value: 2100, change: 1.1 },
-        { name: '建行', value: 1800, change: -0.5 },
+        { name: 'ICBC', value: 2100, change: 1.1 },
+        { name: 'CCB', value: 1800, change: -0.5 },
       ],
     },
   ],
@@ -222,13 +221,13 @@ chart.options({
   },
   encode: {
     value: 'value',
-    // 颜色按涨跌幅映射
+    // Color mapped by rise and fall percentage
     color: (d) => d.data?.change ?? 0,
   },
   scale: {
     color: {
       type: 'diverging',
-      palette: 'RdYlGn',      // 红（跌）→ 黄（平）→ 绿（涨）
+      palette: 'RdYlGn',      // Red (fall) → Yellow (flat) → Green (rise)
       domain: [-5, 0, 5],
     },
   },
@@ -244,20 +243,20 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：数据格式非树形结构
+### Error 1: Data Format is Not a Tree Structure
 
 ```javascript
-// ❌ 错误：treemap 需要树形嵌套数据，不能用平坦数组
+// ❌ Incorrect: Treemap requires nested tree data, not a flat array
 chart.options({
   type: 'treemap',
   data: [
-    { name: '前端', value: 120, parent: '技术' },   // ❌ 平坦格式
+    { name: 'Frontend', value: 120, parent: 'Technology' },   // ❌ Flat format
   ],
 });
 
-// ✅ 正确：需要 children 嵌套结构
+// ✅ Correct: Requires children nested structure
 chart.options({
   type: 'treemap',
   data: {
@@ -265,9 +264,9 @@ chart.options({
       name: 'root',
       children: [
         {
-          name: '技术',
+          name: 'Technology',
           children: [
-            { name: '前端', value: 120 },   // ✅ 叶节点有 value
+            { name: 'Frontend', value: 120 },   // ✅ Leaf nodes have value
           ],
         },
       ],
@@ -277,101 +276,101 @@ chart.options({
 });
 ```
 
-### 错误 2：encode.value 字段名与数据不匹配
+### Error 2: Mismatch Between `encode.value` Field Name and Data
 
 ```javascript
-// ❌ 错误：数据中叶节点字段是 size，但 encode.value 写的是 value
+// ❌ Error: The leaf node field in the data is `size`, but `encode.value` is set to `value`
 const data = {
   value: { name: 'root', children: [{ name: 'A', size: 100 }] }
- };
+};
 chart.options({
-  encode: { value: 'value' },   // ❌ 字段名不匹配
+  encode: { value: 'value' },   // ❌ Field name mismatch
 });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({
-  encode: { value: 'size' },    // ✅ 与数据字段一致
+  encode: { value: 'size' },    // ✅ Matches the data field
 });
 ```
 
 ---
 
-## 节点数据访问规则（重要！）
+## Node Data Access Rules (Important!)
 
-层次结构图中，回调函数接收到的参数 `d` **不是原始数据对象**，而是 G2 用 d3-hierarchy 包装后的层次节点，**原始数据在 `d.data` 中**。
+In the hierarchical chart, the parameter `d` received by the callback function **is not the original data object**, but rather a hierarchical node wrapped by G2 using d3-hierarchy. **The original data is stored in `d.data`**.
 
-### 为什么 `encode.color: 'growth'` 不起作用？
+### Why Doesn’t `encode.color: 'growth'` Work?
 
-**根本原因**：当 encode 是字符串时，G2 内部做的是 `datum[fieldName]`，直接访问节点对象的属性。对于层次 mark，`datum` 是层次节点（hierarchy node），不是原始数据对象：
+**Root Cause**: When `encode` is a string, G2 internally performs `datum[fieldName]`, directly accessing the node object's property. For hierarchical marks, `datum` is a hierarchy node, not the original data object:
 
 ```
-d['growth']        → undefined  ❌（层次节点没有 growth 属性）
-d.data['growth']   → 3.5        ✅（原始数据在 d.data 上）
+d['growth']        → undefined  ❌ (Hierarchy node does not have the 'growth' property)
+d.data['growth']   → 3.5        ✅ (Original data is on `d.data`)
 ```
 
-**特例**：`encode.value: 'value'` 看起来用字符串也能工作，是因为 G2 对层次 mark 的 `value` 通道做了**专项处理**，直接读取节点的 `value` 属性（d3-hierarchy 计算后的值）。其他通道（`color`、`shape` 等）没有这个特殊处理，字符串会直接 `datum[field]` 导致 `undefined`。
+**Special Case**: `encode.value: 'value'` appears to work with a string because G2 applies **special handling** to the `value` channel for hierarchical marks, directly reading the node's `value` property (computed by d3-hierarchy). Other channels (`color`, `shape`, etc.) lack this special handling, causing the string to directly access `datum[field]`, resulting in `undefined`.
 
 ```javascript
-// ❌ encode.color: 'growth' 的内部执行等价于：
-const color = datum['growth']  // datum 是层次节点，'growth' 不在节点上 → undefined
-// 结果：所有矩形使用相同颜色
+// ❌ Internal execution equivalent to `encode.color: 'growth'`:
+const color = datum['growth']  // datum is a hierarchy node, 'growth' is not on the node → undefined
+// Result: All rectangles use the same color
 
-// ✅ 使用回调才能正确访问：
-const color = datum.data?.['growth']  // datum.data 才是原始数据对象
+// ✅ Callback is required for correct access:
+const color = datum.data?.['growth']  // datum.data is the original data object
 ```
 
-### 回调参数 d 的结构
+### Structure of Callback Parameter d
 
 ```javascript
-// d 是 d3-hierarchy 节点，结构如下：
+// d is a d3-hierarchy node with the following structure:
 {
-  value: 100,              // 节点数值（d3 计算的叶子值之和）
-  depth: 2,                // 层级深度（0 = 根节点）
-  height: 0,               // 子树高度（叶子节点为 0）
-   {                  // ← 原始数据在这里！
-    name: '前端',
+  value: 100,              // Node value (sum of leaf values calculated by d3)
+  depth: 2,                // Hierarchy depth (0 = root node)
+  height: 0,               // Subtree height (0 for leaf nodes)
+  data: {                  // ← Original data is here!
+    name: 'Frontend',
     value: 120,
     growth: 3.5,
-    // ... 其它自定义字段
+    // ... other custom fields
   },
-  path: ['root', '技术', '前端'],  // 从根到当前节点的路径
+  path: ['root', 'Technology', 'Frontend'],  // Path from root to current node
 }
 ```
 
-### encode 中访问字段
+### Accessing Fields in encode
 
 ```javascript
-// ❌ 错误：字符串字段名对 color/shape 等通道不起作用，返回 undefined
+// ❌ Incorrect: String field names do not work for channels like color/shape, return undefined
 encode: {
-  value: 'value',   // ✅ value 通道有专项处理，字符串可用
-  color: 'growth',  // ❌ 等价于 d['growth'] = undefined，所有矩形颜色相同
+  value: 'value',   // ✅ value channel has special handling, strings are valid
+  color: 'growth',  // ❌ Equivalent to d['growth'] = undefined, all rectangles have the same color
 }
 
-// ✅ 正确：除 value 外的所有通道必须用回调函数
+// ✅ Correct: All channels except value must use callback functions
 encode: {
   value: 'value',
-  color: (d) => d.data?.growth,  // ✅ 通过 d.data 访问原始字段
+  color: (d) => d.data?.growth,  // ✅ Access the original field via d.data
 }
 ```
 
-### 常用着色策略
+### Common Coloring Strategies
 
 ```javascript
-// 按父节点着色（推荐，同门类同色，视觉分组清晰）
+// Color by parent node (recommended, same category same color, clear visual grouping)
 color: (d) => d.path?.[1] || d.data?.name
 
-// 按层级深度着色
+// Color by depth level
 color: (d) => d.depth
 
-// 按自定义字段着色
+// Color by custom field
 color: (d) => d.data?.growth
 color: (d) => d.data?.category
 
-// 按数值着色（连续色板）
+// Color by value (continuous color palette)
 color: (d) => d.value
 ```
 
-### 配合 scale 自定义颜色
+### Customizing Colors with Scale
 
 ```javascript
 encode: {
@@ -387,39 +386,39 @@ scale: {
 }
 ```
 
-### 错误 3：encode.color 使用字符串字段名导致所有矩形颜色相同
+### Error 3: Using String Field Name in encode.color Causes All Rectangles to Have the Same Color
 
 ```javascript
-// ❌ 错误：color: 'growth' 等价于 d['growth']，层次节点上没有 growth 属性 → undefined
+// ❌ Incorrect: color: 'growth' is equivalent to d['growth'], hierarchy nodes do not have a 'growth' property → undefined
 chart.options({
   type: 'treemap',
   data: { value: data },
   encode: {
     value: 'value',
-    color: 'growth',  // ❌ d['growth'] = undefined → 所有矩形显示相同颜色
+    color: 'growth',  // ❌ d['growth'] = undefined → all rectangles display the same color
   },
 });
 
-// ✅ 正确：color 必须用回调函数，通过 d.data 访问原始字段
+// ✅ Correct: color must use a callback function to access the original field via d.data
 chart.options({
   type: 'treemap',
   data: { value: data },
   encode: {
     value: 'value',
-    color: (d) => d.data?.growth,  // ✅ 按涨跌幅着色
+    color: (d) => d.data?.growth,  // ✅ Color by growth rate
   },
 });
 ```
 
-### 错误 4：labels/style 中使用 d.name 导致 undefined
+### Error 4: Using `d.name` in `labels/style` results in `undefined`
 
 ```javascript
-// ❌ 错误：treemap 节点的原始字段在 d.data 中，d.name 是 undefined
+// ❌ Error: The original field of the treemap node is in `d.data`, `d.name` is undefined
 style: {
-  labelText: (d) => d.name,  // ❌ d.name 是 undefined
+  labelText: (d) => d.name,  // ❌ `d.name` is undefined
 }
 
-// ✅ 正确：通过 d.data 访问原始数据字段
+// ✅ Correct: Access the original data field through `d.data`
 style: {
   labelText: (d) => d.data?.name || '',  // ✅
 }

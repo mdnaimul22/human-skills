@@ -1,20 +1,18 @@
 ---
 id: "g2-mark-arc-pie"
-title: "G2 饼图（Interval + theta 坐标系）"
+title: "G2 Pie Chart (Interval + theta Coordinate System)"
 description: |
-  使用 Interval Mark 配合 theta 坐标系和 stackY 变换创建饼图，
-  展示各部分在整体中的占比关系。本文采用 Spec 模式（chart.options({})）。
+  Create a pie chart using Interval Mark with the theta coordinate system and stackY transform,
+  to display the proportion of each part in the whole. This article uses the Spec mode (chart.options({})).
 
 library: "g2"
 version: "5.x"
 category: "marks"
 subcategory: "arc"
 tags:
-  - "饼图"
   - "pie chart"
-  - "占比"
-  - "比例"
-  - "theta坐标系"
+  - "proportion"
+  - "theta coordinate system"
   - "stackY"
   - "spec"
 
@@ -25,14 +23,14 @@ related:
   - "g2-interaction-tooltip"
 
 use_cases:
-  - "展示各类别占总量的比例"
-  - "显示市场份额分布"
-  - "可视化资源分配比例"
+  - "Display the proportion of each category to the total"
+  - "Show market share distribution"
+  - "Visualize resource allocation proportions"
 
 anti_patterns:
-  - "类别超过 6-7 个时饼图难以阅读，改用柱状图"
-  - "需要精确比较数值时不适用（人眼对角度判断不准确）"
-  - "有零值或负值时饼图无意义"
+  - "Pie charts are difficult to read when there are more than 6-7 categories, use bar charts instead"
+  - "Not suitable for precise numerical comparisons (human eyes are inaccurate at judging angles)"
+  - "Pie charts are meaningless when there are zero or negative values"
 
 difficulty: "beginner"
 completeness: "full"
@@ -41,16 +39,15 @@ updated: "2025-03-01"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/pie"
 ---
+## Core Concepts
 
-## 核心概念
+Spec structure for G2 v5 pie chart:
+- `coordinate: { type: 'theta' }` — Transforms Cartesian coordinates into circular angle coordinates
+- `transform: [{ type: 'stackY' }]` — Accumulates categorical values into angle ranges (**required**)
+- `encode.y` — Maps numerical fields (angle size)
+- `encode.color` — Maps categorical fields (sector color)
 
-G2 v5 饼图的 Spec 结构：
-- `coordinate: { type: 'theta' }` — 将直角坐标转换为圆形角度坐标
-- `transform: [{ type: 'stackY' }]` — 将各分类数值累积为角度区间（**必须**）
-- `encode.y` — 映射数值字段（角度大小）
-- `encode.color` — 映射分类字段（扇区颜色）
-
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -64,18 +61,18 @@ const chart = new Chart({
 chart.options({
   type: 'interval',
   data: [
-    { type: '分类一', value: 27 },
-    { type: '分类二', value: 25 },
-    { type: '分类三', value: 18 },
-    { type: '分类四', value: 15 },
-    { type: '分类五', value: 10 },
-    { type: '其他',   value: 5  },
+    { type: 'Category One', value: 27 },
+    { type: 'Category Two', value: 25 },
+    { type: 'Category Three', value: 18 },
+    { type: 'Category Four', value: 15 },
+    { type: 'Category Five', value: 10 },
+    { type: 'Others', value: 5 },
   ],
   encode: {
-    y: 'value',       // 映射数值字段（决定扇区角度大小）
-    color: 'type',    // 映射分类字段（决定扇区颜色）
+    y: 'value',       // Maps numerical field (determines sector angle size)
+    color: 'type',    // Maps categorical field (determines sector color)
   },
-  transform: [{ type: 'stackY' }],   // 必须：将 y 值转换为角度区间
+  transform: [{ type: 'stackY' }],   // Required: Converts y values to angle ranges
   coordinate: { type: 'theta', outerRadius: 0.8 },
   legend: {
     color: { position: 'bottom', layout: { justifyContent: 'center' } },
@@ -92,17 +89,17 @@ chart.options({
 chart.render();
 ```
 
-## 带百分比标签的饼图
+## Pie Chart with Percentage Labels
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = [
-  { type: '分类一', value: 27 },
-  { type: '分类二', value: 25 },
-  { type: '分类三', value: 18 },
-  { type: '分类四', value: 15 },
-  { type: '其他',   value: 15 },
+  { type: 'Category One', value: 27 },
+  { type: 'Category Two', value: 25 },
+  { type: 'Category Three', value: 18 },
+  { type: 'Category Four', value: 15 },
+  { type: 'Other', value: 15 },
 ];
 const total = data.reduce((sum, d) => sum + d.value, 0);
 
@@ -126,7 +123,7 @@ chart.options({
 chart.render();
 ```
 
-## 环形图（Donut）
+## Donut Chart (Donut)
 
 ```javascript
 chart.options({
@@ -137,56 +134,56 @@ chart.options({
   coordinate: {
     type: 'theta',
     outerRadius: 0.8,
-    innerRadius: 0.5,    // 设置内径即为环形图
+    innerRadius: 0.5,    // Setting the inner radius creates a donut chart
   },
 });
 ```
 
-## 玫瑰图（极坐标柱状图）
+## Rose Chart (Polar Coordinate Bar Chart)
 
 ```javascript
-// 极坐标下每个扇区角度相同，半径由数值决定
+// In polar coordinates, each sector has the same angle, and the radius is determined by the value
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'type', y: 'value', color: 'type' },
-  coordinate: { type: 'polar' },   // 注意：玫瑰图用 polar，不用 theta
+  coordinate: { type: 'polar' },   // Note: Use polar for rose charts, not theta
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：忘记 transform stackY
+### Error 1: Forgetting to transform stackY
 ```javascript
-// ❌ 错误：没有 stackY，所有扇形从 0 开始角度，完全重叠
+// ❌ Incorrect: Without stackY, all sectors start from angle 0, completely overlapping
 chart.options({
   type: 'interval',
   data,
   encode: { y: 'value', color: 'type' },
   coordinate: { type: 'theta' },
-  // 缺少 transform！
+  // Missing transform!
 });
 
-// ✅ 正确：必须声明 stackY
+// ✅ Correct: Must declare stackY
 chart.options({
   type: 'interval',
   data,
   encode: { y: 'value', color: 'type' },
-  transform: [{ type: 'stackY' }],   // 必须！
+  transform: [{ type: 'stackY' }],   // Mandatory!
   coordinate: { type: 'theta' },
 });
 ```
 
-### 错误 2：饼图误用 x 通道
+### Error 2: Misuse of x Channel in Pie Charts
 ```javascript
-// ❌ 错误：theta 坐标系中 x 通道无效，不要在饼图中 encode.x
+// ❌ Incorrect: x channel is invalid in theta coordinate system, do not use encode.x in pie charts
 chart.options({
   type: 'interval',
-  encode: { x: 'type', y: 'value' },    // x 在 theta 下没有意义
+  encode: { x: 'type', y: 'value' },    // x has no meaning under theta
   coordinate: { type: 'theta' },
 });
 
-// ✅ 正确：饼图只需 encode.y（数值）和 encode.color（分类）
+// ✅ Correct: Pie charts only require encode.y (numerical) and encode.color (categorical)
 chart.options({
   type: 'interval',
   encode: { y: 'value', color: 'type' },
@@ -195,13 +192,13 @@ chart.options({
 });
 ```
 
-### 错误 3：G2 v4 饼图写法
+### Error 3: Pie Chart Syntax in G2 v4
 ```javascript
-// ❌ 错误（G2 v4 写法）
+// ❌ Incorrect (G2 v4 Syntax)
 chart.coord('theta', { radius: 0.75 });
 chart.interval().position('value').color('type');
 
-// ✅ 正确（G2 v5 Spec 写法）
+// ✅ Correct (G2 v5 Spec Syntax)
 chart.options({
   type: 'interval',
   data,

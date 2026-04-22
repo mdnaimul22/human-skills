@@ -1,18 +1,17 @@
 ---
 id: "g2-mark-distribution-curve"
-title: "G2 分布曲线图（distribution curve）"
+title: "G2 Distribution Curve Chart"
 description: |
-  分布曲线图使用 type: 'line' + encode.shape: 'smooth' + data.transform 中的自定义分箱统计，
-  展示连续数值数据的频率密度分布。适合探索数据分布形态、多组数据分布比较。
+  The distribution curve chart uses `type: 'line'` + `encode.shape: 'smooth'` + custom binning statistics in `data.transform` to display the frequency density distribution of continuous numerical data. It is suitable for exploring data distribution patterns and comparing multiple data distributions.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "分布曲线图"
+  - "Distribution Curve Chart"
   - "distribution curve"
-  - "频率密度"
-  - "正态分布"
+  - "frequency density"
+  - "normal distribution"
   - "smooth"
   - "KDE"
 
@@ -22,13 +21,13 @@ related:
   - "g2-mark-violin"
 
 use_cases:
-  - "展示连续数值的概率密度分布"
-  - "多组数据分布形态对比"
-  - "数据质量检查（正态性检验）"
+  - "Displaying probability density distribution of continuous numerical data"
+  - "Comparing distribution patterns of multiple datasets"
+  - "Data quality checks (normality tests)"
 
 anti_patterns:
-  - "数据量少于 30 条时效果不稳定，改用散点图或箱线图"
-  - "离散分类数据不适合分布曲线"
+  - "Unstable results with less than 30 data points; use scatter plots or box plots instead"
+  - "Discrete categorical data is not suitable for distribution curves"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -38,19 +37,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/distributioncurve"
 ---
 
-## 核心概念
+## Core Concepts
 
-**分布曲线图 = `type: 'line'` + `encode.shape: 'smooth'` + 手动分箱统计**
+**Distribution Curve Chart = `type: 'line'` + `encode.shape: 'smooth'` + Manual Binning Statistics**
 
-G2 本身没有内置分布曲线 mark，需要先把原始数据分箱并计算频率密度，再用 smooth 折线绘制：
+G2 does not have a built-in distribution curve mark. It requires binning the raw data and calculating the frequency density before using a smooth line to plot:
 
 ```
-原始数据 → 分箱（bins） → 计算每箱频率密度 → smooth 折线
+Raw Data → Binning (bins) → Calculate Frequency Density per Bin → Smooth Line
 ```
 
-如果原始数据已有 KDE 处理，也可以直接使用 `type: 'density'` + `data.transform kde`。
+If the raw data has already been processed with KDE, you can directly use `type: 'density'` + `data.transform kde`.
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -66,7 +65,7 @@ chart.options({
     value: [
       { value: 85 }, { value: 92 }, { value: 78 }, { value: 95 },
       { value: 88 }, { value: 72 }, { value: 91 }, { value: 83 },
-      // ... 更多数据（建议 100+ 条）
+      // ... more data (recommended 100+ entries)
     ],
     transform: [
       {
@@ -78,7 +77,7 @@ chart.options({
           const binCount = 20;
           const binWidth = (max - min) / binCount;
 
-          // 分箱统计
+          // Binning statistics
           const bins = Array.from({ length: binCount }, (_, i) => ({
             x0: min + i * binWidth,
             x1: min + (i + 1) * binWidth,
@@ -89,7 +88,7 @@ chart.options({
             bins[idx].count++;
           });
 
-          // 输出频率密度
+          // Output frequency density
           const total = values.length;
           return bins.map((bin) => ({
             x: (bin.x0 + bin.x1) / 2,
@@ -102,22 +101,22 @@ chart.options({
   encode: {
     x: 'x',
     y: 'y',
-    shape: 'smooth',   // 平滑曲线
+    shape: 'smooth',   // Smooth curve
   },
   style: {
     lineWidth: 3,
     stroke: '#1890ff',
   },
   axis: {
-    x: { title: '数值' },
-    y: { title: '频率密度' },
+    x: { title: 'Value' },
+    y: { title: 'Frequency Density' },
   },
 });
 
 chart.render();
 ```
 
-## 多组分布曲线对比
+## Multiple Distribution Curve Comparison
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -136,7 +135,7 @@ chart.options({
       {
         type: 'custom',
         callback: (data) => {
-          // 按 species 分组，各自分箱
+          // Group by species and bin each group separately
           const groups = {};
           data.forEach((d) => {
             if (!groups[d.species]) groups[d.species] = [];
@@ -188,20 +187,20 @@ chart.options({
     strokeOpacity: 0.8,
   },
   axis: {
-    x: { title: '花瓣长度' },
-    y: { title: '频率密度' },
+    x: { title: 'Petal Length' },
+    y: { title: 'Frequency Density' },
   },
   legend: {
-    color: { title: '物种', position: 'right' },
+    color: { title: 'Species', position: 'right' },
   },
 });
 
 chart.render();
 ```
 
-## 使用 density mark 替代（推荐）
+## Use density mark instead (recommended)
 
-当数据量足够大时，优先使用内置的 density mark + KDE 变换，比手动分箱更精准：
+When the data volume is large enough, prioritize using the built-in density mark + KDE transformation, which is more accurate than manual binning:
 
 ```javascript
 chart.options({
@@ -212,9 +211,9 @@ chart.options({
     transform: [
       {
         type: 'kde',
-        field: 'value',        // 做 KDE 的字段
-        groupBy: ['category'], // 分组字段
-        size: 30,              // 输出点数，越多越精细
+        field: 'value',        // Field for KDE
+        groupBy: ['category'], // Grouping field
+        size: 30,              // Number of output points, more points for finer detail
       },
     ],
   },
@@ -229,19 +228,19 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：忘记 encode.shape: 'smooth'
+### Error 1: Forgot to encode.shape: 'smooth'
 
 ```javascript
-// ❌ 效果：折线图，有明显锯齿，不像分布曲线
+// ❌ Effect: Line chart with obvious jagged edges, not resembling a distribution curve
 chart.options({
   type: 'line',
   data: binnedData,
-  encode: { x: 'x', y: 'y' },  // ❌ 缺少 shape: 'smooth'
+  encode: { x: 'x', y: 'y' },  // ❌ Missing shape: 'smooth'
 });
 
-// ✅ 正确：smooth 使曲线平滑
+// ✅ Correct: smooth makes the curve smooth
 chart.options({
   type: 'line',
   data: binnedData,
@@ -249,17 +248,17 @@ chart.options({
 });
 ```
 
-### 错误 2：原始数据未分箱直接绘制
+### Error 2: Plotting Raw Data Directly Without Binning
 
 ```javascript
-// ❌ 错误：原始数据点连成折线，不是密度曲线
+// ❌ Incorrect: Raw data points connected as a line, not a density curve
 chart.options({
   type: 'line',
-  data: rawData,   // ❌ 未分箱，只是散点连线
+  data: rawData,   // ❌ No binning, just connecting scatter points
   encode: { x: 'index', y: 'value', shape: 'smooth' },
 });
 
-// ✅ 正确：先在 data.transform 中分箱，再绘制
+// ✅ Correct: Bin data in data.transform before plotting
 chart.options({
   type: 'line',
   data: {
@@ -270,17 +269,17 @@ chart.options({
 });
 ```
 
-### 错误 3：data 关键字缺失
+### Error 3: Missing `data` Keyword
 
 ```javascript
-// ❌ 错误：transform 必须放在 data 对象内
+// ❌ Error: `transform` must be placed inside the `data` object
 chart.options({
   type: 'line',
-  data: { value: rawData, transform: [...] },  // ❌ 孤立的 { } 语法错误
+  data: { value: rawData, transform: [...] },  // ❌ Isolated { } syntax error
   encode: { x: 'x', y: 'y' },
 });
 
-// ✅ 正确：必须有 data: 键
+// ✅ Correct: Must have the `data:` key
 chart.options({
   type: 'line',
   data: { value: rawData, transform: [...] },  // ✅
@@ -288,11 +287,11 @@ chart.options({
 });
 ```
 
-## 分布曲线 vs 相关图表选择
+## Distribution Curve vs. Correlation Chart Selection
 
-| 图表 | 适用场景 |
+| Chart | Applicable Scenario |
 |------|---------|
-| 分布曲线（line + smooth） | 展示连续分布形态，数据量 50+ |
-| 直方图 | 需要精确频次统计，看区间分布 |
-| density mark | 数据量大，自动 KDE 估计 |
-| 小提琴图 | 多组对比 + 显示统计摘要 |
+| Distribution Curve (line + smooth) | Display continuous distribution patterns, data volume 50+ |
+| Histogram | Requires precise frequency statistics, observe interval distribution |
+| Density mark | Large data volume, automatic KDE estimation |
+| Violin Plot | Multiple group comparisons + display statistical summary |

@@ -2,30 +2,30 @@
 id: "g2-mark-violin"
 title: "G2 Violin Plot Mark"
 description: |
-  小提琴图 Mark。使用 density 和 boxplot 组合，结合核密度估计展示数据分布形状。
-  适用于多组数据分布比较、探索数据分布模式等场景。
+  Violin plot mark. Combines density and boxplot, using kernel density estimation to display data distribution shapes.
+  Suitable for scenarios such as multi-group data distribution comparison and exploring data distribution patterns.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "小提琴图"
+  - "violin plot"
   - "violin"
-  - "密度分布"
-  - "统计分析"
+  - "density distribution"
+  - "statistical analysis"
 
 related:
   - "g2-mark-boxplot"
   - "g2-mark-density"
 
 use_cases:
-  - "多组数据分布比较"
-  - "数据分布模式探索"
-  - "异常值检测"
+  - "Multi-group data distribution comparison"
+  - "Data distribution pattern exploration"
+  - "Outlier detection"
 
 anti_patterns:
-  - "数据量少（<20）应使用箱形图"
-  - "离散数据不适合"
+  - "Use boxplot for small datasets (<20)"
+  - "Not suitable for discrete data"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,19 +35,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/violin"
 ---
 
-## 核心概念
+## Core Concepts
 
-小提琴图结合了箱形图和核密度估计：
-- 展示完整的数据分布形状
-- 叠加箱形图的统计信息
-- 通过 KDE（核密度估计）生成密度轮廓
+The violin plot combines a box plot with kernel density estimation (KDE):
+- Displays the complete shape of the data distribution
+- Overlays statistical information from the box plot
+- Generates a density contour through KDE
 
-**主要组成部分：**
-- 密度轮廓：展示数据分布密度
-- 箱形图：显示中位数、四分位数
-- 中位线：标示中位数位置
+**Main Components:**
+- Density Contour: Shows the density of the data distribution
+- Box Plot: Displays the median and quartiles
+- Median Line: Marks the position of the median
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -101,9 +101,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 极坐标小提琴图
+### Polar Coordinate Violin Plot
 
 ```javascript
 chart.options({
@@ -129,7 +129,7 @@ chart.options({
 });
 ```
 
-### 纯密度图
+### Pure Density Chart
 
 ```javascript
 chart.options({
@@ -151,7 +151,7 @@ chart.options({
 });
 ```
 
-### 带异常值标记
+### With Outlier Markers
 
 ```javascript
 chart.options({
@@ -173,19 +173,19 @@ chart.options({
       encode: { x: 'Expt', y: 'Speed', color: 'Expt', shape: 'violin' },
       style: {
         opacity: 0.8,
-        point: { fill: 'red', size: 3 },  // 异常值标记
+        point: { fill: 'red', size: 3 },  // Outlier markers
       },
     },
   ],
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface ViolinOptions {
   type: 'view';
-  data: any; // 原始数据源
+  data: any; // Original data source
   children: [
     {
       type: 'density';
@@ -193,9 +193,9 @@ interface ViolinOptions {
         transform: [
           {
             type: 'kde';
-            field: string;      // 数值字段
-            groupBy: string[];  // 分组字段（必须包含x轴字段和分组字段）
-            size?: number;      // 采样点数，默认为10，建议设置为20~50以获得更平滑的曲线
+            field: string;      // Numerical field
+            groupBy: string[];  // Grouping field (must include x-axis field and grouping field)
+            size?: number;      // Number of sampling points, defaults to 10, recommended to set between 20~50 for smoother curves
           }
         ]
       };
@@ -206,7 +206,7 @@ interface ViolinOptions {
         color?: string;
         series: string;
       };
-      tooltip?: boolean; // 推荐关闭，避免与boxplot重复
+      tooltip?: boolean; // Recommended to disable to avoid duplication with boxplot
     },
     {
       type: 'boxplot';
@@ -220,30 +220,30 @@ interface ViolinOptions {
       style?: {
         opacity?: number;
         strokeOpacity?: number;
-        point?: boolean | object; // 是否显示异常点
+        point?: boolean | object; // Whether to display outliers
       };
     }
   ];
 }
 ```
 
-## 小提琴图 vs 箱形图
+## Violin Plot vs. Box Plot
 
-| 特性 | 小提琴图 | 箱形图 |
-|------|----------|--------|
-| 分布信息 | 完整密度 | 统计摘要 |
-| 多峰检测 | 支持 | 不支持 |
-| 简洁程度 | 较复杂 | 简洁 |
+| Feature         | Violin Plot       | Box Plot          |
+|-----------------|-------------------|-------------------|
+| Distribution Info| Full Density      | Statistical Summary|
+| Multi-modality Detection | Supported | Not Supported    |
+| Simplicity      | More Complex      | Concise           |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：缺少 KDE 转换
+### Error 1: Missing KDE Transformation
 
 ```javascript
-// ❌ 问题：没有核密度估计
+// ❌ Problem: No Kernel Density Estimation
 data: { type: 'fetch', value: 'data.json' }
 
-// ✅ 正确：添加 kde 转换
+// ✅ Correct: Add kde transformation
 data: {
   type: 'fetch',
   value: 'data.json',
@@ -251,20 +251,20 @@ data: {
 }
 ```
 
-### 错误 2：数据量过少
+### Error 2: Insufficient Data Volume
 
 ```javascript
-// ⚠️ 注意：每个分组建议至少 20-30 个数据点
-// 数据量少时建议使用箱形图
+// ⚠️ Note: It is recommended to have at least 20-30 data points per group
+// When data volume is low, it is recommended to use a box plot
 ```
 
-### 错误 3：缺少 boxplot 叠加
+### Error 3: Missing Boxplot Overlay
 
 ```javascript
-// ❌ 问题：只有密度图，缺少统计信息
+// ❌ Issue: Only density chart, missing statistical information
 children: [{ type: 'density', ... }]
 
-// ✅ 正确：叠加 boxplot
+// ✅ Correct: Overlay boxplot
 children: [
   { type: 'density', ... },
   { 
@@ -280,23 +280,23 @@ children: [
 ]
 ```
 
-### 错误 4：KDE transform 配置错误
+### Error 4: Incorrect KDE Transform Configuration
 
 ```javascript
-// ❌ 问题：groupBy 字段不完整或缺失
+// ❌ Issue: Incomplete or missing groupBy fields
 transform: [{ type: 'kde', field: 'y', groupBy: ['x'] }]
 
-// ✅ 正确：确保 groupBy 包含所有分组字段
+// ✅ Correct: Ensure groupBy includes all grouping fields
 transform: [{ type: 'kde', field: 'y', groupBy: ['x', 'species'] }]
 ```
 
-### 错误 5：encode 映射不完整
+### Error 5: Incomplete encode Mapping
 
 ```javascript
-// ❌ 问题：缺少必要的 encode 映射
+// ❌ Issue: Missing necessary encode mapping
 encode: { x: 'x', y: 'y' }
 
-// ✅ 正确：确保映射了所有必需字段
+// ✅ Correct: Ensure all required fields are mapped
 encode: {
   x: 'x',
   y: 'y',

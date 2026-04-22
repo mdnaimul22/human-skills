@@ -330,7 +330,6 @@ chart.options({
   type: 'line',
   data,
   encode: { x: 'date', y: 'value' },
-  scale: { x: { type: 'time' } },
 });
 ```
 

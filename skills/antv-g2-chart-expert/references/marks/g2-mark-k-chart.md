@@ -2,30 +2,30 @@
 id: "g2-mark-k-chart"
 title: "G2 K-Chart (Candlestick) Mark"
 description: |
-  K线图 Mark。使用 link 和 interval 组合，展示股票等金融数据的价格走势。
-  适用于股票分析、期货交易、数字货币分析等场景。
+  Candlestick Mark. Uses a combination of link and interval to display price trends for financial data such as stocks.
+  Suitable for stock analysis, futures trading, digital currency analysis, and other scenarios.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "K线图"
-  - "蜡烛图"
+  - "K-Chart"
+  - "Candlestick"
   - "candlestick"
-  - "股票"
+  - "stocks"
 
 related:
   - "g2-mark-line-basic"
   - "g2-mark-boxplot"
 
 use_cases:
-  - "股票价格分析"
-  - "期货交易"
-  - "数字货币分析"
+  - "Stock price analysis"
+  - "Futures trading"
+  - "Digital currency analysis"
 
 anti_patterns:
-  - "非时间序列数据不适合"
-  - "单一数值展示应使用折线图"
+  - "Not suitable for non-time series data"
+  - "Single value display should use line charts"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,20 +35,20 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/candlestick"
 ---
 
-## 核心概念
+## Core Concepts
 
-K线图展示金融数据的价格走势：
-- 使用 `link` 标记表示影线（最高/最低价）
-- 使用 `interval` 标记表示实体（开盘/收盘价）
-- 颜色区分涨跌
+K-line charts display price trends of financial data:
+- Use `link` markers to represent shadows (high/low prices)
+- Use `interval` markers to represent entities (open/close prices)
+- Colors distinguish between rises and falls
 
-**四价数据：**
-- 开盘价（start）
-- 收盘价（end）
-- 最高价（max）
-- 最低价（min）
+**Four Price Data:**
+- Open price (start)
+- Close price (end)
+- High price (max)
+- Low price (min)
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -70,18 +70,18 @@ chart.options({
   data,
   encode: {
     x: 'time',
-    color: (d) => (d.start > d.end ? '下跌' : '上涨'),
+    color: (d) => (d.start > d.end ? 'Decline' : 'Rise'),
   },
   scale: {
-    color: { domain: ['下跌', '上涨'], range: ['#4daf4a', '#e41a1c'] },
+    color: { domain: ['Decline', 'Rise'], range: ['#4daf4a', '#e41a1c'] },
   },
   children: [
-    // 影线（最高/最低价）
+    // Shadow line (highest/lowest price)
     {
       type: 'link',
       encode: { y: ['min', 'max'] },
     },
-    // 实体（开盘/收盘价）
+    // Entity (opening/closing price)
     {
       type: 'interval',
       encode: { y: ['start', 'end'] },
@@ -93,24 +93,24 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 带成交量
+### With Trading Volume
 
 ```javascript
-// K线图
+// Candlestick Chart
 const kChart = new Chart({ container: 'kChart' });
 kChart.options({
   type: 'view',
   data,
-  encode: { x: 'time', color: (d) => d.start > d.end ? '下跌' : '上涨' },
+  encode: { x: 'time', color: (d) => d.start > d.end ? 'Decline' : 'Rise' },
   children: [
     { type: 'link', encode: { y: ['min', 'max'] } },
     { type: 'interval', encode: { y: ['start', 'end'] } },
   ],
 });
 
-// 成交量图
+// Volume Chart
 const volumeChart = new Chart({ container: 'volumeChart' });
 volumeChart.options({
   type: 'interval',
@@ -118,12 +118,12 @@ volumeChart.options({
   encode: {
     x: 'time',
     y: 'volume',
-    color: (d) => d.start > d.end ? '下跌' : '上涨',
+    color: (d) => d.start > d.end ? 'Decline' : 'Rise',
   },
 });
 ```
 
-### Spec 模式
+### Spec Mode
 
 ```javascript
 chart.options({
@@ -131,10 +131,10 @@ chart.options({
   data,
   encode: {
     x: 'time',
-    color: (d) => d.start > d.end ? '下跌' : '上涨',
+    color: (d) => d.start > d.end ? 'Decline' : 'Rise',
   },
   scale: {
-    color: { domain: ['下跌', '上涨'], range: ['#4daf4a', '#e41a1c'] },
+    color: { domain: ['Decline', 'Rise'], range: ['#4daf4a', '#e41a1c'] },
   },
   children: [
     {
@@ -150,7 +150,7 @@ chart.options({
 });
 ```
 
-### 带坐标轴标题
+### With Axis Title
 
 ```javascript
 chart.options({
@@ -162,50 +162,50 @@ chart.options({
       type: 'interval',
       encode: { y: ['start', 'end'] },
       axis: {
-        y: { title: '价格' },
+        y: { title: 'Price' },
       },
     },
   ],
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface KChartData {
-  time: string;      // 时间
-  start: number;     // 开盘价
-  end: number;       // 收盘价
-  max: number;       // 最高价
-  min: number;       // 最低价
-  volume?: number;   // 成交量（可选）
+  time: string;      // Time
+  start: number;     // Open price
+  end: number;       // Close price
+  max: number;       // Highest price
+  min: number;       // Lowest price
+  volume?: number;   // Trading volume (optional)
 }
 
-// K线图由两个图层组成：
-// 1. link - 影线（最高/最低价）
-// 2. interval - 实体（开盘/收盘价）
+// K-line chart consists of two layers:
+// 1. link - Shadow line (highest/lowest price)
+// 2. interval - Entity (open/close price)
 ```
 
-## K线图 vs 折线图
+## K-Line Chart vs Line Chart
 
-| 特性 | K线图 | 折线图 |
-|------|-------|--------|
-| 信息量 | 四价数据 | 单一价格 |
-| 用途 | 技术分析 | 趋势展示 |
-| 复杂度 | 较高 | 简单 |
+| Feature | K-Line Chart | Line Chart |
+|---------|-------|--------|
+| Data Volume | Four Price Data | Single Price |
+| Use Case | Technical Analysis | Trend Display |
+| Complexity | Higher | Simple |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：缺少 link 标记
+### Error 1: Missing link Mark
 
 ```javascript
-// ❌ 问题：只有实体，没有影线
+// ❌ Issue: Only entities, no shadow lines
 chart.options({
   type: 'interval',
   encode: { y: ['start', 'end'] },
 });
 
-// ✅ 正确：使用 view 组合 link 和 interval
+// ✅ Correct: Use view to combine link and interval
 chart.options({
   type: 'view',
   children: [
@@ -215,20 +215,20 @@ chart.options({
 });
 ```
 
-### 错误 2：颜色编码错误
+### Error 2: Incorrect Color Encoding
 
 ```javascript
-// ❌ 问题：颜色字段不正确
+// ❌ Issue: Incorrect color field
 encode: { color: 'time' }
 
-// ✅ 正确：根据涨跌设置颜色
-encode: { color: (d) => d.start > d.end ? '下跌' : '上涨' }
+// ✅ Correct: Set color based on increase or decrease
+encode: { color: (d) => d.start > d.end ? 'Decline' : 'Increase' }
 ```
 
-### 错误 3：数据顺序错误
+### Error 3: Incorrect Data Order
 
 ```javascript
-// ⚠️ 注意：时间数据需要正确排序
+// ⚠️ Note: Time data needs to be correctly sorted
 scale: {
   x: {
     compare: (a, b) => new Date(a).getTime() - new Date(b).getTime(),

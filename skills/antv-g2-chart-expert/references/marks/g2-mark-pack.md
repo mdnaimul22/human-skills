@@ -1,30 +1,29 @@
 ---
 id: "g2-mark-pack"
-title: "G2 圆形打包图（pack）"
+title: "G2 Circle Packing (pack)"
 description: |
-  pack mark 使用圆形打包布局（circle packing）展示层次数据，
-  父子关系通过圆的包含关系表达，圆的大小映射数值。
-  数据需要是树形结构（包含 children 字段的嵌套数组）或扁平带 parent 的结构。
+  The pack mark uses circle packing layout to display hierarchical data,
+  where parent-child relationships are expressed through the containment of circles, and the size of the circles maps to numerical values.
+  The data must be in a tree structure (a nested array containing the children field) or a flat structure with a parent field.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
   - "pack"
-  - "圆形打包"
   - "circle packing"
-  - "层次数据"
-  - "树形"
-  - "嵌套"
+  - "hierarchical data"
+  - "tree"
+  - "nested"
 
 related:
   - "g2-mark-treemap"
   - "g2-core-chart-init"
 
 use_cases:
-  - "展示层次结构的规模关系（如文件目录大小）"
-  - "展示分类的嵌套关系和比例"
-  - "组织架构中各部门规模"
+  - "Displaying size relationships in hierarchical structures (e.g., file directory sizes)"
+  - "Showing nested relationships and proportions in categories"
+  - "Department sizes in organizational structures"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -34,35 +33,35 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/other/#pack"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 层次数据（树形结构）
+// Hierarchical data (tree structure)
 const data = {
-  name: '公司',
+  name: 'Company',
   children: [
     {
-      name: '研发部',
+      name: 'R&D Department',
       children: [
-        { name: '前端组', value: 12 },
-        { name: '后端组', value: 18 },
-        { name: '算法组', value: 8 },
+        { name: 'Frontend Team', value: 12 },
+        { name: 'Backend Team', value: 18 },
+        { name: 'Algorithm Team', value: 8 },
       ],
     },
     {
-      name: '市场部',
+      name: 'Marketing Department',
       children: [
-        { name: '品牌组', value: 6 },
-        { name: '运营组', value: 10 },
+        { name: 'Brand Team', value: 6 },
+        { name: 'Operations Team', value: 10 },
       ],
     },
     {
-      name: '设计部',
+      name: 'Design Department',
       children: [
-        { name: 'UX组', value: 7 },
-        { name: '视觉组', value: 5 },
+        { name: 'UX Team', value: 7 },
+        { name: 'Visual Team', value: 5 },
       ],
     },
   ],
@@ -76,7 +75,7 @@ chart.options({
     value: data,
   },
   encode: {
-    value: 'value',   // 叶子节点的数值（决定圆大小）
+    value: 'value',   // Leaf node value (determines circle size)
   },
   style: {
     labelFontSize: 11,
@@ -88,21 +87,21 @@ chart.options({
 chart.render();
 ```
 
-## 数据配置形式说明
+## Data Configuration Format Explanation
 
-**为什么 pack 使用 ` { value: data }` 而不是 `data`？**
+**Why does pack use `{ value: data }` instead of `data`?**
 
-G2 v5 中数据配置有两种形式：
+In G2 v5, there are two forms of data configuration:
 
-### 简写形式（仅限数组数据）
+### Abbreviated Form (Array Data Only)
 
-当数据满足**三个条件**时可使用简写：
-1. 内联数据
-2. **是数组**
-3. 没有数据转换
+The abbreviated form can be used when the data meets **three conditions**:
+1. Inline data
+2. **Is an array**
+3. No data transformation
 
 ```javascript
-// ✅ 普通图表：数据是数组，可以用简写
+// ✅ Regular Chart: Data is an array, can use abbreviated form
 const arrayData = [
   { genre: 'Sports', sold: 275 },
   { genre: 'Strategy', sold: 115 },
@@ -110,16 +109,16 @@ const arrayData = [
 
 chart.options({
   type: 'interval',
-  data: arrayData,  // 简写形式
+  data: arrayData,  // Abbreviated form
 });
 ```
 
-### 完整形式（层次数据必须使用）
+### Full Form (Must Be Used for Hierarchical Data)
 
-层次数据是**对象**（包含 name/children），不是数组，必须使用完整形式：
+Hierarchical data is an **object** (containing `name`/`children`), not an array, and must be used in its full form:
 
 ```javascript
-// 层次数据是对象，不是数组
+// Hierarchical data is an object, not an array
 const hierarchyData = {
   name: 'root',
   children: [
@@ -128,63 +127,63 @@ const hierarchyData = {
   ],
 };
 
-// ❌ 错误：层次数据不是数组，不能用简写
+// ❌ Wrong: Hierarchical data is not an array, cannot use shorthand
 chart.options({
   type: 'pack',
-  data: hierarchyData,  // ❌ 不工作
+  data: hierarchyData,  // ❌ Does not work
 });
 
-// ✅ 正确：层次数据必须用完整形式
+// ✅ Correct: Hierarchical data must use the full form
 chart.options({
   type: 'pack',
   data: { value: hierarchyData },  // ✅
 });
 ```
 
-### 数据配置对照表
+### Data Configuration Reference Table
 
-| 数据类型 | 形式 | 示例 |
+| Data Type | Format | Example |
 |---------|------|------|
-| 数组数据（无 transform） | 简写 | `data: arrayData` 或 ` [...]` |
-| 数组数据（有 transform） | 完整 | ` { value: [...], transform: [...] }` |
-| 层次数据（对象） | 完整 | ` { value: { name, children } }` |
-| 远程数据 | 完整 | `data: { type: 'fetch', value: 'url' }` |
+| Array Data (without transform) | Abbreviated | `data: arrayData` or ` [...]` |
+| Array Data (with transform) | Complete | ` { value: [...], transform: [...] }` |
+| Hierarchical Data (Object) | Complete | ` { value: { name, children } }` |
+| Remote Data | Complete | `data: { type: 'fetch', value: 'url' }` |
 
 ---
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：data 直接传树形对象
+### Error 1: Directly Passing Tree Object to `data`
 
 ```javascript
-// ❌ 错误：层次数据不是数组，不能用简写形式
+// ❌ Incorrect: Hierarchical data is not an array, cannot use shorthand form
 chart.options({
   type: 'pack',
-  data: hierarchyData,   // ❌ 直接传树形对象不工作
+  data: hierarchyData,   // ❌ Directly passing tree object does not work
 });
 
-// ✅ 正确：层次数据必须用 { value: treeData } 形式
+// ✅ Correct: Hierarchical data must use { value: treeData } form
 chart.options({
   type: 'pack',
   data: { value: hierarchyData },  // ✅
 });
 ```
 
-### 错误 2：叶子节点没有 value 字段——所有圆大小相同
+### Error 2: Leaf Nodes Without `value` Field—All Circles Are the Same Size
 
 ```javascript
-// ❌ 叶子节点没有数值字段，所有节点大小相同（不能展示差异）
+// ❌ Leaf nodes lack a value field, resulting in all nodes being the same size (unable to display differences)
 const data = {
   value: {
     name: 'root',
     children: [
-      { name: 'A' },  // ❌ 没有 value
+      { name: 'A' },  // ❌ No value
       { name: 'B' },
     ],
   }
 };
 
-// ✅ 叶子节点加 value 字段
+// ✅ Add value field to leaf nodes
 const data = {
   value: {
     name: 'root',
@@ -196,50 +195,50 @@ const data = {
 }
 ```
 
-### 错误 3：encode.color 使用字符串字段名导致所有圆颜色相同
+### Error 3: Using String Field Name in `encode.color` Causes All Circles to Have the Same Color
 
 ```javascript
-// ❌ 错误：color: 'name' 等价于 d['name']，层次节点上没有 name 属性 → undefined
+// ❌ Incorrect: color: 'name' is equivalent to d['name'], hierarchy nodes do not have a 'name' property → undefined
 chart.options({
   type: 'pack',
   data: { value: data },
   encode: {
     value: 'value',
-    color: 'name',   // ❌ d['name'] = undefined → 所有圆显示相同颜色
+    color: 'name',   // ❌ d['name'] = undefined → all circles display the same color
   },
 });
 
-// ✅ 正确：color 必须用回调函数，通过 d.data 访问原始字段
+// ✅ Correct: color must use a callback function to access the original field via d.data
 chart.options({
   type: 'pack',
   data: { value: data },
   encode: {
     value: 'value',
-    color: (d) => d.data?.name,           // ✅ 按节点自身名称着色
-    // 或按父节点着色（同门类同色，更直观）：
+    color: (d) => d.data?.name,           // ✅ Color by the node's own name
+    // Or color by the parent node (same category, same color, more intuitive):
     // color: (d) => d.path?.[1] || d.data?.name,
   },
 });
 ```
 
-**为什么 `value: 'value'` 字符串可以用，`color: 'name'` 字符串不行？**
-G2 对层次 mark 的 `value` 通道有**专项处理**，直接读取 d3-hierarchy 计算好的节点 `.value` 属性；而 `color`、`shape` 等其他通道走通用路径，用字符串直接做 `datum[field]`，拿到的是层次节点而非原始数据，`datum['name']` 自然是 `undefined`。
+**Why does `value: 'value'` work as a string, but `color: 'name'` does not?**  
+G2 has **special handling** for the `value` channel in hierarchical marks, directly reading the `.value` property computed by d3-hierarchy. However, other channels like `color` and `shape` follow a general path, using the string directly as `datum[field]`, which accesses the hierarchy node instead of the original data. Thus, `datum['name']` naturally results in `undefined`.
 
-### 错误 4：labels 中直接使用 d.name 导致 undefined
+### Error 4: Directly using `d.name` in `labels` results in `undefined`
 
 ```javascript
-// ❌ 错误：pack 节点的原始字段在 d.data 中，d.name 是 undefined
+// ❌ Error: The original field of the pack node is in `d.data`, `d.name` is undefined
 labels: [
   {
-    text: (d) => `${d.name}\n${d.value?.toLocaleString()}`,  // ❌ d.name 是 undefined
+    text: (d) => `${d.name}\n${d.value?.toLocaleString()}`,  // ❌ `d.name` is undefined
   },
 ]
 
-// ✅ 正确：通过 d.data 访问原始数据字段
+// ✅ Correct: Access the original data field through `d.data`
 labels: [
   {
     text: (d) => {
-      if (d.height > 0) return '';  // 父节点不显示文字
+      if (d.height > 0) return '';  // Parent nodes do not display text
       return `${d.data?.name}\n${d.value?.toLocaleString()}`;  // ✅
     },
     position: 'inside',
@@ -249,103 +248,103 @@ labels: [
 ]
 ```
 
-**根本原因**：层次图中 G2 将原始数据封装为层次节点，`d` 本身是节点对象（含 `depth`、`height`、`value` 等内置字段），原始数据对象整体存放在 `d.data` 下。
+**Root Cause**: In hierarchical charts, G2 encapsulates the original data as hierarchical nodes. The `d` itself is a node object (containing built-in fields such as `depth`, `height`, `value`, etc.), and the entire original data object is stored in `d.data`.
 
-### 错误 5：混淆 data.value 和节点的 value 字段
+### Error 5: Confusing `data.value` and Node's `value` Field
 
 ```javascript
-// ⚠️ 注意区分两个不同的 value：
-// 1. data.value - 数据配置的值（可以是任意数据）
-// 2. 节点的 value 字段 - 叶子节点的数值（决定圆大小）
+// ⚠️ Note the distinction between the two different `value` fields:
+// 1. `data.value` - The value in the data configuration (can be any data type)
+// 2. Node's `value` field - The numerical value of the leaf node (determines the circle size)
 
-// ✅ 正确理解
+// ✅ Correct Understanding
 chart.options({
   type: 'pack',
   data: {
-    value: {           // 这是数据配置的 value
+    value: {           // This is the `value` in the data configuration
       name: 'root',
       children: [
-        { name: 'A', value: 30 },  // 这是节点的 value 字段
+        { name: 'A', value: 30 },  // This is the node's `value` field
       ],
     },
   },
   encode: {
-    value: 'value',    // 映射节点的 value 字段到圆大小
+    value: 'value',    // Maps the node's `value` field to the circle size
   },
 });
 ```
 
 ---
 
-## 节点数据访问规则（重要！）
+## Node Data Access Rules (Important!)
 
-层次结构图中，回调函数（encode、labels 的 text 等）接收到的参数 `d` **不是原始数据对象**，而是 G2 用 d3-hierarchy 包装后的层次节点，**原始数据在 `d.data` 中**。
+In the hierarchical chart, the callback functions (such as `encode`, `labels`'s `text`, etc.) receive a parameter `d` which **is not the original data object**, but rather a hierarchical node wrapped by G2 using d3-hierarchy. **The original data is stored in `d.data`**.
 
-### 为什么 `encode.color: 'name'` 不起作用？
+### Why Doesn't `encode.color: 'name'` Work?
 
-**根本原因**：当 encode 是字符串时，G2 内部做的是 `datum[fieldName]`，即直接访问节点对象的属性。对于层次 mark，`datum` 是层次节点（hierarchy node），不是原始数据对象：
+**Root Cause**: When `encode` is a string, G2 internally performs `datum[fieldName]`, directly accessing the node object's property. For hierarchical marks, `datum` is a hierarchy node, not the original data object:
 
 ```
-d['name']        → undefined  ❌（层次节点没有 name 属性）
-d.data['name']   → '前端组'  ✅（原始数据在 d.data 上）
+d['name']        → undefined  ❌ (Hierarchy node does not have a 'name' property)
+d.data['name']   → 'Frontend Team'  ✅ (Original data is on `d.data`)
 ```
 
-**特例**：`encode.value: 'value'` 看起来用字符串也能工作，是因为 G2 对层次 mark 的 `value` 通道做了**专项处理**，直接读取节点的 `value` 属性（d3-hierarchy 计算后的值）。其他通道（`color`、`shape` 等）没有这个特殊处理，字符串会直接 `datum[field]` 导致 `undefined`。
+**Special Case**: `encode.value: 'value'` appears to work with a string because G2 applies **special handling** to the `value` channel for hierarchical marks, directly reading the node's `value` property (computed by d3-hierarchy). Other channels (`color`, `shape`, etc.) do not have this special handling, and strings will directly use `datum[field]`, resulting in `undefined`.
 
 ```javascript
-// ❌ encode.color: 'name' 的内部执行等价于：
-const color = datum['name']  // datum 是层次节点，'name' 属性不在节点上 → undefined
-// 结果：所有圆使用相同颜色（undefined 被映射为默认颜色）
+// ❌ Internal execution equivalent to `encode.color: 'name'`:
+const color = datum['name']  // datum is a hierarchy node, 'name' property is not on the node → undefined
+// Result: All circles use the same color (undefined is mapped to the default color)
 
-// ✅ 使用回调才能正确访问：
-const color = datum.data?.['name']  // datum.data 才是原始数据对象
+// ✅ Correct access using a callback:
+const color = datum.data?.['name']  // datum.data is the original data object
 ```
 
-### 回调参数 d 的结构
+### Structure of Callback Parameter d
 
 ```javascript
-// d 是 d3-hierarchy 节点，结构如下：
+// d is a d3-hierarchy node, with the following structure:
 {
-  value: 100,              // 节点数值（d3 计算的叶子值之和）
-  depth: 2,                // 层级深度（0 = 根节点）
-  height: 0,               // 子树高度（叶子节点为 0）
-  data: {                  // ← 原始数据在这里！
-    name: '前端组',
+  value: 100,              // Node value (sum of leaf values calculated by d3)
+  depth: 2,                // Hierarchy depth (0 = root node)
+  height: 0,               // Subtree height (0 for leaf nodes)
+  data: {                  // ← Original data is here!
+    name: 'Frontend Team',
     value: 12,
     category: 'tech',
-    // ... 其它自定义字段
+    // ... other custom fields
   },
-  path: ['root', '技术', '前端'],  // 从根到当前节点的路径
+  path: ['root', 'Technology', 'Frontend'],  // Path from root to current node
 }
 ```
 
-### encode 中访问字段
+### Accessing Fields in encode
 
 ```javascript
-// ❌ 错误：字符串字段名对 color/shape 等通道不起作用，返回 undefined
+// ❌ Incorrect: String field names do not work for channels like color/shape, return undefined
 encode: {
-  value: 'value',   // ✅ value 通道有专项处理，字符串可用
-  color: 'name',    // ❌ 等价于 d['name'] = undefined，所有圆颜色相同
+  value: 'value',   // ✅ value channel has special handling, strings are valid
+  color: 'name',    // ❌ Equivalent to d['name'] = undefined, all circles have the same color
 }
 
-// ✅ 正确：除 value 外的所有通道必须用回调函数
+// ✅ Correct: All channels except value must use callback functions
 encode: {
   value: 'value',
-  color: (d) => d.data?.name,  // ✅ 通过 d.data 访问原始字段
+  color: (d) => d.data?.name,  // ✅ Access original field via d.data
 }
 ```
 
-### labels 中访问字段
+### Accessing Fields in `labels`
 
 ```javascript
-// ❌ 错误：d.name 是 undefined，因为原始字段在 d.data 中
+// ❌ Wrong: d.name is undefined because the original field is in d.data
 labels: [
   {
-    text: (d) => `${d.name}\n${d.value}`,  // ❌ d.name 是 undefined
+    text: (d) => `${d.name}\n${d.value}`,  // ❌ d.name is undefined
   },
 ]
 
-// ✅ 正确：通过 d.data 访问原始字段
+// ✅ Correct: Access original fields through d.data
 labels: [
   {
     text: (d) => `${d.data?.name}\n${d.value?.toLocaleString()}`,  // ✅
@@ -356,28 +355,28 @@ labels: [
 ]
 ```
 
-### 常用访问模式
+### Common Access Patterns
 
 ```javascript
-// 原始字段（name、category 等自定义字段）— 必须通过 d.data 访问
+// Original fields (name, category, and other custom fields) — Must be accessed via d.data
 d.data?.name
 d.data?.category
 d.data?.type
 
-// 层次节点内置字段（不需要 .data）— 可直接访问
-d.value    // 节点数值（d3 计算的子树总和）
-d.depth    // 层级深度（0 = 根节点）
-d.height   // 子树高度（叶子节点为 0）
+// Hierarchical node built-in fields (no need for .data) — Can be accessed directly
+d.value    // Node value (d3 calculated subtree sum)
+d.depth    // Hierarchy depth (0 = root node)
+d.height   // Subtree height (leaf nodes are 0)
 
-// 常用着色策略
-color: (d) => d.path?.[1] || d.data?.name   // 按第二层父节点着色（推荐，同门类同色）
-color: (d) => d.depth                        // 按层级深度着色
-color: (d) => d.data?.name                   // 按当前节点名称着色
-color: (d) => d.data?.category               // 按自定义字段着色
-color: (d) => d.value                        // 按数值大小着色
+// Common coloring strategies
+color: (d) => d.path?.[1] || d.data?.name   // Color by second-level parent node (recommended, same category, same color)
+color: (d) => d.depth                        // Color by hierarchy depth
+color: (d) => d.data?.name                   // Color by current node name
+color: (d) => d.data?.category               // Color by custom field
+color: (d) => d.value                        // Color by value size
 ```
 
-### 完整带 labels 的示例
+### Complete Example with Labels
 
 ```javascript
 chart.options({
@@ -395,7 +394,7 @@ chart.options({
   labels: [
     {
       text: (d) => {
-        // 只在叶子节点（height === 0）显示文本，避免父节点文字遮挡
+        // Display text only on leaf nodes (height === 0) to avoid parent node text overlap
         if (d.height > 0) return '';
         return `${d.data?.name}\n${d.value?.toLocaleString()}`;
       },
@@ -408,7 +407,7 @@ chart.options({
 });
 ```
 
-### 配合 scale 自定义颜色
+### Customizing Colors with Scale
 
 ```javascript
 encode: {

@@ -1,19 +1,19 @@
 ---
 id: "g2-data-filter"
-title: "G2 Filter 数据过滤"
+title: "G2 Filter Data Filtering"
 description: |
-  filter 数据变换在数据加载阶段根据条件过滤数据，只保留满足条件的行。
-  与 JavaScript 的 Array.filter 类似，接受一个断言函数（predicate）。
-  配置在 data.transform 中，在渲染前预处理数据。
+  The filter data transformation filters data during the data loading phase based on conditions, retaining only rows that meet the criteria.
+  Similar to JavaScript's Array.filter, it accepts a predicate function.
+  Configured in data.transform, it preprocesses data before rendering.
 
 library: "g2"
 version: "5.x"
 category: "data"
 tags:
   - "filter"
-  - "过滤"
-  - "数据筛选"
-  - "条件过滤"
+  - "filtering"
+  - "data filtering"
+  - "conditional filtering"
   - "data transform"
 
 related:
@@ -22,9 +22,9 @@ related:
   - "g2-interaction-brush"
 
 use_cases:
-  - "只展示满足条件的数据子集（如值大于阈值的数据）"
-  - "排除异常值或空值"
-  - "在数据加载阶段做分类筛选"
+  - "Display only data subsets that meet conditions (e.g., values greater than a threshold)"
+  - "Exclude outliers or null values"
+  - "Perform categorical filtering during the data loading phase"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,15 +34,15 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/data/filter"
 ---
 
-## 核心概念
+## Core Concepts
 
-**filter 是数据变换（Data Transform），不是标记变换（Mark Transform）**
+**filter is a Data Transform, not a Mark Transform**
 
-- 数据变换配置在 `data.transform` 中
-- 在数据加载阶段执行，影响所有使用该数据的标记
-- 与 mark transform 不同，数据变换是数据预处理，不涉及视觉通道
+- Data transforms are configured in `data.transform`
+- Executed during the data loading phase, affecting all marks using that data
+- Unlike mark transforms, data transforms are data preprocessing and do not involve visual channels
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -51,7 +51,7 @@ const chart = new Chart({ container: 'container', width: 640, height: 400 });
 
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: [
       { genre: 'Sports', sold: 275 },
@@ -63,7 +63,7 @@ chart.options({
     transform: [
       {
         type: 'filter',
-        callback: (d) => d.sold >= 100,  // 只保留销量 ≥ 100 的数据
+        callback: (d) => d.sold >= 100,  // Retain only data with sales ≥ 100
       },
     ],
   },
@@ -73,18 +73,18 @@ chart.options({
 chart.render();
 ```
 
-## 排除空值 / 异常值
+## Exclude Null Values / Outliers
 
 ```javascript
 chart.options({
   type: 'line',
-   {
+  {
     type: 'inline',
     value: rawData,
     transform: [
       {
         type: 'filter',
-        // 过滤掉 null、undefined、NaN
+        // Filter out null, undefined, NaN
         callback: (d) => d.value != null && !isNaN(d.value) && d.value > 0,
       },
     ],
@@ -93,12 +93,12 @@ chart.options({
 });
 ```
 
-## 多条件过滤
+## Multi-Condition Filtering
 
 ```javascript
 chart.options({
   type: 'point',
-   {
+  data: {
     type: 'inline',
     value: allData,
     transform: [
@@ -112,12 +112,12 @@ chart.options({
 });
 ```
 
-## 与 fetch 连用
+## Used with fetch
 
 ```javascript
 chart.options({
   type: 'point',
-   {
+  data: {
     type: 'fetch',
     value: 'https://example.com/data.json',
     transform: [
@@ -131,77 +131,77 @@ chart.options({
 });
 ```
 
-## 多个数据变换组合
+## Multiple Data Transformations Combination
 
 ```javascript
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: rawData,
     transform: [
       { type: 'filter', callback: (d) => d.value != null },
       { type: 'sort', callback: (a, b) => b.value - a.value },
-      { type: 'slice', start: 0, end: 10 },  // 只取前 10 条
+      { type: 'slice', start: 0, end: 10 },  // Take only the first 10 items
     ],
   },
   encode: { x: 'category', y: 'value' },
 });
 ```
 
-## 配置项
+## Configuration Options
 
-| 属性     | 描述                                 | 类型                                           | 默认值                                                     |
-| -------- | ------------------------------------ | ---------------------------------------------- | ---------------------------------------------------------- |
-| callback | 过滤函数，返回 true 保留该行数据     | `(d: any, idx: number, arr: any[]) => boolean` | `(d) => d !== undefined && d !== null && !Number.isNaN(d)` |
+| Property | Description                              | Type                                           | Default Value                                               |
+| -------- | ---------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
+| callback | Filter function, returns true to keep the row data | `(d: any, idx: number, arr: any[]) => boolean` | `(d) => d !== undefined && d !== null && !Number.isNaN(d)` |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：filter 放在 mark transform 中
+### Error 1: Placing `filter` in `mark transform`
 
 ```javascript
-// ❌ 错误：filter 是数据变换，不能放在 mark 的 transform 中
+// ❌ Incorrect: `filter` is a data transformation and cannot be placed in `mark`'s `transform`
 chart.options({
   type: 'interval',
-   myData,
-  transform: [{ type: 'filter', callback: (d) => d.value > 100 }],  // ❌ 错误位置
+  data: myData,
+  transform: [{ type: 'filter', callback: (d) => d.value > 100 }],  // ❌ Incorrect location
 });
 
-// ✅ 正确：filter 放在 data.transform 中
+// ✅ Correct: Place `filter` in `data.transform`
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: myData,
-    transform: [{ type: 'filter', callback: (d) => d.value > 100 }],  // ✅ 正确
+    transform: [{ type: 'filter', callback: (d) => d.value > 100 }],  // ✅ Correct
   },
 });
 ```
 
-### 错误 2：callback 不是函数
+### Error 2: callback is not a function
 
 ```javascript
-// ❌ 错误：callback 必须是函数
+// ❌ Error: callback must be a function
 data: {
-  transform: [{ type: 'filter', callback: 'value > 100' }],  // ❌ 字符串
+  transform: [{ type: 'filter', callback: 'value > 100' }],  // ❌ string
 }
 
-// ✅ 正确：使用箭头函数
+// ✅ Correct: Use an arrow function
  {
   transform: [{ type: 'filter', callback: (d) => d.value > 100 }],  // ✅
 }
 ```
 
-### 错误 3：简写 data 无法配置 transform
+### Error 3: Shorthand data Cannot Configure transform
 
 ```javascript
-// ❌ 错误：简写 data 无法配置 transform
+// ❌ Error: Shorthand data cannot configure transform
 chart.options({
-  data: myData,  // 简写形式
-  // 无法添加 transform
+  data: myData,  // Shorthand form
+  // Unable to add transform
 });
 
-// ✅ 正确：使用完整 data 配置
+// ✅ Correct: Use full data configuration
 chart.options({
   data: {
     type: 'inline',

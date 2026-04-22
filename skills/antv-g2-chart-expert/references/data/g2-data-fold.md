@@ -1,20 +1,20 @@
 ---
 id: "g2-data-fold"
-title: "G2 Fold 宽表转长表"
+title: "G2 Fold Wide to Long Table Transformation"
 description: |
-  Fold 数据变换将宽格式数据（多列）转换为长格式数据（单列+分类列），
-  使多个字段可以映射到同一个 color/series 通道。
-  配置在 data.transform 中，是在 G2 中实现多系列图表的常用数据预处理手段。
+  The Fold data transformation converts wide-format data (multiple columns) into long-format data (single column + category column),
+  allowing multiple fields to be mapped to the same color/series channel.
+  Configured in data.transform, it is a common data preprocessing method for implementing multi-series charts in G2.
 
 library: "g2"
 version: "5.x"
 category: "data"
 tags:
   - "fold"
-  - "宽表转长表"
+  - "wide to long table"
   - "pivot"
-  - "多系列"
-  - "数据变换"
+  - "multi-series"
+  - "data transformation"
   - "data transform"
 
 related:
@@ -24,9 +24,9 @@ related:
   - "g2-mark-area-stacked"
 
 use_cases:
-  - "将宽表多列数据转换为多系列折线图"
-  - "将同类指标的多个字段合并为一个系列字段"
-  - "减少手动 flatMap 数据预处理代码"
+  - "Convert wide table multi-column data into a multi-series line chart"
+  - "Merge multiple fields of the same metric into a single series field"
+  - "Reduce manual flatMap data preprocessing code"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,21 +36,21 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/data/fold"
 ---
 
-## 核心概念
+## Core Concepts
 
-**Fold 是数据变换（Data Transform），不是标记变换（Mark Transform）**
+**Fold is a Data Transform, not a Mark Transform**
 
-- 数据变换配置在 `data.transform` 中
-- 在数据加载阶段执行，影响所有使用该数据的标记
+- Data transform configurations are set in `data.transform`
+- Executed during the data loading phase, affecting all marks using that data
 
-**宽表（Wide）**：每个指标占一列
+**Wide Table (Wide)**: Each metric occupies one column
 ```
 month | revenue | cost | profit
 Jan   | 320     | 200  | 120
 Feb   | 450     | 230  | 220
 ```
 
-**长表（Long/Tidy）**：所有指标值合并到一列，增加分类列
+**Long Table (Long/Tidy)**: All metric values merged into one column, with an added category column
 ```
 month | key     | value
 Jan   | revenue | 320
@@ -60,16 +60,16 @@ Feb   | revenue | 450
 ...
 ```
 
-G2 的 `fold` 数据变换自动完成这个转换，无需手动 `flatMap`。
+G2's `fold` data transform automatically completes this conversion, eliminating the need for manual `flatMap`.
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({ container: 'container', width: 700, height: 400 });
 
-// 宽表数据（每个指标是独立的列）
+// Wide table data (each metric is an independent column)
 const wideData = [
   { month: 'Jan', revenue: 320, cost: 200, profit: 120 },
   { month: 'Feb', revenue: 450, cost: 230, profit: 220 },
@@ -85,23 +85,23 @@ chart.options({
     transform: [
       {
         type: 'fold',
-        fields: ['revenue', 'cost', 'profit'],  // 要折叠的列名
-        key: 'key',      // 生成的键列名（默认 'key'）
-        value: 'value',  // 生成的值列名（默认 'value'）
+        fields: ['revenue', 'cost', 'profit'],  // Columns to fold
+        key: 'key',      // Generated key column name (default 'key')
+        value: 'value',  // Generated value column name (default 'value')
       },
     ],
   },
   encode: {
     x: 'month',
-    y: 'value',     // fold 后的值列
-    color: 'key',   // fold 后的键列
+    y: 'value',     // Value column after fold
+    color: 'key',   // Key column after fold
   },
 });
 
 chart.render();
 ```
 
-## 堆叠面积图中使用 fold
+## Using fold in Stacked Area Charts
 
 ```javascript
 chart.options({
@@ -118,10 +118,10 @@ chart.options({
 });
 ```
 
-## 等价的手动方式（作为对比）
+## Equivalent Manual Approach (For Comparison)
 
 ```javascript
-// 不用 fold，手动 flatMap（代码较冗长）
+// Without fold, manually flatMap (more verbose code)
 const longData = wideData.flatMap((d) => [
   { month: d.month, metric: 'revenue', value: d.revenue },
   { month: d.month, metric: 'cost',    value: d.cost    },
@@ -130,68 +130,68 @@ const longData = wideData.flatMap((d) => [
 
 chart.options({
   type: 'line',
-   longData,
+  data: longData,
   encode: { x: 'month', y: 'value', color: 'metric' },
 });
 ```
 
-## 配置项
+## Configuration Options
 
-| 属性   | 描述                           | 类型       | 默认值  |
-| ------ | ------------------------------ | ---------- | ------- |
-| fields | 需要展开的字段列表             | `string[]` |         |
-| key    | 展开之后，字段枚举值对应字段名 | `string`   | `key`   |
-| value  | 展开之后，数据值对应字段名     | `string`   | `value` |
+| Property | Description                          | Type       | Default Value |
+| -------- | ------------------------------------ | ---------- | ------------- |
+| fields   | List of fields that need to be expanded | `string[]` |               |
+| key      | Field name corresponding to the enumeration value after expansion | `string`   | `key`         |
+| value    | Field name corresponding to the data value after expansion | `string`   | `value`       |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：fold 放在 mark transform 中
+### Error 1: Placing `fold` in `mark` transform
 
 ```javascript
-// ❌ 错误：fold 是数据变换，不能放在 mark 的 transform 中
+// ❌ Incorrect: `fold` is a data transformation and cannot be placed in `mark`'s transform
 chart.options({
   type: 'line',
-   wideData,
-  transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ❌ 错误位置
+  wideData,
+  transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ❌ Incorrect location
 });
 
-// ✅ 正确：fold 放在 data.transform 中
+// ✅ Correct: `fold` should be placed in `data.transform`
 chart.options({
   type: 'line',
   data: {
     type: 'inline',
     value: wideData,
-    transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ✅ 正确
+    transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ✅ Correct
   },
 });
 ```
 
-### 错误 2：fields 里的字段名拼写错误
+### Error 2: Incorrect Spelling of Field Names in `fields`
 
 ```javascript
-// ❌ 错误：字段名与数据不匹配，fold 后得到 undefined 值
+// ❌ Incorrect: Field names do not match the data, resulting in undefined values after folding
 data: {
-  transform: [{ type: 'fold', fields: ['Revenue', 'Cost'] }],  // 大写，但数据是小写
+  transform: [{ type: 'fold', fields: ['Revenue', 'Cost'] }],  // Capitalized, but data is in lowercase
 }
 
-// ✅ 正确：字段名必须与数据对象的 key 完全一致（区分大小写）
+// ✅ Correct: Field names must exactly match the keys in the data object (case-sensitive)
 data: {
   transform: [{ type: 'fold', fields: ['revenue', 'cost'] }],
 }
 ```
 
-### 错误 3：encode 中 y/color 字段名与 as 配置不匹配
+### Error 3: Mismatch between y/color field names in encode and as configuration
 
 ```javascript
-// ❌ 错误：fold 默认生成 'key'/'value' 列，但 encode 用了别的名字
+// ❌ Error: fold generates 'key'/'value' columns by default, but encode uses different names
 chart.options({
   data: {
-    transform: [{ type: 'fold', fields: ['a', 'b'] }],  // 默认生成 key/value
+    transform: [{ type: 'fold', fields: ['a', 'b'] }],  // Generates key/value by default
   },
-  encode: { y: 'metric', color: 'series' },  // 错误：字段名不存在
+  encode: { y: 'metric', color: 'series' },  // Error: Field names do not exist
 });
 
-// ✅ 正确：encode 名字与 fold 的 key/value 配置一致
+// ✅ Correct: encode names match the key/value configuration of fold
 chart.options({
   data: {
     transform: [{ type: 'fold', fields: ['a', 'b'], key: 'metric', value: 'amount' }],
@@ -200,16 +200,16 @@ chart.options({
 });
 ```
 
-### 错误 4：简写 data 无法配置 transform
+### Error 4: Shorthand data cannot configure transform
 
 ```javascript
-// ❌ 错误：简写 data 无法配置 transform
+// ❌ Error: Shorthand data cannot configure transform
 chart.options({
-   wideData,  // 简写形式
-  // 无法添加 fold transform
+   wideData,  // Shorthand form
+  // Unable to add fold transform
 });
 
-// ✅ 正确：使用完整 data 配置
+// ✅ Correct: Use complete data configuration
 chart.options({
    {
     type: 'inline',
@@ -219,15 +219,15 @@ chart.options({
 });
 ```
 
-### 错误 5：`` 关键字丢失——SyntaxError
+### Error 5: Missing `` Keyword——SyntaxError
 
-这是代码生成时极常见的错误：`data` 属性值是一个多行嵌套对象，容易忘记写 `data:` 键名，导致 JavaScript 语法错误（`Unexpected token '{'`），图表完全无法运行。
+This is a very common error during code generation: the `data` property value is a multi-line nested object, and it's easy to forget to write the `data:` key, resulting in a JavaScript syntax error (`Unexpected token '{'`), causing the chart to fail completely.
 
 ```javascript
-// ❌ 错误： 键名丢失，{ type: 'inline', ... } 是孤立对象字面量 → SyntaxError
+// ❌ Error: Missing key name, { type: 'inline', ... } is an isolated object literal → SyntaxError
 chart.options({
   type: 'interval',
-  {                          // ❌ 语法错误！缺少 data: 前缀
+  {                          // ❌ Syntax error! Missing data: prefix
     type: 'inline',
     value: populationData,
     transform: [{
@@ -240,10 +240,10 @@ chart.options({
   encode: { x: 'State', y: 'Population', color: 'AgeGroup' },
 });
 
-// ✅ 正确：必须写 data: 键名
+// ✅ Correct: Must include data: key name
 chart.options({
   type: 'interval',
-   {                    // ✅  不能省略
+  data: {                    // ✅ Cannot omit
     type: 'inline',
     value: populationData,
     transform: [{
@@ -257,4 +257,4 @@ chart.options({
 });
 ```
 
-**为什么容易漏写**：`data` 值是一个多行嵌套对象，在生成时容易把它当作独立的「块」而非 `chart.options({})` 的属性，导致漏写 `` 前缀。同样问题也出现在 `coordinate:`、`children:` 等多行对象属性上——凡是值为复杂对象的属性，都要确认键名写全。
+**Why it's easy to omit**: The `data` value is a multi-line nested object, and during generation, it's easy to treat it as an independent "block" rather than a property of `chart.options({})`, leading to the omission of the `data:` prefix. The same issue occurs with `coordinate:`, `children:`, and other multi-line object properties - whenever the value is a complex object, ensure the key name is complete.

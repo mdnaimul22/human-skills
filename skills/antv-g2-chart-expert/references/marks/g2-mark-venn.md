@@ -2,30 +2,30 @@
 id: "g2-mark-venn"
 title: "G2 Venn Diagram Mark"
 description: |
-  韦恩图 Mark。使用 path 标记配合 venn 转换，展示集合之间的交集、并集关系。
-  适用于用户群体分析、产品功能对比、技能重叠分析等场景。
+  Venn Diagram Mark. Uses path marks with venn transformation to display intersections and unions between sets.
+  Suitable for user group analysis, product feature comparison, skill overlap analysis, and similar scenarios.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "韦恩图"
+  - "Venn Diagram"
   - "venn"
-  - "集合关系"
-  - "交集"
+  - "set relationships"
+  - "intersection"
 
 related:
   - "g2-mark-chord"
   - "g2-mark-sankey"
 
 use_cases:
-  - "用户群体重叠分析"
-  - "产品功能对比"
-  - "技能重叠分析"
+  - "User group overlap analysis"
+  - "Product feature comparison"
+  - "Skill overlap analysis"
 
 anti_patterns:
-  - "集合数量 >4 应使用其他图表"
-  - "数值差异过大不适合"
+  - "Number of sets >4 should use other charts"
+  - "Not suitable for large value differences"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,19 +35,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/venn"
 ---
 
-## 核心概念
+## Core Concepts
 
-韦恩图展示集合之间的交集关系：
-- 使用 `path` 标记
-- 配合 `venn` 数据转换
-- 重叠区域表示交集
+Venn diagrams display the intersection relationships between sets:
+- Use `path` marks
+- Combine with `venn` data transformation
+- Overlapping areas represent intersections
 
-**数据格式：**
-- `sets`：集合名称数组
-- `size`：集合大小
-- `label`：显示标签
+**Data Format:**
+- `sets`: Array of set names
+- `size`: Size of the set
+- `label`: Display label
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -62,9 +62,9 @@ chart.options({
   data: {
     type: 'inline',
     value: [
-      { sets: ['微信'], size: 1200, label: '微信' },
-      { sets: ['微博'], size: 800, label: '微博' },
-      { sets: ['微信', '微博'], size: 300, label: '重叠' },
+      { sets: ['WeChat'], size: 1200, label: 'WeChat' },
+      { sets: ['Weibo'], size: 800, label: 'Weibo' },
+      { sets: ['WeChat', 'Weibo'], size: 300, label: 'Overlap' },
     ],
     transform: [{ type: 'venn' }],
   },
@@ -83,9 +83,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 三集合韦恩图
+### Three-Set Venn Diagram
 
 ```javascript
 chart.options({
@@ -93,13 +93,13 @@ chart.options({
   data: {
     type: 'inline',
     value: [
-      { sets: ['前端'], size: 12, label: '前端' },
-      { sets: ['后端'], size: 15, label: '后端' },
-      { sets: ['设计'], size: 8, label: '设计' },
-      { sets: ['前端', '后端'], size: 5, label: '全栈' },
-      { sets: ['前端', '设计'], size: 3 },
-      { sets: ['后端', '设计'], size: 2 },
-      { sets: ['前端', '后端', '设计'], size: 1 },
+      { sets: ['Frontend'], size: 12, label: 'Frontend' },
+      { sets: ['Backend'], size: 15, label: 'Backend' },
+      { sets: ['Design'], size: 8, label: 'Design' },
+      { sets: ['Frontend', 'Backend'], size: 5, label: 'Full Stack' },
+      { sets: ['Frontend', 'Design'], size: 3 },
+      { sets: ['Backend', 'Design'], size: 2 },
+      { sets: ['Frontend', 'Backend', 'Design'], size: 1 },
     ],
     transform: [{ type: 'venn' }],
   },
@@ -107,7 +107,7 @@ chart.options({
 });
 ```
 
-### 空心韦恩图
+### Hollow Venn Diagram
 
 ```javascript
 chart.options({
@@ -120,7 +120,7 @@ chart.options({
   encode: {
     d: 'path',
     color: 'key',
-    shape: 'hollow',  // 空心样式
+    shape: 'hollow',  // Hollow style
   },
   style: {
     lineWidth: 3,
@@ -128,7 +128,7 @@ chart.options({
 });
 ```
 
-### 带交互
+### With Interaction
 
 ```javascript
 chart.options({
@@ -143,13 +143,13 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface VennData {
-  sets: string[];    // 集合名称数组
-  size: number;      // 集合大小
-  label?: string;    // 显示标签
+  sets: string[];    // Array of set names
+  size: number;      // Size of the set
+  label?: string;    // Display label
 }
 
 interface VennOptions {
@@ -166,39 +166,39 @@ interface VennOptions {
 }
 ```
 
-## 韦恩图 vs 其他图表
+## Venn Diagram vs Other Charts
 
-| 场景 | 推荐图表 |
-|------|----------|
-| 集合交集关系 | 韦恩图 |
-| 层次结构 | 旭日图 |
-| 流向关系 | 桑基图 |
+| Scenario          | Recommended Chart |
+|-------------------|-------------------|
+| Set Intersection  | Venn Diagram      |
+| Hierarchical Structure | Sunburst Chart   |
+| Flow Relationships | Sankey Diagram    |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：缺少 venn 转换
+### Error 1: Missing Venn Transform
 
 ```javascript
-// ❌ 问题：没有 venn 转换
+// ❌ Issue: No Venn transform
 data: { type: 'inline', value: [...] }
 
-// ✅ 正确：添加 venn 转换
+// ✅ Correct: Add Venn transform
 data: { type: 'inline', value: [...], transform: [{ type: 'venn' }] }
 ```
 
-### 错误 2：集合数量过多
+### Error 2: Excessive Number of Sets
 
 ```javascript
-// ⚠️ 注意：集合数量建议不超过 4 个
-// 5 个以上集合会导致视觉混乱
+// ⚠️ Note: It is recommended to have no more than 4 sets
+// More than 5 sets can lead to visual clutter
 ```
 
-### 错误 3：encode 配置错误
+### Error 3: Incorrect encode Configuration
 
 ```javascript
-// ❌ 问题：使用 x/y 编码
+// ❌ Issue: Using x/y encoding
 encode: { x: 'sets', y: 'size' }
 
-// ✅ 正确：使用 d 编码 path
+// ✅ Correct: Using d encoding for path
 encode: { d: 'path', color: 'key' }
 ```

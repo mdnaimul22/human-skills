@@ -2,34 +2,34 @@
 id: "g2-mark-bi-directional-bar"
 title: "G2 Bi-Directional Bar Mark"
 description: |
-  双向柱状图 Mark。使用 interval 标记展示正向和反向的数据对比。
-  适用于正负数据对比、收入支出对比、完成/未完成对比等场景。
+  Bi-directional bar mark. Uses the interval mark to display comparisons of positive and negative data.
+  Suitable for scenarios such as positive/negative data comparison, income/expense comparison, completed/uncompleted comparison, etc.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "双向柱状图"
-  - "正负条形图"
+  - "bi-directional bar chart"
+  - "positive/negative bar chart"
   - "bi-directional"
-  - "对比"
-  - "人口金字塔"
+  - "comparison"
+  - "population pyramid"
   - "butterfly chart"
-  - "对称条形图"
+  - "symmetric bar chart"
 
 related:
   - "g2-mark-interval-basic"
   - "g2-mark-interval-stacked"
 
 use_cases:
-  - "正负分类数据对比"
-  - "收入支出对比"
-  - "完成/未完成对比"
-  - "人口金字塔（男女对比）"
-  - "butterfly chart（左右对称条形图）"
+  - "Positive/negative categorical data comparison"
+  - "Income/expense comparison"
+  - "Completed/uncompleted comparison"
+  - "Population pyramid (male/female comparison)"
+  - "Butterfly chart (left-right symmetric bar chart)"
 
 anti_patterns:
-  - "不含相反含义的数据不适合"
+  - "Not suitable for data without opposite meanings"
 
 difficulty: "beginner"
 completeness: "full"
@@ -39,19 +39,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/bi-directional-bar"
 ---
 
-## 核心概念
+## Core Concepts
 
-双向柱状图展示正向和反向的数据对比：
-- 使用 `interval` 标记
-- 通过负值表示反向数据
-- 配合 `transpose` 坐标变换
+The bidirectional bar chart displays comparisons of positive and negative data:
+- Uses the `interval` mark
+- Represents negative data through negative values
+- Works with the `transpose` coordinate transformation
 
-**适用场景：**
-- 完成/未完成对比
-- 收入/支出对比
-- 正负数据对比
+**Applicable Scenarios:**
+- Completed/Uncompleted comparisons
+- Revenue/Expenditure comparisons
+- Positive/Negative data comparisons
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -61,10 +61,10 @@ const chart = new Chart({
 });
 
 const data = [
-  { department: '部门1', people: 37, type: 'completed' },
-  { department: '部门1', people: 9, type: 'uncompleted' },
-  { department: '部门2', people: 27, type: 'completed' },
-  { department: '部门2', people: 10, type: 'uncompleted' },
+  { department: 'Department 1', people: 37, type: 'completed' },
+  { department: 'Department 1', people: 9, type: 'uncompleted' },
+  { department: 'Department 2', people: 27, type: 'completed' },
+  { department: 'Department 2', people: 10, type: 'uncompleted' },
 ];
 
 chart.options({
@@ -86,9 +86,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 堆叠双向柱状图
+### Stacked Bidirectional Bar Chart
 
 ```javascript
 chart.options({
@@ -107,7 +107,7 @@ chart.options({
 });
 ```
 
-### 自定义 Y 轴标签
+### Customizing Y-Axis Labels
 
 ```javascript
 chart.options({
@@ -117,13 +117,13 @@ chart.options({
   encode: { x: 'category', y: (d) => d.type === 'A' ? d.value : -d.value },
   axis: {
     y: {
-      labelFormatter: (d) => Math.abs(d),  // 显示绝对值
+      labelFormatter: (d) => Math.abs(d),  // Display absolute values
     },
   },
 });
 ```
 
-### 分组显示
+### Group Display
 
 ```javascript
 chart.options({
@@ -141,13 +141,13 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface BiDirectionalData {
-  category: string;      // 分类字段
-  value: number;         // 数值
-  direction: 'forward' | 'backward';  // 方向
+  category: string;      // Category field
+  value: number;         // Numerical value
+  direction: 'forward' | 'backward';  // Direction
 }
 
 interface BiDirectionalOptions {
@@ -156,24 +156,24 @@ interface BiDirectionalOptions {
     transform: [{ type: 'transpose' }];
   };
   encode: {
-    x: string;           // 分类字段
-    y: (d) => number;    // 根据方向返回正/负值
+    x: string;           // Category field
+    y: (d) => number;    // Returns positive/negative value based on direction
     color?: string;
   };
 }
 ```
 
-## 双向柱状图 vs 柱状图
+## Bidirectional Bar Chart vs Bar Chart
 
-| 特性 | 双向柱状图 | 柱状图 |
+| Feature | Bidirectional Bar Chart | Bar Chart |
 |------|------------|--------|
-| 数据方向 | 正反两个方向 | 单一方向 |
-| 用途 | 对比相反含义 | 数值对比 |
-| 视觉效果 | 双向对称 | 单向 |
+| Data Direction | Positive and Negative Directions | Single Direction |
+| Use Case | Comparing Opposite Meanings | Numerical Comparison |
+| Visual Effect | Bidirectional Symmetry | Unidirectional |
 
-## 人口金字塔（butterfly chart）
+## Population Pyramid (Butterfly Chart)
 
-人口金字塔是双向柱状图的典型场景——男女两侧数据方向相反，通过负值技巧实现，**无需 `createView`**。
+The population pyramid is a typical scenario of a bidirectional bar chart—data on the male and female sides are in opposite directions, achieved through negative value techniques, **without the need for `createView`**.
 
 ```javascript
 const data = [
@@ -183,7 +183,7 @@ const data = [
   // ...
 ];
 
-// 宽表转长表：将 male/female 合并为一列
+// Wide table to long table: Merge male/female into one column
 const longData = data.flatMap((d) => [
   { age: d.age, sex: 'Male',   population: d.male },
   { age: d.age, sex: 'Female', population: d.female },
@@ -192,19 +192,19 @@ const longData = data.flatMap((d) => [
 chart.options({
   type: 'interval',
   data: longData,
-  coordinate: { transform: [{ type: 'transpose' }] },  // 横向条形图
+  coordinate: { transform: [{ type: 'transpose' }] },  // Horizontal bar chart
   encode: {
     x: 'age',
-    // 关键：男性用负值，女性用正值 → 形成左右对称
+    // Key: Use negative values for males and positive values for females → Create left-right symmetry
     y: (d) => d.sex === 'Male' ? -d.population : d.population,
     color: 'sex',
   },
   axis: {
     y: {
-      labelFormatter: (d) => Math.abs(d),  // 显示绝对值（不显示负号）
-      title: '人口占比 (%)',
+      labelFormatter: (d) => Math.abs(d),  // Display absolute values (no negative signs)
+      title: 'Population Ratio (%)',
     },
-    x: { title: '年龄段' },
+    x: { title: 'Age Group' },
   },
   scale: {
     color: { range: ['#5B8FF9', '#FF7875'] },
@@ -212,46 +212,46 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：缺少负值转换
+### Error 1: Missing Negative Value Conversion
 
 ```javascript
-// ❌ 问题：所有值都是正值
+// ❌ Issue: All values are positive
 encode: { y: 'value' }
 
-// ✅ 正确：根据类型返回正/负值
+// ✅ Correct: Return positive/negative values based on type
 encode: { y: (d) => d.type === 'A' ? d.value : -d.value }
 ```
 
-### 错误 2：缺少 transpose
+### Error 2: Missing transpose
 
 ```javascript
-// ❌ 问题：默认是垂直方向
+// ❌ Problem: Default is vertical direction
 coordinate: {}
 
-// ✅ 正确：添加 transpose
+// ✅ Correct: Add transpose
 coordinate: { transform: [{ type: 'transpose' }] }
 ```
 
-### 错误 3：Y 轴标签显示负值
+### Error 3: Y-axis Labels Display Negative Values
 
 ```javascript
-// ❌ 问题：负值显示为负数
+// ❌ Problem: Negative values are displayed as negative numbers
 axis: {}
 
-// ✅ 正确：格式化为绝对值
+// ✅ Correct: Format as absolute values
 axis: {
   y: { labelFormatter: (d) => Math.abs(d) },
 }
 ```
 
-### 错误 4：用 `chart.createView()` 实现人口金字塔
+### Error 4: Using `chart.createView()` to Implement a Population Pyramid
 
-这是最常见的错误——V4 时代用 `createView` 创建左右两个独立视图，V5 已移除此 API。正确做法是**负值技巧**（单一 `interval` + 负值编码）或 `spaceLayer`。
+This is the most common mistake—in V4, `createView` was used to create two independent views on the left and right, but this API has been removed in V5. The correct approach is to use the **negative value technique** (single `interval` + negative value encoding) or `spaceLayer`.
 
 ```javascript
-// ❌ 禁止：V4 createView，V5 中不存在
+// ❌ Prohibited: V4 createView, does not exist in V5
 const leftView = chart.createView();
 leftView.options({
   type: 'interval',
@@ -261,10 +261,10 @@ leftView.options({
 const rightView = chart.createView();
 rightView.options({ ... });
 
-// ✅ 方案一（推荐）：负值技巧——单一 interval，男性取负值
+// ✅ Solution 1 (Recommended): Negative Value Technique—Single interval, males take negative values
 chart.options({
   type: 'interval',
-  data: combinedData,   // male/female 合并到一个数组
+  data: combinedData,   // male/female merged into one array
   coordinate: { transform: [{ type: 'transpose' }] },
   encode: {
     x: 'age',
@@ -274,7 +274,7 @@ chart.options({
   axis: { y: { labelFormatter: (d) => Math.abs(d) } },
 });
 
-// ✅ 方案二：spaceLayer（两侧需完全独立比例尺时使用）
+// ✅ Solution 2: spaceLayer (use when both sides require completely independent scales)
 chart.options({
   type: 'spaceLayer',
   children: [

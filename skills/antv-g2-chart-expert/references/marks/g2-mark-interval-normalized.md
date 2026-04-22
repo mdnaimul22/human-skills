@@ -1,21 +1,21 @@
 ---
 id: "g2-mark-interval-normalized"
-title: "G2 百分比堆叠柱状图"
+title: "G2 Percentage Stacked Bar Chart"
 description: |
-  使用 Interval Mark 配合 stackY + normalizeY Transform 创建百分比堆叠柱状图。
-  每组柱体总高度归一化为 100%，聚焦展示各子类别的占比变化，
-  消除总量差异的干扰，便于跨组比较结构分布。
+  Use Interval Mark with stackY + normalizeY Transform to create a percentage stacked bar chart.
+  The total height of each group of bars is normalized to 100%, focusing on the proportion changes of sub-categories,
+  eliminating the interference of total quantity differences, and facilitating cross-group comparison of structural distribution.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 subcategory: "interval"
 tags:
-  - "百分比堆叠"
+  - "percentage stacked"
   - "normalized"
   - "normalizeY"
-  - "占比"
-  - "结构分析"
+  - "proportion"
+  - "structural analysis"
   - "100% stacked bar"
   - "spec"
 
@@ -26,13 +26,13 @@ related:
   - "g2-transform-stacky"
 
 use_cases:
-  - "比较不同组别中各子类别的比例分布"
-  - "关注结构变化而非绝对数值时"
-  - "消除总量差异，突出占比"
+  - "Comparing the proportion distribution of sub-categories across different groups"
+  - "Focusing on structural changes rather than absolute values"
+  - "Eliminating total quantity differences to highlight proportions"
 
 anti_patterns:
-  - "需要看绝对数值变化时，改用普通堆叠柱状图"
-  - "子类别只有两个时，简单折线图或面积图更直观"
+  - "When absolute value changes are needed, use a regular stacked bar chart instead"
+  - "When there are only two sub-categories, a simple line chart or area chart is more intuitive"
 
 difficulty: "beginner"
 completeness: "full"
@@ -42,13 +42,13 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/bar/normalized"
 ---
 
-## 核心概念
+## Core Concepts
 
-百分比堆叠 = `stackY` + `normalizeY` 两个变换顺序执行：
-1. `stackY`：先将各子类别数值堆叠为 y0/y1 区间
-2. `normalizeY`：再将每组的 y 值归一化到 [0, 1]
+Percentage Stacking = `stackY` + `normalizeY` executed in sequence:
+1. `stackY`: First, stack the values of each sub-category into the y0/y1 range
+2. `normalizeY`: Then, normalize the y values of each group to [0, 1]
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -78,8 +78,8 @@ chart.options({
     color: 'type',
   },
   transform: [
-    { type: 'stackY' },      // 1. 先堆叠
-    { type: 'normalizeY' },  // 2. 再归一化为百分比
+    { type: 'stackY' },      // 1. Stack first
+    { type: 'normalizeY' },  // 2. Then normalize to percentage
   ],
   axis: {
     y: { labelFormatter: (v) => `${(v * 100).toFixed(0)}%` },
@@ -89,7 +89,7 @@ chart.options({
 chart.render();
 ```
 
-## 带百分比数据标签
+## With Percentage Data Labels
 
 ```javascript
 chart.options({
@@ -99,14 +99,14 @@ chart.options({
   transform: [{ type: 'stackY' }, { type: 'normalizeY' }],
   labels: [
     {
-      text: (d) => `${(d.value * 100).toFixed(1)}%`,  // 注意：归一化后 value 已是 0-1
+      text: (d) => `${(d.value * 100).toFixed(1)}%`,  // Note: After normalization, value is already between 0-1
       position: 'inside',
       style: {
         fill: 'white',
         fontSize: 11,
         fontWeight: 'bold',
       },
-      // 过滤掉占比过小的标签（避免拥挤）
+      // Filter out labels with small percentages (to avoid clutter)
       filter: (d) => d.value > 0.05,
     },
   ],
@@ -116,7 +116,7 @@ chart.options({
 });
 ```
 
-## 百分比堆叠条形图（水平）
+## Horizontal Percentage Stacked Bar Chart
 
 ```javascript
 chart.options({
@@ -131,16 +131,16 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：transform 顺序颠倒
+### Error: Transform Order Reversed
 ```javascript
-// ❌ 错误：先 normalizeY 再 stackY，结果不正确
+// ❌ Incorrect: normalizeY before stackY, resulting in incorrect output
 chart.options({
   transform: [{ type: 'normalizeY' }, { type: 'stackY' }],
 });
 
-// ✅ 正确：必须先 stackY 后 normalizeY
+// ✅ Correct: stackY must come before normalizeY
 chart.options({
   transform: [{ type: 'stackY' }, { type: 'normalizeY' }],
 });

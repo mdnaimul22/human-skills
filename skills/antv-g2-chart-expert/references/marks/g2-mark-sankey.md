@@ -1,20 +1,20 @@
 ---
 id: "g2-mark-sankey"
-title: "G2 桑基图（sankey）"
+title: "G2 Sankey Diagram (sankey)"
 description: |
-  G2 v5 内置 sankey Mark，用于展示多阶段流量/能量分配流向，
-  数据格式为包含 source、target、value 的链接数组，
-  节点宽度自动由传入/传出流量决定。
+  G2 v5 comes with a built-in sankey Mark, used to display multi-stage flow/energy distribution,
+  with a data format consisting of an array of links containing source, target, and value.
+  Node width is automatically determined by incoming/outgoing flow.
 
 library: "g2"
 version: "5.x"
 category: "marks"
 tags:
-  - "桑基图"
+  - "Sankey Diagram"
   - "sankey"
-  - "流向图"
-  - "能量流"
-  - "转化漏斗"
+  - "Flow Diagram"
+  - "Energy Flow"
+  - "Conversion Funnel"
   - "spec"
 
 related:
@@ -23,10 +23,10 @@ related:
   - "g2-core-chart-init"
 
 use_cases:
-  - "展示能源/物质流动分配"
-  - "用户转化路径分析（多步骤）"
-  - "预算/资金流向可视化"
-  - "供应链流向图"
+  - "Displaying energy/material flow distribution"
+  - "Multi-step user conversion path analysis"
+  - "Budget/fund flow visualization"
+  - "Supply chain flow diagram"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,7 +36,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/graph/network/#sankey"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -47,27 +47,27 @@ const chart = new Chart({
   height: 500,
 });
 
-// 链接数组：每条记录是一条流向
+// Links array: each record represents a flow
 const links = [
-  { source: '访问',   target: '注册',   value: 8000 },
-  { source: '访问',   target: '直接离开', value: 2000 },
-  { source: '注册',   target: '激活',   value: 5000 },
-  { source: '注册',   target: '流失',   value: 3000 },
-  { source: '激活',   target: '付费',   value: 2000 },
-  { source: '激活',   target: '免费使用', value: 3000 },
+  { source: 'Visit', target: 'Register', value: 8000 },
+  { source: 'Visit', target: 'Direct Leave', value: 2000 },
+  { source: 'Register', target: 'Activate', value: 5000 },
+  { source: 'Register', target: 'Churn', value: 3000 },
+  { source: 'Activate', target: 'Pay', value: 2000 },
+  { source: 'Activate', target: 'Free Use', value: 3000 },
 ];
 
 chart.options({
   type: 'sankey',
   data: {
     value: {
-      links,    // 链接数组（必须）
-      // nodes 可选，不填则自动从 links 中提取节点
+      links,    // Links array (required)
+      // nodes optional, automatically extracted from links if not provided
     },
   },
   layout: {
-    nodeAlign: 'justify',   // 节点对齐：'left'|'right'|'center'|'justify'
-    nodePadding: 0.03,      // 节点上下间距（0-1）
+    nodeAlign: 'justify',   // Node alignment: 'left'|'right'|'center'|'justify'
+    nodePadding: 0.03,      // Node vertical padding (0-1)
   },
   style: {
     labelSpacing: 3,
@@ -80,7 +80,7 @@ chart.options({
 chart.render();
 ```
 
-## 带颜色区分的桑基图
+## Sankey Diagram with Color Differentiation
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -92,13 +92,13 @@ const chart = new Chart({
 });
 
 const links = [
-  { source: '煤炭', target: '电力', value: 150 },
-  { source: '石油', target: '交通', value: 120 },
-  { source: '天然气', target: '供热', value: 80 },
-  { source: '电力', target: '工业', value: 90 },
-  { source: '电力', target: '居民', value: 60 },
-  { source: '交通', target: '公路', value: 80 },
-  { source: '交通', target: '航空', value: 40 },
+  { source: 'Coal', target: 'Electricity', value: 150 },
+  { source: 'Oil', target: 'Transportation', value: 120 },
+  { source: 'Natural Gas', target: 'Heating', value: 80 },
+  { source: 'Electricity', target: 'Industry', value: 90 },
+  { source: 'Electricity', target: 'Residential', value: 60 },
+  { source: 'Transportation', target: 'Highway', value: 80 },
+  { source: 'Transportation', target: 'Aviation', value: 40 },
 ];
 
 chart.options({
@@ -109,12 +109,12 @@ chart.options({
   layout: {
     nodeAlign: 'center',
     nodePadding: 0.03,
-    nodeWidth: 0.02,       // 节点宽度（相对画布）
+    nodeWidth: 0.02,       // Node width (relative to canvas)
   },
   scale: {
     color: {
       type: 'ordinal',
-      // 颜色跟随 source 节点
+      // Color follows the source node
     },
   },
   style: {
@@ -130,7 +130,7 @@ chart.options({
 chart.render();
 ```
 
-## 完整配置项
+## Complete Configuration Options
 
 ```javascript
 chart.options({
@@ -138,9 +138,9 @@ chart.options({
   data: {
     value: {
       links: [
-        { source: 'A', target: 'B', value: 10 },  // source/target 是节点名称
+        { source: 'A', target: 'B', value: 10 },  // source/target are node names
       ],
-      nodes: [     // 可选，自动推断
+      nodes: [     // Optional, automatically inferred
         { key: 'A' },
         { key: 'B' },
       ],
@@ -148,70 +148,69 @@ chart.options({
   },
 
   layout: {
-    nodeId: (d) => d.key,      // 节点 ID 提取（默认 d.key）
+    nodeId: (d) => d.key,      // Node ID extraction (default d.key)
     nodeAlign: 'justify',       // 'left'|'right'|'center'|'justify'
-    nodeWidth: 0.02,            // 节点宽度（相对画布宽度，0-1）
-    nodePadding: 0.02,          // 节点上下间距
-    nodeSort: null,             // 节点排序函数
-    linkSort: null,             // 链接排序函数
-    iterations: 6,              // 布局迭代次数
+    nodeWidth: 0.02,            // Node width (relative to canvas width, 0-1)
+    nodePadding: 0.02,          // Vertical padding between nodes
+    nodeSort: null,             // Node sorting function
+    linkSort: null,             // Link sorting function
+    iterations: 6,              // Number of layout iterations
   },
 
   style: {
-    labelSpacing: 3,            // 标签与节点的间距
+    labelSpacing: 3,            // Spacing between label and node
     labelFontSize: 12,
     labelFontWeight: 'normal',
-    nodeLineWidth: 1,           // 节点边框宽度
-    nodeStroke: '#fff',         // 节点边框颜色
-    linkFillOpacity: 0.4,       // 链接透明度
+    nodeLineWidth: 1,           // Node border width
+    nodeStroke: '#fff',         // Node border color
+    linkFillOpacity: 0.4,       // Link opacity
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：数据格式错误——直接传 links 数组
+### Error 1: Incorrect Data Format — Directly Passing the `links` Array
 
 ```javascript
-// ❌ 错误：sankey 的 data 需要包装为 { value: { links } }
+// ❌ Incorrect: Sankey's data requires wrapping in { value: { links } }
 chart.options({
   type: 'sankey',
-  data: links,   // ❌ 直接传数组
+  data: links,   // ❌ Directly passing the array
 });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({
   type: 'sankey',
   data: {
-    value: { links },   // ✅ 需要 { value: { links } } 结构
+    value: { links },   // ✅ Requires { value: { links } } structure
   },
 });
 ```
 
-### 错误 2：source/target 节点名称不一致导致断链
+### Error 2: Broken Links Due to Inconsistent Source/Target Node Names
 
 ```javascript
-// ❌ 错误：'电力' 和 '电力公司' 被当作两个不同节点
+// ❌ Error: '电力' and '电力公司' are treated as two different nodes
 const links = [
   { source: '煤炭',   target: '电力',   value: 100 },
-  { source: '电力公司', target: '工业', value: 80 },   // ❌ 名称不一致！
+  { source: '电力公司', target: '工业', value: 80 },   // ❌ Inconsistent names!
 ];
 
-// ✅ 正确：source 和 target 中对同一节点使用完全相同的名称
+// ✅ Correct: Use exactly the same name for the same node in source and target
 const links = [
   { source: '煤炭', target: '电力', value: 100 },
-  { source: '电力', target: '工业', value: 80 },   // ✅ 完全一致
+  { source: '电力', target: '工业', value: 80 },   // ✅ Exact match
 ];
 ```
-
-### 错误 3：图中存在环（循环引用）
+### Error 3: Presence of Cycles (Circular References) in the Chart
 
 ```javascript
-// ❌ 桑基图不支持环形流向
+// ❌ Sankey charts do not support circular flows
 const links = [
   { source: 'A', target: 'B', value: 10 },
-  { source: 'B', target: 'A', value: 5 },   // ❌ 形成环！布局异常
+  { source: 'B', target: 'A', value: 5 },   // ❌ Forms a cycle! Layout anomaly
 ];
 
-// ✅ 桑基图只适合有向无环的流向数据
+// ✅ Sankey charts are only suitable for directed acyclic flow data
 ```

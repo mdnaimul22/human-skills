@@ -1,19 +1,19 @@
 ---
 id: "g2-data-sortby"
-title: "G2 SortBy 字段排序"
+title: "G2 SortBy Field Sorting"
 description: |
-  SortBy 数据变换按照指定字段对数据进行排序。
-  与 sort 不同，sortBy 通过字段名指定排序，更简洁直观。
-  配置在 data.transform 中。
+  The SortBy data transform sorts data according to the specified field.
+  Unlike sort, sortBy specifies sorting by field name, making it more concise and intuitive.
+  It is configured in data.transform.
 
 library: "g2"
 version: "5.x"
 category: "data"
 tags:
   - "sortBy"
-  - "字段排序"
-  - "排序"
-  - "数据变换"
+  - "field sorting"
+  - "sorting"
+  - "data transform"
   - "data transform"
 
 related:
@@ -21,9 +21,9 @@ related:
   - "g2-transform-sortx"
 
 use_cases:
-  - "按字段值排序"
-  - "多字段组合排序"
-  - "升序/降序排列"
+  - "Sort by field value"
+  - "Multi-field combined sorting"
+  - "Ascending/Descending order"
 
 difficulty: "beginner"
 completeness: "full"
@@ -33,18 +33,18 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/data/sortBy"
 ---
 
-## 核心概念
+## Core Concepts
 
-**SortBy 是数据变换（Data Transform），不是标记变换（Mark Transform）**
+**SortBy is a Data Transform, not a Mark Transform**
 
-- 数据变换配置在 `data.transform` 中
-- 按字段名指定排序，比 sort 更简洁
+- Data transforms are configured in `data.transform`
+- Specify sorting by field name, more concise than sort
 
-**与 sort 的区别：**
-- `sort`: 使用 callback 比较函数
-- `sortBy`: 通过字段名指定，更简洁
+**Differences from sort:**
+- `sort`: Uses a callback comparison function
+- `sortBy`: Specifies by field name, more concise
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -67,7 +67,7 @@ chart.options({
     transform: [
       {
         type: 'sortBy',
-        fields: ['sold'],  // 按 sold 字段升序排序
+        fields: ['sold'],  // Sort in ascending order by the 'sold' field
       },
     ],
   },
@@ -77,13 +77,13 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
-| 属性   | 描述       | 类型                              | 默认值 |
-| ------ | ---------- | --------------------------------- | ------ |
-| fields | 排序的字段 | `(string \| [string, boolean])[]` | `[]`   |
+| Property | Description          | Type                              | Default Value |
+| -------- | -------------------- | --------------------------------- | ------------- |
+| fields   | Fields to be sorted  | `(string \| [string, boolean])[]` | `[]`          |
 
-## 降序排列
+## Descending Order
 
 ```javascript
 chart.options({
@@ -93,17 +93,17 @@ chart.options({
     transform: [
       {
         type: 'sortBy',
-        fields: [['sold', false]],  // false 表示降序
+        fields: [['sold', false]],  // false indicates descending order
       },
     ],
   },
 });
 ```
 
-## 多字段排序
+## Multi-field Sorting
 
 ```javascript
-// 先按 name 升序，name 相同时按 age 降序
+// First sort by name in ascending order, then by age in descending order when names are the same
 chart.options({
   data: {
     type: 'inline',
@@ -112,8 +112,8 @@ chart.options({
       {
         type: 'sortBy',
         fields: [
-          ['name', true],   // name 升序
-          ['age', false],   // age 降序
+          ['name', true],   // name ascending
+          ['age', false],   // age descending
         ],
       },
     ],
@@ -121,62 +121,62 @@ chart.options({
 });
 ```
 
-## 与 sort 的对比
+## Comparison with sort
 
 ```javascript
-// 使用 sortBy（推荐，更简洁）
+// Using sortBy (recommended, more concise)
 data: {
   transform: [{ type: 'sortBy', fields: ['value'] }],
 }
 
-// 使用 sort（更灵活）
+// Using sort (more flexible)
 data: {
   transform: [{ type: 'sort', callback: (a, b) => a.value - b.value }],
 }
 
-// sortBy 降序
+// sortBy in descending order
 data: {
   transform: [{ type: 'sortBy', fields: [['value', false]] }],
 }
 
-// sort 降序
+// sort in descending order
 data: {
   transform: [{ type: 'sort', callback: (a, b) => b.value - a.value }],
 }
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：sortBy 放在 mark transform 中
+### Error 1: sortBy Placed in Mark Transform
 
 ```javascript
-// ❌ 错误：sortBy 是数据变换，不能放在 mark 的 transform 中
+// ❌ Incorrect: sortBy is a data transformation and cannot be placed in the mark's transform
 chart.options({
   type: 'interval',
   data,
-  transform: [{ type: 'sortBy', fields: ['value'] }],  // ❌ 错误位置
+  transform: [{ type: 'sortBy', fields: ['value'] }],  // ❌ Incorrect location
 });
 
-// ✅ 正确：sortBy 放在 data.transform 中
+// ✅ Correct: sortBy should be placed in data.transform
 chart.options({
   type: 'interval',
   data: {
     type: 'inline',
     value: data,
-    transform: [{ type: 'sortBy', fields: ['value'] }],  // ✅ 正确
+    transform: [{ type: 'sortBy', fields: ['value'] }],  // ✅ Correct
   },
 });
 ```
 
-### 错误 2：字段名不存在
+### Error 2: Non-existent Field Name
 
 ```javascript
-// ❌ 错误：字段名不存在，排序无效
+// ❌ Error: Non-existent field name, sorting is invalid
 data: {
   transform: [{ type: 'sortBy', fields: ['nonexistent'] }],
 }
 
-// ✅ 正确：确保字段名存在
+// ✅ Correct: Ensure the field name exists
 data: {
   transform: [{ type: 'sortBy', fields: ['value'] }],
 }

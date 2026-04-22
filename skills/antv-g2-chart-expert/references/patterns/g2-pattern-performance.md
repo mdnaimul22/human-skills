@@ -1,48 +1,48 @@
 ---
 id: "g2-pattern-performance"
-title: "G2 大数据量性能优化"
+title: "G2 Large Dataset Performance Optimization"
 description: |
-  G2 处理大量数据时的性能优化策略：数据预聚合、LTTB 降采样、
-  Canvas 渲染器确认、高频实时数据节流更新等。
-  提供各场景的数据量阈值参考和具体优化方案。
+  Performance optimization strategies for G2 when handling large datasets: data pre-aggregation, LTTB downsampling,
+  Canvas renderer confirmation, high-frequency real-time data throttling updates, etc.
+  Provides data volume thresholds for various scenarios and specific optimization solutions.
 
 library: "g2"
 version: "5.x"
 category: "patterns"
 tags:
-  - "性能优化"
+  - "performance optimization"
   - "performance"
-  - "大数据"
+  - "big data"
   - "Canvas"
-  - "降采样"
-  - "聚合"
+  - "downsampling"
+  - "aggregation"
 
 related:
   - "g2-core-chart-init"
   - "g2-data-transform-patterns"
 
 use_cases:
-  - "图表数据量超过万条时的优化"
-  - "实时数据流的高频更新场景"
+  - "Optimization for charts with data exceeding 10,000 entries"
+  - "High-frequency update scenarios for real-time data streams"
 
 difficulty: "advanced"
 completeness: "full"
 ---
 
-## 数据量阈值参考
+## Data Volume Threshold Reference
 
-| 场景 | 数据量 | 建议方案 |
-|------|--------|---------|
-| 折线图 | < 1,000 点 | 直接渲染 |
-| 折线图 | 1,000 ~ 10,000 点 | 降采样到 500 点以内 |
-| 折线图 | > 10,000 点 | 后端聚合 + 时间范围过滤 |
-| 散点图 | < 5,000 点 | 直接渲染 |
-| 散点图 | 5,000 ~ 50,000 点 | 开启 Canvas 渲染 + 降采样 |
+| Scenario | Data Volume | Recommended Solution |
+|----------|------------------|---------------------|
+| Line Chart | < 1,000 points | Direct Rendering |
+| Line Chart | 1,000 ~ 10,000 points | Downsample to within 500 points |
+| Line Chart | > 10,000 points | Backend Aggregation + Time Range Filtering |
+| Scatter Plot | < 5,000 points | Direct Rendering |
+| Scatter Plot | 5,000 ~ 50,000 points | Enable Canvas Rendering + Downsampling |
 
-## 数据预聚合（最重要的优化）
+## Data Pre-Aggregation (The Most Important Optimization)
 
 ```javascript
-// 10 万条日粒度数据 → 聚合为 365 条月粒度
+// 100,000 daily granularity data → Aggregated into 365 monthly granularity
 function aggregateTimeSeries(data, dateKey, valueKey, granularity = 'month') {
   const getGroupKey = (dateStr) => {
     const d = new Date(dateStr);
@@ -77,11 +77,11 @@ chart.options({
 });
 ```
 
-## 折线图降采样（LTTB 算法）
+## Line Chart Downsampling (LTTB Algorithm)
 
 ```javascript
-// Largest Triangle Three Buckets (LTTB) 降采样
-// 保留视觉上最重要的 N 个点，同时保持折线形状
+// Largest Triangle Three Buckets (LTTB) Downsampling
+// Retains the visually most important N points while preserving the line shape
 function lttb(data, threshold) {
   const dataLength = data.length;
   if (threshold >= dataLength || threshold === 0) return data;
@@ -124,28 +124,28 @@ function lttb(data, threshold) {
   return sampled;
 }
 
-// 10000 个点降采样到 500 个
+// Downsample 10,000 points to 500
 const sampledData = lttb(rawData, 500);
 chart.options({  sampledData, type: 'line', encode: { x: 'x', y: 'y' } });
 ```
 
-## 确认使用 Canvas 渲染器
+## Confirm Using Canvas Renderer
 
 ```javascript
-// G2 默认使用 Canvas 渲染，比 SVG 快得多
-// 大数据量时确认没有被切换为 SVG
+// G2 defaults to Canvas rendering, which is much faster than SVG
+// Confirm that it hasn't been switched to SVG when dealing with large datasets
 const chart = new Chart({
   container: 'container',
-  renderer: 'canvas',   // 默认，大数据量下比 SVG 快 5-10x
+  renderer: 'canvas',   // default, 5-10x faster than SVG with large datasets
   width: 800,
   height: 400,
 });
 ```
 
-## 高频实时数据更新优化
+## High-Frequency Real-Time Data Update Optimization
 
 ```javascript
-// 使用 requestAnimationFrame 节流（最多每帧更新一次）
+// Throttling with requestAnimationFrame (update at most once per frame)
 let pendingData = null;
 let rafId = null;
 
@@ -163,19 +163,19 @@ function updateChart(newData) {
   }
 }
 
-// 模拟实时数据流（每 100ms 有新数据）
+// Simulate real-time data stream (new data every 100ms)
 setInterval(() => {
   const newPoint = { time: Date.now(), value: Math.random() * 100 };
-  updateChart([...currentData.slice(-500), newPoint]);  // 只保留最近 500 个点
+  updateChart([...currentData.slice(-500), newPoint]);  // Keep only the latest 500 points
 }, 100);
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
 ```javascript
-// ❌ 10 万行数据直接传给 G2，页面卡死
+// ❌ Passing 100,000 rows of data directly to G2 causes the page to freeze
 chart.options({ data: tenThousandRows });
 
-// ✅ 先聚合/降采样到合理数量（< 1000 点）
+// ✅ Aggregate or downsample to a reasonable number (< 1000 points) first
 chart.options({ data: aggregateTimeSeries(tenThousandRows, 'date', 'value') });
 ```
