@@ -1,7 +1,6 @@
 ---
 Name: coding_standareds
-Description: >
-  A professional and comprehensive guide transforming complex architectures into clean, maintainable systems. Focused on Clean Architecture, Unidirectional Dependency, and Type Safety.
+Description: A professional and comprehensive guide transforming complex architectures into clean, maintainable systems. Focused on Clean Architecture, Unidirectional Dependency, and Type Safety.
 ---
 
 # Coding Standards
