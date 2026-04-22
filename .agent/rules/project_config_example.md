@@ -325,8 +325,14 @@ def setup_logger(log_path: Path, name: str = None) -> logging.Logger:
         return logger
 
     logger.setLevel(logging.INFO)
+
+    # Silence noisy third-party loggers
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("openai").setLevel(logging.WARNING)
+
+    # Standardized format: [TIME] [LEVEL] [MODULE] - MESSAGE
     fmt = logging.Formatter(
-        "%(asctime)s  %(levelname)-7s  %(name)-25s  %(message)s",
+        "%(asctime)s  %(levelname)-7s  %(name)-30s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
