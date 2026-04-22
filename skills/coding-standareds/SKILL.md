@@ -36,7 +36,7 @@ The code must look like it is part of a **solid, production-grade framework.**
 
 ## 2. Universal Dependency Flow
 
-> *"পানি কখনো উপরে যায় না — imports always flow downward."*
+> *"Water never flows upward — imports always flow downward."*
 
 ```mermaid
 ---
