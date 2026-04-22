@@ -100,6 +100,16 @@ curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/scripts
 
 ---
 
+## Bootstrap New Project
+
+To quickly scaffold a new project with our standard directory structure and the latest agent rules, run the following command in your new project directory:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/scripts/bootstrap.sh | bash
+```
+
+---
+
 
 ## Personalising for Your Own Setup
 
