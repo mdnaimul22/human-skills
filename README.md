@@ -90,6 +90,16 @@ Finally Point your AI assistant's skill loader at the `skills/` directory.
 
 ---
 
+## Distributing Agent Rules
+
+If you have multiple projects and want to keep their `.agent/rules` in sync with this repository, you can use the following one-liner. Running this command in any project directory will create (or update) the `.agent/rules` folder with the latest standards from this repo:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/scripts/sync-rules.sh | bash
+```
+
+---
+
 
 ## Personalising for Your Own Setup
 

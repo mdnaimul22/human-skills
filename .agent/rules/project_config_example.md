@@ -32,13 +32,14 @@ into each new project. Project-specific settings extend `BaseProjectSettings`.
 
 ```
 config/
-├── __init__.py       ← auto-loads dotenv, exports everything
+├── __init__.py       ← auto-loads dotenv, exports EVERYTHING (ProjectSettings, settings, paths, files, etc.)
 ├── paths.py          ← PROJECT_ROOT auto-detection
 ├── files.py          ← read/write/json/delete utilities
 ├── dotenv.py         ← load/set/get/remove .env values
-├── settings.py       ← BaseProjectSettings (base class only)
+├── settings.py       ← Settings class and instance
 └── .env.example      ← universal template
 ```
+
 
 ---
 
@@ -56,8 +57,9 @@ flowchart TB
         PATHS["paths.py\nauto-detects PROJECT_ROOT"]
         DOTENV["dotenv.py\nload · set · get · remove"]
         FILES["files.py\nread · write · json · delete"]
-        SETTINGS["settings.py\nBaseProjectSettings"]
+        SETTINGS["settings.py\nSettings class & instance"]
         CINIT["__init__.py\nsingle export point"]
+
 
         PATHS --> DOTENV
         PATHS --> FILES
@@ -75,8 +77,9 @@ flowchart TB
 ## Core Rules
 
 1. `config/` is **always copied whole** into every project — never modified
-2. Project-specific fields live in a **separate file** (e.g. `core/settings.py`)
-   that extends `BaseProjectSettings`
+2. Project-specific fields live in `src/config/settings.py` (which extends the template) 
+   or in a dedicated module that **exports via __init__.py**.
+
 3. `paths.py` auto-detects `PROJECT_ROOT` via marker files — no hardcoding
 4. `dotenv.py` uses `os.environ.setdefault` — never overwrites already-set vars
 5. All path fields in settings are resolved relative to `PROJECT_ROOT`
@@ -115,7 +118,7 @@ from typing import Any
 from .paths import PROJECT_ROOT
 
 def _abs(relative_path: str) -> Path:
-    p = Path(relative_path)
+    p = Path(relative_path).expanduser()
     return p if p.is_absolute() else PROJECT_ROOT / p
 
 def read_text(relative_path: str, encoding: str = "utf-8") -> str:
@@ -207,7 +210,8 @@ def remove_value(key: str, path: str = _DOTENV_PATH) -> None:
 
 ---
 
-## settings.py (BaseProjectSettings)
+## settings.py (Settings)
+
 
 ```python
 from pathlib import Path
@@ -217,7 +221,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from .paths import PROJECT_ROOT
 
 
-class BaseProjectSettings(BaseSettings):
+class Settings(BaseSettings):
+
 
     PROJECT_NAME: str = "MyProject"
     VERSION: str = "1.0.0"
@@ -244,7 +249,7 @@ class BaseProjectSettings(BaseSettings):
     _MANIFEST_PATH: Optional[str] = Field(default=None, validation_alias="MANIFEST_PATH")
 
     def _resolve(self, val: str) -> Path:
-        p = Path(val)
+        p = Path(val).expanduser()
         return p if p.is_absolute() else PROJECT_ROOT / p
 
     @property
@@ -296,7 +301,11 @@ class BaseProjectSettings(BaseSettings):
         extra="ignore",
         populate_by_name=True,
     )
+
+
+Settings = Settings()
 ```
+
 
 ---
 
@@ -309,7 +318,7 @@ from .files import (
     exists, ensure_dir, delete, list_files, get_abs_path,
 )
 from .dotenv import load_dotenv, set_value, get_value, remove_value
-from .settings import BaseProjectSettings
+from .settings import Settings
 
 load_dotenv()
 
@@ -318,38 +327,24 @@ __all__ = [
     "read_text", "write_text", "read_json", "write_json",
     "exists", "ensure_dir", "delete", "list_files", "get_abs_path",
     "load_dotenv", "set_value", "get_value", "remove_value",
-    "BaseProjectSettings",
+    "Settings",
 ]
 ```
 
+
 ---
 
-## How a Project Extends the Base?
+## How to use the config?
 
-Create a separate file per project (e.g. `core/settings.py`) and only add
-project-specific fields there:
+Import from the package root only. **Directly importing internal scripts (settings.py, paths.py) is strictly forbidden.**
 
 ```python
-from typing import Optional
-from pydantic import Field
-from config.settings import BaseProjectSettings
+from src.config import Settings
 
-class Settings(BaseProjectSettings):
-    PROJECT_NAME: str = "MyNewProject"
-
-    # Only project-specific fields go here
-    MY_SECRET_KEY: str = Field(..., validation_alias="MY_SECRET_KEY")
-    SOME_API_KEY: Optional[str] = None
-
-settings = Settings()
+print(Settings.PROJECT_ROOT)
+print(Settings.LOG_DIR)
 ```
 
-Import from anywhere in the project:
-```python
-from core.settings import settings
-print(settings.PROJECT_ROOT)
-print(settings.LOG_DIR)
-```
 
 ---
 
@@ -385,8 +380,7 @@ DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
 
 ## Checklist When Setting Up a New Project
 
-- [ ] Copy the `config/` folder into the project root
-- [ ] Copy `.env.example` to `.env` and fill in mandatory fields
-- [ ] Create `core/settings.py` (or any name), extend `BaseProjectSettings`
-- [ ] Add only project-specific fields there
-- [ ] Use `from core.settings import settings` anywhere in the project
+- [ ] Copy the `config/` folder into `src/config/`
+- [ ] Copy `root/.env.example` to `root/.env` and fill in mandatory fields
+- [ ] Ensure `src/config/settings.py` contains all project-specific fields
+- [ ] Use `from src.config import Settings` anywhere in the project
