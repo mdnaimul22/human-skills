@@ -1,7 +1,6 @@
 ---
 Name: coding_standareds
-Description: >
-  A professional and comprehensive guide transforming complex architectures into clean, maintainable systems. Focused on Clean Architecture, Unidirectional Dependency, and Type Safety.
+Description: A professional and comprehensive guide transforming complex architectures into clean, maintainable systems. Focused on Clean Architecture, Unidirectional Dependency, and Type Safety.
 ---
 
 # Coding Standards
@@ -37,7 +36,7 @@ The code must look like it is part of a **solid, production-grade framework.**
 
 ## 2. Universal Dependency Flow
 
-> *"পানি কখনো উপরে যায় না — imports always flow downward."*
+> *"Water never flows upward — imports always flow downward."*
 
 ```mermaid
 ---

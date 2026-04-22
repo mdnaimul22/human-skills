@@ -32,11 +32,12 @@ into each new project. Project-specific settings extend `BaseProjectSettings`.
 
 ```
 config/
-├── __init__.py       ← auto-loads dotenv, exports EVERYTHING (ProjectSettings, settings, paths, files, etc.)
+├── __init__.py       ← auto-loads dotenv, exports EVERYTHING
 ├── paths.py          ← PROJECT_ROOT auto-detection
 ├── files.py          ← read/write/json/delete utilities
 ├── dotenv.py         ← load/set/get/remove .env values
 ├── settings.py       ← Settings class and instance
+├── logger.py         ← Unified Rotating Logger setup
 └── .env.example      ← universal template
 ```
 
@@ -223,7 +224,6 @@ from .paths import PROJECT_ROOT
 
 class Settings(BaseSettings):
 
-
     PROJECT_NAME: str = "MyProject"
     VERSION: str = "1.0.0"
     ENV: str = Field(default="development", validation_alias="APP_ENV")
@@ -306,6 +306,44 @@ class Settings(BaseSettings):
 Settings = Settings()
 ```
 
+---
+
+## logger.py (Unified Rotating Logger)
+
+```python
+import logging
+import sys
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+def setup_logger(log_path: Path, name: str = None) -> logging.Logger:
+    """Unified logger setup. Configures root logger if name is None."""
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    logger = logging.getLogger(name)
+    
+    if logger.handlers:
+        return logger
+
+    logger.setLevel(logging.INFO)
+    fmt = logging.Formatter(
+        "%(asctime)s  %(levelname)-7s  %(name)-25s  %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    # 1. Rotating File Handler (5MB, 3 backups)
+    fh = RotatingFileHandler(log_path, maxBytes=5 * 1024 * 1024, backupCount=3)
+    fh.setFormatter(fmt)
+    logger.addHandler(fh)
+
+    # 2. Console Handler
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setFormatter(fmt)
+    logger.addHandler(sh)
+
+    return logger
+```
+
+
 
 ---
 
@@ -319,6 +357,7 @@ from .files import (
 )
 from .dotenv import load_dotenv, set_value, get_value, remove_value
 from .settings import Settings
+from .logger import setup_logger
 
 load_dotenv()
 
@@ -327,8 +366,9 @@ __all__ = [
     "read_text", "write_text", "read_json", "write_json",
     "exists", "ensure_dir", "delete", "list_files", "get_abs_path",
     "load_dotenv", "set_value", "get_value", "remove_value",
-    "Settings",
+    "Settings", "setup_logger",
 ]
+
 ```
 
 
