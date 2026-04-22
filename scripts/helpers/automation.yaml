@@ -22,7 +22,7 @@ git:
   branch: main
 
   # Commit message template — [{datetime}] will be replaced with actual time
-  commit_message: "sync: [{datetime}]"
+  commit_message: "[{datetime}]"
 
 # ── Logging Configuration ─────────────────────────────────────────────────────
 logging:
