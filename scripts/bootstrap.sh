@@ -7,6 +7,13 @@ RULES_FILES=("coding_standareds.md" "project_config_example.md" "project_tree_ex
 
 echo "🚀 Starting Project Bootstrap..."
 
+# Safety Check: Ensure the directory is empty
+if [ "$(ls -A)" ]; then
+    echo -e "⚠️  Error: This directory is not empty!"
+    echo "❌ দুঃখিত, এই মডিউল শুধুমাত্র নতুন প্রজেক্ট ইনিশিয়েলাইজ করার জন্য। পুরাতন প্রজেক্টে এটি রান করলে প্রজেক্ট ধ্বংস হয়ে যেতে পারে।"
+    exit 1
+fi
+
 # 1. Create Directory Structure
 echo "📁 Creating directories..."
 DIRS=(
