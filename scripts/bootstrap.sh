@@ -10,7 +10,7 @@ echo "🚀 Starting Project Bootstrap..."
 # Safety Check: Ensure the directory is empty
 if [ "$(ls -A)" ]; then
     echo -e "⚠️  Error: This directory is not empty!"
-    echo "❌ দুঃখিত, এই মডিউল শুধুমাত্র নতুন প্রজেক্ট ইনিশিয়েলাইজ করার জন্য। পুরাতন প্রজেক্টে এটি রান করলে প্রজেক্ট ধ্বংস হয়ে যেতে পারে।"
+    echo "❌ Sorry, this module is for initializing new projects only. Running it in an existing project may result in data loss or configuration overwrite."
     exit 1
 fi
 
