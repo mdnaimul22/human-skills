@@ -275,8 +275,12 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> tuple[list[s
             logger.warning(f"  ⚠  Source missing — skipping: {src}")
             continue
             
-        # Record this destination as managed
-        touched_dsts.add(str(dst.resolve()))
+        # Record this destination as managed (relative to REPO_ROOT if possible)
+        try:
+            rel_dst = dst.resolve().relative_to(REPO_ROOT.resolve())
+            touched_dsts.add(str(rel_dst))
+        except ValueError:
+            touched_dsts.add(str(dst.resolve()))
             
         logger.info(f"  →  Forwarding [{name}] …")
         try:
@@ -362,7 +366,11 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     orphans = previous_managed - current_managed
     
     for orphan_path_str in orphans:
+        # Resolve path relative to REPO_ROOT if it's not absolute
         orphan_path = Path(orphan_path_str)
+        if not orphan_path.is_absolute():
+            orphan_path = REPO_ROOT / orphan_path
+            
         if orphan_path.exists():
             logger.warning(f"  🗑️  Removing orphaned upstream skill: {orphan_path.name}")
             try:
