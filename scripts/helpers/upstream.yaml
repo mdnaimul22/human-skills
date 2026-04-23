@@ -35,3 +35,8 @@ upstreams:
     path: "{REPO_ROOT}/.chart-visualization-skills"
     url: "https://github.com/mdnaimul22/chart-visualization-skills.git"
     pull: true
+
+  - name: anthropics-skills
+    path: "{REPO_ROOT}/.anthropics-skills"
+    url: "https://github.com/anthropics/skills.git"
+    pull: true
