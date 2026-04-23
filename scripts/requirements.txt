@@ -1,2 +1,4 @@
 pyyaml>=6.0
 schedule>=1.2.0
+defusedxml>=0.7.1
+Pillow>=10.0.0
