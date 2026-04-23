@@ -16,6 +16,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 forwards:
+# anthropics-skills
+  - from: "{REPO_ROOT}/.anthropics-skills/skills/docx"
+    to:   "{REPO_ROOT}/skills/docx"
+    enabled: true
 
 # everything-claude-code
   - from: "{REPO_ROOT}/.everything-claude-code/skills/pytorch-patterns"
