@@ -11,33 +11,13 @@
 
 ---
 
-## What is Human Skills?
+## What is Human Skills
 
-The internet is full of AI skill repositories — thousands of instruction files telling AI assistants *how* to behave for specific tasks. The problem? Most of them are **blind skills**: written once, never run, never verified.
-
-**Human Skills** is different.
-
-A skill earns its place in this repository only after it has been:
-
-1. **Run multiple times** against a real task
-2. **Verified by a human** to produce correct, useful output
-3. **Proven consistent** — not a one-off lucky result
-
-If a skill has never been tested end-to-end by a human, it has **no place here**.
+The internet is full of AI skill repositories. The problem, Most of them are **blind skills**, Let's pull and track only the favorite one.
 
 ---
 
-## Who is this for?
-
-| User | How they benefit |
-|---|---|
-| **You (the admin)** | A personal, curated knowledge base — no more drowning in unverified skill repos |
-| **Anyone who clones this** | A ready-to-use, tested skill library they can drop into their own AI setup |
-| **Teams** | A shared standard for what "a working skill" actually means |
-
----
-
-## Core Concept: Upstream Tracking + Skill Forwarding
+### Core Concept: Upstream Tracking + Skill Forwarding
 
 Many great skill repos exist in the open-source community. Instead of copying them manually or losing track of updates, Human Skills uses a **two-step pipeline**:
 
@@ -52,6 +32,122 @@ Your GitHub repo (always up to date)
 ```
 
 You stay in control of **what gets promoted** into `skills/`. Everything else in the upstream stays there — you only forward what you've verified works.
+
+#### Step 1 — Fork the repo
+
+Fork this repo on GitHub so you have your own copy to push to.
+
+#### Step 2 — Configure git identity
+
+```bash
+git config user.name  "Your Name"
+git config user.email "your@email.com"
+```
+
+#### Step 3 — Add your upstream repos
+
+Edit `scripts/helpers/upstream.yaml`:
+
+```yaml
+upstreams:
+
+  - name: claude-skills
+    path: "{REPO_ROOT}/.claude-skills"
+    url: "https://github.com/alirezarezvani/claude-skills.git"
+    pull: true
+
+  - name: everything-claude-code
+    path: "{REPO_ROOT}/.everything-claude-code"
+    url: "https://github.com/affaan-m/everything-claude-code.git"
+    pull: true
+```
+
+Each entry defines an upstream repository. 
+- **Auto-Clone:** If the `path` does not exist locally but a `url` is provided, the script will automatically run `git clone` to download it.
+- **Auto-Pull:** The sync script will run `git pull` in each one every cycle.
+- **Freeze Updates:** Set `pull: false` if you want to freeze an upstream at its current version and stop receiving automatic updates.
+
+#### Step 4 — Define which skills to forward
+
+Edit `scripts/helpers/path_forward.yaml`:
+
+```yaml
+# everything-claude-code
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/pytorch-patterns"
+    to:   "{REPO_ROOT}/skills/pytorch-patterns"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-patterns"
+    to:   "{REPO_ROOT}/skills/python-patterns"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-testing"
+    to:   "{REPO_ROOT}/skills/python-testing"
+    enabled: true
+
+# ui-ux-pro-max-skill
+  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max"
+    to: "{REPO_ROOT}/skills/ui-ux-pro-max" 
+    enabled: true
+
+  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/README.md"
+    to: "{REPO_ROOT}/skills/ui-ux-pro-max"
+    enabled: true
+
+# Temporarily pause a forward:
+  - from: /absolute/path/to/cloned/some-skill-repo/skills/unverified-skill
+    to:   /absolute/path/to/human-skills/skills/unverified-skill
+    enabled: false
+```
+
+> **Rule of thumb:** Only set `enabled: true` for skills you have personally run and verified. This is what makes it a *Human Skill*.
+> 
+> **Smart Forwarding:** The daemon supports forwarding both entire directories and individual files. It uses a **Wipe-Once Merge Strategy**: multiple rules can safely copy files into the same destination directory without accidentally overwriting each other.
+
+#### Step 5 — Tune the schedule
+
+Edit `scripts/helpers/automation.yaml`:
+
+```yaml
+schedule:
+  run_at: "06:00"            # Daily at 6 AM — change to your preference
+  interval_hours: 24         # Used if run_at is null
+  poll_interval_seconds: 30  # How often to check for config file changes
+
+git:
+  auto_push: true
+  branch: main
+  commit_message: "sync: auto-update from upstream [{datetime}]"
+
+logging:
+  level: INFO
+  log_file: /absolute/path/to/human-skills/scripts/logs/sync.log
+```
+
+#### Step 6 — Running the Sync Daemon
+
+The sync script is designed to run **persistently inside a `screen` session** so it survives terminal closure.
+
+```bash
+# Start a named screen session
+screen -S human-skills-sync
+
+# Run the daemon
+python3 /path/to/human-skills/scripts/sync.py
+
+# Detach from screen (daemon keeps running in background)
+# Press:  Ctrl+A, then D
+
+# Reconnect at any time to check logs
+screen -r human-skills-sync
+```
+
+On every sync cycle the daemon:
+
+1. **Pulls** or clones all upstream repos
+2. **Copies** the forwarded skill folders into `skills/`
+3. **Commits** all changes with a dynamic timestamped message detailing exactly which upstreams were updated (e.g. `sync: auto-update from upstream ui-ux-pro-max-skill 2026-04-17`)
+4. **Pushes** to your remote repository automatically
 
 ---
 
@@ -90,7 +186,7 @@ Finally Point your AI assistant's skill loader at the `skills/` directory.
 
 ---
 
-## Distributing Agent Rules
+### Distributing Agent Rules
 
 If you have multiple projects and want to keep their `.agent/rules` in sync with this repository, you can use the following one-liner. Running this command in any project directory will create (or update) the `.agent/rules` folder with the latest standards from this repo:
 
@@ -100,7 +196,7 @@ curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/scripts
 
 ---
 
-## Bootstrap New Project
+### Bootstrap New Project
 
 To quickly scaffold a new project with our standard directory structure and the latest agent rules, run the following command in your new project directory:
 
@@ -110,147 +206,7 @@ curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/scripts
 
 ---
 
-
-## Personalising for Your Own Setup
-
-### Step 1 — Fork the repo
-
-Fork this repo on GitHub so you have your own copy to push to.
-
-### Step 2 — Configure git identity
-
-```bash
-git config user.name  "Your Name"
-git config user.email "your@email.com"
-```
-
-### Step 3 — Add your upstream repos
-
-Edit `scripts/helpers/upstream.yaml`:
-
-```yaml
-upstreams:
-
-  - name: claude-skills
-    path: "{REPO_ROOT}/.claude-skills"
-    url: "https://github.com/alirezarezvani/claude-skills.git"
-    pull: true
-
-  - name: everything-claude-code
-    path: "{REPO_ROOT}/.everything-claude-code"
-    url: "https://github.com/affaan-m/everything-claude-code.git"
-    pull: true
-```
-
-Each entry defines an upstream repository. 
-- **Auto-Clone:** If the `path` does not exist locally but a `url` is provided, the script will automatically run `git clone` to download it.
-- **Auto-Pull:** The sync script will run `git pull` in each one every cycle.
-- **Freeze Updates:** Set `pull: false` if you want to freeze an upstream at its current version and stop receiving automatic updates.
-
-### Step 4 — Define which skills to forward
-
-Edit `scripts/helpers/path_forward.yaml`:
-
-```yaml
-# everything-claude-code
-  - from: "{REPO_ROOT}/.everything-claude-code/skills/pytorch-patterns"
-    to:   "{REPO_ROOT}/skills/pytorch-patterns"
-    enabled: true
-
-  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-patterns"
-    to:   "{REPO_ROOT}/skills/python-patterns"
-    enabled: true
-
-  - from: "{REPO_ROOT}/.everything-claude-code/skills/python-testing"
-    to:   "{REPO_ROOT}/skills/python-testing"
-    enabled: true
-
-# ui-ux-pro-max-skill
-  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max"
-    to: "{REPO_ROOT}/skills/ui-ux-pro-max" 
-    enabled: true
-
-  - from: "{REPO_ROOT}/.ui-ux-pro-max-skill/README.md"
-    to: "{REPO_ROOT}/skills/ui-ux-pro-max"
-    enabled: true
-
-# Temporarily pause a forward:
-  - from: /absolute/path/to/cloned/some-skill-repo/skills/unverified-skill
-    to:   /absolute/path/to/human-skills/skills/unverified-skill
-    enabled: false
-```
-
-> **Rule of thumb:** Only set `enabled: true` for skills you have personally run and verified. This is what makes it a *Human Skill*.
-> 
-> **Smart Forwarding:** The daemon supports forwarding both entire directories and individual files. It uses a **Wipe-Once Merge Strategy**: multiple rules can safely copy files into the same destination directory without accidentally overwriting each other.
-
-### Step 5 — Tune the schedule
-
-Edit `scripts/helpers/automation.yaml`:
-
-```yaml
-schedule:
-  run_at: "06:00"            # Daily at 6 AM — change to your preference
-  interval_hours: 24         # Used if run_at is null
-  poll_interval_seconds: 30  # How often to check for config file changes
-
-git:
-  auto_push: true
-  branch: main
-  commit_message: "sync: auto-update from upstream [{datetime}]"
-
-logging:
-  level: INFO
-  log_file: /absolute/path/to/human-skills/scripts/logs/sync.log
-```
-
----
-
-## Running the Sync Daemon
-
-The sync script is designed to run **persistently inside a `screen` session** so it survives terminal closure.
-
-```bash
-# Start a named screen session
-screen -S human-skills-sync
-
-# Run the daemon
-python3 /path/to/human-skills/scripts/sync.py
-
-# Detach from screen (daemon keeps running in background)
-# Press:  Ctrl+A, then D
-
-# Reconnect at any time to check logs
-screen -r human-skills-sync
-```
-
-On every sync cycle the daemon:
-
-1. **Pulls** or clones all upstream repos
-2. **Copies** the forwarded skill folders into `skills/`
-3. **Commits** all changes with a dynamic timestamped message detailing exactly which upstreams were updated (e.g. `sync: auto-update from upstream ui-ux-pro-max-skill 2026-04-17`)
-4. **Pushes** to your remote repository automatically
-
----
-
-## Hot-Reload — No Restart Needed
-
-The daemon watches `scripts/helpers/*.yaml` for file changes every `poll_interval_seconds`. If you edit any config file while the script is running:
-
-| What you change | What happens automatically |
-|---|---|
-| Add a new upstream in `upstream.yaml` | Cloned/Picked up on next sync cycle |
-| Toggle `pull: false` on an upstream | Pauses pulling updates for that specific upstream (freezing it) |
-| Add a new forward in `path_forward.yaml` | Picked up on next sync cycle |
-| Set `enabled: false` on a forward | Skipped from next sync onwards |
-| Change `run_at` in `automation.yaml` | Schedule cleared and re-registered immediately |
-| Change `poll_interval_seconds` | New interval takes effect on next loop tick |
-
-You never need to restart the script.
-
----
-
-## What Makes a Skill "Human-Verified"?
+### What Makes a Skill "Human-Verified"?
 
 A skill qualifies for this repo when:
 
@@ -263,7 +219,7 @@ Blind skills — instruction files that look good on paper but have never been t
 
 ---
 
-## Repository Structure
+### Repository Structure
 
 ```
 human-skills/
@@ -287,7 +243,7 @@ human-skills/
 └── .superpowers/
 ```
 
-## Contributing
+### Contributing
 
 If you want to contribute a skill:
 
@@ -300,6 +256,6 @@ Skills submitted without evidence of testing will not be merged.
 
 ---
 
-## License
+### License
 
 MIT — see [LICENSE](LICENSE).
