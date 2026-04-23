@@ -23,7 +23,7 @@ forwards:
 
   - from: "{REPO_ROOT}/.anthropics-skills/skills/pdf"
     to:   "{REPO_ROOT}/skills/pdf"
-    enabled: true
+    enabled: false
 
   - from: "{REPO_ROOT}/.anthropics-skills/skills/pptx"
     to:   "{REPO_ROOT}/skills/pptx"
