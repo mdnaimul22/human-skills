@@ -21,6 +21,22 @@ forwards:
     to:   "{REPO_ROOT}/skills/docx"
     enabled: true
 
+  - from: "{REPO_ROOT}/.anthropics-skills/skills/pdf"
+    to:   "{REPO_ROOT}/skills/pdf"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.anthropics-skills/skills/pptx"
+    to:   "{REPO_ROOT}/skills/pptx"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.anthropics-skills/skills/xlsx"
+    to:   "{REPO_ROOT}/skills/xlsx"
+    enabled: true
+
+  - from: "{REPO_ROOT}/.anthropics-skills/skills/mcp-builder"
+    to:   "{REPO_ROOT}/skills/mcp-builder"
+    enabled: true
+
 # everything-claude-code
   - from: "{REPO_ROOT}/.everything-claude-code/skills/pytorch-patterns"
     to:   "{REPO_ROOT}/skills/pytorch-patterns"
