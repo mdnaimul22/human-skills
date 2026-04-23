@@ -33,18 +33,7 @@ Your GitHub repo (always up to date)
 
 You stay in control of **what gets promoted** into `skills/`. Everything else in the upstream stays there — you only forward what you've verified works.
 
-#### Step 1 — Fork the repo
-
-Fork this repo on GitHub so you have your own copy to push to.
-
-#### Step 2 — Configure git identity
-
-```bash
-git config user.name  "Your Name"
-git config user.email "your@email.com"
-```
-
-#### Step 3 — Add your upstream repos
+#### Step 1 — Add your upstream repos
 
 Edit `scripts/helpers/upstream.yaml`:
 
@@ -67,7 +56,7 @@ Each entry defines an upstream repository.
 - **Auto-Pull:** The sync script will run `git pull` in each one every cycle.
 - **Freeze Updates:** Set `pull: false` if you want to freeze an upstream at its current version and stop receiving automatic updates.
 
-#### Step 4 — Define which skills to forward
+#### Step 2 — Define which skills to forward
 
 Edit `scripts/helpers/path_forward.yaml`:
 
@@ -104,7 +93,7 @@ Edit `scripts/helpers/path_forward.yaml`:
 > 
 > **Smart Forwarding:** The daemon supports forwarding both entire directories and individual files. It uses a **Wipe-Once Merge Strategy**: multiple rules can safely copy files into the same destination directory without accidentally overwriting each other.
 
-#### Step 5 — Tune the schedule
+#### Step 3 — Tune the schedule
 
 Edit `scripts/helpers/automation.yaml`:
 
@@ -124,7 +113,7 @@ logging:
   log_file: /absolute/path/to/human-skills/scripts/logs/sync.log
 ```
 
-#### Step 6 — Running the Sync Daemon
+#### Step 4 — Running the Sync Daemon
 
 The sync script is designed to run **persistently inside a `screen` session** so it survives terminal closure.
 
