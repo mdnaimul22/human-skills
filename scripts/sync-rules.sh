@@ -5,7 +5,13 @@ TARGET_DIR=".agents/rules"
 REPO_RAW_URL="https://raw.githubusercontent.com/mdnaimul22/human-skills/main/.agents/rules"
 
 # Files to sync
-FILES=("coding_standareds.md" "project_config_example.md" "project_tree_example.md")
+FILES=(
+    "coding-standards.md"
+    "architecture-patterns.md"
+    "maintenance-testing.md"
+    "project-config-example.md"
+    "project-tree-example.md"
+)
 
 echo "--- Rules Sync Started ---"
 

@@ -1,8 +1,7 @@
 ---
-name: python-project-config
-description: Generates a universal `config/` folder (paths.py, files.py, dotenv.py,
-  settings.py, __init__.py, .env.example) that works across any Python project
-  — FastAPI, CLI, scripts, or AI agent backends.
+trigger: always_on
+name: project-config-example
+description: Generates a universal `config/` folder (paths.py, files.py, dotenv.py, settings.py, __init__.py, .env.example) that works across any Python project — FastAPI, CLI, scripts, or AI agent backends.
 ---
 
 # Python Project Config
@@ -12,19 +11,14 @@ description: Generates a universal `config/` folder (paths.py, files.py, dotenv.
 
 Trigger this skill **proactively** (without waiting for explicit requests) under any of the following scenarios:
 
-- **Project Initialization & Refactoring:** The user is starting a new Python project, restructuring an existing one, or asking how to organize `config` and `settings`.
-- **Framework Setup:** The user is bootstrapping a FastAPI application, CLI tool, or AI-agent backend.
+- **Project Setup & Refactoring:** The user is starting, bootstrapping (FastAPI, CLI, AI-agent), or restructuring a project.
 - **Environment Management:** The task involves `.env` handling, securely managing API keys, detecting universal `PROJECT_ROOT`, or organizing project-level file paths.
 - **Target Keywords:** The user mentions `pydantic-settings`, `BaseSettings`, or custom configuration managers.
 - **Conversational Cues:** The user says things like *"set up my project structure," "where should I put settings?," "how do I manage env vars in Python?,"* or *"copy the config folder."*
 
 > **Mandate:** If the task involves initializing or scaffolding a Python backend, immediately rely on this structure.
 
-## What This Config Pattern Does
-
-Generates a universal `config/` folder that works across any Python project
-(FastAPI, CLI, scripts, Next.js+Python hybrid). The folder is copied as-is
-into each new project. Project-specific settings extend `BaseProjectSettings`.
+Generates a universal `config/` folder (FastAPI, CLI, scripts) that is copied into each new project. Project settings extend `BaseProjectSettings`.
 
 ---
 
@@ -78,8 +72,7 @@ flowchart TB
 ## Core Rules
 
 1. `config/` is **always copied whole** into every project — never modified
-2. Project-specific fields live in `src/config/settings.py` (which extends the template) 
-   or in a dedicated module that **exports via __init__.py**.
+2. Project-specific fields live in `src/config/settings.py` (extends template) or a dedicated module.
 
 3. `paths.py` auto-detects `PROJECT_ROOT` via marker files — no hardcoding
 4. `dotenv.py` uses `os.environ.setdefault` — never overwrites already-set vars

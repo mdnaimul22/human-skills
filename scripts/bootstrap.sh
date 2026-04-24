@@ -3,7 +3,13 @@
 # Configuration
 REPO_RAW_URL="https://raw.githubusercontent.com/mdnaimul22/human-skills/main"
 RULES_DIR=".agents/rules"
-RULES_FILES=("coding_standareds.md" "project_config_example.md" "project_tree_example.md")
+RULES_FILES=(
+    "coding-standards.md"
+    "architecture-patterns.md"
+    "maintenance-testing.md"
+    "project-config-example.md"
+    "project-tree-example.md"
+)
 
 echo "🚀 Starting Project Bootstrap..."
 
