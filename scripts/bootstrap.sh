@@ -2,7 +2,7 @@
 
 # Configuration
 REPO_RAW_URL="https://raw.githubusercontent.com/mdnaimul22/human-skills/main"
-RULES_DIR=".agent/rules"
+RULES_DIR=".agents/rules"
 RULES_FILES=("coding_standareds.md" "project_config_example.md" "project_tree_example.md")
 
 echo "🚀 Starting Project Bootstrap..."
@@ -241,10 +241,10 @@ EOF
 
 echo "   [Created] .gitignore, .env, .env.example, main.py, README.md, LICENSE"
 
-# 4. Sync Agent Rules
-echo "📥 Syncing Agent Rules from human-skills..."
+# 4. Sync Rules
+echo "📥 Syncing Rules from human-skills..."
 for FILE in "${RULES_FILES[@]}"; do
-    curl -sSL "$REPO_RAW_URL/.agent/rules/$FILE" -o "$RULES_DIR/$FILE"
+    curl -sSL "$REPO_RAW_URL/.agents/rules/$FILE" -o "$RULES_DIR/$FILE"
     if [ $? -eq 0 ]; then
         echo "   [Synced] $FILE"
     else
