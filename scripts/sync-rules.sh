@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Target directory
-TARGET_DIR=".agent/rules"
-REPO_RAW_URL="https://raw.githubusercontent.com/mdnaimul22/human-skills/main/.agent/rules"
+TARGET_DIR=".agents/rules"
+REPO_RAW_URL="https://raw.githubusercontent.com/mdnaimul22/human-skills/main/.agents/rules"
 
 # Files to sync
 FILES=("coding_standareds.md" "project_config_example.md" "project_tree_example.md")
