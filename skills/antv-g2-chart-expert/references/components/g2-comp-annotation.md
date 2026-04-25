@@ -11,30 +11,16 @@ version: "5.x"
 category: "components"
 tags:
   - "annotation"
-  - "annotation"
+  - "标注"
+  - "参考线"
   - "reference line"
-  - "reference line"
-  - "text annotation"
+  - "文字标注"
   - "lineX"
   - "lineY"
   - "spec"
 
 related:
   - "g2-core-view-composition"
-  - "g2-comp-axis-config"
-
-use_cases:
-  - "Add average lines, target lines to charts"
-  - "Annotate special data points (max, min)"
-  - "Add reference area background color"
-
-difficulty: "intermediate"
-completeness: "full"
-created: "2024-01-01"
-updated: "2025-03-01"
-author: "antv-team"
-source_url: "https://g2.antv.antgroup.com/manual/extra-topics/annotation"
----
 ## Horizontal Reference Line (lineY)
 
 ```javascript
@@ -62,7 +48,7 @@ chart.options({
       },
       labels: [
         {
-          text: 'Target value: 60',
+          text: 'Target Value: 60',
           position: 'right',
           style: { fill: '#f5222d', fontSize: 11 },
         },
@@ -115,13 +101,36 @@ chart.options({
 });
 ```
 
-## Reference Range (rangeX / rangeY)
+## Reference Range (rangeX)
+
+```javascript
+// Highlight a specific x-value range (e.g., normal range)
+{
+  type: 'rangeX',
+  data: [{ x: 'June', x1: 'July' }],
+  encode: { x: 'x', x1: 'x1' },
+  style: {
+    fill: '#52c41a',
+    fillOpacity: 0.08,
+  },
+  labels: [
+    {
+      text: 'Normal Range',
+      position: 'top-right',
+      style: { fill: '#52c41a', fontSize: 11 },
+    },
+  ],
+}
+```
+
+## Reference Range (rangeY)
 
 ```javascript
 // Highlight a specific y-value range (e.g., normal range)
 {
   type: 'rangeY',
-  data: [{ y: [40, 80] }],
+  data: [{ y: 50, y1: 80 }],
+  encode: { y: 'y', y1: 'y1' },
   style: {
     fill: '#52c41a',
     fillOpacity: 0.08,
@@ -181,7 +190,7 @@ chart.options({
 
 ## Common Errors and Fixes
 
-### Error: Directly Overlaying Annotations in a Non-View Container
+### Error: Directly overlaying annotations in a non-view container
 ```javascript
 // ❌ Incorrect: Multiple chart.options() will overwrite each other
 chart.options({ type: 'line', ... });
@@ -198,7 +207,7 @@ chart.options({
 });
 ```
 
-### Error: Incorrect Position and Encoding of Image Annotations
+### Error: Incorrect Positioning and Encoding of Image Annotations
 ```javascript
 // ❌ Error: Using a function to return fixed coordinates, not bound to data channels
 {
