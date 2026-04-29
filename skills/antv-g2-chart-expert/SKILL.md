@@ -974,7 +974,6 @@ Themes define the overall visual style of a chart, including colors, fonts, spac
 > **Detailed Documentation**: [Built-in Themes](references/themes/g2-theme-builtin.md) | [Custom Themes](references/themes/g2-theme-custom.md)
 
 ---
-
 ## 15. Palettes
 
 Palettes define color sequences, used for color mapping of categorical or continuous data.
@@ -1010,7 +1009,7 @@ Label transforms are used to handle issues such as label overlap and overflow, i
 
 ---
 
-## 18. Patterns / 模式
+## 18. Patterns
 
 Patterns are best practices for common scenarios, including migration guides, performance optimization, and responsive adaptation.
 ### 18.1 Migration Guide / Migration (v4 → v5)

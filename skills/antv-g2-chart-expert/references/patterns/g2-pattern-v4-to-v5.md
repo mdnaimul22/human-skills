@@ -12,9 +12,8 @@ category: "patterns"
 tags:
   - "v4"
   - "v5"
-  - "迁移"
   - "migration"
-  - "废弃API"
+  - "deprecated API"
   - "upgrade"
 
 related:
@@ -130,7 +129,7 @@ chart.options({
       data: [{ threshold: 50 }],
       encode: { y: 'threshold' },
       style: { stroke: 'red', lineDash: [4, 4] },
-      labels: [{ text: '目标线', position: 'right' }],
+      labels: [{ text: 'Target Line', position: 'right' }],
     },
   ],
 });
@@ -177,7 +176,6 @@ chart.options({
   interaction: [{ type: 'tooltip' }],
 });
 ```
-
 ## Change 9: Multiple Mark Overlay
 
 ```javascript
