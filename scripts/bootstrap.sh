@@ -3,10 +3,12 @@
 # Configuration
 REPO_RAW_URL="https://raw.githubusercontent.com/mdnaimul22/human-skills/main"
 RULES_DIR=".agents/rules"
-RULES_FILES=(
+FILES=(
     "coding-standards.md"
     "architecture-patterns.md"
     "maintenance-testing.md"
+    "config-path-rules.md"
+    "config-usage-rules.md"
     "project-config-example.md"
     "project-tree-example.md"
 )
@@ -52,13 +54,14 @@ function create_init() {
 }
 
 create_init "src/__init__.py" "Global source package."
-create_init "src/configs/__init__.py" "All environment settings must be aggregated here and exposed via a Single Source of Truth."
-create_init "src/core/__init__.py" "Core business logic. Domain models and pure functional flows live here."
-create_init "src/helpers/__init__.py" "Global utilities and stateless helpers used across the entire project."
-create_init "src/providers/__init__.py" "External service integrations (LLM, Database, API clients) only."
-create_init "src/schema/__init__.py" "Single source of truth for Pydantic models and data structures. No business logic allowed."
-create_init "src/services/__init__.py" "Fan-in point. Orchestrates Core logic and Providers. This is the only layer where Core and Providers converge to fulfill application-specific use cases. Business logic stays in Core, while Services handle the high-level orchestration."
-create_init "src/routers/__init__.py" "Acts as the HTTP interface for the application services. No business logic allowed."
+create_init "src/requirements.txt" "# write essential requirements with specefic version compability"
+create_init "src/configs/__init__.py" "All environment settings must be aggregated here and exposed via a Single Source of Truth (Dont remove this Comments)."
+create_init "src/core/__init__.py" "Core business logic. Domain models and pure functional flows live here (Dont remove this Comments)."
+create_init "src/helpers/__init__.py" "Global utilities and stateless helpers used across the entire project (Dont remove this Comments)."
+create_init "src/providers/__init__.py" "External service integrations (LLM, Database, API clients) only (Dont remove this Comments)."
+create_init "src/schema/__init__.py" "Single source of truth for Pydantic models and data structures. No business logic allowed (Dont remove this Comments)."
+create_init "src/services/__init__.py" "Fan-in point. Orchestrates Core logic and Providers. This is the only layer where Core and Providers converge to fulfill application-specific use cases. Business logic stays in Core, while Services handle the high-level orchestration (Dont remove this Comments)."
+create_init "src/routers/__init__.py" "Acts as the HTTP interface for the application services. No business logic allowed (Dont remove this Comments)."
 create_init "tests/__init__.py" "Test suite for the project."
 
 # 3. Create basic files
@@ -249,7 +252,7 @@ echo "   [Created] .gitignore, .env, .env.example, main.py, README.md, LICENSE"
 
 # 4. Sync Rules
 echo "📥 Syncing Rules from human-skills..."
-for FILE in "${RULES_FILES[@]}"; do
+for FILE in "${FILES[@]}"; do
     curl -sSL "$REPO_RAW_URL/.agents/rules/$FILE" -o "$RULES_DIR/$FILE"
     if [ $? -eq 0 ]; then
         echo "   [Synced] $FILE"

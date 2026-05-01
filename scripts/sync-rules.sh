@@ -9,6 +9,8 @@ FILES=(
     "coding-standards.md"
     "architecture-patterns.md"
     "maintenance-testing.md"
+    "config-path-rules.md"
+    "config-usage-rules.md"
     "project-config-example.md"
     "project-tree-example.md"
 )

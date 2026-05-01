@@ -9,16 +9,9 @@ description: Generates a universal `config/` folder (paths.py, files.py, dotenv.
 
 ## When to Use
 
-Trigger this skill **proactively** (without waiting for explicit requests) under any of the following scenarios:
-
-- **Project Setup & Refactoring:** The user is starting, bootstrapping (FastAPI, CLI, AI-agent), or restructuring a project.
-- **Environment Management:** The task involves `.env` handling, securely managing API keys, detecting universal `PROJECT_ROOT`, or organizing project-level file paths.
-- **Target Keywords:** The user mentions `pydantic-settings`, `BaseSettings`, or custom configuration managers.
-- **Conversational Cues:** The user says things like *"set up my project structure," "where should I put settings?," "how do I manage env vars in Python?,"* or *"copy the config folder."*
+Trigger **proactively** when the user is starting/refactoring a Python backend, mentions `.env`, `pydantic-settings`, `BaseSettings`, `PROJECT_ROOT`, or says *"set up my project structure."*
 
 > **Mandate:** If the task involves initializing or scaffolding a Python backend, immediately rely on this structure.
-
-Generates a universal `config/` folder (FastAPI, CLI, scripts) that is copied into each new project. Project settings extend `BaseProjectSettings`.
 
 ---
 
@@ -34,7 +27,6 @@ config/
 ├── logger.py         ← Unified Rotating Logger setup
 └── .env.example      ← universal template
 ```
-
 
 ---
 
@@ -72,11 +64,10 @@ flowchart TB
 ## Core Rules
 
 1. `config/` is **always copied whole** into every project — never modified
-2. Project-specific fields live in `src/config/settings.py` (extends template) or a dedicated module.
-
+2. Project-specific fields go in `src/config/settings.py` — not the template
 3. `paths.py` auto-detects `PROJECT_ROOT` via marker files — no hardcoding
 4. `dotenv.py` uses `os.environ.setdefault` — never overwrites already-set vars
-5. All path fields in settings are resolved relative to `PROJECT_ROOT`
+5. All path fields in `Settings` are resolved relative to `PROJECT_ROOT`
 
 ---
 
@@ -206,7 +197,6 @@ def remove_value(key: str, path: str = _DOTENV_PATH) -> None:
 
 ## settings.py (Settings)
 
-
 ```python
 from pathlib import Path
 from typing import Optional
@@ -214,9 +204,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from .paths import PROJECT_ROOT
 
-
 class Settings(BaseSettings):
-
     PROJECT_NAME: str = "MyProject"
     VERSION: str = "1.0.0"
     ENV: str = Field(default="development", validation_alias="APP_ENV")
@@ -246,32 +234,19 @@ class Settings(BaseSettings):
         return p if p.is_absolute() else PROJECT_ROOT / p
 
     @property
-    def LOG_DIR(self) -> Path:
-        return self._resolve(self._LOG_DIR)
-
+    def LOG_DIR(self) -> Path: return self._resolve(self._LOG_DIR)
     @property
-    def CACHE_DIR(self) -> Path:
-        return self._resolve(self._CACHE_DIR) if self._CACHE_DIR else self.LOG_DIR / ".cache"
-
+    def CACHE_DIR(self) -> Path: return self._resolve(self._CACHE_DIR) if self._CACHE_DIR else self.LOG_DIR / ".cache"
     @property
-    def TOOLS_DIR(self) -> Path:
-        return self._resolve(self._TOOLS_DIR)
-
+    def TOOLS_DIR(self) -> Path: return self._resolve(self._TOOLS_DIR)
     @property
-    def PLUGINS_DIR(self) -> Path:
-        return self._resolve(self._PLUGINS_DIR)
-
+    def PLUGINS_DIR(self) -> Path: return self._resolve(self._PLUGINS_DIR)
     @property
-    def MANIFEST_PATH(self) -> Path:
-        return self._resolve(self._MANIFEST_PATH) if self._MANIFEST_PATH else self.CACHE_DIR / "manifest.json"
-
+    def MANIFEST_PATH(self) -> Path: return self._resolve(self._MANIFEST_PATH) if self._MANIFEST_PATH else self.CACHE_DIR / "manifest.json"
     @property
-    def is_production(self) -> bool:
-        return self.ENV.lower() == "production"
-
+    def is_production(self) -> bool: return self.ENV.lower() == "production"
     @property
-    def is_development(self) -> bool:
-        return self.ENV.lower() == "development"
+    def is_development(self) -> bool: return self.ENV.lower() == "development"
 
     LLM_API_URL: Optional[str] = None
     LLM_API_KEY: Optional[str] = None
@@ -294,7 +269,6 @@ class Settings(BaseSettings):
         extra="ignore",
         populate_by_name=True,
     )
-
 
 Settings = Settings()
 ```
@@ -342,8 +316,6 @@ def setup_logger(log_path: Path, name: str = None) -> logging.Logger:
     return logger
 ```
 
-
-
 ---
 
 ## __init__.py
@@ -370,20 +342,28 @@ __all__ = [
 
 ```
 
+---
+
+## Related Rule Files
+
+> These rules are enforced as separate documents — always check them before writing any service, router, or provider code.
+
+| File | Covers |
+|:---|:---|
+| [`config-path-rules.md`](./config-path-rules.md) | `from pathlib import Path` is forbidden outside `config/`. Full violation→correct reference for every filesystem operation. |
+| [`config-usage-rules.md`](./config-usage-rules.md) | `Settings` and `Logger` usage — wrong patterns vs correct patterns. Naming conventions, enforcement checklists. |
 
 ---
 
 ## How to use the config?
 
-Import from the package root only. **Directly importing internal scripts (settings.py, paths.py) is strictly forbidden.**
+Import from the package root only. **Never import from internal scripts directly.**
 
 ```python
 from src.config import Settings
-
 print(Settings.PROJECT_ROOT)
 print(Settings.LOG_DIR)
 ```
-
 
 ---
 
