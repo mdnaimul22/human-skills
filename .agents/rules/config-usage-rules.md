@@ -1,6 +1,5 @@
 ---
 trigger: always_on
-name: config-usage-rules
 description: Strict usage rules for Settings and Logger — wrong patterns vs correct patterns for every scenario.
 ---
 
@@ -238,6 +237,34 @@ logger = setup_logger(
 ```
 
 ---
+## Architecture Auditing (Linter)
+> *"Trust, but verify."*
+
+To ensure your project remains compliant with these standards, use the built-in `linter` tool. It scans your code for violations of the architecture rules (logging, pathlib, print, etc.) using AST parsing.
+
+### How to use?
+Run the linter via `human-skills` command.
+
+#### 1. Audit entire project 
+```bash
+human-skills '{
+    "tool_name": "linter",
+    "tool_args": {
+        "scan_path": "/path/to/your/project",
+        "ignored_path": "venv, .git, tests"
+    }
+}'
+```
+
+#### 2. Audit a specific file
+```bash
+human-skills '{
+    "tool_name": "linter",
+    "tool_args": {
+        "scan_path": "/path/to/your/project/src/services/logic.py"
+    }
+}'
+```
 
 ### Logger Enforcement Checklist
 

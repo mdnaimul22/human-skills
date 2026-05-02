@@ -79,8 +79,14 @@ class Linter(Tool):
         report_lines = []
 
         for py_file in sorted(py_files):
+            rel_path = py_file.relative_to(root_dir)
+            
             # Ignore hidden files, virtualenvs, and explicitly bypassed dirs
-            if any(part in bypass_dirs or part.startswith(".") for part in py_file.parts):
+            is_bypassed = any(str(rel_path).startswith(d) for d in bypass_dirs) or \
+                          any(part.startswith(".") for part in py_file.parts) or \
+                          any(part in ("venv", ".venv", "__pycache__", ".git") for part in py_file.parts)
+
+            if is_bypassed:
                 if not (target_path.is_file() and py_file == target_path): # Allow if scanning the file directly
                     continue
 
