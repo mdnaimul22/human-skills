@@ -41,13 +41,22 @@ class Linter(Tool):
 
         return Response(message=full_message, break_loop=False)
 
-    def audit_project(self, root_dir: Path, bypass_dirs: set[str]):
-        py_files = list(root_dir.rglob("*.py"))
+    def audit_project(self, target_path: Path, bypass_dirs: set[str]):
+        if target_path.is_file():
+            py_files = [target_path]
+            root_dir = target_path.parent
+        else:
+            py_files = list(target_path.rglob("*.py"))
+            root_dir = target_path
+
         total_violations = 0
         report_lines = []
 
         for py_file in sorted(py_files):
-            # Ignore directories
+            # Ignore directories and non-python files (if accidentally passed)
+            if py_file.suffix != ".py":
+                continue
+
             if any(part in bypass_dirs or part in (".git", "__pycache__", "venv", ".venv") for part in py_file.parts):
                 continue
 
