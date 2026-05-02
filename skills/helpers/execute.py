@@ -14,7 +14,7 @@ _SKILLS_DIR = _HELPERS_DIR.parent
 if str(_SKILLS_DIR) not in sys.path:
     sys.path.insert(0, str(_SKILLS_DIR))
 
-# excude list
+# exclude list
 _EXCLUDED = {"execute.py", "__init__.py", "__pycache__"}
 
 
@@ -102,6 +102,11 @@ def _build_registry() -> dict[str, dict]:
 
         if runner is not None:
             registry[tool_name] = runner
+        else:
+            _warn(
+                f"'{py_file.name}' found but no valid tool detected — skipped.\n"
+                f"  Expected: class AnyName(Tool) with an async execute() method."
+            )
 
     return registry
 
