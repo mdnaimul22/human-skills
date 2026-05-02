@@ -213,7 +213,7 @@ Adding a new feature = **existing code remains untouched**, only new modules/lay
 
 **Every component must possess:**
 - [ ] Structured error handling (`try/except` with typed exceptions).
-- [ ] Meaningful logging — `print()` is prohibited.
+- [ ] Meaningful logging — `print()` is prohibited. Consolidate logs by layer (e.g., `service.log`, `router.log`) instead of per-script.
 - [ ] Graceful degradation — a single failure will not bring down the entire system.
 
 ### 4.4 Security-Safety Practices
@@ -267,5 +267,5 @@ Testing is mandatory not just for finding bugs in the code, but for keeping the 
 
 ---
 > [!NOTE]  
-> - **For project tree examples and relationships, follow:** `.agents/rules/project_tree_example.md`
-> - **For project configuration example follow:** `.agents/rules/python-project-config.md`
+> - **For project tree examples and relationships, follow:** `.agents/rules/project-tree-example.md`
+> - **For project configuration example follow:** `.agents/rules/project-config-example.md`

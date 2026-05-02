@@ -74,7 +74,7 @@ cache_path = Path.home() / ".cache" / "chaincv"
 ```python
 # ✅ CORRECT — paths flow from Settings which resolves against PROJECT_ROOT
 from src.config import Settings, setup_logger
-logger = setup_logger(Settings.LOG_DIR / "cv_generator.log", name="chaincv.services.cv_generator")
+logger = setup_logger(Settings.LOG_DIR / "service.log", name="chaincv.services.cv_generator")
 ```
 
 ---
@@ -112,7 +112,7 @@ class Settings(BaseSettings):
 
 ## Part 2 — Logger Usage Rules
 
-`setup_logger()` creates a **rotating file + console logger** with a standardized format. Every module gets exactly one logger, defined at module level.
+`setup_logger()` creates a **rotating file + console logger** with a standardized format. Every module gets exactly one logger, defined at module level. All scripts within the same directory (layer) must share the same log file named after the layer (e.g., `service.log`, `router.log`).
 
 ---
 
@@ -150,7 +150,7 @@ logger.addHandler(handler)
 from src.config import setup_logger, Settings
 
 logger = setup_logger(
-    Settings.LOG_DIR / "cv_generator.log",
+    Settings.LOG_DIR / "service.log",
     name="chaincv.services.cv_generator"
 )
 ```
@@ -168,13 +168,13 @@ logger = setup_logger(Settings.LOG_DIR / "app.log")  # no name = root logger pol
 ```python
 # ✅ CORRECT — each module owns its own named logger
 # src/services/cv_generator.py
-logger = setup_logger(Settings.LOG_DIR / "cv_generator.log", name="chaincv.services.cv_generator")
+logger = setup_logger(Settings.LOG_DIR / "service.log", name="chaincv.services.cv_generator")
 
 # src/services/cv_library.py
-logger = setup_logger(Settings.LOG_DIR / "cv_library.log", name="chaincv.services.cv_library")
+logger = setup_logger(Settings.LOG_DIR / "service.log", name="chaincv.services.cv_library")
 
 # src/routers/generator.py
-logger = setup_logger(Settings.LOG_DIR / "router_generator.log", name="chaincv.routers.generator")
+logger = setup_logger(Settings.LOG_DIR / "router.log", name="chaincv.routers.generator")
 ```
 
 ---
@@ -226,7 +226,7 @@ Examples:
 from src.config import setup_logger, Settings
 
 logger = setup_logger(
-    Settings.LOG_DIR / "my_module.log",
+    Settings.LOG_DIR / "{layer}.log",
     name="chaincv.{layer}.{module_name}"
 )
 

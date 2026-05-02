@@ -76,5 +76,5 @@ Adding a new feature = **existing code remains untouched**, only new modules/lay
 
 **Every component must possess:**
 - [ ] Structured error handling (`try/except` with typed exceptions).
-- [ ] Meaningful logging — `print()` is prohibited.
+- [ ] Meaningful logging — `print()` is prohibited. Consolidate logs by layer (e.g., `service.log`, `router.log`) instead of per-script.
 - [ ] Graceful degradation — a single failure will not bring down the entire system.

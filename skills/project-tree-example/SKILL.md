@@ -1,7 +1,7 @@
 ---
-name: project_tree_example
-description: >
-  follow similar kind of Project Structure or more schema base Architectural Pattern that track code structure without viewing the full context of code.
+trigger: always_on
+name: project-tree-example
+description: follow similar kind of Project Structure or more schema base Architectural Pattern that track code structure without viewing the full context of code.
 ---
 
 ### Canonical Project Structure Example-1
