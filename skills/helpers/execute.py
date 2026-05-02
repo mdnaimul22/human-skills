@@ -102,11 +102,6 @@ def _build_registry() -> dict[str, dict]:
 
         if runner is not None:
             registry[tool_name] = runner
-        else:
-            _warn(
-                f"'{py_file.name}' found but no valid tool detected — skipped.\n"
-                f"  Expected: class AnyName(Tool) with an async execute() method."
-            )
 
     return registry
 
