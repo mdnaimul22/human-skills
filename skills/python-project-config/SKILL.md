@@ -12,10 +12,7 @@ Trigger **proactively** when the user is starting/refactoring a Python backend, 
 
 > **Mandate:** If the task involves initializing or scaffolding a Python backend, immediately rely on this structure.
 
----
-
-## File Structure
-
+-## Config Structure
 ```
 config/
 ├── __init__.py       ← auto-loads dotenv, exports EVERYTHING
@@ -27,9 +24,7 @@ config/
 └── .env.example      ← universal template
 ```
 
----
-
-## Config Internal Flow
+## Internal Flow
 
 ```mermaid
 ---
@@ -58,20 +53,14 @@ flowchart TB
     CINIT --> REST["rest of the project\nschema · helpers · core · providers · services"]
 ```
 
----
-
 ## Core Rules
-
 1. `config/` is **always copied whole** into every project — never modified
 2. Project-specific fields go in `src/config/settings.py` — not the template
 3. `paths.py` auto-detects `PROJECT_ROOT` via marker files — no hardcoding
 4. `dotenv.py` uses `os.environ.setdefault` — never overwrites already-set vars
 5. All path fields in `Settings` are resolved relative to `PROJECT_ROOT`
 
----
-
 ## paths.py
-
 ```python
 import sys
 from pathlib import Path
@@ -91,10 +80,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 ```
 
----
-
 ## files.py
-
 ```python
 import os, json, shutil
 from pathlib import Path
@@ -141,10 +127,7 @@ def get_abs_path(*parts: str) -> str:
     return str(PROJECT_ROOT.joinpath(*parts))
 ```
 
----
-
 ## dotenv.py
-
 ```python
 import os, re
 from pathlib import Path
@@ -192,10 +175,7 @@ def remove_value(key: str, path: str = _DOTENV_PATH) -> None:
     files.write_text(path, "\n".join(new_lines) + "\n")
 ```
 
----
-
-## settings.py (Settings)
-
+## settings.py
 ```python
 from pathlib import Path
 from typing import Optional
@@ -208,25 +188,18 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     ENV: str = Field(default="development", validation_alias="APP_ENV")
 
-    API_HOST: str = "127.0.0.1"
-    API_PORT: int = 8000
-    API_V1_STR: str = "/v1"
-    FRONTEND_PORT: int = 3000
-    FRONTEND_URL: str = "http://localhost:3000"
+    API_HOST: str = Field(default="127.0.0.1", validation_alias="API_HOST")
+    API_PORT: int = Field(default=8000, validation_alias="API_PORT")
+    FRONTEND_PORT: int = Field(default=3000, validation_alias="FRONTEND_PORT")
+    FRONTEND_URL: str = Field(default="http://localhost:3000", validation_alias="FRONTEND_URL")
 
     SECRET_KEY: str = Field(..., validation_alias="SECRET_KEY")
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080
 
-    DATABASE_URL: str = Field(...)
-    DIRECT_DATABASE_URL: Optional[str] = None
+    DATABASE_URL: str = Field(..., validation_alias="DATABASE_URL")
     LOCAL_DATABASE_URL: Optional[str] = None
 
     _LOG_DIR: str = Field(default="logs", validation_alias="LOG_DIR")
-    _CACHE_DIR: Optional[str] = Field(default=None, validation_alias="CACHE_DIR")
     _TOOLS_DIR: str = Field(default="core/tools", validation_alias="TOOLS_DIR")
-    _PLUGINS_DIR: str = Field(default="core/plugins", validation_alias="PLUGINS_DIR")
-    _MANIFEST_PATH: Optional[str] = Field(default=None, validation_alias="MANIFEST_PATH")
 
     def _resolve(self, val: str) -> Path:
         p = Path(val).expanduser()
@@ -235,32 +208,11 @@ class Settings(BaseSettings):
     @property
     def LOG_DIR(self) -> Path: return self._resolve(self._LOG_DIR)
     @property
-    def CACHE_DIR(self) -> Path: return self._resolve(self._CACHE_DIR) if self._CACHE_DIR else self.LOG_DIR / ".cache"
-    @property
     def TOOLS_DIR(self) -> Path: return self._resolve(self._TOOLS_DIR)
-    @property
-    def PLUGINS_DIR(self) -> Path: return self._resolve(self._PLUGINS_DIR)
-    @property
-    def MANIFEST_PATH(self) -> Path: return self._resolve(self._MANIFEST_PATH) if self._MANIFEST_PATH else self.CACHE_DIR / "manifest.json"
     @property
     def is_production(self) -> bool: return self.ENV.lower() == "production"
     @property
     def is_development(self) -> bool: return self.ENV.lower() == "development"
-
-    LLM_API_URL: Optional[str] = None
-    LLM_API_KEY: Optional[str] = None
-    LLM_PRIMARY_MODEL: str = "gpt-4o-mini"
-    LLM_FALLBACK_MODEL: Optional[str] = None
-    LLM_LOCAL_MODEL: str = "qwen2.5:1.5b"
-
-    EMBED_PROVIDERS: str = "ollama"
-    EMBED_TRUNCATE: int = 4096
-    EMBED_OLLAMA_URL: Optional[str] = None
-    EMBED_OLLAMA_MODEL: str = "all-minilm"
-    EMBED_GOOGLE_API_KEY: Optional[str] = None
-    EMBED_GOOGLE_MODEL: str = "text-embedding-004"
-    EMBED_JINA_API_KEY: Optional[str] = None
-    EMBED_VOYAGE_API_KEY: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=str(PROJECT_ROOT / ".env"),
@@ -272,53 +224,120 @@ class Settings(BaseSettings):
 Settings = Settings()
 ```
 
----
-
-## logger.py (Unified Rotating Logger)
-
+## logger.py
 ```python
 import logging
 import sys
+import threading
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-def setup_logger(log_path: Path, name: str = None) -> logging.Logger:
-    """Unified logger setup. Configures root logger if name is None."""
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    logger = logging.getLogger(name)
-    
-    if logger.handlers:
-        return logger
+_NOISY_LOGGERS: tuple[str, ...] = ("httpx", "openai", "anthropic", "httpcore","urllib3", "asyncio", "multipart",)
 
-    logger.setLevel(logging.INFO)
+_lock              = threading.Lock()
+_registry: dict[str, logging.Logger] = {}
+_system_configured = False
 
-    # Silence noisy third-party loggers
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("openai").setLevel(logging.WARNING)
-
-    # Standardized format: [TIME] [LEVEL] [MODULE] - MESSAGE
-    fmt = logging.Formatter(
-        "%(asctime)s  %(levelname)-7s  %(name)-30s  %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+def _build_formatter() -> logging.Formatter:
+    return logging.Formatter(
+        fmt     = "%(asctime)s  %(levelname)-8s  %(name)-35s  %(message)s",
+        datefmt = "%Y-%m-%d %H:%M:%S",
     )
 
-    # 1. Rotating File Handler (5MB, 3 backups)
-    fh = RotatingFileHandler(log_path, maxBytes=5 * 1024 * 1024, backupCount=3)
-    fh.setFormatter(fmt)
-    logger.addHandler(fh)
+def _configure_system(log_dir: Path, is_production: bool) -> None:
+    global _system_configured
+    if _system_configured:
+        return
 
-    # 2. Console Handler
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(fmt)
-    logger.addHandler(sh)
+    root = logging.getLogger()
+    root.setLevel(logging.INFO if is_production else logging.DEBUG)
 
-    return logger
+    for name in _NOISY_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
+
+    log_dir.mkdir(parents=True, exist_ok=True)
+    _system_configured = True
+
+
+def setup_logger(name: str) -> logging.Logger:
+    """
+    Return a fully configured Logger for `name`. Standardized for the project.
+
+    Behaviour
+    ---------
+    - development : console → DEBUG  |  file → DEBUG
+    - production  : console → WARNING |  file → INFO
+
+    The logger is registered in _registry so repeated calls
+    with the same name return the cached instance immediately.
+
+    Usage
+    -----
+        from src.config import setup_logger
+        logger = setup_logger(__name__)
+        logger.info("Ready.")
+    """
+    if name in _registry:
+        return _registry[name]
+
+    with _lock:
+        # Double-checked locking
+        if name in _registry:
+            return _registry[name]
+
+        # ── Lazy import to avoid circular imports at module load ──────────────
+        from .settings import Settings
+
+        is_prod  : bool = Settings.is_production
+        is_dev   : bool = Settings.is_development
+        log_dir  : Path = Settings.LOG_DIR
+
+        _configure_system(log_dir, is_prod)
+
+        # ── Logger ────────────────────────────────────────────────────────────
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.DEBUG)
+        logger.propagate = False          # never bubble up to root
+
+        if logger.handlers:               # already wired (edge-case guard)
+            _registry[name] = logger
+            return logger
+
+        fmt = _build_formatter()
+
+        # ── 1. Rotating file handler ──────────────────────────────────────────
+        log_file = log_dir / f"{name.replace('.', '_')}.log"
+        fh = RotatingFileHandler(
+            log_file,
+            maxBytes    = 5 * 1024 * 1024,   # 5 MB
+            backupCount = 3,
+            encoding    = "utf-8",
+        )
+        fh.setLevel(logging.INFO if is_prod else logging.DEBUG)
+        fh.setFormatter(fmt)
+        logger.addHandler(fh)
+
+        # ── 2. Console handler ────────────────────────────────────────────────
+        sh = logging.StreamHandler(sys.stdout)
+        sh.setLevel(logging.WARNING if is_prod else logging.DEBUG)
+        sh.setFormatter(fmt)
+        logger.addHandler(sh)
+
+        _registry[name] = logger
+        return logger
+
+def shutdown() -> None:
+    with _lock:
+        for logger in _registry.values():
+            for handler in logger.handlers[:]:
+                handler.flush()
+                handler.close()
+                logger.removeHandler(handler)
+        _registry.clear()
+    logging.shutdown()
 ```
 
----
-
 ## __init__.py
-
 ```python
 from .paths import PROJECT_ROOT, find_project_root
 from .files import (
@@ -341,104 +360,22 @@ __all__ = [
 
 ```
 
----
-
-## Related Rule Files
-
-> These rules are enforced as separate documents — always check them before writing any service, router, or provider code.
-
-| File | Covers |
-|:---|:---|
-| [`config-path-rules.md`](./config-path-rules.md) | `from pathlib import Path` is forbidden outside `config/`. Full violation→correct reference for every filesystem operation. |
-| [`config-usage-rules.md`](./config-usage-rules.md) | `Settings` and `Logger` usage — wrong patterns vs correct patterns. Naming conventions, enforcement checklists. |
-
----
-
-## How to use the config?
-
-Import from the package root only. **Never import from internal scripts directly.**
-
-```python
-from src.config import Settings
-print(Settings.PROJECT_ROOT)
-print(Settings.LOG_DIR)
-```
-
----
-
-## .env.example (template)
-
+## .env.example
 ```dotenv
 APP_ENV=development
 API_HOST=127.0.0.1
 API_PORT=8000
 FRONTEND_PORT=3000
 FRONTEND_URL=http://localhost:3000
-
 SECRET_KEY=your-secret-key-here
 DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
-
 # LOG_DIR=logs
-# CACHE_DIR=
 # TOOLS_DIR=core/tools
-# PLUGINS_DIR=core/plugins
-
-# LLM_API_URL=
-# LLM_API_KEY=
-# LLM_PRIMARY_MODEL=gpt-4o-mini
-
-# EMBED_PROVIDERS=ollama
-# EMBED_OLLAMA_URL=http://localhost:11434
-# EMBED_GOOGLE_API_KEY=
-
-# --- Project-specific keys below ---
+# LOCAL_DATABASE_URL=
 ```
 
----
-
-## Architecture Auditing (Linter)
-> *"Trust, but verify."*
-
-To ensure your project remains compliant with these standards, use the built-in `linter` tool. It scans your code for violations of the architecture rules (logging, pathlib, print, etc.) using AST parsing.
-
-### How to use?
-Run the linter via `human-skills` command.
-
-#### 1. Audit entire project 
-```bash
-human-skills '{
-    "tool_name": "linter",
-    "tool_args": {
-        "scan_path": "/path/to/your/project",
-        "ignored_path": "venv, .git, tests"
-    }
-}'
-```
-
-#### 2. Audit a specific file
-```bash
-human-skills '{
-    "tool_name": "linter",
-    "tool_args": {
-        "scan_path": "/path/to/your/project/src/services/logic.py"
-    }
-}'
-```
-
-### What it detects?
-- ❌ **Logging Violation**: Use of direct `import logging` (Must use `setup_logger`).
-- ❌ **Pathlib Violation**: Use of `pathlib` outside `src/config/`.
-- ❌ **Manual Dir Creation**: Use of `exist_ok=True` (Must use `ensure_dir`).
-- ❌ **Silent Exception**: Use of `except: pass` (Swallowing errors).
-- ⚠️ **Print Statements**: Use of `print()` in production-ready code.
-- ❌ **Env Access**: Use of `os.environ` or `os.getenv` (Must use `Settings`).
-- ❌ **Logger Compliance**: Hardcoded log filenames in `setup_logger`.
-
----
-
-## Checklist When Setting Up a New Project
-
-- [ ] Copy the `config/` folder into `src/config/`
-- [ ] Copy `root/.env.example` to `root/.env` and fill in mandatory fields
+## Checklist for a Project
+- [ ] setup `config/` folder into `src/config/`
+- [ ] setup `root/.env.example` to `root/.env` and fill in mandatory fields
 - [ ] Ensure `src/config/settings.py` contains all project-specific fields
 - [ ] Use `from src.config import Settings` anywhere in the project
