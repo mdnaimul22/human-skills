@@ -112,47 +112,47 @@ forwards:
     to: "{REPO_ROOT}/skills/tdd-guide"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/api-design-reviewer"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/api-design-reviewer"
     to: "{REPO_ROOT}/skills/api-design-reviewer"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/api-test-suite-builder"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/api-test-suite-builder"
     to: "{REPO_ROOT}/skills/api-test-suite-builder"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/ci-cd-pipeline-builder"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/ci-cd-pipeline-builder"
     to: "{REPO_ROOT}/skills/ci-cd-pipeline-builder"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/data-quality-auditor"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/data-quality-auditor/skills/data-quality-auditor"
     to: "{REPO_ROOT}/skills/data-quality-auditor"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/database-designer"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/database-designer"
     to: "{REPO_ROOT}/skills/database-designer"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/database-schema-designer"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/database-schema-designer"
     to: "{REPO_ROOT}/skills/database-schema-designer"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/git-worktree-manager"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/git-worktree-manager"
     to: "{REPO_ROOT}/skills/git-worktree-manager"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/docker-development"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/docker-development"
     to: "{REPO_ROOT}/skills/docker-development"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/pr-review-expert"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/pr-review-expert"
     to: "{REPO_ROOT}/skills/pr-review-expert"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/release-manager"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/release-manager"
     to: "{REPO_ROOT}/skills/release-manager"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/sql-database-assistant"
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/sql-database-assistant"
     to: "{REPO_ROOT}/skills/sql-database-assistant"
     enabled: true
 
