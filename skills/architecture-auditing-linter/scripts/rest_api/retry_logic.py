@@ -1,6 +1,6 @@
 import re
 from typing import Any
-from helpers.tool_manager import Tool
+from helpers.tool import Tool
 
 RETRY_LIBRARIES = re.compile(
     r'\b(tenacity|backoff|retry|Retry|retrying|stamina|'

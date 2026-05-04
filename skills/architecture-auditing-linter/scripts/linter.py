@@ -10,12 +10,14 @@ class Linter(Tool):
     Enforces project-specific coding standards and generates refactoring task lists.
     """
     name: str = "linter"
-    description: str = "Scans Python projects for architecture violations and generates a REFACTORING_TASKS.md report."
+    description: str = "Scans Python projects for architecture violations. Supports multiple linter types: 'default' (AST-based architecture audit) and 'rest_api' (REST API quality scoring)."
     arguments: dict = {
         "scan_path": "Path to the project directory or a specific .py file to audit (REQUIRED).",
-        "ignored_path": "Comma-separated list of directory names to skip during scanning."
+        "linter_type": "Linter mode: 'default' (architecture violations) or 'rest_api' (API quality score). Defaults to 'default'.",
+        "ignored_path": "Comma-separated list of directory names to skip during scanning.",
+        "ignored_rules": "Comma-separated list of analyzer names to skip (e.g. 'auth_implementation,rate_limiting'). Used only in rest_api mode."
     }
-    instruction: str = "Audit your codebase and generate a tracked task list for refactoring."
+    instruction: str = "Audit your codebase. Use linter_type='default' for architecture violations, 'rest_api' for REST API quality scoring."
 
     # Infrastructure config files — these USE pathlib/logging by design, always skip them
     CONFIG_INFRA_FILES: set = {"paths.py", "files.py", "logger.py", "dotenv.py", "__init__.py"}
@@ -29,11 +31,26 @@ class Linter(Tool):
                 break_loop=False
             )
 
-        allowed_keys = ["scan_path", "ignored_path", "path", "ignored_apth"]
-        invalid_keys = [k for k in self.args.keys() if k not in allowed_keys]
+        linter_type = str(self.args.get("linter_type", "default")).strip().lower()
+        valid_types = {"default", "rest_api"}
+        if linter_type not in valid_types:
+            return Response(
+                message=f"❌ Error: Unknown linter_type '{linter_type}'.\n💡 Valid types: {', '.join(sorted(valid_types))}",
+                break_loop=False
+            )
+
+        # --- ARGUMENT VALIDATION ---
+        allowed_args = {
+            "default": ["scan_path", "path", "ignored_path", "ignored_apth", "linter_type"],
+            "rest_api": ["scan_path", "path", "ignored_path", "ignored_apth", "linter_type", "ignored_rules"]
+        }
+
+        valid_keys = allowed_args[linter_type]
+        invalid_keys = [k for k in self.args.keys() if k not in valid_keys]
+        
         if invalid_keys:
             msg = f"❌ Error: Invalid argument(s) provided: {', '.join(invalid_keys)}\n"
-            msg += f"💡 Available arguments: {', '.join(['scan_path', 'ignored_path'])}"
+            msg += f"💡 Available arguments for '{linter_type}' mode: {', '.join([k for k in valid_keys if k not in ['path', 'ignored_apth']])}"
             return Response(message=msg, break_loop=False)
 
         scan_path = Path(scan_path_str).resolve()
@@ -42,33 +59,39 @@ class Linter(Tool):
 
         custom_ignores = self.args.get("ignored_path") or self.args.get("ignored_apth") or ""
         ignored_list = {i.strip() for i in custom_ignores.split(",") if i.strip()}
-        
-        # Infrastructure files — these USE pathlib/logging by design, skip them
+
+        ignored_rules_raw = self.args.get("ignored_rules", "")
+        ignored_rules = {r.strip() for r in ignored_rules_raw.split(",") if r.strip()}
+
+        # ── Route to correct linter ───────────────────────────────────────────
+        if linter_type == "rest_api":
+            return await self.run_rest_api_audit(scan_path, ignored_list, ignored_rules)
+        return await self.run_default_audit(scan_path, ignored_list)
+
+    async def run_default_audit(self, scan_path: Path, ignored_list: set) -> Response:
+        """AST-based architecture violation checker."""
         bypass_dirs = {
             "tests", ".agents", ".a0proj", ".claude", ".gemini",
             "venv", ".venv", "__pycache__", ".git", "scripts", "docs"
         }
         bypass_dirs.update(ignored_list)
 
-        # --- AUDIT ---
         audit_results = self.audit_project(scan_path, bypass_dirs)
         total_violations = sum(len(v) for v in audit_results.values())
 
-        # --- CONSOLE REPORT ---
         status = "✨ CLEAN ARCHITECTURE! No violations detected." if total_violations == 0 else f"🚨 Audit finished. Found {total_violations} compliance violations."
-        
-        console_msg = f"🚀 Starting human-lint (Next-Gen) on: {scan_path}\n"
+
+        console_msg = f"🚀 Starting human-lint [default] on: {scan_path}\n"
         console_msg += "=" * 65 + "\n"
-        
+
         for file_path, violations in audit_results.items():
             console_msg += f"\n📄 {file_path}\n"
             for v in violations:
                 console_msg += f"  {v}\n"
-        
+
         console_msg += "=" * 65 + "\n"
         console_msg += f"{status}\n"
 
-        # --- GENERATE MARKDOWN TASK LIST ---
         if total_violations > 0 and scan_path.is_dir():
             report_path = scan_path / "REFACTORING_TASKS.md"
             self.generate_markdown_report(report_path, scan_path, audit_results)
@@ -76,6 +99,182 @@ class Linter(Tool):
             console_msg += "💡 Tip: Open the markdown file to track your refactoring progress."
 
         return Response(message=console_msg, break_loop=False)
+
+    async def run_rest_api_audit(self, scan_path: Path, ignored_list: set, ignored_rules: set) -> Response:
+        """Concurrent REST API quality scorer using all analyzers in rest_api/."""
+        import importlib.util
+        import asyncio
+
+        # ── Discover all analyzer modules in rest_api/ ────────────────────────
+        rest_api_dir = Path(__file__).resolve().parent / "rest_api"
+        if not rest_api_dir.exists():
+            return Response(message="❌ Error: 'rest_api/' directory not found next to linter.py.", break_loop=False)
+
+        analyzer_files = sorted(rest_api_dir.glob("*.py"))
+        if not analyzer_files:
+            return Response(message="❌ Error: No analyzer files found in rest_api/.", break_loop=False)
+
+        # ── Load analyzer instances dynamically ───────────────────────────────
+        analyzers = []
+        for af in analyzer_files:
+            if af.stem in ignored_rules:
+                continue
+            
+            spec = importlib.util.spec_from_file_location(af.stem, af)
+            mod  = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            # Find the Tool subclass in the module
+            for attr in vars(mod).values():
+                if isinstance(attr, type) and attr.__name__ != "Tool" and hasattr(attr, "evaluate"):
+                    analyzers.append((af.stem, attr()))
+                    break
+
+        # ── Collect .py files to scan ─────────────────────────────────────────
+        bypass_parts = {"venv", ".venv", "__pycache__", ".git", "tests"} | ignored_list
+        if scan_path.is_file():
+            py_files = [scan_path]
+        else:
+            py_files = [
+                f for f in sorted(scan_path.rglob("*.py"))
+                if not any(p in bypass_parts for p in f.parts)
+                and not any(part.startswith(".") for part in f.parts)
+            ]
+
+        if not py_files:
+            return Response(message="ℹ️  No Python files found to score.", break_loop=False)
+
+        # ── Two-layer router file filter ──────────────────────────────────────
+        # Layer 1: directory name heuristic (fast pre-filter)
+        _ROUTER_DIRS = {"routers", "routes", "api", "endpoints", "views", "handlers"}
+
+        # Layer 2: HTTP decorator / framework content fingerprint (precise)
+        import re as _re
+        _HTTP_FINGERPRINT = _re.compile(
+            r'(@(router|app|bp|blueprint|api)\.(get|post|put|patch|delete|head|options)\b'    # FastAPI / Flask
+            r'|@(app|bp)\.route\b'                                                             # Flask @app.route
+            r'|APIRouter\(\)'                                                                  # FastAPI router instance
+            r'|urlpatterns\s*='                                                                # Django urls.py
+            r'|path\s*\([\'\"]\s*[\w/<>]'                                                     # Django path()
+            r'|Blueprint\s*\()'                                                               # Flask Blueprint
+        )
+
+        def _is_router_file(py_file: Path) -> bool:
+            if py_file.name == "__init__.py":
+                return False
+            # Layer 1: is it in a router-ish directory?
+            in_router_dir = any(p.lower() in _ROUTER_DIRS for p in py_file.parts)
+            # Layer 2: does it contain HTTP handler patterns?
+            try:
+                snippet = py_file.read_text(encoding="utf-8", errors="ignore")[:4000]
+                has_http_patterns = bool(_HTTP_FINGERPRINT.search(snippet))
+            except OSError:
+                return False
+            return in_router_dir or has_http_patterns
+
+        if not scan_path.is_file():
+            router_files = [f for f in py_files if _is_router_file(f)]
+        else:
+            router_files = py_files
+
+        if not router_files:
+            return Response(
+                message=(
+                    f"ℹ️  No router/endpoint files detected in {scan_path.name}.\n"
+                    f"   Scanned {len(py_files)} files — none matched router patterns.\n"
+                    f"   💡 Router files are detected by directory name (routers/, api/, endpoints/)\n"
+                    f"      or HTTP decorators (@router.get, @app.route, APIRouter, urlpatterns)."
+                ),
+                break_loop=False
+            )
+
+        # ── Score each router file concurrently across all analyzers ──────────
+        async def score_file(py_file: Path) -> tuple[str, dict[str, float]]:
+            source = py_file.read_text(encoding="utf-8", errors="ignore")
+            if not source.strip():
+                return "", {}
+            try:
+                import ast as _ast
+                module = _ast.parse(source)
+            except SyntaxError:
+                module = None
+            scores = await asyncio.gather(
+                *[asyncio.to_thread(a.evaluate, module, source) for _, a in analyzers]
+            )
+            return str(py_file.relative_to(scan_path if scan_path.is_dir() else scan_path.parent)), {
+                name: score for (name, _), score in zip(analyzers, scores)
+            }
+
+        file_scores = await asyncio.gather(*[score_file(f) for f in router_files])
+        file_scores = [(p, s) for p, s in file_scores if p]  # drop empty
+
+        # ── Build scorecard report ────────────────────────────────────────────
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        msg  = f"🚀 Starting human-lint [rest_api] on: {scan_path}\n"
+        msg += "=" * 65 + "\n"
+        msg += f"🔍 Detected {len(router_files)} router file(s)\n"
+
+        overall_totals: dict[str, list[float]] = {name: [] for name, _ in analyzers}
+
+        for rel_path, scores in file_scores:
+            for name, score in scores.items():
+                overall_totals[name].append(score)
+
+        # ── Project-wide averages / max ───────────────────────────────────────
+        # For certain features (auth, rate limiting, caching), if they exist in ANY
+        # router, the project has them. For others (naming, methods), we average.
+        _USE_MAX_METRICS = {"auth_implementation", "caching_strategy", "rate_limiting", "retry_logic"}
+        
+        msg += "\n" + "=" * 65 + "\n"
+        msg += f"📊 PROJECT API QUALITY SCORECARD\n"
+        msg += "=" * 65 + "\n"
+        
+        project_scores = {}
+        for name, vals in overall_totals.items():
+            if not vals:
+                final_score = 0.0
+            elif name in _USE_MAX_METRICS:
+                final_score = max(vals)
+            else:
+                final_score = sum(vals) / len(vals)
+                
+            project_scores[name] = final_score
+            icon = "✅" if final_score >= 0.7 else ("⚠️" if final_score >= 0.4 else "❌")
+            msg += f"  {icon} {name:<35} {final_score:.2f}\n"
+
+        grand_avg = sum(project_scores.values()) / max(len(project_scores), 1)
+        msg += "=" * 65 + "\n"
+        msg += f"🏆 OVERALL API SCORE: {grand_avg:.2f} / 1.00  {self._score_bar(grand_avg)}\n"
+
+        # ── Generating Suggestions for Low Scores ─────────────────────────────
+        _SUGGESTIONS = {
+            "auth_implementation": "Add authentication (e.g., JWT, OAuth, or @login_required) to secure endpoints.",
+            "caching_strategy": "Implement caching (e.g., Redis, Cache-Control headers) for read-heavy endpoints.",
+            "endpoint_naming_convention": "Use standard RESTful noun-based naming (e.g., GET /users instead of /getUsers).",
+            "error_handling": "Catch specific exceptions (not just 'Exception'), use global error handlers, and log errors using logger.error.",
+            "http_method_correctness": "Use appropriate HTTP methods (GET for reading, POST for creation, PUT/PATCH for updates).",
+            "input_validation": "Validate request payloads using Pydantic, Marshmallow, or standard schema validators.",
+            "n1_query_detection": "Avoid making database queries inside loops. Use JOINs or eager loading.",
+            "pagination_implementation": "Add pagination (limit/offset or cursors) to endpoints returning lists of data.",
+            "rate_limiting": "Implement rate limiting (e.g., Flask-Limiter, FastAPI-Limiter) to protect endpoints from abuse.",
+            "retry_logic": "Add automatic retry logic (with exponential backoff) for external API calls.",
+            "status_code_usage": "Return precise HTTP status codes using standard libraries (e.g., 201 Created, 404 Not Found).",
+            "timeout_handling": "Always set explicit timeouts on external network requests (e.g., requests.get(url, timeout=5))."
+        }
+
+        low_scores = [name for name, score in project_scores.items() if score < 0.70]
+        if low_scores:
+            msg += "\n💡 SUGGESTIONS FOR IMPROVEMENT:\n"
+            msg += "-" * 65 + "\n"
+            for name in low_scores:
+                suggestion = _SUGGESTIONS.get(name, "Review best practices for this metric.")
+                msg += f" 🔹 {name}:\n      {suggestion}\n"
+
+        return Response(message=msg, break_loop=False)
+
+    @staticmethod
+    def _score_bar(score: float) -> str:
+        filled = int(score * 10)
+        return "[" + "█" * filled + "░" * (10 - filled) + "]"
 
     def audit_project(self, target_path: Path, bypass_dirs: set[str]) -> dict:
         if target_path.is_file():

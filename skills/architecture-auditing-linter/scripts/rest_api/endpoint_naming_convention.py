@@ -1,7 +1,7 @@
 import re
 import ast
 from typing import Any, List
-from helpers.tool_manager import Tool
+from helpers.tool import Tool
 
 
 VERB_PATTERNS = re.compile(
