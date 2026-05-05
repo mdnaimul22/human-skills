@@ -60,55 +60,55 @@ forwards:
     enabled: true
 
 # .claude-skills
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/epic-design"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/epic-design"
     to: "{REPO_ROOT}/skills/epic-design" 
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-architect"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-architect"
     to: "{REPO_ROOT}/skills/senior-architect"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-backend"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-backend"
     to: "{REPO_ROOT}/skills/senior-backend"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-data-engineer"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-data-engineer"
     to: "{REPO_ROOT}/skills/senior-data-engineer"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-data-scientist"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-data-scientist"
     to: "{REPO_ROOT}/skills/senior-data-scientist"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-devops"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-devops"
     to: "{REPO_ROOT}/skills/senior-devops"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-frontend"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-frontend"
     to: "{REPO_ROOT}/skills/senior-frontend"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-fullstack"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-fullstack"
     to: "{REPO_ROOT}/skills/senior-fullstack"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-ml-engineer"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-ml-engineer"
     to: "{REPO_ROOT}/skills/senior-ml-engineer"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-qa"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-qa"
     to: "{REPO_ROOT}/skills/senior-qa"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-secops"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-secops"
     to: "{REPO_ROOT}/skills/senior-secops"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/senior-security"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/senior-security"
     to: "{REPO_ROOT}/skills/senior-security"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering-team/tdd-guide"
+  - from: "{REPO_ROOT}/.claude-skills/engineering-team/skills/tdd-guide"
     to: "{REPO_ROOT}/skills/tdd-guide"
     enabled: true
 
@@ -124,7 +124,11 @@ forwards:
     to: "{REPO_ROOT}/skills/ci-cd-pipeline-builder"
     enabled: true
 
+<<<<<<< HEAD
   - from: "{REPO_ROOT}/.claude-skills/engineering/data-quality-auditor/skills/data-quality-auditor"
+=======
+  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/data-quality-auditor"
+>>>>>>> e610cd7 (sync: auto-update from claude-skills 2026-05-05 17:44)
     to: "{REPO_ROOT}/skills/data-quality-auditor"
     enabled: true
 
@@ -156,24 +160,16 @@ forwards:
     to: "{REPO_ROOT}/skills/sql-database-assistant"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/programmatic-seo"
-    to: "{REPO_ROOT}/skills/programmatic-seo"
-    enabled: true
-
-  - from: "{REPO_ROOT}/.claude-skills/marketing-skill/schema-markup"
+  - from: "{REPO_ROOT}/.claude-skills/marketing-skill/skills/schema-markup"
     to: "{REPO_ROOT}/skills/schema-markup"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/marketing-skill/seo-audit"
+  - from: "{REPO_ROOT}/.claude-skills/marketing-skill/skills/seo-audit"
     to: "{REPO_ROOT}/skills/seo-audit"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/marketing-skill/site-architecture"
+  - from: "{REPO_ROOT}/.claude-skills/marketing-skill/skills/site-architecture"
     to: "{REPO_ROOT}/skills/site-architecture"
-    enabled: true
-
-  - from: "{REPO_ROOT}/.claude-skills/product-team/landing-page-generator"
-    to: "{REPO_ROOT}/skills/landing-page-generator"
     enabled: true
 
 # .chart-visualization-skills
