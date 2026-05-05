@@ -26,9 +26,6 @@ git:
     # Variables: {count} = number of files, {datetime} = current time
     manual: "chore: manual update of {count} file(s) [{datetime}]"
     
-    # Catch-all fallback
-    catch_all: "sync: catch-all cleanup [{datetime}]"
-    
     # Upstream specific templates.
     # Variables: {upstream_name} = name of the upstream, {count} = number of files, {datetime} = current time
     upstreams:
