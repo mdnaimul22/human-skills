@@ -456,11 +456,24 @@ class CodeAuditor(ast.NodeVisitor):
         
         # 2. Forbidden Path methods
         forbidden_path_methods = {
-            "exists", "read_text", "read_bytes", "write_text", "write_bytes", 
-            "mkdir", "iterdir", "glob", "rglob", "unlink"
+            "exists": "exists",
+            "is_file": "is_file",
+            "is_dir": "is_dir",
+            "read_text": "read_text",
+            "read_bytes": "read_text",
+            "write_text": "write_text",
+            "write_bytes": "write_text",
+            "mkdir": "ensure_dir",
+            "iterdir": "list_files",
+            "glob": "list_files",
+            "rglob": "list_files",
+            "unlink": "delete",
+            "resolve": "get_abs_path",
+            "absolute": "get_abs_path"
         }
         if node.attr in forbidden_path_methods and not self.is_config_file:
-            self.add_violation(node, f"❌ [Config Path Violation] Direct '.{node.attr}()' used. Use 'src.config' utilities (exists, read_text, list_files, etc.)")
+            suggestion = forbidden_path_methods[node.attr]
+            self.add_violation(node, f"❌ [Config Path Violation] Direct '.{node.attr}()' used. Use '{suggestion}' from src.config.files instead.")
             
         # 3. os.path methods
         os_path_blacklist = {
