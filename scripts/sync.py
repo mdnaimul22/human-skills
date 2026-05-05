@@ -465,10 +465,14 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
         upstreams = cfg["upstream"].get("upstreams", [])
         
         for line in status_out.splitlines():
-            if len(line) < 4:
+            parts = line.strip().split(maxsplit=1)
+            if len(parts) < 2:
                 continue
-            # Extract path from line (e.g., " M skills/g2-chart-generator/SKILL.md")
-            changed_file = line[3:].strip('"')
+            
+            changed_file = parts[1].strip('"')
+            if " -> " in changed_file:
+                changed_file = changed_file.split(" -> ")[-1].strip('"')
+                
             changed_path = (REPO_ROOT / changed_file).resolve()
             
             matched_upstream = None
