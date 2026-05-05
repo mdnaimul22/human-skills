@@ -8,13 +8,13 @@
 schedule:
   # Run once every day at this time (24-hour format HH:MM)
   # Set run_at to null to use interval_hours instead
-  run_at: "06:00"
+  run_at: null
 
-  # Fallback: if run_at is null, run every N hours
-  interval_hours: 24
+  # Fallback: if run_at is null, run every N minutes
+  interval_minutes: 10
 
   # How often (seconds) to poll config files for hot-reload changes
-  poll_interval_seconds: 30
+  poll_interval_seconds: 60
 
 # ── Git Configuration ─────────────────────────────────────────────────────────
 git:

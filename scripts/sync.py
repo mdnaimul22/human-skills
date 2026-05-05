@@ -94,9 +94,9 @@ class ConfigWatcher:
 
     # ── Schedule params helpers ────────────────────────────────────────────
     def sched_params(self) -> tuple[str | None, int]:
-        """Return (run_at, interval_hours) from automation.yaml."""
+        """Return (run_at, interval_minutes) from automation.yaml."""
         sched = self.config["automation"].get("schedule", {})
-        return sched.get("run_at"), sched.get("interval_hours", 24)
+        return sched.get("run_at"), sched.get("interval_minutes", 10)
 
     @property
     def poll_interval(self) -> int:
@@ -514,14 +514,14 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
 def register_schedule(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     """Clear all jobs and register sync_job with current schedule config."""
     schedule.clear()
-    run_at, interval_hours = watcher.sched_params()
+    run_at, interval_minutes = watcher.sched_params()
 
     if run_at:
         schedule.every().day.at(run_at).do(sync_job, watcher=watcher, logger=logger)
         logger.info(f"⏰  Scheduled: daily at {run_at}")
     else:
-        schedule.every(interval_hours).hours.do(sync_job, watcher=watcher, logger=logger)
-        logger.info(f"⏰  Scheduled: every {interval_hours} hour(s)")
+        schedule.every(interval_minutes).minutes.do(sync_job, watcher=watcher, logger=logger)
+        logger.info(f"⏰  Scheduled: every {interval_minutes} minute(s)")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -574,12 +574,12 @@ def main() -> None:
             else:
                 for key, diff in changes.items():
                     if key == "schedule":
-                        before_at, before_h = diff["before"]
-                        after_at,  after_h  = diff["after"]
+                        before_at, before_m = diff["before"]
+                        after_at,  after_m  = diff["after"]
                         logger.info(
                             f"   📅 Schedule changed: "
-                            f"{'@'+before_at if before_at else str(before_h)+'h'} → "
-                            f"{'@'+after_at  if after_at  else str(after_h) +'h'}"
+                            f"{'@'+before_at if before_at else str(before_m)+'m'} → "
+                            f"{'@'+after_at  if after_at  else str(after_m) +'m'}"
                         )
                     elif key == "upstreams":
                         logger.info(
