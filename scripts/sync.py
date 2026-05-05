@@ -452,7 +452,7 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
         forwards = cfg["path_forward"].get("forwards", [])
         upstreams = cfg["upstream"].get("upstreams", [])
         
-        for line in status_out.strip().split("\n"):
+        for line in status_out.splitlines():
             if len(line) < 4:
                 continue
             # Extract path from line (e.g., " M skills/g2-chart-generator/SKILL.md")
