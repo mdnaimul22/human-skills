@@ -212,14 +212,14 @@ def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> tuple[dict[
                 path.parent.mkdir(parents=True, exist_ok=True)
                 ok, out = run_git(["clone", url, str(path)], path.parent, logger)
                 if ok:
-                    logger.info(f"     ✓  Cloned successfully")
+                    logger.info(f"     ✅  Cloned successfully")
                     updated_upstreams.append(name)
                 else:
                     logger.error(f"     ✗  Failed to clone: {out}")
                 results[name] = ok
                 continue
             else:
-                logger.warning(f"  ⚠  [{name}] path missing and no URL provided — skipping: {path}")
+                logger.warning(f"  ⚠️  [{name}] path missing and no URL provided — skipping: {path}")
                 results[name] = False
                 continue
                 
@@ -227,7 +227,7 @@ def pull_upstreams(upstreams: list[dict], logger: logging.Logger) -> tuple[dict[
         ok, out = run_git(["pull"], path, logger)
         if ok:
             tag = "already up to date" if "Already up to date" in out else (out or "updated")
-            logger.info(f"     ✓  {tag}")
+            logger.info(f"     ✅  {tag}")
             if "Already up to date" not in out:
                 updated_upstreams.append(name)
         else:
@@ -272,7 +272,7 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> tuple[list[s
         name = src.name
         
         if not src.exists():
-            logger.warning(f"  ⚠  Source missing — skipping: {src}")
+            logger.warning(f"  ⚠️  Source missing — skipping: {src}")
             continue
             
         # Record this destination as managed (relative to REPO_ROOT if possible)
@@ -282,7 +282,7 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> tuple[list[s
         except ValueError:
             touched_dsts.add(str(dst.resolve()))
             
-        logger.info(f"  →  Forwarding [{name}] …")
+        logger.info(f"  Forwarding [{name}] …")
         try:
             if src.is_file():
                 if dst.is_dir() or dst_path_str.endswith("/") or dst_path_str.endswith("\\"):
@@ -293,7 +293,7 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> tuple[list[s
                     actual_dst = dst
                     
                 shutil.copy2(src, actual_dst)
-                logger.info(f"     ✓  [File] {src} → {actual_dst}")
+                logger.info(f"     ✅  [File] {src} → {actual_dst}")
                 copied.append(name)
                 
             elif src.is_dir():
@@ -304,7 +304,7 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> tuple[list[s
                     cleared_dsts.add(resolved_dst)
                     
                 shutil.copytree(src, dst, dirs_exist_ok=True)
-                logger.info(f"     ✓  [Dir]  {src} → {dst}")
+                logger.info(f"     ✅  [Dir]  {src} → {dst}")
                 copied.append(name)
                 
         except Exception as exc:
@@ -323,7 +323,7 @@ def commit_and_push(
     commit_schema: dict
 ) -> bool:
     if not repo_is_dirty(repo, logger):
-        logger.info("  ✓  Nothing to commit — repo is clean.")
+        logger.info("  ✅  Nothing to commit — repo is clean.")
         return True
 
     msg_schema = commit_schema or {}
@@ -380,7 +380,7 @@ def commit_and_push(
         logger.error(f"     ✗  {out}")
         return False
         
-    logger.info("     ✓  Push successful.")
+    logger.info("     ✅  Push successful.")
     return True
 
 
@@ -404,7 +404,7 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     pull_args = ["pull", "--rebase", "--autostash", "origin", branch]
     ok, out = run_git(pull_args, REPO_ROOT, logger)
     if ok:
-        logger.info(f"     ✓  Main repo updated: {out or 'Already up to date'}")
+        logger.info(f"     ✅  Main repo updated: {out or 'Already up to date'}")
     else:
         logger.error(f"     ✗  Failed to pull main repo: {out}")
         logger.warning("        Push step may fail later due to this.")
@@ -517,7 +517,7 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
 
     # Summary
     ok_cnt  = sum(pulls.values())
-    icon    = "✅" if push_ok else "⚠️ "
+    icon    = "✅" if push_ok else "⚠️️ "
     logger.info(sep)
     logger.info(
         f"{icon} SYNC COMPLETE  |  "
@@ -624,7 +624,7 @@ def main() -> None:
             logger.info("   ⚡ Triggering immediate sync due to config change …")
             sync_job(watcher, logger)
             
-            logger.info("   ✓  Hot-reload complete — new config active\n")
+            logger.info("   ✅  Hot-reload complete — new config active\n")
 
 
 if __name__ == "__main__":

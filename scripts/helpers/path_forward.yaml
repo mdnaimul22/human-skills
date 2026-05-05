@@ -124,9 +124,6 @@ forwards:
     to: "{REPO_ROOT}/skills/ci-cd-pipeline-builder"
     enabled: true
 
-  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/data-quality-auditor"
-    to: "{REPO_ROOT}/skills/data-quality-auditor"
-    enabled: true
 
   - from: "{REPO_ROOT}/.claude-skills/engineering/skills/database-designer"
     to: "{REPO_ROOT}/skills/database-designer"
@@ -138,10 +135,6 @@ forwards:
 
   - from: "{REPO_ROOT}/.claude-skills/engineering/skills/git-worktree-manager"
     to: "{REPO_ROOT}/skills/git-worktree-manager"
-    enabled: true
-
-  - from: "{REPO_ROOT}/.claude-skills/engineering/skills/docker-development"
-    to: "{REPO_ROOT}/skills/docker-development"
     enabled: true
 
   - from: "{REPO_ROOT}/.claude-skills/engineering/skills/pr-review-expert"
