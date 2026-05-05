@@ -34,6 +34,14 @@ def exists(relative_path: str) -> bool:
     return _abs(relative_path).exists()
 
 
+def is_file(relative_path: str) -> bool:
+    return _abs(relative_path).is_file()
+
+
+def is_dir(relative_path: str) -> bool:
+    return _abs(relative_path).is_dir()
+
+
 def ensure_dir(relative_path: str) -> Path:
     path = _abs(relative_path)
     path.mkdir(parents=True, exist_ok=True)

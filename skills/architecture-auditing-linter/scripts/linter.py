@@ -380,6 +380,19 @@ class CodeAuditor(ast.NodeVisitor):
             self.add_violation(node, "❌ [Logging Violation] Direct 'logging' import used. Use 'setup_logger' instead.")
         if node.module == "pathlib" and not self.is_config_file:
             self.add_violation(node, "❌ [Pathlib Violation] Direct 'pathlib' import used outside config. Use 'src.config' utilities.")
+            
+        if node.module == "os.path" and not self.is_config_file:
+            os_path_blacklist = {
+                "realpath": "get_abs_path",
+                "exists": "exists",
+                "isdir": "is_dir",
+                "join": "get_abs_path or relative string concatenation"
+            }
+            for alias in node.names:
+                if alias.name in os_path_blacklist:
+                    suggestion = os_path_blacklist[alias.name]
+                    self.add_violation(node, f"❌ [Config Path Violation] 'from os.path import {alias.name}' used. Use '{suggestion}' from files.py instead.")
+                    
         self.generic_visit(node)
 
     def visit_Call(self, node):
@@ -448,6 +461,24 @@ class CodeAuditor(ast.NodeVisitor):
         }
         if node.attr in forbidden_path_methods and not self.is_config_file:
             self.add_violation(node, f"❌ [Config Path Violation] Direct '.{node.attr}()' used. Use 'src.config' utilities (exists, read_text, list_files, etc.)")
+            
+        # 3. os.path methods
+        os_path_blacklist = {
+            "realpath": "get_abs_path",
+            "exists": "exists",
+            "isdir": "is_dir",
+            "join": "get_abs_path or relative string concatenation"
+        }
+        if node.attr in os_path_blacklist and not self.is_config_file:
+            is_os_path = False
+            if isinstance(node.value, ast.Name) and node.value.id in ("os", "path"):
+                is_os_path = True
+            elif isinstance(node.value, ast.Attribute) and node.value.attr == "path":
+                is_os_path = True
+
+            if is_os_path:
+                suggestion = os_path_blacklist[node.attr]
+                self.add_violation(node, f"❌ [Config Path Violation] 'os.path.{node.attr}' used. Use '{suggestion}' from files.py instead.")
         
         self.generic_visit(node)
 
