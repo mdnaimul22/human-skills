@@ -3,9 +3,8 @@ import sys
 import threading
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from .files import ensure_dir
 
-_NOISY_LOGGERS: tuple[str, ...] = ("httpx", "openai", "anthropic", "httpcore", "urllib3", "asyncio", "multipart",)
+_NOISY_LOGGERS: tuple[str, ...] = ("httpx", "openai", "anthropic", "httpcore","urllib3", "asyncio", "multipart",)
 
 _lock              = threading.Lock()
 _registry: dict[str, logging.Logger] = {}
@@ -28,12 +27,11 @@ def _configure_system(log_dir: Path, is_production: bool) -> None:
     for name in _NOISY_LOGGERS:
         logging.getLogger(name).setLevel(logging.WARNING)
 
-    ensure_dir(log_dir)
-
+    log_dir.mkdir(parents=True, exist_ok=True)
     _system_configured = True
 
 
-def setup_logger(name: str) -> logging.Logger:
+def setup_logger(log_path: Path, name: str) -> logging.Logger:
     """
     Return a fully configured Logger for `name`. Standardized for the project.
 
@@ -44,46 +42,35 @@ def setup_logger(name: str) -> logging.Logger:
 
     The logger is registered in _registry so repeated calls
     with the same name return the cached instance immediately.
-
-    Usage
-    -----
-        from src.config import setup_logger
-        logger = setup_logger(__name__)
-        logger.info("Ready.")
     """
     if name in _registry:
         return _registry[name]
 
     with _lock:
-        # Double-checked locking
         if name in _registry:
             return _registry[name]
 
-        # ── Lazy import to avoid circular imports at module load ──────────────
         from .settings import Settings
 
         is_prod  : bool = Settings.is_production
-        is_dev   : bool = Settings.is_development
         log_dir  : Path = Settings.LOG_DIR
 
         _configure_system(log_dir, is_prod)
 
-        # ── Logger ────────────────────────────────────────────────────────────
         logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
-        logger.propagate = False          # never bubble up to root
+        logger.propagate = False
 
-        if logger.handlers:               # already wired (edge-case guard)
+        if logger.handlers:
             _registry[name] = logger
             return logger
 
         fmt = _build_formatter()
 
-        # ── 1. Rotating file handler ──────────────────────────────────────────
-        log_file = log_dir / f"{name.replace('.', '_')}.log"
+        # 1. Rotating file handler
         fh = RotatingFileHandler(
-            log_file,
-            maxBytes    = 5 * 1024 * 1024,   # 5 MB
+            log_path,
+            maxBytes    = 5 * 1024 * 1024,
             backupCount = 3,
             encoding    = "utf-8",
         )
@@ -91,7 +78,7 @@ def setup_logger(name: str) -> logging.Logger:
         fh.setFormatter(fmt)
         logger.addHandler(fh)
 
-        # ── 2. Console handler ────────────────────────────────────────────────
+        # 2. Console handler
         sh = logging.StreamHandler(sys.stdout)
         sh.setLevel(logging.WARNING if is_prod else logging.DEBUG)
         sh.setFormatter(fmt)

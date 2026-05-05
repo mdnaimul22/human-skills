@@ -1,8 +1,12 @@
-import os, re
+import os
+import re
+from pathlib import Path
+
 from .paths import PROJECT_ROOT
 from . import files
 
 _DOTENV_PATH = ".env"
+
 
 def load_dotenv(path: str = _DOTENV_PATH) -> None:
     if not files.exists(path):
@@ -14,6 +18,7 @@ def load_dotenv(path: str = _DOTENV_PATH) -> None:
         if "=" in line:
             key, _, value = line.partition("=")
             os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
 
 def set_value(key: str, value: str, path: str = _DOTENV_PATH) -> None:
     content = files.read_text(path) if files.exists(path) else ""
@@ -31,9 +36,11 @@ def set_value(key: str, value: str, path: str = _DOTENV_PATH) -> None:
     files.write_text(path, "\n".join(new_lines) + "\n")
     load_dotenv(path)
 
+
 def get_value(key: str, default: str = "") -> str:
     load_dotenv()
     return os.environ.get(key, default)
+
 
 def remove_value(key: str, path: str = _DOTENV_PATH) -> None:
     if not files.exists(path):
