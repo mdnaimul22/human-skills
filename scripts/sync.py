@@ -346,6 +346,16 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     logger.info(f"🔄  SYNC STARTED  —  {now}")
     logger.info(sep)
 
+    # Step 0
+    logger.info("⬇️  STEP 0 — Pulling main repository (human-skills)")
+    pull_args = ["pull", "--rebase", "--autostash", "origin", branch]
+    ok, out = run_git(pull_args, REPO_ROOT, logger)
+    if ok:
+        logger.info(f"     ✓  Main repo updated: {out or 'Already up to date'}")
+    else:
+        logger.error(f"     ✗  Failed to pull main repo: {out}")
+        logger.warning("        Push step may fail later due to this.")
+
     # Step 1
     logger.info("📥 STEP 1 — Pulling upstream repositories")
     pulls, updated_upstreams = pull_upstreams(cfg["upstream"].get("upstreams", []), logger)

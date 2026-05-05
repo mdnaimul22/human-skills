@@ -124,11 +124,7 @@ forwards:
     to: "{REPO_ROOT}/skills/ci-cd-pipeline-builder"
     enabled: true
 
-<<<<<<< HEAD
-  - from: "{REPO_ROOT}/.claude-skills/engineering/data-quality-auditor/skills/data-quality-auditor"
-=======
   - from: "{REPO_ROOT}/.claude-skills/engineering/skills/data-quality-auditor"
->>>>>>> e610cd7 (sync: auto-update from claude-skills 2026-05-05 17:44)
     to: "{REPO_ROOT}/skills/data-quality-auditor"
     enabled: true
 
