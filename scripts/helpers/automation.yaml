@@ -30,12 +30,12 @@ git:
     # Variables: {upstream_name} = name of the upstream, {count} = number of files, {datetime} = current time
     upstreams:
       default: "sync: auto-update from {upstream_name} [{datetime}]"
-      claude-skills: "sync: core skills synced from claude-skills [{datetime}]"
-      everything-claude-code: "sync: imported rules from everything-claude-code [{datetime}]"
-      superpowers: "sync: superpowers repository updated [{datetime}]"
-      ui-ux-pro-max-skill: "sync: ui/ux guidelines updated [{datetime}]"
-      chart-visualization-skills: "sync: chart tools synced [{datetime}]"
-      anthropics-skills: "sync: anthropic standards synced [{datetime}]"
+      claude-skills: "sync: auto-update from {upstream_name} [{datetime}]"
+      everything-claude-code: "sync: auto-update from {upstream_name} [{datetime}]"
+      superpowers: "sync: auto-update from {upstream_name} [{datetime}]"
+      ui-ux-pro-max-skill: "sync: auto-update from {upstream_name} [{datetime}]"
+      chart-visualization-skills: "sync: auto-update from {upstream_name} [{datetime}]"
+      anthropics-skills: "sync: auto-update from {upstream_name} [{datetime}]"
 
 # ── Logging Configuration ─────────────────────────────────────────────────────
 logging:
