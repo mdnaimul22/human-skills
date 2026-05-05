@@ -329,25 +329,37 @@ def commit_and_push(
     for up_name, files in upstream_changes.items():
         if not files:
             continue
-        run_git(["add", "--all", "--"] + files, repo, logger)
+        ok_add, out_add = run_git(["add", "--all", "--"] + files, repo, logger)
+        if not ok_add:
+            logger.error(f"     ✗  git add failed for {up_name}: {out_add}")
         msg = f"sync: auto-update from {up_name} {current_time}"
         logger.info(f"  📝 Committing {len(files)} files for [{up_name}] …")
-        run_git(["commit", "-m", msg], repo, logger)
+        ok_cmt, out_cmt = run_git(["commit", "-m", msg], repo, logger)
+        if not ok_cmt:
+            logger.error(f"     ✗  git commit failed for {up_name}: {out_cmt}")
 
     # 2. Commit manual changes
     if manual_changes:
-        run_git(["add", "--all", "--"] + manual_changes, repo, logger)
+        ok_add, out_add = run_git(["add", "--all", "--"] + manual_changes, repo, logger)
+        if not ok_add:
+            logger.error(f"     ✗  git add failed for manual changes: {out_add}")
         msg = f"chore: manual update of {len(manual_changes)} file(s) {current_time}"
         logger.info(f"  📝 Committing {len(manual_changes)} manual changes …")
-        run_git(["commit", "-m", msg], repo, logger)
+        ok_cmt, out_cmt = run_git(["commit", "-m", msg], repo, logger)
+        if not ok_cmt:
+            logger.error(f"     ✗  git commit failed for manual changes: {out_cmt}")
 
     # 3. Catch-all for any missed files
     ok, status_out = run_git(["status", "--porcelain"], repo, logger)
     if ok and status_out.strip():
-        run_git(["add", "."], repo, logger)
+        ok_add, out_add = run_git(["add", "."], repo, logger)
+        if not ok_add:
+            logger.error(f"     ✗  git add . failed: {out_add}")
         msg = f"sync: catch-all cleanup {current_time}"
         logger.info(f"  📝 Committing remaining catch-all changes …")
-        run_git(["commit", "-m", msg], repo, logger)
+        ok_cmt, out_cmt = run_git(["commit", "-m", msg], repo, logger)
+        if not ok_cmt:
+            logger.error(f"     ✗  git commit failed for catch-all: {out_cmt}")
 
     # 4. Push
     logger.info(f"  🚀 Pushing → origin/{branch} …")
