@@ -47,45 +47,7 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         return self.ENV.lower() == "development"
 
-    # ── LLM ────────────────────────────────────────────────────────────────
-    LLM_BASE_URL: str = Field(..., validation_alias="LLM_BASE_URL")
-    LLM_MODEL: str = Field(
-        default="CohereForAI_C4AI_Command",
-        validation_alias="LLM_MODEL",
-    )
-    LLM_API_KEY: str = Field(default="no_key_need", validation_alias="LLM_API_KEY")
-    LLM_TEMPERATURE: float = Field(default=0.3, validation_alias="LLM_TEMPERATURE")
-    LLM_MAX_TOKENS: int = Field(default=4000, validation_alias="LLM_MAX_TOKENS")
 
-    # ── Paths (resolved via _resolve — no hardcoding) ──────────────────────
-    RAW_BRAIN_DIR: str = Field(..., validation_alias="BRAIN_DIR")
-    RAW_KNOWLEDGE_DIR: str = Field(..., validation_alias="KNOWLEDGE_DIR")
-
-    @property
-    def BRAIN_DIR(self) -> Path:
-        return self._resolve(self.RAW_BRAIN_DIR)
-
-    @property
-    def KNOWLEDGE_DIR(self) -> Path:
-        return self._resolve(self.RAW_KNOWLEDGE_DIR)
-
-    @property
-    def STATE_FILE(self) -> Path:
-        return self.DATA_DIR / "state.json"
-
-    @property
-    def PROMPTS_DIR(self) -> Path:
-        return PROJECT_ROOT / "prompts"
-
-    # ── Watcher ─────────────────────────────────────────────────────────────
-    WATCHER_ENABLED: bool = Field(default=True, validation_alias="WATCHER_ENABLED")
-    WATCHER_BUFFER_TURNS: int = Field(default=6, validation_alias="WATCHER_BUFFER_TURNS")
-    WATCHER_BUFFER_TIMEOUT: int = Field(default=180, validation_alias="WATCHER_BUFFER_TIMEOUT")
-    WATCHER_POLL_SECONDS: int = Field(default=30, validation_alias="WATCHER_POLL_SECONDS")
-
-    # ── Batch ────────────────────────────────────────────────────────────────
-    BATCH_MAX_CHARS: int = Field(default=500000, validation_alias="BATCH_MAX_CHARS")
-    BATCH_CHUNK_SIZE: int = Field(default=16000, validation_alias="BATCH_CHUNK_SIZE")
 
     model_config = SettingsConfigDict(
         env_file=str(PROJECT_ROOT / ".env"),
