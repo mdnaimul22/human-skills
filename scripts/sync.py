@@ -313,20 +313,49 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> tuple[list[s
     return copied, touched_dsts
 
 
-def push_repo(repo: Path, msg: str, branch: str, logger: logging.Logger) -> bool:
+def commit_and_push(
+    repo: Path,
+    upstream_changes: dict[str, list[str]],
+    manual_changes: list[str],
+    branch: str,
+    logger: logging.Logger,
+    current_time: str
+) -> bool:
     if not repo_is_dirty(repo, logger):
         logger.info("  ✓  Nothing to commit — repo is clean.")
         return True
-    for git_args, label in [
-        (["add", "."],         "Staging"),
-        (["commit", "-m", msg], f"Committing: {msg}"),
-        (["push", "origin", branch], f"Pushing → origin/{branch}"),
-    ]:
-        logger.info(f"  {'📦' if 'add' in git_args else '📝' if 'commit' in git_args else '🚀'}  {label} …")
-        ok, out = run_git(git_args, repo, logger)
-        if not ok:
-            logger.error(f"     ✗  {out}")
-            return False
+
+    # 1. Commit per upstream
+    for up_name, files in upstream_changes.items():
+        if not files:
+            continue
+        run_git(["add", "--all", "--"] + files, repo, logger)
+        msg = f"sync: auto-update from {up_name} {current_time}"
+        logger.info(f"  📝 Committing {len(files)} files for [{up_name}] …")
+        run_git(["commit", "-m", msg], repo, logger)
+
+    # 2. Commit manual changes
+    if manual_changes:
+        run_git(["add", "--all", "--"] + manual_changes, repo, logger)
+        msg = f"chore: manual update of {len(manual_changes)} file(s) {current_time}"
+        logger.info(f"  📝 Committing {len(manual_changes)} manual changes …")
+        run_git(["commit", "-m", msg], repo, logger)
+
+    # 3. Catch-all for any missed files
+    ok, status_out = run_git(["status", "--porcelain"], repo, logger)
+    if ok and status_out.strip():
+        run_git(["add", "."], repo, logger)
+        msg = f"sync: catch-all cleanup {current_time}"
+        logger.info(f"  📝 Committing remaining catch-all changes …")
+        run_git(["commit", "-m", msg], repo, logger)
+
+    # 4. Push
+    logger.info(f"  🚀 Pushing → origin/{branch} …")
+    ok, out = run_git(["push", "origin", branch], repo, logger)
+    if not ok:
+        logger.error(f"     ✗  {out}")
+        return False
+        
     logger.info("     ✓  Push successful.")
     return True
 
@@ -400,12 +429,13 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
     
     # Identify which upstreams actually caused modifications
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
-    changed_upstreams = set(updated_upstreams)
     
     # Check git status to find which forwards were updated
     ok, status_out = run_git(["status", "--porcelain"], REPO_ROOT, logger)
     
     manual_changes = []
+    upstream_changes = {} # upstream_name -> list of relative file paths
+    
     if ok and status_out.strip():
         forwards = cfg["path_forward"].get("forwards", [])
         upstreams = cfg["upstream"].get("upstreams", [])
@@ -417,7 +447,7 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
             changed_file = line[3:].strip('"')
             changed_path = (REPO_ROOT / changed_file).resolve()
             
-            matched_upstream = False
+            matched_upstream = None
             for rule in forwards:
                 if not rule.get("enabled", True) or not rule.get("to"):
                     continue
@@ -437,33 +467,28 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
                         up_path = Path(up.get("path", "")).resolve()
                         try:
                             if src == up_path or src.is_relative_to(up_path):
-                                changed_upstreams.add(up.get("name", "unknown"))
-                                matched_upstream = True
+                                matched_upstream = up.get("name", "unknown")
                                 break
                         except AttributeError:
                             if str(src).startswith(str(up_path)):
-                                changed_upstreams.add(up.get("name", "unknown"))
-                                matched_upstream = True
+                                matched_upstream = up.get("name", "unknown")
                                 break
                     if matched_upstream:
                         break
             
-            if not matched_upstream:
+            if matched_upstream:
+                upstream_changes.setdefault(matched_upstream, []).append(changed_file)
+            else:
                 manual_changes.append(changed_file)
 
-    if changed_upstreams:
-        names = ", ".join(sorted(changed_upstreams))
-        msg = f"sync: auto-update from {names} {current_time}"
-        if manual_changes:
-            logger.info(f"  ℹ️  Detected {len(manual_changes)} manual changes alongside sync")
-    elif manual_changes:
-        msg = f"chore: manual update of {len(manual_changes)} file(s) {current_time}"
-        logger.info(f"  📝 Manual changes detected: {', '.join(manual_changes[:3])}{'...' if len(manual_changes) > 3 else ''}")
-    else:
-        tmpl = git_cfg.get("commit_message", "sync: [{datetime}]")
-        msg  = tmpl.replace("[{datetime}]", current_time)
-        
-    push_ok = push_repo(REPO_ROOT, msg, branch, logger)
+    push_ok = commit_and_push(
+        repo=REPO_ROOT,
+        upstream_changes=upstream_changes,
+        manual_changes=manual_changes,
+        branch=branch,
+        logger=logger,
+        current_time=current_time
+    )
 
     # Summary
     ok_cnt  = sum(pulls.values())
