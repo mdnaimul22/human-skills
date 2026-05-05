@@ -300,7 +300,7 @@ def forward_skills(forwards: list[dict], logger: logging.Logger) -> tuple[list[s
                 resolved_dst = str(dst.resolve())
                 if resolved_dst not in cleared_dsts:
                     if dst.exists():
-                        shutil.rmtree(dst)
+                        shutil.rmtree(dst, ignore_errors=True)
                     cleared_dsts.add(resolved_dst)
                     
                 shutil.copytree(src, dst, dirs_exist_ok=True)
@@ -370,6 +370,11 @@ def commit_and_push(
 
     # 4. Push
     logger.info(f"  🚀 Pushing → origin/{branch} …")
+    
+    ok_pull, out_pull = run_git(["pull", "--rebase", "--autostash", "origin", branch], repo, logger)
+    if not ok_pull:
+        logger.error(f"     ✗  Pre-push pull failed: {out_pull}")
+        
     ok, out = run_git(["push", "origin", branch], repo, logger)
     if not ok:
         logger.error(f"     ✗  {out}")
