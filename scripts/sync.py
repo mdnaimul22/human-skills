@@ -319,11 +319,15 @@ def commit_and_push(
     manual_changes: list[str],
     branch: str,
     logger: logging.Logger,
-    current_time: str
+    current_time: str,
+    commit_schema: dict
 ) -> bool:
     if not repo_is_dirty(repo, logger):
         logger.info("  ✓  Nothing to commit — repo is clean.")
         return True
+
+    msg_schema = commit_schema or {}
+    up_schema = msg_schema.get("upstreams", {})
 
     # 1. Commit per upstream
     for up_name, files in upstream_changes.items():
@@ -332,7 +336,10 @@ def commit_and_push(
         ok_add, out_add = run_git(["add", "--all", "--"] + files, repo, logger)
         if not ok_add:
             logger.error(f"     ✗  git add failed for {up_name}: {out_add}")
-        msg = f"sync: auto-update from {up_name} {current_time}"
+        
+        template = up_schema.get(up_name) or up_schema.get("default", "sync: auto-update from {upstream_name} [{datetime}]")
+        msg = template.replace("{upstream_name}", up_name).replace("{count}", str(len(files))).replace("{datetime}", current_time)
+        
         logger.info(f"  📝 Committing {len(files)} files for [{up_name}] …")
         ok_cmt, out_cmt = run_git(["commit", "-m", msg], repo, logger)
         if not ok_cmt:
@@ -343,7 +350,10 @@ def commit_and_push(
         ok_add, out_add = run_git(["add", "--all", "--"] + manual_changes, repo, logger)
         if not ok_add:
             logger.error(f"     ✗  git add failed for manual changes: {out_add}")
-        msg = f"chore: manual update of {len(manual_changes)} file(s) {current_time}"
+            
+        template = msg_schema.get("manual", "chore: manual update of {count} file(s) [{datetime}]")
+        msg = template.replace("{count}", str(len(manual_changes))).replace("{datetime}", current_time)
+        
         logger.info(f"  📝 Committing {len(manual_changes)} manual changes …")
         ok_cmt, out_cmt = run_git(["commit", "-m", msg], repo, logger)
         if not ok_cmt:
@@ -355,7 +365,10 @@ def commit_and_push(
         ok_add, out_add = run_git(["add", "."], repo, logger)
         if not ok_add:
             logger.error(f"     ✗  git add . failed: {out_add}")
-        msg = f"sync: catch-all cleanup {current_time}"
+            
+        template = msg_schema.get("catch_all", "sync: catch-all cleanup [{datetime}]")
+        msg = template.replace("{datetime}", current_time)
+        
         logger.info(f"  📝 Committing remaining catch-all changes …")
         ok_cmt, out_cmt = run_git(["commit", "-m", msg], repo, logger)
         if not ok_cmt:
@@ -499,7 +512,8 @@ def sync_job(watcher: ConfigWatcher, logger: logging.Logger) -> None:
         manual_changes=manual_changes,
         branch=branch,
         logger=logger,
-        current_time=current_time
+        current_time=current_time,
+        commit_schema=cfg.get("git", {}).get("commit_messages", {})
     )
 
     # Summary
