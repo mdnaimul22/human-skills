@@ -113,24 +113,26 @@ class CorsImplementation(Tool):
     def evaluate(self, module: Any, source_code: str) -> float:
         # ── OWASP Critical: wildcard + credentials → instant 0.0 ──────────────
         if WILDCARD_ORIGIN.search(source_code) and CREDENTIALS_ENABLED.search(source_code):
-            return 0.0
-
-        has_cors = bool(CORS_MIDDLEWARE.search(source_code))
-        has_routes = bool(HAS_ROUTES.search(source_code))
-
-        # No CORS config at all
-        if not has_cors:
-            return 0.0
+            return 0.0, ["CRITICAL: Wildcard CORS origins ('*') combined with credentials enabled allows cross-site request forgery. Change to explicit origins."]
 
         score = 0.0
+        suggestions = []
 
-        # 1. Explicit origin whitelist (0.30)
-        if ORIGIN_WHITELIST.search(source_code):
+        # 1. CORS enabled globally or per-route (0.30)
+        if CORS_MIDDLEWARE.search(source_code):
             score += 0.30
-        elif WILDCARD_ORIGIN.search(source_code):
-            score += 0.05   # Wildcard present — minimal credit only
+        else:
+            suggestions.append("Enable CORS explicitly using standard middleware (e.g., Flask-CORS, CORSMiddleware) to control domain access.")
 
-        # 2. Credentials handled correctly (0.25)
+        # 2. Origin specificity (0.25 max)
+        if WILDCARD_ORIGIN.search(source_code):
+            score += 0.05   # Barely any points for wildcard
+            suggestions.append("CRITICAL: Avoid wildcard CORS origins ('*') in production. Explicitly list trusted domains.")
+        elif ORIGIN_WHITELIST.search(source_code):
+            score += 0.25
+        else:
+            suggestions.append("Define explicit 'allowed_origins' to restrict API access strictly to trusted clients.")
+            
         if CREDENTIALS_ENABLED.search(source_code):
             score += 0.25
 
@@ -139,13 +141,18 @@ class CorsImplementation(Tool):
             score += 0.20
         elif not METHODS_WILDCARD.search(source_code):
             score += 0.10   # Not wildcard but not explicit either — partial
+            suggestions.append("Explicitly list allowed CORS methods (e.g., GET, POST, OPTIONS) instead of relying on permissive defaults.")
+        else:
+            suggestions.append("Avoid allowing all HTTP methods ('*') via CORS. Restrict exactly to what endpoints require.")
 
         # 4. Explicit allowed headers (0.15)
         if HEADERS_EXPLICIT.search(source_code):
             score += 0.15
+        else:
+            suggestions.append("Explicitly list allowed CORS headers (e.g. Authorization, Content-Type) instead of using wildcards ('*').")
 
         # 5. Preflight OPTIONS handled (0.10)
         if PREFLIGHT_HANDLER.search(source_code):
             score += 0.10
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
