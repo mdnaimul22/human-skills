@@ -110,11 +110,12 @@ class HttpMethodCorrectness(Tool):
             description="Scores whether HTTP methods are used semantically correctly."
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         pairs = _extract_method_handler_pairs(source_code)
-        if not pairs: return 1.0
+        if not pairs: return 1.0, []
 
         scores = []
+        all_suggestions = []
         for method, body in pairs:
             clean_body = re.sub(r'#.*', '', body)
             clean_body = re.sub(r'^\s*@.*\n', '', clean_body, flags=re.MULTILINE)
@@ -130,13 +131,23 @@ class HttpMethodCorrectness(Tool):
                 has_read = bool(re.search(r'(find|get|list|fetch|retrieve|all|select|exists|findById|map|query)', clean_body, re.I))
 
             if method == 'GET':
-                if has_strong: scores.append(0.0)
-                elif has_weak: scores.append(0.5)
-                else: scores.append(1.0)
+                if has_strong: 
+                    scores.append(0.0)
+                    all_suggestions.append(f"CRITICAL: Found strong database mutations in GET endpoint. GET must be strictly read-only.")
+                elif has_weak: 
+                    scores.append(0.5)
+                    all_suggestions.append(f"Found weak mutations (like logging or cache updates) in GET endpoint. Ensure it remains safe/idempotent.")
+                else: 
+                    scores.append(1.0)
             elif method in ('POST', 'PUT', 'PATCH', 'DELETE'):
-                if has_strong or has_weak: scores.append(1.0)
-                elif has_read: scores.append(0.6)
-                else: scores.append(0.5)
-            else: scores.append(1.0)
+                if has_strong or has_weak: 
+                    scores.append(1.0)
+                elif has_read: 
+                    scores.append(0.6)
+                    all_suggestions.append(f"Found read-only logic in {method} endpoint. Use GET for fetching data.")
+                else: 
+                    scores.append(0.5)
+            else: 
+                scores.append(1.0)
 
-        return round(sum(scores) / len(scores), 4) if scores else 1.0
+        return (round(sum(scores) / len(scores), 4) if scores else 1.0), list(set(all_suggestions))
