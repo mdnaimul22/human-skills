@@ -75,7 +75,11 @@ human-skills '{
 - ❌ **Logger Compliance**: Hardcoded log filenames in `setup_logger`.
 
 ### What it detects in `rest_api` mode?
-When `linter_type="rest_api"` is used, it evaluates router files based on 12 Enterprise API Best Practices. Some rules may not apply to local or internal tools. Use `ignored_rules` to skip them.
+When `linter_type="rest_api"` is used, it evaluates router files based on Enterprise API Best Practices.
+
+> [!NOTE]
+> **Why use `ignored_rules`?**
+> There can be many conventions for API endpoints, but not all conventions apply to a single script. That's exactly why the ignore mechanism is kept. For example, global rules like `error_handling` (e.g., global exception handlers) or `input_validation` (e.g., file upload limits) might be handled globally in `others_script.py` and may not apply when analyzing a single local endpoint file. You should use `ignored_rules` to skip rules that are handled globally elsewhere or are irrelevant to the specific endpoint context.
 
 | Analyzer Rule | Description | When to Ignore (`ignored_rules`) |
 | :--- | :--- | :--- |
