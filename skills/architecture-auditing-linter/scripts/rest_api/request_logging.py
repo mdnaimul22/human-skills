@@ -119,16 +119,19 @@ class RequestLogging(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         # ── OWASP Critical: sensitive data in log lines → instant 0.0 ─────────
         if SENSITIVE_IN_LOG.search(source_code):
-            return 0.0
+            return 0.0, ["CRITICAL: Sensitive data (password, token, secret) detected in log statements! This is a severe OWASP violation."]
 
         score = 0.0
+        suggestions = []
 
         # 1. Request ID / correlation ID (0.25)
         if REQUEST_ID.search(source_code):
             score += 0.25
+        else:
+            suggestions.append("Generate and log a unique Request ID (Correlation ID) for every incoming request to trace issues.")
 
         # 2. Structured logger + method/path/status (0.25)
         has_logger = bool(STRUCTURED_LOGGER.search(source_code) or MORGAN.search(source_code))
@@ -139,20 +142,30 @@ class RequestLogging(Tool):
             score += 0.25
         elif has_logger and (has_method_path or has_status):
             score += 0.15
+            suggestions.append("Ensure your logger captures both the HTTP method/path and the response status code.")
         elif has_logger:
             score += 0.05
+            suggestions.append("Log the HTTP method, path, and status code for each request.")
+        else:
+            suggestions.append("Use a structured logging library (e.g., standard logging, winston, morgan) instead of basic prints.")
 
         # 3. Latency logged (0.20)
         if LATENCY_LOGGED.search(source_code):
             score += 0.20
+        else:
+            suggestions.append("Measure and log the request latency/duration to monitor performance.")
 
         # 4. X-Request-ID returned to client (0.15)
         if REQUEST_ID_HEADER_RETURNED.search(source_code):
             score += 0.15
+        else:
+            suggestions.append("Return the X-Request-ID in the HTTP response headers so clients can report it when facing errors.")
 
         # 5. Middleware / lifecycle hooks (0.10)
         if MIDDLEWARE_HOOK.search(source_code):
             score += 0.10
+        else:
+            suggestions.append("Use global middleware or lifecycle hooks (e.g. @app.before_request) to centralize request logging.")
 
         # 6. Structured format (0.05)
         if STRUCTURED_FIELDS.search(source_code):
@@ -161,5 +174,6 @@ class RequestLogging(Tool):
         # Penalty: print() used for logging
         if PRINT_LOGGING.search(source_code):
             score = max(score - 0.30, 0.0)
+            suggestions.append("CRITICAL: Do not use print() for logging requests. Use a proper logging framework with severity levels.")
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
