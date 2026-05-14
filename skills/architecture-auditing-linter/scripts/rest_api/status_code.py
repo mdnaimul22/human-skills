@@ -25,7 +25,8 @@ STATUS_CODE_RE = re.compile(
     r'|jsonify\([^)]*\),\s*(\d{3})'
     r'|Response\([^)]*,\s*(\d{3})'
     r'|abort\((\d{3})\)'
-    r'|raise\s+HTTP(?:Exception)?\((\d{3})',
+    r'|raise\s+HTTP(?:Exception)?\((\d{3})'
+    r'|return\s+[^,]+,\s*(\d{3})\b',
     re.IGNORECASE | re.DOTALL,
 )
 
