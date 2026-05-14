@@ -71,12 +71,15 @@ class InputValidation(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         score = 0.0
+        suggestions = []
 
         # 1. Schema-level validation (0.30) — most important
         if SCHEMA_VALIDATORS.search(source_code):
             score += 0.30
+        else:
+            suggestions.append("Use a robust schema validation library (e.g., Pydantic, Marshmallow) instead of manual dict lookups.")
 
         # 2. Manual type/range checks (0.15)
         manual_count = len(MANUAL_CHECKS.findall(source_code))
@@ -84,6 +87,7 @@ class InputValidation(Tool):
             score += 0.15
         elif manual_count > 0:
             score += 0.08
+            suggestions.append("Replace manual type/range checks with declarative schema validation where possible.")
 
         # 3. ORM usage (0.15) — implicit SQL injection protection
         uses_orm = bool(ORM_USAGE.search(source_code))
@@ -94,10 +98,15 @@ class InputValidation(Tool):
             score += 0.15
         elif uses_raw_sql:
             score -= 0.25   # String-interpolated SQL — strong penalty
+            suggestions.append("CRITICAL: SQL injection risk detected! Never use string formatting for SQL queries. Use parameterised queries or an ORM.")
+        else:
+            suggestions.append("Ensure database queries use an ORM or parameterised queries to prevent SQL injection.")
 
         # 4. XSS prevention (0.15)
         if XSS_PREVENTION.search(source_code):
             score += 0.15
+        else:
+            suggestions.append("Sanitize or escape user inputs before reflecting them in HTML or storing them if XSS is a risk.")
 
         # 5. File upload validation (0.15) — only if uploads are present
         has_upload = re.search(r'\b(file|upload|multipart|FormData)\b', source_code, re.I)
@@ -106,9 +115,12 @@ class InputValidation(Tool):
                 score += 0.15
             else:
                 score -= 0.10   # File upload with no validation
+                suggestions.append("CRITICAL: File uploads detected without validation. Check file extensions, MIME types, and use secure filenames.")
 
         # 6. Request size limit (0.10)
         if REQUEST_SIZE_LIMIT.search(source_code):
             score += 0.10
+        else:
+            suggestions.append("Enforce explicit request body size limits to prevent Denial of Service (DoS) attacks.")
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
