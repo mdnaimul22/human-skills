@@ -70,12 +70,15 @@ class RateLimiting(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         score = 0.0
+        suggestions = []
 
         # 1. Rate limiting library imported (0.25)
         if RATE_LIMIT_LIBRARIES.search(source_code):
             score += 0.25
+        else:
+            suggestions.append("Import a standard rate-limiting library (e.g. slowapi, Flask-Limiter, fastapi-limiter) to protect endpoints.")
 
         # 2. Rate limiting decorators on endpoints (0.25)
         decorator_count = len(RATE_LIMIT_DECORATORS.findall(source_code))
@@ -83,6 +86,9 @@ class RateLimiting(Tool):
             score += 0.25
         elif decorator_count == 1:
             score += 0.15
+            suggestions.append("Apply rate-limit decorators globally or specifically to all sensitive endpoints.")
+        else:
+            suggestions.append("Use rate-limit decorators (e.g. @limiter.limit) on endpoints to prevent abuse and brute force attacks.")
 
         # 3. Middleware-level rate limiting (0.20)
         if RATE_LIMIT_MIDDLEWARE.search(source_code):
@@ -95,10 +101,14 @@ class RateLimiting(Tool):
         # 5. Proper 429 response (0.10)
         if RESPONSE_429.search(source_code):
             score += 0.10
+        else:
+            suggestions.append("Ensure rate-limited requests explicitly return HTTP 429 (Too Many Requests).")
 
         # 6. Rate limit headers in response (0.10)
         if RATE_LIMIT_HEADERS.search(source_code):
             score += 0.10
+        else:
+            suggestions.append("Include standard rate-limit headers (X-RateLimit-Limit, Retry-After) so clients know when to retry.")
 
         # 7. Per-user rate limiting bonus (0.05)
         if PER_USER_RATE.search(source_code):
@@ -112,6 +122,6 @@ class RateLimiting(Tool):
         all_exempt = bool(RATE_LIMIT_EXEMPT.search(source_code))
 
         if has_routes and score == 0.0 and not all_exempt:
-            return 0.05   # Routes with zero rate limiting — very low score
+            return 0.05, suggestions + ["Endpoints detected with absolutely no rate limiting. API is vulnerable to DoS."]
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
