@@ -94,8 +94,9 @@ class ErrorHandling(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         score = 0.0
+        suggestions = []
         
         clean_code = re.sub(r'#.*', '', source_code)
         
@@ -106,28 +107,45 @@ class ErrorHandling(Tool):
             if total > 0:
                 specificity_ratio = exc_stats.specific_count / total
                 score += specificity_ratio * 0.20
-                score -= exc_stats.bare_count * 0.10
-                score -= exc_stats.swallowed * 0.12
+                if exc_stats.bare_count > 0:
+                    score -= exc_stats.bare_count * 0.10
+                    suggestions.append("Avoid bare 'except:' clauses; catch specific exceptions (e.g., ValueError, KeyError).")
+                if exc_stats.broad_count > 0:
+                    suggestions.append("Minimize catching broad 'Exception'; prefer specific exceptions to avoid masking bugs.")
+                if exc_stats.swallowed > 0:
+                    score -= exc_stats.swallowed * 0.12
+                    suggestions.append("Do not swallow exceptions silently (e.g. 'except: pass'). Log or handle them properly.")
             else:
                 score -= 0.10
+                suggestions.append("Use explicit try/except blocks around fragile code logic.")
         else:
             score -= 0.10
+            suggestions.append("Use explicit try/except blocks around fragile code logic.")
 
         if GLOBAL_ERROR_HANDLERS.search(clean_code):
             score += 0.20
+        else:
+            suggestions.append("Implement a global error handler (e.g., @app.errorhandler, exception middleware) to catch unexpected exceptions safely.")
 
         if JSON_ERROR_RESPONSE.search(clean_code):
             score += 0.15
+        else:
+            suggestions.append("Return a consistent JSON structure for all error responses (e.g., {'error': '...', 'status_code': 400}).")
 
         if ERROR_LOGGING.search(clean_code):
             score += 0.20
+        else:
+            suggestions.append("Log error details explicitly using logger.error() or an APM tool (Sentry/Rollbar) instead of just returning them.")
 
         if TRACEBACK_LEAK.search(clean_code):
             score -= 0.50
+            suggestions.append("CRITICAL: Remove traceback leaks (e.g. str(e), traceback.format_exc()) from API responses to prevent information disclosure.")
         else:
             score += 0.10
             
         if DB_FAILURE_HANDLING.search(clean_code):
             score += 0.15
+        else:
+            suggestions.append("Add explicit database failure handling (e.g. session.rollback(), OperationalError capture) if DB ops are present.")
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
