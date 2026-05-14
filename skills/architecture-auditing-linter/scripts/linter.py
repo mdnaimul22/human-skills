@@ -188,7 +188,7 @@ class Linter(Tool):
             )
 
         # ── Score each router file concurrently across all analyzers ──────────
-        async def score_file(py_file: Path) -> tuple[str, dict[str, float]]:
+        async def score_file(py_file: Path) -> tuple[str, dict[str, tuple[float, list[str]]]]:
             source = py_file.read_text(encoding="utf-8", errors="ignore")
             if not source.strip():
                 return "", {}
@@ -197,11 +197,12 @@ class Linter(Tool):
                 module = _ast.parse(source)
             except SyntaxError:
                 module = None
-            scores = await asyncio.gather(
+            results = await asyncio.gather(
                 *[asyncio.to_thread(a.evaluate, module, source) for _, a in analyzers]
             )
             return str(py_file.relative_to(scan_path if scan_path.is_dir() else scan_path.parent)), {
-                name: score for (name, _), score in zip(analyzers, scores)
+                name: (res[0], res[1]) if isinstance(res, tuple) else (res, []) 
+                for (name, _), res in zip(analyzers, results)
             }
 
         file_scores = await asyncio.gather(*[score_file(f) for f in router_files])
@@ -214,10 +215,13 @@ class Linter(Tool):
         msg += f"🔍 Detected {len(router_files)} router file(s)\n"
 
         overall_totals: dict[str, list[float]] = {name: [] for name, _ in analyzers}
+        overall_suggestions: dict[str, set[str]] = {name: set() for name, _ in analyzers}
 
-        for rel_path, scores in file_scores:
-            for name, score in scores.items():
+        for rel_path, scores_dict in file_scores:
+            for name, (score, suggestions) in scores_dict.items():
                 overall_totals[name].append(score)
+                for sug in suggestions:
+                    overall_suggestions[name].add(sug)
 
         # ── Project-wide averages / max ───────────────────────────────────────
         # For certain features (auth, rate limiting, caching), if they exist in ANY
@@ -246,28 +250,17 @@ class Linter(Tool):
         msg += f"🏆 OVERALL API SCORE: {grand_avg:.2f} / 1.00  {self._score_bar(grand_avg)}\n"
 
         # ── Generating Suggestions for Low Scores ─────────────────────────────
-        _SUGGESTIONS = {
-            "auth_implementation": "Add authentication (e.g., JWT, OAuth, or @login_required) to secure endpoints.",
-            "caching_strategy": "Implement caching (e.g., Redis, Cache-Control headers) for read-heavy endpoints.",
-            "endpoint_naming_convention": "Use standard RESTful noun-based naming (e.g., GET /users instead of /getUsers).",
-            "error_handling": "Catch specific exceptions (not just 'Exception'), use global error handlers, and log errors using logger.error.",
-            "http_method_correctness": "Use appropriate HTTP methods (GET for reading, POST for creation, PUT/PATCH for updates).",
-            "input_validation": "Validate request payloads using Pydantic, Marshmallow, or standard schema validators.",
-            "n1_query_detection": "Avoid making database queries inside loops. Use JOINs or eager loading.",
-            "pagination_implementation": "Add pagination (limit/offset or cursors) to endpoints returning lists of data.",
-            "rate_limiting": "Implement rate limiting (e.g., Flask-Limiter, FastAPI-Limiter) to protect endpoints from abuse.",
-            "retry_logic": "Add automatic retry logic (with exponential backoff) for external API calls.",
-            "status_code_usage": "Return precise HTTP status codes using standard libraries (e.g., 201 Created, 404 Not Found).",
-            "timeout_handling": "Always set explicit timeouts on external network requests (e.g., requests.get(url, timeout=5))."
-        }
-
         low_scores = [name for name, score in project_scores.items() if score < 0.70]
         if low_scores:
             msg += "\n💡 SUGGESTIONS FOR IMPROVEMENT:\n"
             msg += "-" * 65 + "\n"
             for name in low_scores:
-                suggestion = _SUGGESTIONS.get(name, "Review best practices for this metric.")
-                msg += f" 🔹 {name}:\n      {suggestion}\n"
+                suggestions = overall_suggestions.get(name, set())
+                if suggestions:
+                    formatted_suggestions = "\n      ".join(f"- {s}" for s in sorted(suggestions))
+                    msg += f" 🔹 {name}:\n      {formatted_suggestions}\n"
+                else:
+                    msg += f" 🔹 {name}:\n      - Review best practices and fix related architecture violations.\n"
 
         return Response(message=msg, break_loop=False)
 
