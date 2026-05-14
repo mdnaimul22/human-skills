@@ -93,33 +93,45 @@ class ResponseFieldFiltering(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         has_list = bool(LIST_ENDPOINT.search(source_code))
 
         # No list endpoints — neutral
         if not has_list:
-            return 0.5
+            return 0.5, []
 
         score = 0.0
+        suggestions = []
 
         # 1. ?fields= / ?$select= query param (0.30)
         if FIELDS_PARAM.search(source_code) or FIELDS_QUERY_DEF.search(source_code):
             score += 0.30
+        else:
+            suggestions.append("Support sparse fieldsets (e.g., ?fields=id,name) to allow clients to request only needed data.")
 
         # 2. Dynamic field selection (0.25)
         if DYNAMIC_FIELD_SELECTION.search(source_code):
             score += 0.25
+        else:
+            suggestions.append("Implement dynamic field projection at the database or serializer level to avoid fetching unused columns.")
 
         # 3. List endpoint uses projection (0.20)
         if LIST_PROJECTION.search(source_code):
             score += 0.20
+        else:
+            suggestions.append("Ensure list endpoints do not use 'SELECT *' equivalent; query only the necessary fields.")
 
         # 4. Response model / DTO restricts fields (0.15)
         if RESPONSE_MODEL.search(source_code):
             score += 0.15
+        else:
+            suggestions.append("Use Response Models / DTOs to enforce the exact schema returned, avoiding database-model leakage.")
 
         # 5. Default field set limited (0.10)
         if DEFAULT_FIELDS.search(source_code):
             score += 0.10
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        if score < 0.65 and not suggestions:
+            suggestions.append("Review Google API Design Guide (AIP-0157) on Partial Responses to improve response performance.")
+
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
