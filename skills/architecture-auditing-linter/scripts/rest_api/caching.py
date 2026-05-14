@@ -59,13 +59,16 @@ class CachingStrategy(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         score = 0.0
+        suggestions = []
 
         # 1. HTTP-level cache headers (0.25)
         has_http_cache = bool(HTTP_CACHE_HEADERS.search(source_code))
         if has_http_cache:
             score += 0.25
+        else:
+            suggestions.append("Add standard HTTP cache headers (e.g., Cache-Control, ETag, Last-Modified) for static or read-heavy responses.")
 
         # 2. Application cache backend imported/used (0.20)
         has_backend = bool(APP_CACHE_BACKENDS.search(source_code))
@@ -78,6 +81,9 @@ class CachingStrategy(Tool):
             score += 0.25
         elif cache_op_count == 1:
             score += 0.12
+            suggestions.append("Ensure caching operations perform both reads (get) and writes (set/expire).")
+        else:
+            suggestions.append("Implement application-level caching (e.g., Redis get/set) for expensive database queries or computations.")
 
         # 4. Cache decorators (0.15)
         has_decorator = bool(CACHE_DECORATORS.search(source_code))
@@ -88,6 +94,8 @@ class CachingStrategy(Tool):
         has_invalidation = bool(CACHE_INVALIDATION.search(source_code))
         if has_invalidation:
             score += 0.15
+        else:
+            suggestions.append("Add cache invalidation logic (e.g., clear, delete) when resources are created, updated, or deleted.")
 
         # 6. Auth-sensitive endpoints: reward explicit no-store (or neutral)
         is_auth_sensitive = bool(AUTH_SENSITIVE.search(source_code))
@@ -96,9 +104,10 @@ class CachingStrategy(Tool):
                 score += 0.10   # Good: explicitly disabled cache for sensitive data
             else:
                 score -= 0.10   # Risky: might be caching user-specific data
+                suggestions.append("CRITICAL: Explicitly disable caching (Cache-Control: no-store) on endpoints that handle user-specific or authenticated data.")
 
         # If no caching at all and code returns collections → mild penalty
         if score == 0.0:
-            return 0.2   # No caching detected — not necessarily wrong, but not ideal
+            return 0.2, ["No caching mechanisms detected. Implement basic caching strategies for performance optimization."]
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
