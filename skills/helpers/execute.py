@@ -34,11 +34,27 @@ def _extract_message(result) -> str:
 
 # ─ Resolve a single .py file → sync callable or None ──────────
 
+import ast
+
 def _resolve_runner(module_name: str, path: Path) -> Optional[dict]:
     """
     Searches for any class extending 'Tool' with an async execute().
     Returns a dict containing the runner and metadata.
     """
+    
+    # 1. Safely check if the file even contains a Tool class via AST before executing it
+    try:
+        content = path.read_text(encoding="utf-8")
+        tree = ast.parse(content, filename=str(path))
+        has_tool = any(
+            isinstance(node, ast.ClassDef) and 
+            any(isinstance(base, ast.Name) and base.id == 'Tool' for base in node.bases)
+            for node in tree.body
+        )
+        if not has_tool:
+            return None
+    except Exception:
+        pass # Fallback to dynamic loading if AST parsing fails for some reason
 
     spec = importlib.util.spec_from_file_location(module_name, path)
 
