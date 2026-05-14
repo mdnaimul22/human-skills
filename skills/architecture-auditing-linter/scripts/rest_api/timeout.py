@@ -91,15 +91,16 @@ class TimeoutHandling(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         makes_http   = bool(MAKES_EXTERNAL_CALLS.search(source_code))
         makes_db     = bool(MAKES_DB_CALLS.search(source_code))
 
         # If code makes no external calls and no DB calls, timeouts are N/A
         if not makes_http and not makes_db:
-            return 0.8   # Not applicable — generous neutral score
+            return 0.8, []   # Not applicable — generous neutral score
 
         score = 0.0
+        suggestions = []
 
         # 1. HTTP client timeout (0.30) — most critical
         if makes_http:
@@ -107,6 +108,7 @@ class TimeoutHandling(Tool):
                 score += 0.30
             else:
                 score -= 0.20  # External calls with no timeout = reliability risk
+                suggestions.append("CRITICAL: Outbound HTTP requests detected without explicit timeouts. This can cause the API to hang indefinitely.")
 
         # 2. DB timeout configured (0.20)
         if makes_db:
@@ -114,6 +116,7 @@ class TimeoutHandling(Tool):
                 score += 0.20
             else:
                 score -= 0.05
+                suggestions.append("Configure explicit timeouts on database connections/queries to avoid blocking threads on slow queries.")
 
         # 3. Async timeout (0.20)
         has_async = re.search(r'\b(async def|await )\b', source_code)
@@ -122,6 +125,7 @@ class TimeoutHandling(Tool):
                 score += 0.20
             else:
                 score -= 0.05   # Async without timeout gates
+                suggestions.append("Wrap long-running async operations with asyncio.wait_for() or a timeout context manager.")
 
         # 4. Connection pool timeout (0.10)
         if CONNECTION_POOL_TIMEOUT.search(source_code):
@@ -130,6 +134,9 @@ class TimeoutHandling(Tool):
         # 5. Timeout error handling (0.15)
         if TIMEOUT_ERROR_HANDLING.search(source_code):
             score += 0.15
+        else:
+            if makes_http or makes_db:
+                suggestions.append("Catch and handle Timeout exceptions explicitly, returning an appropriate error (e.g. 504 Gateway Timeout) to clients.")
 
         # 6. Deadline propagation (0.05 bonus)
         if DEADLINE_PROPAGATION.search(source_code):
@@ -137,6 +144,8 @@ class TimeoutHandling(Tool):
 
         # Penalty for explicit timeout=None
         no_timeout_count = len(NO_TIMEOUT_EXPLICIT.findall(source_code))
+        if no_timeout_count > 0:
+            suggestions.append("CRITICAL: Explicit `timeout=None` or zero-timeout found. Never disable timeouts for network calls.")
         score -= no_timeout_count * 0.10
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
