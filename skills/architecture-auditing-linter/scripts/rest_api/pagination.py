@@ -66,17 +66,20 @@ class PaginationImplementation(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         # If the code doesn't return collections, pagination is not required
         if not _is_collection_endpoint(source_code):
-            return 1.0   # N/A — neutral pass
+            return 1.0, []   # N/A — neutral pass
 
         score = 0.0
+        suggestions = []
 
         # 1. Pagination parameters present (0.35)
         has_pagination_params = bool(PAGINATION_PARAMS.search(source_code))
         if has_pagination_params:
             score += 0.35
+        else:
+            suggestions.append("Extract pagination parameters (e.g., limit, offset, page, cursor) from incoming requests.")
 
         # 2. Cursor-based pagination (bonus on top of param check) (0.10)
         has_cursor = bool(CURSOR_SIGNALS.search(source_code))
@@ -87,11 +90,15 @@ class PaginationImplementation(Tool):
         has_limit = bool(LIMIT_APPLIED.search(source_code))
         if has_limit:
             score += 0.25
+        else:
+            suggestions.append("Apply a strict LIMIT to database/ORM queries to prevent fetching the entire collection into memory.")
 
         # 4. Response includes pagination metadata (0.20)
         has_metadata = bool(RESPONSE_METADATA.search(source_code))
         if has_metadata:
             score += 0.20
+        else:
+            suggestions.append("Include pagination metadata in the response (e.g., total_count, has_next, next_cursor) to aid client navigation.")
 
         # 5. No unbounded fetches detected (0.10 bonus, or penalty)
         unlimited_count = len(UNLIMITED_FETCH.findall(source_code))
@@ -99,5 +106,9 @@ class PaginationImplementation(Tool):
             score += 0.10
         else:
             score -= 0.15 * unlimited_count  # penalise each unbounded fetch
+            suggestions.append("CRITICAL: Unbounded collection fetch detected (e.g. .all() without limit). This will crash under high load.")
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        if score < 0.8 and not suggestions:
+             suggestions.append("Improve pagination logic by adding limit constraints and response metadata.")
+
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
