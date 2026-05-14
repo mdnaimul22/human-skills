@@ -72,13 +72,16 @@ class RetryLogic(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         score = 0.0
+        suggestions = []
 
         # 1. Retry library imported (0.25)
         has_library = bool(RETRY_LIBRARIES.search(source_code))
         if has_library:
             score += 0.25
+        else:
+            suggestions.append("Use a robust retry library (e.g. tenacity, backoff) to handle transient failures instead of manual loops.")
 
         # 2. Retry decorator applied (0.25)
         decorator_count = len(RETRY_DECORATORS.findall(source_code))
@@ -89,16 +92,22 @@ class RetryLogic(Tool):
         has_exp_backoff = bool(EXPONENTIAL_BACKOFF.search(source_code))
         if has_exp_backoff:
             score += 0.20
+        else:
+            suggestions.append("Implement exponential backoff (with jitter) for retries to prevent thundering herd problems.")
 
         # 4. Max retry limit defined (0.15)
         has_max = bool(MAX_RETRIES.search(source_code))
         if has_max:
             score += 0.15
+        else:
+            suggestions.append("Always set a maximum retry limit (e.g. stop_after_attempt) to avoid infinite retry loops.")
 
         # 5. Retry on specific errors only (0.10)
         has_specific = bool(SPECIFIC_RETRY_ERRORS.search(source_code))
         if has_specific:
             score += 0.10
+        else:
+            suggestions.append("Target retries only on specific, transient exceptions (e.g. ConnectionError, 503) rather than a broad Exception.")
 
         # 6. Idempotency awareness (0.05 bonus)
         if IDEMPOTENCY_SIGNALS.search(source_code):
@@ -107,6 +116,7 @@ class RetryLogic(Tool):
         # Penalties
         if INFINITE_RETRY.search(source_code):
             score -= 0.20
+            suggestions.append("CRITICAL: Infinite retry loop detected. Always include a termination condition.")
 
         # Fixed-sleep retry (not backoff) — mild penalty
         has_bare_sleep = bool(BARE_SLEEP_RETRY.search(source_code))
@@ -125,6 +135,6 @@ class RetryLogic(Tool):
             source_code, re.IGNORECASE
         )
         if makes_external_calls and score <= 0.0:
-            return 0.10   # External calls with zero retry = reliability risk
+            return 0.10, suggestions + ["External API calls detected without any retry logic. This risks failure during transient network issues."]
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
