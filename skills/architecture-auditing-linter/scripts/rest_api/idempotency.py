@@ -85,33 +85,44 @@ class IdempotencyImplementation(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         has_mutations = bool(MUTATION_ENDPOINTS.search(source_code))
 
         # No mutation endpoints — cannot assess idempotency
         if not has_mutations:
-            return 0.5
+            return 0.5, ["No mutation endpoints (POST/PUT/PATCH/DELETE) detected to evaluate idempotency."]
 
         score = 0.0
+        suggestions = []
 
         # 1. Idempotency-Key header used (0.30)
         if IDEMPOTENCY_KEY_READ.search(source_code):
             score += 0.30
+        else:
+            suggestions.append("Accept an 'Idempotency-Key' header in mutation endpoints to allow clients to safely retry requests.")
 
         # 2. PUT endpoint — idempotent by nature (0.25)
         if PUT_ENDPOINT.search(source_code):
             score += 0.25
+        else:
+            suggestions.append("Consider using PUT for operations that fully replace a resource (PUT must be strictly idempotent).")
 
         # 3. Deduplication logic (0.20)
         if DEDUP_LOGIC.search(source_code):
             score += 0.20
+        else:
+            suggestions.append("Implement deduplication logic (e.g. check DB/Redis if 'Idempotency-Key' was already processed).")
 
         # 4. 409 Conflict on duplicate (0.15)
         if CONFLICT_RESPONSE.search(source_code):
             score += 0.15
+        else:
+            suggestions.append("Return HTTP 409 Conflict when a duplicate request or integrity violation occurs.")
 
         # 5. Key returned in response header (0.10)
         if KEY_IN_RESPONSE.search(source_code):
             score += 0.10
+        else:
+            suggestions.append("Echo the 'Idempotency-Key' back in the response headers to confirm idempotency handling to the client.")
 
-        return round(min(max(score, 0.0), 1.0), 4)
+        return round(min(max(score, 0.0), 1.0), 4), suggestions
