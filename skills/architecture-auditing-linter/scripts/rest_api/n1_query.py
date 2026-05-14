@@ -102,7 +102,7 @@ class N1QueryDetector(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         # Try AST-based detection first; fall back to regex
         ast_violations = _count_ast_violations(source_code)
         regex_violations = _count_regex_violations(source_code)
@@ -111,12 +111,17 @@ class N1QueryDetector(Tool):
         violations = max(ast_violations, regex_violations)
 
         has_mitigation = _has_eager_loading(source_code)
+        suggestions = []
 
         if violations == 0:
-            return 1.0
+            return 1.0, []
 
         # Each violation degrades score; mitigation halves the penalty
         penalty_per_violation = 0.25 if not has_mitigation else 0.12
         penalty = min(violations * penalty_per_violation, 1.0)
+        
+        suggestions.append(f"Detected {violations} potential N+1 query loop(s). Move database calls outside loops or use JOINs/bulk fetch.")
+        if not has_mitigation:
+            suggestions.append("Use eager loading (e.g. select_related, joinedload, prefetch_related) to load related database objects efficiently.")
 
-        return round(max(0.0, 1.0 - penalty), 4)
+        return round(max(0.0, 1.0 - penalty), 4), suggestions
