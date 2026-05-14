@@ -364,15 +364,16 @@ class StatusCodeUsage(Tool):
             )
         )
 
-    def evaluate(self, module: Any, source_code: str) -> float:
+    def evaluate(self, module: Any, source_code: str) -> tuple[float, list[str]]:
         # Strip strings and comments — prevents false positives from message strings
         clean = _clean(source_code)
 
         all_codes = _extract_codes(clean)
+        suggestions = []
 
         # No explicit status codes at all → neutral baseline
         if not all_codes:
-            return 0.40
+            return 0.40, ["No explicit HTTP status codes found. Use framework features to return precise status codes (e.g., 201, 404)."]
 
         contextual_score = _check_contextual_correctness(clean)
 
@@ -384,10 +385,19 @@ class StatusCodeUsage(Tool):
         # Overuse penalty only applies when the code HAS semantic context
         # but returns 200 anyway. A plain GET /config returning 200 is fine.
         overuse_penalty = _penalise_200_overuse(all_codes) if _has_signals else 0.0
+        
+        if overuse_penalty > 0.0:
+             suggestions.append("Overuse of HTTP 200 OK detected. Return semantic codes (e.g., 201 Created, 404 Not Found, 400 Bad Request) instead of returning 200 for everything.")
+
+        if contextual_score < 0.8:
+             suggestions.append("Review status code assignments. Some contexts (e.g., error handlers or DB writes) appear to return incorrect status codes.")
 
         # Variety bonus: more distinct codes = more intentional usage
         unique = len(set(all_codes))
         variety_bonus = min(0.10 * (unique - 1), 0.20) if unique > 1 else 0.0
+        
+        if unique <= 1 and _has_signals:
+             suggestions.append("API uses very few distinct status codes. Expand your usage to improve client error handling.")
 
         final = contextual_score - overuse_penalty + variety_bonus
-        return round(min(max(final, 0.0), 1.0), 4)
+        return round(min(max(final, 0.0), 1.0), 4), suggestions
