@@ -180,7 +180,7 @@ human-skills '{
 > After scaffolding:
 > 1. Rename `AppError` → `YourProjectError` in `exceptions.py` (optional)
 > 2. Add `tenacity` to your dependencies: `pip install tenacity`
-> 3. Import: `from src.helpers.exceptions import AppError, NotFoundError`
+> 3. Import: `from src.helpers import AppError, NotFoundError`
 
 ---
 
