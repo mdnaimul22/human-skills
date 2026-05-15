@@ -9,7 +9,7 @@ from src.helpers import (
     register_error_handlers,
     init_db,
     shutdown_db,
-    kill_port
+    kill_pid
 )
 
 # 1. Initialize Logger
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     port = getattr(Settings, "API_PORT", 8000)
     
     # Ensure port is free before starting
-    kill_port(port)
+    kill_pid(port)
     
     uvicorn.run(
         "main:app", 

@@ -15,7 +15,7 @@ from .exceptions import (
 )
 from .date_utils import get_now_iso, parse_iso, format_iso, relative_time
 from .retry import retry_on_failure, retry_async_on_failure
-from .port_utils import get_port, kill_port
+from .port_utils import get_pid, kill_pid
 
 __all__ = [
     # Exceptions
@@ -35,8 +35,8 @@ __all__ = [
     "retry_on_failure",
     "retry_async_on_failure",
     # Network
-    "get_port",
-    "kill_port",
+    "get_pid",
+    "kill_pid",
 ]
 
 # ── Optional: FastAPI Components ──────────────────────────────────────────────
