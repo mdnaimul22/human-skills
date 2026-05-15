@@ -14,7 +14,7 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
-def get_pids_on_port(port: int) -> List[int]:
+def get_port(port: int) -> List[int]:
     """Get all PIDs listening on a specific port"""
     try:
         cmd = f"lsof -t -i:{port}"
@@ -26,9 +26,9 @@ def get_pids_on_port(port: int) -> List[int]:
         logger.error(f"Error finding PIDs on port {port}: {e}")
         return []
 
-def kill_process_on_port(port: int) -> bool:
+def kill_port(port: int) -> bool:
     """Find and kill processes running on a specific port"""
-    pids = get_pids_on_port(port)
+    pids = get_port(port)
     if not pids:
         return False
 
@@ -55,7 +55,7 @@ def kill_process_on_port(port: int) -> bool:
     if pids:
         for _ in range(5): # Max 1 second
             time.sleep(0.2)
-            if not get_pids_on_port(port):
+            if not get_port(port):
                 logger.info(f"Port {port} successfully freed.")
                 return True
                 
