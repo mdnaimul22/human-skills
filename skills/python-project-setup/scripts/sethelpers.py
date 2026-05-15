@@ -4,12 +4,12 @@ from helpers.tool import Tool, Response
 
 class SetHelpers(Tool):
     """
-    Scaffolds universal helper utilities into any Python project.
-    Copies exceptions.py, date_utils.py, and retry.py from resources/helpers/.
+    Scaffolds universal helper utilities, API middleware, and Database layer into any Python project.
+    Copies exceptions, dates, retry, CORS, middleware, error_handlers, connection, and repository.
     Only overwrites files that share the same name — never touches other existing files.
     """
     name: str = "sethelpers"
-    description: str = "Scaffolds universal helpers (exceptions, date_utils, retry) into the target project's helpers directory."
+    description: str = "Scaffolds universal helpers (exceptions, date_utils, retry), FastAPI middleware, and Async SQLAlchemy DB layer into the target project's helpers directory."
     arguments: dict = {
         "destination": "Target path where helpers should be created (e.g. '/path/to/project/src/helpers').",
         "override": "Optional boolean ('true' or 'false'). If true, overwrites existing matching files."
@@ -54,8 +54,9 @@ class SetHelpers(Tool):
 
             msg += "\n📋 Next steps:\n"
             msg += "  1. Rename AppError → YourProjectError in exceptions.py (optional)\n"
-            msg += "  2. Add 'tenacity' to your dependencies for retry.py\n"
-            msg += "  3. Import: from src.helpers.exceptions import AppError, NotFoundError\n"
+            msg += "  2. Add dependencies to pyproject.toml: tenacity, fastapi, sqlalchemy[asyncio], aiosqlite\n"
+            msg += "  3. (FastAPI) Import and register: cors, middleware, error_handlers in main.py\n"
+            msg += "  4. (DB) Call init_db() in lifespan and extend BaseRepository for models\n"
 
             return Response(message=msg, break_loop=False)
 

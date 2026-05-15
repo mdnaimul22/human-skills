@@ -18,9 +18,7 @@ Every Python project shares identical foundational layers. This skill pre-builds
 | Tool | Command | Scaffolds |
 |:---|:---|:---|
 | `setconfig` | `human-skills '{"tool_name": "setconfig", ...}'` | `src/config/` — Settings, env, file I/O, logger |
-| `sethelpers` | `human-skills '{"tool_name": "sethelpers", ...}'` | `src/helpers/` — Exceptions, dates, retry |
-| `setapi` | `human-skills '{"tool_name": "setapi", ...}'` | `src/helpers/` — Error handlers, middleware, CORS (FastAPI) |
-| `setdb` | `human-skills '{"tool_name": "setdb", ...}'` | `src/helpers/` — Async SQLAlchemy connection + CRUD repository |
+| `sethelpers` | `human-skills '{"tool_name": "sethelpers", ...}'` | `src/helpers/` — Exceptions, utils, middleware, DB |
 
 ---
 
@@ -185,125 +183,11 @@ human-skills '{
 
 ---
 
-## SetApi
-> *"Production middleware in one call."*
-
-Scaffolds a battle-tested FastAPI middleware stack. **Framework-specific: FastAPI only.**
-Auto-integrates with `sethelpers` exceptions — if `AppError` hierarchy exists, all subclasses map to their correct HTTP status codes automatically.
-
-### API Structure
-```
-helpers/
-├── error_handlers.py   ← AppError→JSON, ValidationError→422, Exception→500 (catch-all)
-├── middleware.py        ← Request-ID, latency logging, OWASP security headers, HSTS
-└── cors.py              ← Settings-driven CORS (zero hardcoding)
-```
-
-### How to use?
-
-```bash
-human-skills '{
-    "tool_name": "setapi",
-    "tool_args": {
-        "destination": "/path/to/your_project/src/helpers"
-    }
-}'
-```
-
-### Integration in main.py
-
-```python
-from fastapi import FastAPI
-from src.config import Settings, setup_logger
-from src.helpers.error_handlers import register_error_handlers
-from src.helpers.middleware import register_middleware
-from src.helpers.cors import register_cors
-
-logger = setup_logger(Settings.LOG_DIR / "server.log", name="myproject.main")
-app = FastAPI(title=Settings.PROJECT_NAME, version=Settings.VERSION)
-
-# One-time setup — order matters
-register_cors(app, Settings)
-register_middleware(app, logger, Settings)
-register_error_handlers(app, logger)
-```
-
-> After scaffolding: every response automatically carries `X-Request-ID`, security headers, and all errors return consistent JSON.
-
----
-
-## SetDb
-> *"Async database in three files."*
-
-Scaffolds an async SQLAlchemy database layer with connection management and a generic CRUD repository.
-
-### DB Structure
-```
-helpers/
-├── connection.py     ← Async engine factory + session dependency
-└── repository.py     ← Generic async CRUD (get, list, create, update, delete, count, exists)
-```
-
-### How to use?
-
-```bash
-human-skills '{
-    "tool_name": "setdb",
-    "tool_args": {
-        "destination": "/path/to/your_project/src/helpers"
-    }
-}'
-```
-
-### Integration in main.py (FastAPI lifespan)
-
-```python
-from contextlib import asynccontextmanager
-from src.helpers.connection import init_db, shutdown_db
-
-@asynccontextmanager
-async def lifespan(app):
-    init_db(Settings.DATABASE_URL)
-    yield
-    await shutdown_db()
-
-app = FastAPI(lifespan=lifespan)
-```
-
-### Creating a model repository
-
-```python
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from src.helpers.repository import BaseRepository
-
-class Base(DeclarativeBase):
-    pass
-
-class User(Base):
-    __tablename__ = "users"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str]
-    email: Mapped[str]
-
-class UserRepository(BaseRepository[User]):
-    def __init__(self, session):
-        super().__init__(User, session)
-```
-
-> After scaffolding:
-> 1. Install: `pip install 'sqlalchemy[asyncio]' aiosqlite` (or `asyncpg` for PostgreSQL)
-> 2. Add `DATABASE_URL` to `.env` and `Settings`
-> 3. Create model-specific repositories extending `BaseRepository`
-
----
-
 ## Checklist When Setting Up a New Project
 
 - [ ] Run `setconfig` → scaffolds `src/config/`
-- [ ] Run `sethelpers` → scaffolds `src/helpers/`
-- [ ] Run `setapi` → scaffolds `src/helpers/` (FastAPI middleware files)
-- [ ] Run `setdb` → scaffolds `src/helpers/` (Database infrastructure files)
+- [ ] Run `sethelpers` → scaffolds `src/helpers/` (Exceptions, Utils, Retry, FastAPI Middleware, Async DB Layer)
 - [ ] Copy `root/.env.example` to `root/.env` and fill in mandatory fields
 - [ ] Add project-specific fields to `src/config/settings.py`
 - [ ] Rename `AppError` in `exceptions.py` to your project name (optional)
-- [ ] Add `tenacity`, `sqlalchemy[asyncio]` to `pyproject.toml` dependencies
+- [ ] Add required dependencies to `pyproject.toml` (e.g. `tenacity`, `fastapi`, `sqlalchemy[asyncio]`, `aiosqlite`)
