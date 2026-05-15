@@ -235,6 +235,7 @@ __pycache__/
     main_template_path = Path(__file__).resolve().parent / "main.py"
     if main_template_path.exists():
         Path("main.py").write_text(main_template_path.read_text(encoding="utf-8"), encoding="utf-8")
+    
     Path("README.md").write_text("# New Project\n", encoding="utf-8")
     
     license_content = """MIT License
