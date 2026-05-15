@@ -25,7 +25,7 @@ class SetConfig(Tool):
         override_str = str(self.args.get("override", "false")).lower()
         override = override_str in ("true", "1", "yes", "y")
 
-        resources_dir = Path(__file__).resolve().parent.parent / "resources"
+        resources_dir = Path(__file__).resolve().parent.parent / "resources" / "config"
         if not resources_dir.exists():
             return Response(message=f"❌ Error: resources directory not found at {resources_dir}", break_loop=False)
 
