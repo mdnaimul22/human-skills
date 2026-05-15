@@ -8,7 +8,8 @@ from src.helpers import (
     register_middleware,
     register_error_handlers,
     init_db,
-    shutdown_db
+    shutdown_db,
+    kill_process_on_port
 )
 
 # 1. Initialize Logger
@@ -64,6 +65,9 @@ if __name__ == "__main__":
     # Fallback host and port if not defined in Settings
     host = getattr(Settings, "API_HOST", "127.0.0.1")
     port = getattr(Settings, "API_PORT", 8000)
+    
+    # Ensure port is free before starting
+    kill_process_on_port(port)
     
     uvicorn.run(
         "main:app", 
