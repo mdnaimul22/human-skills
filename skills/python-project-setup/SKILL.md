@@ -17,6 +17,7 @@ Every Python project shares identical foundational layers. This skill pre-builds
 
 | Tool | Command | Scaffolds |
 |:---|:---|:---|
+| `bootstrap` | `human-skills '{"tool_name": "bootstrap", ...}'` | Initializes a complete new project skeleton (Dirs, Config, Helpers) |
 | `setconfig` | `human-skills '{"tool_name": "setconfig", ...}'` | `src/config/` — Settings, env, file I/O, logger |
 | `sethelpers` | `human-skills '{"tool_name": "sethelpers", ...}'` | `src/helpers/` — Exceptions, utils, middleware, DB |
 
@@ -185,9 +186,13 @@ human-skills '{
 
 ## Checklist When Setting Up a New Project
 
-- [ ] Run `setconfig` → scaffolds `src/config/`
-- [ ] Run `sethelpers` → scaffolds `src/helpers/` (Exceptions, Utils, Retry, FastAPI Middleware, Async DB Layer)
+**For a brand new empty project:**
+- [ ] Run `bootstrap` → `human-skills '{"tool_name": "bootstrap", "tool_args": {"destination": "."}}'`
 - [ ] Copy `root/.env.example` to `root/.env` and fill in mandatory fields
 - [ ] Add project-specific fields to `src/config/settings.py`
 - [ ] Rename `AppError` in `exceptions.py` to your project name (optional)
 - [ ] Add required dependencies to `pyproject.toml` (e.g. `tenacity`, `fastapi`, `sqlalchemy[asyncio]`, `aiosqlite`)
+
+**For an existing project:**
+- [ ] Run `setconfig` → scaffolds `src/config/`
+- [ ] Run `sethelpers` → scaffolds `src/helpers/` (Exceptions, Utils, Retry, FastAPI Middleware, Async DB Layer)
