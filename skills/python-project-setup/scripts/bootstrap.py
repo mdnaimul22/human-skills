@@ -24,7 +24,7 @@ class Bootstrap(Tool):
         # Ensure destination exists
         dest_path.mkdir(parents=True, exist_ok=True)
 
-        resource_script = Path(__file__).resolve().parent.parent / "resources" / "bootstrap.py"
+        resource_script = Path(__file__).resolve().parent.parent / "resources" / "initialize" / "bootstrap.py"
         if not resource_script.exists():
             return Response(message=f"❌ Error: bootstrap script not found at {resource_script}", break_loop=False)
 
