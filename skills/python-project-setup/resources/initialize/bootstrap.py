@@ -230,7 +230,11 @@ __pycache__/
     Path(".gitignore").write_text(gitignore_content, encoding="utf-8")
     Path(".env").touch()
     Path(".env.example").write_text("# Environment Variables\n", encoding="utf-8")
-    Path("main.py").write_text("print('Hello from Project Skeleton!')\n", encoding="utf-8")
+    
+    # Copy main.py template if it exists
+    main_template_path = Path(__file__).resolve().parent / "main.py"
+    if main_template_path.exists():
+        Path("main.py").write_text(main_template_path.read_text(encoding="utf-8"), encoding="utf-8")
     Path("README.md").write_text("# New Project\n", encoding="utf-8")
     
     license_content = """MIT License
