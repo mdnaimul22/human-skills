@@ -11,7 +11,7 @@ class SetDb(Tool):
     name: str = "setdb"
     description: str = "Scaffolds async SQLAlchemy database layer (connection management, base CRUD repository) into the target project."
     arguments: dict = {
-        "destination": "Target path where DB layer should be created (e.g. '/path/to/project/src/db').",
+        "destination": "Target path where DB layer should be created (e.g. '/path/to/project/src/helpers').",
         "override": "Optional boolean ('true' or 'false'). If true, overwrites existing matching files."
     }
     instruction: str = "Use this tool to set up the async database layer in a new or existing project."
@@ -57,7 +57,9 @@ class SetDb(Tool):
             msg += "  2. Add DATABASE_URL to .env and Settings:\n"
             msg += "     DATABASE_URL=sqlite+aiosqlite:///./data/app.db\n"
             msg += "  3. Call init_db(Settings.DATABASE_URL) in FastAPI lifespan\n"
+            msg += "     (from src.helpers.connection import init_db)\n"
             msg += "  4. Create model-specific repositories extending BaseRepository\n"
+            msg += "     (from src.helpers.repository import BaseRepository)\n"
 
             return Response(message=msg, break_loop=False)
 

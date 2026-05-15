@@ -19,8 +19,8 @@ Every Python project shares identical foundational layers. This skill pre-builds
 |:---|:---|:---|
 | `setconfig` | `human-skills '{"tool_name": "setconfig", ...}'` | `src/config/` — Settings, env, file I/O, logger |
 | `sethelpers` | `human-skills '{"tool_name": "sethelpers", ...}'` | `src/helpers/` — Exceptions, dates, retry |
-| `setapi` | `human-skills '{"tool_name": "setapi", ...}'` | `src/api/` — Error handlers, middleware, CORS (FastAPI) |
-| `setdb` | `human-skills '{"tool_name": "setdb", ...}'` | `src/db/` — Async SQLAlchemy connection + CRUD repository |
+| `setapi` | `human-skills '{"tool_name": "setapi", ...}'` | `src/helpers/` — Error handlers, middleware, CORS (FastAPI) |
+| `setdb` | `human-skills '{"tool_name": "setdb", ...}'` | `src/helpers/` — Async SQLAlchemy connection + CRUD repository |
 
 ---
 
@@ -193,7 +193,7 @@ Auto-integrates with `sethelpers` exceptions — if `AppError` hierarchy exists,
 
 ### API Structure
 ```
-api/
+helpers/
 ├── error_handlers.py   ← AppError→JSON, ValidationError→422, Exception→500 (catch-all)
 ├── middleware.py        ← Request-ID, latency logging, OWASP security headers, HSTS
 └── cors.py              ← Settings-driven CORS (zero hardcoding)
@@ -205,7 +205,7 @@ api/
 human-skills '{
     "tool_name": "setapi",
     "tool_args": {
-        "destination": "/path/to/your_project/src/api"
+        "destination": "/path/to/your_project/src/helpers"
     }
 }'
 ```
@@ -215,9 +215,9 @@ human-skills '{
 ```python
 from fastapi import FastAPI
 from src.config import Settings, setup_logger
-from src.api.error_handlers import register_error_handlers
-from src.api.middleware import register_middleware
-from src.api.cors import register_cors
+from src.helpers.error_handlers import register_error_handlers
+from src.helpers.middleware import register_middleware
+from src.helpers.cors import register_cors
 
 logger = setup_logger(Settings.LOG_DIR / "server.log", name="myproject.main")
 app = FastAPI(title=Settings.PROJECT_NAME, version=Settings.VERSION)
@@ -239,8 +239,7 @@ Scaffolds an async SQLAlchemy database layer with connection management and a ge
 
 ### DB Structure
 ```
-db/
-├── __init__.py       ← exports: init_db, get_session, shutdown_db, BaseRepository
+helpers/
 ├── connection.py     ← Async engine factory + session dependency
 └── repository.py     ← Generic async CRUD (get, list, create, update, delete, count, exists)
 ```
@@ -251,7 +250,7 @@ db/
 human-skills '{
     "tool_name": "setdb",
     "tool_args": {
-        "destination": "/path/to/your_project/src/db"
+        "destination": "/path/to/your_project/src/helpers"
     }
 }'
 ```
@@ -260,7 +259,7 @@ human-skills '{
 
 ```python
 from contextlib import asynccontextmanager
-from src.db import init_db, shutdown_db
+from src.helpers.connection import init_db, shutdown_db
 
 @asynccontextmanager
 async def lifespan(app):
@@ -275,7 +274,7 @@ app = FastAPI(lifespan=lifespan)
 
 ```python
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from src.db import BaseRepository
+from src.helpers.repository import BaseRepository
 
 class Base(DeclarativeBase):
     pass
@@ -302,8 +301,8 @@ class UserRepository(BaseRepository[User]):
 
 - [ ] Run `setconfig` → scaffolds `src/config/`
 - [ ] Run `sethelpers` → scaffolds `src/helpers/`
-- [ ] Run `setapi` → scaffolds `src/api/` (FastAPI projects only)
-- [ ] Run `setdb` → scaffolds `src/db/` (database projects only)
+- [ ] Run `setapi` → scaffolds `src/helpers/` (FastAPI middleware files)
+- [ ] Run `setdb` → scaffolds `src/helpers/` (Database infrastructure files)
 - [ ] Copy `root/.env.example` to `root/.env` and fill in mandatory fields
 - [ ] Add project-specific fields to `src/config/settings.py`
 - [ ] Rename `AppError` in `exceptions.py` to your project name (optional)

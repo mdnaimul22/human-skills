@@ -11,7 +11,7 @@ class SetApi(Tool):
     name: str = "setapi"
     description: str = "Scaffolds FastAPI middleware stack (error handlers, request-id, security headers, CORS) into the target project."
     arguments: dict = {
-        "destination": "Target path where API middleware should be created (e.g. '/path/to/project/src/api').",
+        "destination": "Target path where API middleware should be created (e.g. '/path/to/project/src/helpers').",
         "override": "Optional boolean ('true' or 'false'). If true, overwrites existing matching files."
     }
     instruction: str = "Use this tool to set up the FastAPI middleware stack in a new or existing project."
@@ -54,9 +54,9 @@ class SetApi(Tool):
 
             msg += "\n📋 Next steps:\n"
             msg += "  1. Add to main.py:\n"
-            msg += "     from src.api.error_handlers import register_error_handlers\n"
-            msg += "     from src.api.middleware import register_middleware\n"
-            msg += "     from src.api.cors import register_cors\n"
+            msg += "     from src.helpers.error_handlers import register_error_handlers\n"
+            msg += "     from src.helpers.middleware import register_middleware\n"
+            msg += "     from src.helpers.cors import register_cors\n"
             msg += "  2. Call after creating FastAPI app:\n"
             msg += "     register_cors(app, Settings)\n"
             msg += "     register_middleware(app, logger, Settings)\n"
