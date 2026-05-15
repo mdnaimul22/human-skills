@@ -1,10 +1,10 @@
 ---
 id: "g2-interaction-tooltip"
-title: "G2 Tooltip 交互配置"
+title: "G2 Tooltip Interaction Configuration"
 description: |
-  配置 G2 图表的 Tooltip 提示框，包括内容定制、格式化和自定义渲染。
-  在 Spec 模式中，Mark 级别的 tooltip 字段控制内容，
-  图表级别的 interaction 字段控制 Tooltip 行为。
+  Configure the Tooltip for G2 charts, including content customization, formatting, and custom rendering.
+  In Spec mode, the tooltip field at the Mark level controls the content,
+  while the interaction field at the chart level controls Tooltip behavior.
 
 library: "g2"
 version: "5.x"
@@ -23,9 +23,9 @@ related:
   - "g2-interaction-crosshair"
 
 use_cases:
-  - "为图表添加数据悬停提示"
-  - "自定义 Tooltip 展示的字段和格式"
-  - "关闭不需要的 Tooltip"
+  - "Add data hover tooltip to charts"
+  - "Customize the fields and format displayed in the Tooltip"
+  - "Disable unnecessary Tooltips"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,15 +35,15 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/component/tooltip"
 ---
 
-## 核心概念
+## Core Concepts
 
-G2 Spec 模式中 Tooltip 有两个配置位置：
-- **Mark 级别 `tooltip` 字段**：控制该 Mark 的 Tooltip 显示内容
-- **图表级别 `interaction` 字段**：控制 Tooltip 的触发行为和自定义渲染
+In G2 Spec mode, Tooltip has two configuration locations:
+- **Mark-level `tooltip` field**: Controls the display content of the Tooltip for that Mark
+- **Chart-level `interaction` field**: Controls the trigger behavior and custom rendering of the Tooltip
 
-G2 默认已启用 Tooltip，鼠标悬停时显示当前元素的数据。
+G2 has Tooltip enabled by default, displaying the data of the current element when the mouse hovers over it.
 
-## 基本用法（Spec 模式）
+## Basic Usage (Spec Mode)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -55,9 +55,9 @@ chart.options({
   data,
   encode: { x: 'genre', y: 'sold' },
   tooltip: {
-    title: 'genre',     // Tooltip 标题字段
+    title: 'genre',     // Tooltip title field
     items: [
-      { field: 'sold', name: '销量', valueFormatter: (v) => `${v} 万` },
+      { field: 'sold', name: 'Sales', valueFormatter: (v) => `${v} million` },
     ],
   },
 });
@@ -65,7 +65,7 @@ chart.options({
 chart.render();
 ```
 
-## tooltip 字段详细配置
+## tooltip Field Detailed Configuration
 
 ```javascript
 chart.options({
@@ -73,25 +73,25 @@ chart.options({
   data: [...],
   encode: { x: 'x', y: 'y' },
   tooltip: {
-    // 标题：字段名字符串 | 固定字符串 | 函数
+    // title: field name string | fixed string | function
     title: 'name',
 
-    // items：定义 Tooltip 中展示的数据行
+    // items: defines the data rows displayed in the Tooltip
     items: [
-      // 写法 1：字段名字符串（快捷写法）
+      // Format 1: field name string (shortcut)
       'value',
 
-      // 写法 2：对象配置
+      // Format 2: object configuration
       {
-        field: 'value',                              // 数据字段
-        name: '数值',                                // 显示名称
-        valueFormatter: (v) => `${v.toFixed(2)}%`,  // 值格式化
-        color: '#1890ff',                            // 颜色标记
+        field: 'value',                              // data field
+        name: 'Value',                               // display name
+        valueFormatter: (v) => `${v.toFixed(2)}%`,  // value formatting
+        color: '#1890ff',                            // color marker
       },
 
-      // 写法 3：函数（完全自定义）
+      // Format 3: function (fully custom)
       (data) => ({
-        name: '计算值',
+        name: 'Calculated Value',
         value: data.a + data.b,
       }),
     ],
@@ -99,25 +99,25 @@ chart.options({
 });
 ```
 
-## 关闭 Tooltip
+## Disable Tooltip
 
 ```javascript
-// 关闭整个图表的 Tooltip
+// Disable Tooltip for the entire chart
 chart.options({
   type: 'interval',
   data: [...],
   encode: { x: 'x', y: 'y' },
-  interaction: { tooltip: false },   // 图表级别关闭
+  interaction: { tooltip: false },   // Disable at chart level
 });
 
-// 或关闭特定 Mark 的 Tooltip 内容（传 false）
+// Or disable Tooltip for a specific Mark (pass false)
 chart.options({
   type: 'interval',
-  tooltip: false,   // 该 Mark 不提供 Tooltip 内容
+  tooltip: false,   // This Mark does not provide Tooltip content
 });
 ```
 
-## 自定义 Tooltip 渲染（HTML）
+## Custom Tooltip Rendering (HTML)
 
 ```javascript
 chart.options({
@@ -142,51 +142,51 @@ chart.options({
 });
 ```
 
-## 在 view 容器中配置 Tooltip
+## Configure Tooltip in the View Container
 
 ```javascript
-// 多 Mark 叠加时，在外层 view 统一配置 Tooltip
+// When multiple Marks are stacked, configure the Tooltip uniformly in the outer view
 chart.options({
   type: 'view',
   data: [...],
-  interaction: { tooltip: { shared: true } },  // 共享 Tooltip（多 Mark 合并展示）
+  interaction: { tooltip: { shared: true } },  // Shared Tooltip (multiple Marks merged display)
   children: [
     {
       type: 'line',
       encode: { x: 'month', y: 'value', color: 'type' },
-      tooltip: { items: [{ field: 'value', name: '数值' }] },
+      tooltip: { items: [{ field: 'value', name: 'Value' }] },
     },
     {
       type: 'point',
       encode: { x: 'month', y: 'value', color: 'type' },
-      tooltip: false,    // 点 Mark 不单独触发 Tooltip
+      tooltip: false,    // Point Mark does not trigger Tooltip separately
     },
   ],
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：tooltip 写在了 style 里
+### Error 1: Tooltip written inside style
 ```javascript
-// ❌ 错误
+// ❌ Incorrect
 chart.options({ type: 'interval',  [...], style: { tooltip: { title: 'name' } } });
 
-// ✅ 正确：tooltip 是与 encode/style 同级的字段
+// ✅ Correct: Tooltip is a field at the same level as encode/style
 chart.options({ type: 'interval',  [...], tooltip: { title: 'name' } });
 ```
 
-### 错误 2：interaction.tooltip 与 mark.tooltip 职责混淆
+### Error 2: Confusion between interaction.tooltip and mark.tooltip Responsibilities
 ```javascript
-// ❌ 错误：把内容配置写在 interaction 里
+// ❌ Incorrect: Content configuration written in interaction
 chart.options({
-  interaction: { tooltip: { items: [{ field: 'value' }] } },  // 无效！
+  interaction: { tooltip: { items: [{ field: 'value' }] } },  // Invalid!
 });
 
-// ✅ 正确：内容配置在 mark 的 tooltip 字段；行为配置在 interaction.tooltip
+// ✅ Correct: Content configuration in the tooltip field of mark; behavior configuration in interaction.tooltip
 chart.options({
   type: 'interval',
-  tooltip: { items: [{ field: 'value', name: '数值' }] },  // 内容
-  interaction: { tooltip: { shared: true } },              // 行为
+  tooltip: { items: [{ field: 'value', name: 'Value' }] },  // Content
+  interaction: { tooltip: { shared: true } },              // Behavior
 });
 ```

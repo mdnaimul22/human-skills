@@ -1,9 +1,9 @@
 ---
 id: "g2-label-transform-overflow-hide"
-title: "G2 OverflowHide 标签变换"
+title: "G2 OverflowHide Label Transform"
 description: |
-  标签溢出隐藏变换。当标签超出其所属元素的边界时自动隐藏，
-  避免标签溢出造成的视觉混乱。
+  Label overflow hide transform. Automatically hides labels when they exceed the boundaries of their associated elements,
+  preventing visual clutter caused by label overflow.
 
 library: "g2"
 version: "5.x"
@@ -21,12 +21,12 @@ related:
   - "g2-comp-label-config"
 
 use_cases:
-  - "饼图标签溢出处理"
-  - "柱状图数据标签"
-  - "小尺寸元素的标签显示"
+  - "Pie chart label overflow handling"
+  - "Bar chart data labels"
+  - "Label display for small-sized elements"
 
 anti_patterns:
-  - "标签必须全部显示的场景"
+  - "Scenarios where labels must be fully displayed"
 
 difficulty: "beginner"
 completeness: "full"
@@ -36,19 +36,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
 
-## 核心概念
+## Core Concepts
 
-OverflowHide 标签变换会检测标签是否超出其所属元素的边界：
-- 如果标签在元素边界内，正常显示
-- 如果标签超出边界，自动隐藏
+The OverflowHide label transformation detects whether a label exceeds the boundaries of its parent element:
+- If the label is within the element's boundaries, it is displayed normally
+- If the label exceeds the boundaries, it is automatically hidden
 
-**工作原理：**
-1. 计算元素的边界框
-2. 计算标签的边界框
-3. 检测标签是否溢出元素边界
-4. 溢出则隐藏标签
+**How it Works:**
+1. Calculate the bounding box of the element
+2. Calculate the bounding box of the label
+3. Detect if the label overflows the element's boundaries
+4. Hide the label if it overflows
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -64,7 +64,7 @@ chart.options({
   data: [
     { category: 'A', value: 10 },
     { category: 'B', value: 50 },
-    { category: 'C', value: 5 },  // 小柱子，标签可能溢出
+    { category: 'C', value: 5 },  // Small bar, label may overflow
   ],
   encode: {
     x: 'category',
@@ -82,9 +82,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 饼图标签溢出处理
+### Pie Chart Label Overflow Handling
 
 ```javascript
 chart.options({
@@ -102,7 +102,7 @@ chart.options({
 });
 ```
 
-### 结合其他标签变换
+### Combine with Other Label Transformations
 
 ```javascript
 chart.options({
@@ -115,56 +115,56 @@ chart.options({
       position: 'inside',
       transform: [
         { type: 'overflowHide' },
-        { type: 'overlapHide' },  // 先处理溢出，再处理重叠
+        { type: 'overlapHide' },  // Handle overflow first, then handle overlap
       ],
     },
   ],
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface OverflowHideTransform {
   type: 'overflowHide';
-  // 无额外配置参数
+  // No additional configuration parameters
 }
 ```
 
-## 与其他标签变换的对比
+## Comparison with Other Label Transformations
 
-| Transform | 功能 | 适用场景 |
-|-----------|------|---------|
-| overflowHide | 隐藏溢出标签 | 标签超出元素边界 |
-| overlapHide | 隐藏重叠标签 | 标签之间重叠 |
-| overlapDodgeY | Y 方向避让 | 标签垂直重叠 |
+| Transform | Function | Applicable Scenarios |
+|-----------|----------|---------------|
+| overflowHide | Hide overflowing labels | Labels exceed element boundaries |
+| overlapHide | Hide overlapping labels | Labels overlap each other |
+| overlapDodgeY | Dodge in Y direction | Labels overlap vertically |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：transform 格式错误
+### Error 1: Incorrect transform Format
 
 ```javascript
-// ❌ 错误：transform 应该是数组
+// ❌ Incorrect: transform should be an array
 labels: [{ text: 'value', transform: { type: 'overflowHide' } }]
 
-// ✅ 正确
+// ✅ Correct
 labels: [{ text: 'value', transform: [{ type: 'overflowHide' }] }]
 ```
 
-### 错误 2：position 设置不当
+### Error 2: Improper position Setting
 
 ```javascript
-// ⚠️ 注意：outside 位置的标签通常不会溢出
-// overflowHide 主要用于 inside 位置
+// ⚠️ Note: Labels in the 'outside' position typically do not overflow
+// overflowHide is primarily used for 'inside' positions
 
-// 对于 inside 标签
+// For inside labels
 labels: [{
   text: 'value',
   position: 'inside',
   transform: [{ type: 'overflowHide' }]
 }]
 
-// 对于 outside 标签，考虑使用 overlapHide
+// For outside labels, consider using overlapHide
 labels: [{
   text: 'value',
   position: 'outside',
@@ -172,12 +172,12 @@ labels: [{
 }]
 ```
 
-### 错误 3：与其他变换顺序错误
+### Error 3: Incorrect Order with Other Transformations
 
 ```javascript
-// ⚠️ 注意：变换顺序影响结果
+// ⚠️ Note: Transformation order affects the result
 
-// 推荐：先处理溢出，再处理重叠
+// Recommended: Handle overflow first, then handle overlap
 transform: [
   { type: 'overflowHide' },
   { type: 'overlapHide' },

@@ -1,20 +1,19 @@
 ---
 id: "g2-interaction-poptip"
-title: "G2 文本溢出提示（poptip）"
+title: "G2 Text Overflow Tooltip (poptip)"
 description: |
-  poptip 交互在文本元素文字被截断（溢出容器）时，
-  鼠标悬停自动弹出完整文本的气泡提示框。
-  适合轴标签过长被截断、标注文字显示不全等场景，无需自定义 tooltip。
+  The poptip interaction automatically displays a bubble tooltip with the full text when the text of a text element is truncated (overflows the container) and the mouse hovers over it.
+  It is suitable for scenarios such as axis labels being too long and truncated, or annotation text not fully displayed, without the need for custom tooltips.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
   - "poptip"
-  - "文本提示"
-  - "溢出"
-  - "气泡"
-  - "截断"
+  - "text tooltip"
+  - "overflow"
+  - "bubble"
+  - "truncation"
   - "interaction"
 
 related:
@@ -22,9 +21,9 @@ related:
   - "g2-comp-axis-config"
 
 use_cases:
-  - "X 轴分类标签过长被截断时的完整文本提示"
-  - "图表内文本标注过长时的悬停提示"
-  - "自动处理文本溢出，无需手动配置 tooltip"
+  - "Full text tooltip for truncated X-axis category labels"
+  - "Hover tooltip for long text annotations within charts"
+  - "Automatic handling of text overflow without manual tooltip configuration"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,18 +33,18 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/poptip"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 轴标签很长的数据
+// Data with long axis labels
 const data = [
-  { category: '人工智能与机器学习算法研究', value: 85 },
-  { category: '云计算基础设施服务', value: 72 },
-  { category: '大数据分析与可视化平台', value: 68 },
-  { category: '区块链与去中心化应用', value: 45 },
-  { category: '物联网设备管理系统', value: 60 },
+  { category: 'Artificial Intelligence and Machine Learning Algorithm Research', value: 85 },
+  { category: 'Cloud Computing Infrastructure Services', value: 72 },
+  { category: 'Big Data Analytics and Visualization Platform', value: 68 },
+  { category: 'Blockchain and Decentralized Applications', value: 45 },
+  { category: 'Internet of Things Device Management System', value: 60 },
 ];
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
@@ -56,26 +55,26 @@ chart.options({
   encode: { x: 'category', y: 'value', color: 'category' },
   axis: {
     x: {
-      labelFormatter: (v) => v.length > 6 ? v.slice(0, 6) + '...' : v,  // 截断显示
+      labelFormatter: (v) => v.length > 6 ? v.slice(0, 6) + '...' : v,  // Truncated display
     },
   },
   interaction: {
-    poptip: true,   // 开启后，悬停截断标签时自动弹出完整文本
+    poptip: true,   // When enabled, automatically pops up the full text when hovering over truncated labels
   },
 });
 
 chart.render();
 ```
 
-## 自定义 poptip 样式
+## Customizing poptip Style
 
 ```javascript
 chart.options({
   interaction: {
     poptip: {
-      offsetX: 8,   // 气泡横向偏移（px），默认 8
-      offsetY: 8,   // 气泡纵向偏移（px），默认 8
-      // 气泡样式（CSS 属性）
+      offsetX: 8,   // Horizontal offset of the bubble (px), default 8
+      offsetY: 8,   // Vertical offset of the bubble (px), default 8
+      // Bubble style (CSS properties)
       tip: {
         backgroundColor: 'rgba(0,0,0,0.75)',
         color: '#fff',
@@ -88,18 +87,18 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：文本没有溢出时 poptip 不弹出——这是正确行为
+### Error: PopTip does not appear when text is not overflowing—this is the correct behavior
 ```javascript
-// ℹ️  poptip 只在文本真正溢出（被截断）时触发，非溢出文本不会弹出
-// 如果所有标签都完整显示，hover 时不会弹出任何提示
-// 这是设计行为，不是 bug
+// ℹ️  PopTip is triggered only when the text is truly overflowing (truncated), non-overflowing text will not pop up
+// If all labels are fully displayed, no tooltip will appear on hover
+// This is a design behavior, not a bug
 
-// 如果需要对所有元素都显示提示，应该用 tooltip
+// If you need to display a tooltip for all elements, use tooltip instead
 chart.options({
   tooltip: {
-    items: [{ channel: 'x' }],   // 显示 x 轴完整值
+    items: [{ channel: 'x' }],   // Display full x-axis values
   },
 });
 ```

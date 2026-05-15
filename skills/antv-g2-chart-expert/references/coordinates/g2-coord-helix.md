@@ -1,19 +1,19 @@
 ---
 id: "g2-coord-helix"
-title: "G2 螺旋坐标系（helix）"
+title: "G2 Helix Coordinate System (helix)"
 description: |
-  螺旋坐标系将时间/顺序数据沿螺旋线排布，适合展示具有周期性规律的长时间序列。
-  数据按螺旋盘绕，相同周期位置的数据点上下对齐，便于发现周期模式。
+  The helix coordinate system arranges time/sequential data along a helix, suitable for displaying long time series with periodic patterns.
+  Data is spirally wound, with data points at the same periodic positions aligned vertically, facilitating the discovery of periodic patterns.
 
 library: "g2"
 version: "5.x"
 category: "coordinates"
 tags:
   - "helix"
-  - "螺旋"
-  - "螺旋图"
-  - "周期"
-  - "时间序列"
+  - "spiral"
+  - "spiral chart"
+  - "periodic"
+  - "time series"
   - "coordinate"
 
 related:
@@ -21,9 +21,9 @@ related:
   - "g2-scale-time"
 
 use_cases:
-  - "展示多年日均气温的周期规律"
-  - "股票价格长时间序列的周期分析"
-  - "周/月/年周期性规律可视化"
+  - "Displaying periodic patterns of multi-year daily average temperatures"
+  - "Periodic analysis of long time series of stock prices"
+  - "Visualization of weekly/monthly/yearly periodic patterns"
 
 difficulty: "advanced"
 completeness: "full"
@@ -33,12 +33,12 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/coordinate/helix"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 生成一年的日均温度数据
+// Generate daily average temperature data for a year
 const data = Array.from({ length: 365 }, (_, i) => ({
   day: i,
   temp: 15 + 12 * Math.sin((i / 365) * Math.PI * 2) + (Math.random() - 0.5) * 5,
@@ -50,8 +50,8 @@ chart.options({
   type: 'interval',
   data,
   encode: {
-    x: 'day',    // 顺序（沿螺旋排布）
-    y: 'temp',   // 数值（映射为半径变化）
+    x: 'day',    // Order (arranged along the spiral)
+    y: 'temp',   // Value (mapped to radius changes)
     color: 'temp',
   },
   scale: {
@@ -59,8 +59,8 @@ chart.options({
   },
   coordinate: {
     type: 'helix',
-    startAngle: 0,              // 起始角度，默认 0
-    endAngle: Math.PI * 6,      // 结束角度，默认 6π（3圈）
+    startAngle: 0,              // Start angle, default 0
+    endAngle: Math.PI * 6,      // End angle, default 6π (3 turns)
     innerRadius: 0.1,
     outerRadius: 0.9,
   },
@@ -71,56 +71,56 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 coordinate: {
   type: 'helix',
-  startAngle: 0,              // 起始角度（弧度），默认 0
-  endAngle: Math.PI * 6,      // 结束角度，默认 6π（3圈）
-  innerRadius: 0,             // 内孔半径，默认 0
-  outerRadius: 1,             // 外径比例，默认 1
+  startAngle: 0,              // Start angle (in radians), default 0
+  endAngle: Math.PI * 6,      // End angle, default 6π (3 turns)
+  innerRadius: 0,             // Inner radius, default 0
+  outerRadius: 1,             // Outer radius ratio, default 1
 }
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：数据量太少，螺旋圈数太多——空白区域很大
+### Error: Too Little Data, Too Many Helix Loops—Large Blank Areas
 ```javascript
-// ❌ 数据只有 12 个月却设置 6π（3圈），每圈只有 4 个点
+// ❌ Only 12 months of data but set to 6π (3 loops), with only 4 points per loop
 chart.options({
-  data: monthlyData,  // 只有 12 条
+  data: monthlyData,  // Only 12 entries
   coordinate: { type: 'helix', endAngle: Math.PI * 6 },
 });
 
-// ✅ 根据数据量调整圈数：endAngle = 圈数 × 2π
+// ✅ Adjust loops based on data volume: endAngle = number of loops × 2π
 chart.options({
   coordinate: {
     type: 'helix',
-    endAngle: Math.PI * 2,  // 1 圈，适合月度数据
+    endAngle: Math.PI * 2,  // 1 loop, suitable for monthly data
   },
 });
 ```
 
-### 错误：样式设置不当导致图形不可见或渲染异常
+### Error: Improper Style Settings Causing Invisible or Abnormal Rendering of Graphics
 ```javascript
-// ❌ 使用了 lineWidth: 0 和 interval 类型但未设置足够宽度，可能导致视觉上“消失”
+// ❌ Using lineWidth: 0 and interval type without setting sufficient width may cause visual "disappearance"
 chart.options({
   type: 'interval',
   coordinate: { type: 'helix' },
   style: { lineWidth: 0 },
 });
 
-// ✅ 设置合适的 lineWidth 或调整图形类型如 point 更适合细粒度数据
+// ✅ Set an appropriate lineWidth or adjust the graphic type, such as point, which is more suitable for fine-grained data
 chart.options({
-  type: 'point', // 对于大量密集数据更合适
+  type: 'point', // More suitable for large amounts of dense data
   style: { lineWidth: 2 },
 });
 ```
 
-### 错误：动画类型与图形元素不兼容导致无动画效果
+### Error: Animation Type Incompatible with Graphic Element Resulting in No Animation Effect
 ```javascript
-// ❌ growInY 动画可能不适用于所有 helix 场景下的 interval 元素
+// ❌ growInY animation may not be applicable to all interval elements in helix scenarios
 chart.options({
   animate: {
     enter: {
@@ -129,7 +129,7 @@ chart.options({
   }
 });
 
-// ✅ 使用 fadeIn 等通用动画类型确保兼容性
+// ✅ Use universal animation types like fadeIn to ensure compatibility
 chart.options({
   animate: {
     enter: {

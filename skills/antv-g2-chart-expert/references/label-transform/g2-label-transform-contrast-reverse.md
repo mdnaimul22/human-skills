@@ -1,9 +1,9 @@
 ---
 id: "g2-label-transform-contrast-reverse"
-title: "G2 ContrastReverse 标签变换"
+title: "G2 ContrastReverse Label Transform"
 description: |
-  标签对比度反转变换。根据背景颜色自动调整标签颜色，
-  确保标签在深色背景上显示浅色，在浅色背景上显示深色。
+  Label contrast reverse transform. Automatically adjusts label color based on the background color,
+  ensuring labels display light colors on dark backgrounds and dark colors on light backgrounds.
 
 library: "g2"
 version: "5.x"
@@ -20,12 +20,12 @@ related:
   - "g2-comp-label-config"
 
 use_cases:
-  - "柱状图内部标签"
-  - "饼图标签"
-  - "需要根据背景调整颜色的标签"
+  - "Bar chart internal labels"
+  - "Pie chart labels"
+  - "Labels requiring color adjustment based on background"
 
 anti_patterns:
-  - "固定颜色标签不需要此变换"
+  - "Fixed-color labels do not require this transform"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,18 +35,18 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
 
-## 核心概念
+## Core Concepts
 
-ContrastReverse 标签变换会根据元素的颜色自动调整标签颜色：
-- 深色背景 → 浅色标签
-- 浅色背景 → 深色标签
+The ContrastReverse label transformation automatically adjusts label colors based on the element's color:
+- Dark background → Light label
+- Light background → Dark label
 
-**工作原理：**
-1. 获取元素的填充颜色
-2. 计算颜色的亮度
-3. 根据亮度选择对比色
+**How it works:**
+1. Obtain the element's fill color
+2. Calculate the color's luminance
+3. Select a contrasting color based on the luminance
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -81,9 +81,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 结合其他变换
+### Combine with Other Transformations
 
 ```javascript
 chart.options({
@@ -103,11 +103,11 @@ chart.options({
 });
 ```
 
-### 自定义对比色
+### Custom Contrast Color
 
 ```javascript
-// 注意：contrastReverse 通常使用默认的黑白对比
-// 如需自定义，可以在 style 中设置
+// Note: contrastReverse typically uses the default black and white contrast
+// If customization is needed, it can be set in the style
 chart.options({
   type: 'interval',
   data,
@@ -117,8 +117,8 @@ chart.options({
       text: 'value',
       position: 'inside',
       style: {
-        fill: '#fff',  // 固定白色
-        stroke: '#000',  // 描边增加对比度
+        fill: '#fff',  // Fixed white
+        stroke: '#000',  // Stroke to increase contrast
         lineWidth: 1,
       },
     },
@@ -126,42 +126,42 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface ContrastReverseTransform {
   type: 'contrastReverse';
-  // 无额外配置参数
+  // No additional configuration parameters
 }
 ```
 
-## 与固定颜色的对比
+## Comparison with Fixed Colors
 
-| 方式 | 优点 | 缺点 |
-|------|------|------|
-| contrastReverse | 自动适应 | 可能不符合设计风格 |
-| 固定颜色 | 风格统一 | 可能对比度不足 |
-| 描边 | 增加对比度 | 可能影响清晰度 |
+| Method | Advantages | Disadvantages |
+|--------|------------|---------------|
+| contrastReverse | Automatically adapts | May not conform to design style |
+| Fixed Color | Consistent style | May lack sufficient contrast |
+| Stroke | Increases contrast | May affect clarity |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：transform 格式错误
+### Error 1: Incorrect transform Format
 
 ```javascript
-// ❌ 错误：transform 应该是数组
+// ❌ Incorrect: transform should be an array
 labels: [{ text: 'value', transform: { type: 'contrastReverse' } }]
 
-// ✅ 正确
+// ✅ Correct
 labels: [{ text: 'value', transform: [{ type: 'contrastReverse' }] }]
 ```
 
-### 错误 2：position 设置不当
+### Error 2: Improper position Setting
 
 ```javascript
-// ⚠️ 注意：contrastReverse 主要用于 inside 位置
-// outside 位置的标签不在元素上，无法获取背景色
+// ⚠️ Note: contrastReverse is primarily used for the inside position
+// Labels in the outside position are not on the element and cannot obtain the background color
 
-// ✅ 正确：用于 inside 标签
+// ✅ Correct: Used for inside labels
 labels: [{
   text: 'value',
   position: 'inside',

@@ -1,9 +1,9 @@
 ---
 id: "g2-label-transform-overlap-hide"
-title: "G2 OverlapHide 标签变换"
+title: "G2 OverlapHide Label Transform"
 description: |
-  标签重叠隐藏变换。当标签重叠时自动隐藏部分标签，
-  避免视觉混乱。支持按优先级决定隐藏顺序。
+  Label overlap hiding transform. Automatically hides some labels when they overlap,
+  preventing visual clutter. Supports determining the hiding order based on priority.
 
 library: "g2"
 version: "5.x"
@@ -21,12 +21,12 @@ related:
   - "g2-comp-label-config"
 
 use_cases:
-  - "密集数据点的标签显示"
-  - "时间序列图表的标签处理"
-  - "需要简洁显示的场景"
+  - "Label display for dense data points"
+  - "Label handling in time series charts"
+  - "Scenarios requiring concise display"
 
 anti_patterns:
-  - "必须显示所有标签的场景（改用 overlapDodgeY）"
+  - "Scenarios where all labels must be displayed (use overlapDodgeY instead)"
 
 difficulty: "beginner"
 completeness: "full"
@@ -36,20 +36,20 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
 
-## 核心概念
+## Core Concepts
 
-OverlapHide 标签变换通过检测标签重叠来隐藏部分标签：
-- 按顺序检测每个标签是否与已显示的标签重叠
-- 如果重叠，隐藏当前标签
-- 支持设置优先级决定隐藏顺序
+The OverlapHide label transform hides some labels by detecting label overlaps:
+- Detects each label in order to see if it overlaps with already displayed labels
+- If overlapping, hides the current label
+- Supports setting priorities to determine the hiding order
 
-**工作原理：**
-1. 获取所有标签
-2. 按优先级排序（可选）
-3. 依次检测每个标签是否与已显示标签重叠
-4. 重叠则隐藏，否则显示
+**How it works:**
+1. Get all labels
+2. Sort by priority (optional)
+3. Check each label in sequence to see if it overlaps with already displayed labels
+4. If overlapping, hide; otherwise, display
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -84,9 +84,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 设置优先级
+### Set Priority
 
 ```javascript
 chart.options({
@@ -104,7 +104,7 @@ chart.options({
       transform: [
         {
           type: 'overlapHide',
-          priority: (a, b) => a.priority - b.priority,  // 高优先级先显示
+          priority: (a, b) => a.priority - b.priority,  // Higher priority displayed first
         },
       ],
     },
@@ -112,7 +112,7 @@ chart.options({
 });
 ```
 
-### 结合其他变换
+### Combine with Other Transformations
 
 ```javascript
 chart.options({
@@ -124,35 +124,35 @@ chart.options({
       text: 'value',
       position: 'top',
       transform: [
-        { type: 'overlapDodgeY' },  // 先尝试避让
-        { type: 'overlapHide' },    // 无法避让的隐藏
+        { type: 'overlapDodgeY' },  // Try dodging first
+        { type: 'overlapHide' },    // Hide if dodging is not possible
       ],
     },
   ],
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface OverlapHideTransform {
   type: 'overlapHide';
-  priority?: (a: any, b: any) => number;  // 优先级比较函数
+  priority?: (a: any, b: any) => number;  // Priority comparison function
 }
 ```
 
-## 与其他标签变换的对比
+## Comparison with Other Label Transformations
 
-| Transform | 功能 | 优点 | 缺点 |
-|-----------|------|------|------|
-| overlapHide | 隐藏重叠标签 | 布局稳定 | 丢失部分标签 |
-| overlapDodgeY | Y 方向避让 | 保留所有标签 | 可能改变布局 |
-| overflowHide | 隐藏溢出标签 | 避免溢出 | 可能丢失标签 |
+| Transform | Function | Advantages | Disadvantages |
+|-----------|----------|------------|---------------|
+| overlapHide | Hide overlapping labels | Stable layout | Loss of some labels |
+| overlapDodgeY | Dodge in Y direction | Retains all labels | May alter layout |
+| overflowHide | Hide overflowing labels | Prevents overflow | May lose labels |
 
-## 优先级排序示例
+## Priority Sorting Example
 
 ```javascript
-// 按数值大小排序：大值优先显示
+// Sort by numerical value: larger values displayed first
 labels: [{
   text: 'value',
   transform: [{
@@ -161,7 +161,7 @@ labels: [{
   }]
 }]
 
-// 按特定顺序排序
+// Sort by specific order
 labels: [{
   text: 'value',
   transform: [{
@@ -174,38 +174,38 @@ labels: [{
 }]
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：transform 格式错误
+### Error 1: Incorrect transform Format
 
 ```javascript
-// ❌ 错误：transform 应该是数组
+// ❌ Incorrect: transform should be an array
 labels: [{ text: 'value', transform: { type: 'overlapHide' } }]
 
-// ✅ 正确
+// ✅ Correct
 labels: [{ text: 'value', transform: [{ type: 'overlapHide' }] }]
 ```
 
-### 错误 2：优先级函数返回值错误
+### Error 2: Incorrect Return Value from Priority Function
 
 ```javascript
-// ❌ 错误：优先级函数应该返回数字
+// ❌ Incorrect: Priority function should return a number
 priority: (a, b) => a.value > b.value
 
-// ✅ 正确：返回正数表示 a 优先，负数表示 b 优先
+// ✅ Correct: Return a positive number to prioritize a, negative for b
 priority: (a, b) => b.value - a.value
 ```
 
-### 错误 3：与其他变换顺序错误
+### Error 3: Incorrect Order with Other Transformations
 
 ```javascript
-// ❌ 错误：先隐藏再处理其他问题
+// ❌ Incorrect: Hide first, then handle other issues
 transform: [
   { type: 'overlapHide' },
-  { type: 'overlapDodgeY' },  // 已经隐藏的标签无法避让
+  { type: 'overlapDodgeY' },  // Hidden labels cannot dodge
 ]
 
-// ✅ 正确：先尝试其他解决方案，最后隐藏
+// ✅ Correct: Try other solutions first, then hide
 transform: [
   { type: 'overlapDodgeY' },
   { type: 'overlapHide' },

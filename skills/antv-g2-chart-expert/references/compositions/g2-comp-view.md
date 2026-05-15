@@ -1,18 +1,18 @@
 ---
 id: "g2-comp-view"
-title: "G2 View 组合"
+title: "G2 View Composition"
 description: |
-  View 组合用于创建多视图图表。可以将多个 mark 组合在一起，
-  共享数据、比例尺、坐标轴等配置。
+  View Composition is used to create multi-view charts. It allows combining multiple marks together,
+  sharing configurations such as data, scales, and axes.
 
 library: "g2"
 version: "5.x"
 category: "compositions"
 tags:
-  - "组合"
+  - "composition"
   - "view"
-  - "多视图"
-  - "复合图表"
+  - "multi-view"
+  - "composite chart"
 
 related:
   - "g2-comp-space-layer"
@@ -20,12 +20,12 @@ related:
   - "g2-core-chart-init"
 
 use_cases:
-  - "多系列图表"
-  - "复合图表"
-  - "共享配置的多 mark 图表"
+  - "multi-series charts"
+  - "composite charts"
+  - "multi-mark charts with shared configurations"
 
 anti_patterns:
-  - "单一 mark 图表不需要 View 组合"
+  - "single-mark charts do not require View Composition"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,19 +35,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/composition"
 ---
 
-## 核心概念
+## Core Concepts
 
-View 组合允许将多个 mark 组合在一起：
-- 共享数据和配置
-- 统一管理比例尺和坐标轴
-- 支持嵌套组合
+View compositions allow combining multiple marks:
+- Share data and configurations
+- Unified management of scales and axes
+- Support nested compositions
 
-**特点：**
-- 子 mark 继承父级配置
-- 支持数据合并
-- 可配置坐标轴、图例等
+**Features:**
+- Child marks inherit parent configurations
+- Support data merging
+- Configurable axes, legends, etc.
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -81,9 +81,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 共享坐标轴配置
+### Shared Axis Configuration
 
 ```javascript
 chart.options({
@@ -100,7 +100,7 @@ chart.options({
 });
 ```
 
-### 共享比例尺
+### Shared Scale
 
 ```javascript
 chart.options({
@@ -118,7 +118,7 @@ chart.options({
 });
 ```
 
-### 子 mark 独立数据
+### Sub-mark Independent Data
 
 ```javascript
 chart.options({
@@ -139,7 +139,7 @@ chart.options({
 });
 ```
 
-### 带图例配置
+### Configuration with Legend
 
 ```javascript
 chart.options({
@@ -156,7 +156,7 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface ViewComposition {
@@ -168,59 +168,59 @@ interface ViewComposition {
   legend?: LegendOption;
   transform?: TransformOption[];
   slider?: SliderOption;
-  children: MarkSpec[];  // 子 mark 数组
+  children: MarkSpec[];  // Child mark array
 }
 ```
 
-## 与 SpaceLayer/SpaceFlex 的区别
+## Differences with SpaceLayer/SpaceFlex
 
-| 组合类型 | 用途 | 特点 |
-|---------|------|------|
-| view | 多 mark 叠加 | 共享坐标系 |
-| spaceLayer | 多图层叠加 | 独立坐标系 |
-| spaceFlex | 多视图排列 | 并排/堆叠布局 |
+| Composition Type | Use Case | Features |
+|------------------|----------|----------|
+| view | Multiple mark overlays | Shared coordinate system |
+| spaceLayer | Multi-layer overlays | Independent coordinate system |
+| spaceFlex | Multi-view arrangement | Side-by-side/stacked layout |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：children 格式错误
+### Error 1: Incorrect `children` Format
 
 ```javascript
-// ❌ 错误：children 应该是数组
+// ❌ Incorrect: `children` should be an array
 chart.options({
   type: 'view',
   children: { type: 'line', ... },
 });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({
   type: 'view',
   children: [{ type: 'line', ... }],
 });
 ```
 
-### 错误 2：子 mark 未指定 type
+### Error 2: Sub-mark type not specified
 
 ```javascript
-// ❌ 错误：子 mark 必须有 type
+// ❌ Error: Sub-mark must have a type
 chart.options({
   type: 'view',
   children: [{ encode: { x: 'a', y: 'b' } }],
 });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({
   type: 'view',
   children: [{ type: 'line', encode: { x: 'a', y: 'b' } }],
 });
 ```
 
-### 错误 3：混淆 data 和 children 的数据
+### Error 3: Confusing Data and Children Data
 
 ```javascript
-// ⚠️ 注意：View 的 data 会与子 mark 的 data 合并
-// 如果子 mark 有自己的 data，会覆盖父级的 data
+// ⚠️ Note: The data of the View will be merged with the data of the child mark
+// If the child mark has its own data, it will override the parent's data
 
-// 方式 1：父级提供数据
+// Method 1: Parent provides data
 chart.options({
   type: 'view',
   data,
@@ -229,7 +229,7 @@ chart.options({
   ],
 });
 
-// 方式 2：子 mark 独立数据
+// Method 2: Child mark has independent data
 chart.options({
   type: 'view',
   children: [
@@ -238,12 +238,12 @@ chart.options({
 });
 ```
 
-### 错误 4：density 和 boxplot 使用不当导致白屏
+### Error 4: Improper Use of Density and Boxplot Leading to Blank Screen
 
 ```javascript
-// ❌ 错误：density 和 boxplot 的数据格式不正确
-// density 需要经过 KDE 转换后的数据，包含 y 和 size 字段
-// boxplot 需要原始数据进行内部统计计算
+// ❌ Incorrect: Incorrect data format for density and boxplot
+// Density requires data transformed by KDE, including y and size fields
+// Boxplot requires raw data for internal statistical calculations
 chart.options({
   type: 'view',
   data: rawData,
@@ -259,7 +259,7 @@ chart.options({
   ],
 });
 
-// ✅ 正确：使用 transform 进行 KDE 转换，确保数据格式正确
+// ✅ Correct: Use transform for KDE conversion to ensure correct data format
 chart.options({
   type: 'view',
   data: {
@@ -275,7 +275,7 @@ chart.options({
             type: 'kde',
             field: 'value',
             groupBy: ['category'],
-            size: 50, // 控制密度曲线的精细程度
+            size: 50, // Controls the granularity of the density curve
           },
         ],
       },
@@ -296,12 +296,12 @@ chart.options({
         x: 'category',
         y: 'value',
         series: 'category',
-        shape: 'violin', // 可选，用于小提琴图
+        shape: 'violin', // Optional, for violin plot
       },
       style: {
         opacity: 0.8,
         strokeOpacity: 0.6,
-        point: false, // 可选，隐藏异常点
+        point: false, // Optional, hides outliers
       },
     },
   ],

@@ -1,9 +1,9 @@
 ---
 id: "g2-label-transform-overlap-dodge-y"
-title: "G2 OverlapDodgeY 标签变换"
+title: "G2 OverlapDodgeY Label Transform"
 description: |
-  标签 Y 方向避让变换。当标签在 Y 方向重叠时自动调整位置，
-  通过迭代算法避免标签重叠。
+  Label Y-direction dodging transform. Automatically adjusts the position of labels when they overlap in the Y direction,
+  using an iterative algorithm to avoid label overlap.
 
 library: "g2"
 version: "5.x"
@@ -21,12 +21,12 @@ related:
   - "g2-comp-label-config"
 
 use_cases:
-  - "密集数据点的标签显示"
-  - "时间序列图表的标签避让"
-  - "需要显示所有标签的场景"
+  - "Displaying labels for dense data points"
+  - "Label dodging in time series charts"
+  - "Scenarios requiring all labels to be displayed"
 
 anti_patterns:
-  - "标签过多时可能导致布局混乱"
+  - "May cause layout clutter when there are too many labels"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,19 +36,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
 
-## 核心概念
+## Core Concepts
 
-OverlapDodgeY 标签变换通过迭代算法在 Y 方向调整标签位置：
-- 检测相邻标签是否在 X 方向重叠
-- 如果重叠，在 Y 方向分开
-- 迭代直到无重叠或达到最大迭代次数
+The OverlapDodgeY label transform adjusts label positions in the Y direction using an iterative algorithm:
+- Detects if adjacent labels overlap in the X direction
+- If overlapping, separates them in the Y direction
+- Iterates until no overlaps exist or the maximum number of iterations is reached
 
-**算法特点：**
-- 时间复杂度 O(n log n)
-- 支持设置最大迭代次数
-- 支持设置标签间距
+**Algorithm Features:**
+- Time complexity O(n log n)
+- Supports setting the maximum number of iterations
+- Supports setting the label spacing
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -64,7 +64,7 @@ chart.options({
   data: [
     { date: '2024-01-01', value: 100, label: 'Event A' },
     { date: '2024-01-02', value: 120, label: 'Event B' },
-    { date: '2024-01-02', value: 110, label: 'Event C' },  // 同一天，标签可能重叠
+    { date: '2024-01-02', value: 110, label: 'Event C' },  // Same day, labels may overlap
   ],
   encode: {
     x: 'date',
@@ -82,31 +82,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 自定义间距
-
-```javascript
-chart.options({
-  type: 'line',
-  data,
-  encode: { x: 'date', y: 'value' },
-  labels: [
-    {
-      text: 'label',
-      position: 'top',
-      transform: [
-        {
-          type: 'overlapDodgeY',
-          padding: 4,  // 标签之间的最小间距（像素）
-        },
-      ],
-    },
-  ],
-});
-```
-
-### 控制迭代次数
+### Custom Spacing
 
 ```javascript
 chart.options({
@@ -120,8 +98,7 @@ chart.options({
       transform: [
         {
           type: 'overlapDodgeY',
-          maxIterations: 20,  // 最大迭代次数，默认 10
-          maxError: 0.1,      // 最大误差，默认 0.1
+          padding: 4,  // Minimum spacing between labels (in pixels)
         },
       ],
     },
@@ -129,7 +106,30 @@ chart.options({
 });
 ```
 
-### 结合其他变换
+### Control Iteration Count
+
+```javascript
+chart.options({
+  type: 'line',
+  data,
+  encode: { x: 'date', y: 'value' },
+  labels: [
+    {
+      text: 'label',
+      position: 'top',
+      transform: [
+        {
+          type: 'overlapDodgeY',
+          maxIterations: 20,  // Maximum iteration count, default is 10
+          maxError: 0.1,      // Maximum error, default is 0.1
+        },
+      ],
+    },
+  ],
+});
+```
+
+### Combine with Other Transformations
 
 ```javascript
 chart.options({
@@ -142,82 +142,82 @@ chart.options({
       position: 'top',
       transform: [
         { type: 'overlapDodgeY' },
-        { type: 'overflowHide' },  // 先避让，再处理溢出
+        { type: 'overflowHide' },  // Dodge first, then handle overflow
       ],
     },
   ],
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface OverlapDodgeYTransform {
   type: 'overlapDodgeY';
-  padding?: number;         // 标签间距，默认 1
-  maxIterations?: number;   // 最大迭代次数，默认 10
-  maxError?: number;        // 最大误差，默认 0.1
+  padding?: number;         // Label spacing, default 1
+  maxIterations?: number;   // Maximum iterations, default 10
+  maxError?: number;        // Maximum error, default 0.1
 }
 ```
 
-## 与其他标签变换的对比
+## Comparison with Other Label Transforms
 
-| Transform | 功能 | 优点 | 缺点 |
-|-----------|------|------|------|
-| overlapDodgeY | Y 方向避让 | 保留所有标签 | 可能改变布局 |
-| overlapHide | 隐藏重叠标签 | 布局稳定 | 丢失部分标签 |
-| overflowHide | 隐藏溢出标签 | 避免溢出 | 可能丢失标签 |
+| Transform | Function | Advantages | Disadvantages |
+|-----------|----------|------------|---------------|
+| overlapDodgeY | Y-direction dodging | Retains all labels | May alter layout |
+| overlapHide | Hides overlapping labels | Layout stability | Loses some labels |
+| overflowHide | Hides overflowing labels | Prevents overflow | May lose labels |
 
-## 工作原理图解
+## Diagram of Working Principle
 
 ```
-原始状态:
+Initial State:
   Label A -------- Label B
-      ↑ 重叠 ↑
+      ↑ Overlap ↑
 
-处理后:
+After Processing:
   Label B
       ↑
   Label A --------
 
-  (Y 方向分开)
+  (Separated in Y direction)
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：transform 格式错误
+### Error 1: Incorrect transform Format
 
 ```javascript
-// ❌ 错误：transform 应该是数组
+// ❌ Incorrect: transform should be an array
 labels: [{ text: 'value', transform: { type: 'overlapDodgeY' } }]
 
-// ✅ 正确
+// ✅ Correct
 labels: [{ text: 'value', transform: [{ type: 'overlapDodgeY' }] }]
 ```
 
-### 错误 2：迭代次数设置不当
+### Error 2: Improper Iteration Count Setting
 
 ```javascript
-// ⚠️ 注意：迭代次数过多会影响性能
-// 标签数量多时，建议减少迭代次数
+// ⚠️ Note: Excessive iterations can impact performance
+// When there are many labels, it is recommended to reduce the number of iterations
 
-// 标签较少时
+// Fewer labels
 transform: [{ type: 'overlapDodgeY', maxIterations: 20 }]
 
-// 标签较多时
+// More labels
 transform: [{ type: 'overlapDodgeY', maxIterations: 5 }]
 ```
 
-### 错误 3：与其他变换顺序错误
+### Error 3: Incorrect Order with Other Transformations
 
 ```javascript
-// ❌ 错误：先隐藏再避让，效果不佳
+// ❌ Incorrect: Hide first, then dodge, poor effect
 transform: [
   { type: 'overlapHide' },
   { type: 'overlapDodgeY' },
 ]
 
-// ✅ 正确：先避让，再隐藏无法处理的
+// ✅ Correct: Dodge first, then hide what cannot be handled
 transform: [
   { type: 'overlapDodgeY' },
   { type: 'overlapHide' },

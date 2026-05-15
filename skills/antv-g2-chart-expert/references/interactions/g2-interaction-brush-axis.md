@@ -1,19 +1,19 @@
 ---
 id: "g2-interaction-brush-axis"
-title: "G2 轴刷选高亮（brushAxisHighlight）"
+title: "G2 Axis Brush Highlight (brushAxisHighlight)"
 description: |
-  brushAxisHighlight 在平行坐标系中，对单个轴进行区间刷选，
-  高亮满足所有轴选区条件的折线。是平行坐标图最常见的多维过滤交互，
-  可在多个轴上同时设置区间，实现多维度联合过滤。
+  brushAxisHighlight allows for interval brushing on a single axis in parallel coordinates,
+  highlighting the lines that meet the selection criteria on all axes. It is the most common multi-dimensional filtering interaction in parallel coordinate plots,
+  enabling simultaneous setting of intervals on multiple axes to achieve multi-dimensional joint filtering.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
   - "brushAxisHighlight"
-  - "轴刷选"
-  - "平行坐标"
-  - "多维过滤"
+  - "axis brushing"
+  - "parallel coordinates"
+  - "multi-dimensional filtering"
   - "interaction"
 
 related:
@@ -21,9 +21,9 @@ related:
   - "g2-interaction-brush-filter"
 
 use_cases:
-  - "平行坐标图中多维联合筛选数据"
-  - "在多个轴上分别设置过滤区间"
-  - "高维数据的交互式探索"
+  - "Multi-dimensional joint data filtering in parallel coordinate plots"
+  - "Setting filtering intervals on multiple axes separately"
+  - "Interactive exploration of high-dimensional data"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -33,17 +33,17 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/brush-axis-highlight"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = [
-  { name: '产品A', price: 120, sales: 300, rating: 4.5, stock: 80 },
-  { name: '产品B', price: 85,  sales: 450, rating: 3.8, stock: 120 },
-  { name: '产品C', price: 200, sales: 180, rating: 4.9, stock: 40 },
-  { name: '产品D', price: 60,  sales: 600, rating: 3.2, stock: 200 },
-  { name: '产品E', price: 150, sales: 220, rating: 4.2, stock: 65 },
+  { name: 'Product A', price: 120, sales: 300, rating: 4.5, stock: 80 },
+  { name: 'Product B', price: 85,  sales: 450, rating: 3.8, stock: 120 },
+  { name: 'Product C', price: 200, sales: 180, rating: 4.9, stock: 40 },
+  { name: 'Product D', price: 60,  sales: 600, rating: 3.2, stock: 200 },
+  { name: 'Product E', price: 150, sales: 220, rating: 4.2, stock: 65 },
 ];
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
@@ -58,14 +58,14 @@ chart.options({
   coordinate: { type: 'parallel' },
   style: { lineWidth: 1.5, strokeOpacity: 0.7 },
   interaction: {
-    brushAxisHighlight: true,   // 在每个轴上可拖拽设置过滤区间
+    brushAxisHighlight: true,   // Draggable filter ranges on each axis
   },
 });
 
 chart.render();
 ```
 
-## 与 parallel 坐标系的标准组合
+## Standard Combination with Parallel Coordinate System
 
 ```javascript
 chart.options({
@@ -79,7 +79,7 @@ chart.options({
   style: { lineWidth: 1, strokeOpacity: 0.5 },
   interaction: {
     brushAxisHighlight: {
-      // 未被选中的线条的样式
+      // Style of unselected lines
       unhighlightedOpacity: 0.1,
     },
   },
@@ -87,24 +87,24 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：在非平行坐标系图表上使用 brushAxisHighlight
+### Error: Using brushAxisHighlight on a Non-Parallel Coordinate Chart
 ```javascript
-// ❌ brushAxisHighlight 专门为平行坐标系设计
+// ❌ brushAxisHighlight is specifically designed for parallel coordinate charts
 chart.options({
   type: 'line',
-  encode: { x: 'date', y: 'value' },   // 普通折线图
+  encode: { x: 'date', y: 'value' },   // Regular line chart
   coordinate: { type: 'cartesian' },
-  interaction: { brushAxisHighlight: true },  // ❌ 普通图表没有"轴"可以刷选
+  interaction: { brushAxisHighlight: true },  // ❌ Regular charts do not have "axes" to brush
 });
 
-// ✅ 应使用普通的 brushHighlight 或 brushFilter
+// ✅ Use regular brushHighlight or brushFilter instead
 chart.options({
-  interaction: { brushHighlight: true },  // ✅ 普通矩形刷选
+  interaction: { brushHighlight: true },  // ✅ Regular rectangular brush
 });
 
-// ✅ 平行坐标图才用 brushAxisHighlight
+// ✅ Use brushAxisHighlight only with parallel coordinate charts
 chart.options({
   coordinate: { type: 'parallel' },
   interaction: { brushAxisHighlight: true },  // ✅

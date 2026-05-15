@@ -1,9 +1,9 @@
 ---
 id: "g2-comp-facet-rect"
-title: "G2 矩形分面（facetRect）"
+title: "G2 Rectangular Facet (facetRect)"
 description: |
-  facetRect 将数据按分类字段拆分，在网格布局中为每个分类绘制一个独立的子图表。
-  适合对比不同分组的数据分布和趋势。通过 type: 'facetRect' + encode.x/y 指定分面维度。
+  facetRect splits data by categorical fields and renders a separate sub-chart for each category in a grid layout.
+  It is suitable for comparing data distributions and trends across different groups. Specify facet dimensions using type: 'facetRect' + encode.x/y.
 
 library: "g2"
 version: "5.x"
@@ -23,9 +23,9 @@ related:
   - "g2-mark-point-scatter"
 
 use_cases:
-  - "对比不同类别的数据分布"
-  - "多维度时间序列对比"
-  - "按地区/产品/部门分面展示"
+  - "Compare data distributions across different categories"
+  - "Multi-dimensional time series comparison"
+  - "Facet display by region/product/department"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,27 +35,27 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/composition/facet-rect"
 ---
 
-## 基本概念
+## Basic Concepts
 
 ```
 chart.options({
   type: 'facetRect',
   encode: {
-    x: '分面列字段',      // 按此字段将数据分为多列
-    y: '分面行字段',      // 按此字段将数据分为多行（可选）
+    x: 'Facet Column Field',      // Split data into multiple columns by this field
+    y: 'Facet Row Field',         // Split data into multiple rows by this field (optional)
   },
   children: [
-    { type: '子图 Mark', ... },    // 每个子图的配置（共用，数据自动过滤）
+    { type: 'Child Mark', ... },  // Configuration for each subplot (shared, data automatically filtered)
   ],
 });
 ```
 
-**关键规则**：
-- `encode.x` → 按该字段的唯一值拆分为多列（列分面）
-- `encode.y` → 按该字段的唯一值拆分为多行（行分面）
-- `children` 中的 Mark 会自动接收过滤后的数据
+**Key Rules**:
+- `encode.x` → Split into multiple columns by unique values of this field (column faceting)
+- `encode.y` → Split into multiple rows by unique values of this field (row faceting)
+- Marks in `children` automatically receive filtered data
 
-## 单维度列分面（按类别分列）
+## Single-Dimensional Column Facet (Categorized by Region)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -67,21 +67,21 @@ const chart = new Chart({
 });
 
 const data = [
-  { month: 'Jan', value: 33, region: '华东' },
-  { month: 'Feb', value: 78, region: '华东' },
-  { month: 'Mar', value: 56, region: '华东' },
-  { month: 'Jan', value: 45, region: '华南' },
-  { month: 'Feb', value: 62, region: '华南' },
-  { month: 'Mar', value: 71, region: '华南' },
-  { month: 'Jan', value: 28, region: '华北' },
-  { month: 'Feb', value: 39, region: '华北' },
-  { month: 'Mar', value: 53, region: '华北' },
+  { month: 'Jan', value: 33, region: 'East China' },
+  { month: 'Feb', value: 78, region: 'East China' },
+  { month: 'Mar', value: 56, region: 'East China' },
+  { month: 'Jan', value: 45, region: 'South China' },
+  { month: 'Feb', value: 62, region: 'South China' },
+  { month: 'Mar', value: 71, region: 'South China' },
+  { month: 'Jan', value: 28, region: 'North China' },
+  { month: 'Feb', value: 39, region: 'North China' },
+  { month: 'Mar', value: 53, region: 'North China' },
 ];
 
 chart.options({
   type: 'facetRect',
   data,
-  encode: { x: 'region' },     // 按 region 列分面（3 列）
+  encode: { x: 'region' },     // Facet by region column (3 columns)
   children: [
     {
       type: 'interval',
@@ -94,26 +94,26 @@ chart.options({
 chart.render();
 ```
 
-## 二维分面（行 + 列）
+## Two-Dimensional Faceting (Row + Column)
 
 ```javascript
 const data = [
-  { quarter: 'Q1', value: 100, region: '华东', type: '线上' },
-  { quarter: 'Q2', value: 130, region: '华东', type: '线上' },
-  { quarter: 'Q1', value: 80,  region: '华南', type: '线上' },
-  { quarter: 'Q2', value: 95,  region: '华南', type: '线上' },
-  { quarter: 'Q1', value: 60,  region: '华东', type: '线下' },
-  { quarter: 'Q2', value: 85,  region: '华东', type: '线下' },
-  { quarter: 'Q1', value: 40,  region: '华南', type: '线下' },
-  { quarter: 'Q2', value: 55,  region: '华南', type: '线下' },
+  { quarter: 'Q1', value: 100, region: 'East China', type: 'Online' },
+  { quarter: 'Q2', value: 130, region: 'East China', type: 'Online' },
+  { quarter: 'Q1', value: 80,  region: 'South China', type: 'Online' },
+  { quarter: 'Q2', value: 95,  region: 'South China', type: 'Online' },
+  { quarter: 'Q1', value: 60,  region: 'East China', type: 'Offline' },
+  { quarter: 'Q2', value: 85,  region: 'East China', type: 'Offline' },
+  { quarter: 'Q1', value: 40,  region: 'South China', type: 'Offline' },
+  { quarter: 'Q2', value: 55,  region: 'South China', type: 'Offline' },
 ];
 
 chart.options({
   type: 'facetRect',
   data,
   encode: {
-    x: 'region',   // 列：华东/华南
-    y: 'type',     // 行：线上/线下
+    x: 'region',   // Column: East China/South China
+    y: 'type',     // Row: Online/Offline
   },
   children: [
     {
@@ -124,13 +124,13 @@ chart.options({
 });
 ```
 
-## 分面折线图（多系列趋势对比）
+## Facet Line Chart (Multi-Series Trend Comparison)
 
 ```javascript
 chart.options({
   type: 'facetRect',
   data,
-  encode: { x: 'product' },          // 按产品分面
+  encode: { x: 'product' },          // Facet by product
   children: [
     {
       type: 'view',
@@ -151,7 +151,7 @@ chart.options({
 });
 ```
 
-## 配置分面标题样式
+## Configure Facet Title Style
 
 ```javascript
 chart.options({
@@ -164,24 +164,24 @@ chart.options({
       encode: { x: 'month', y: 'value' },
     },
   ],
-  // 分面标题配置（通过 frame 字段）
-  frame: false,                        // 是否显示边框
-  // 标题通过 facetRect 的 title 配置
+  // Facet title configuration (via the frame field)
+  frame: false,                        // Whether to display the border
+  // Title configured through facetRect's title
   title: {
-    position: 'top',                   // 标题在顶部
+    position: 'top',                   // Title at the top
     style: { fontSize: 13, fill: '#333', fontWeight: 'bold' },
   },
 });
 ```
 
-## 共享坐标轴（shareData）
+## Shared Coordinate Axis (shareData)
 
 ```javascript
 chart.options({
   type: 'facetRect',
   data,
   encode: { x: 'category' },
-  shareData: true,          // 共享数据范围（坐标轴刻度一致）
+  shareData: true,          // Shared data range (consistent axis scales)
   children: [
     {
       type: 'point',
@@ -191,11 +191,11 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：facetRect 的 children 中写了 data
+### Error: Data is written in the children of facetRect
 ```javascript
-// ❌ 错误：不应在子 Mark 中再指定 data，否则分面过滤不生效
+// ❌ Error: Data should not be specified again in the child Mark, otherwise facet filtering will not take effect
 chart.options({
   type: 'facetRect',
   data: allData,
@@ -203,13 +203,13 @@ chart.options({
   children: [
     {
       type: 'interval',
-       allData,            // ❌ 会导致每个分面显示全量数据
+      data: allData,            // ❌ Causes each facet to display all data
       encode: { x: 'month', y: 'value' },
     },
   ],
 });
 
-// ✅ 正确：子 Mark 不指定 data，自动接收分面过滤后的数据
+// ✅ Correct: Child Mark does not specify data, automatically receives filtered data from the facet
 chart.options({
   type: 'facetRect',
   data: allData,
@@ -217,25 +217,25 @@ chart.options({
   children: [
     {
       type: 'interval',
-      encode: { x: 'month', y: 'value' },   // 不写 data，继承并自动过滤
+      encode: { x: 'month', y: 'value' },   // No data specified, inherits and automatically filters
     },
   ],
 });
 ```
 
-### 错误：encode 字段与数据字段名不匹配
+### Error: Mismatch between encode field and data field name
 ```javascript
-// ❌ 错误：encode.x 指定的分面字段在数据中不存在
+// ❌ Error: The facet field specified by encode.x does not exist in the data
 chart.options({
   type: 'facetRect',
   data: [{ month: 'Jan', value: 33, area: '华东' }],
-  encode: { x: 'region' },   // ❌ 数据中是 'area'，不是 'region'
+  encode: { x: 'region' },   // ❌ Data contains 'area', not 'region'
 });
 
-// ✅ 正确：字段名与数据保持一致
+// ✅ Correct: Field name matches the data
 chart.options({
   type: 'facetRect',
   data,
-  encode: { x: 'area' },     // ✅ 与数据字段名一致
+  encode: { x: 'area' },     // ✅ Matches the data field name
 });
 ```

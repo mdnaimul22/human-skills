@@ -1,10 +1,10 @@
 ---
 id: "g2-coord-parallel"
-title: "G2 平行坐标系（parallel）"
+title: "G2 Parallel Coordinates (parallel)"
 description: |
-  平行坐标系将多个维度排列为平行的竖轴，每条折线代表一条数据记录，
-  用于发现多维数据中的模式、聚类和异常值。
-  需要配合 line mark 使用，encode 中用 position 通道绑定多个字段。
+  Parallel coordinates arrange multiple dimensions as parallel vertical axes, with each line representing a data record.
+  It is used to discover patterns, clusters, and outliers in multidimensional data.
+  It should be used in conjunction with the line mark, binding multiple fields using the position channel in encode.
 
 library: "g2"
 version: "5.x"
@@ -13,8 +13,8 @@ tags:
   - "parallel"
   - "平行坐标"
   - "parallel coordinates"
-  - "多维"
-  - "高维数据"
+  - "multidimensional"
+  - "high-dimensional data"
   - "coordinate"
 
 related:
@@ -22,9 +22,9 @@ related:
   - "g2-coord-transpose"
 
 use_cases:
-  - "多维度数据对比分析（如汽车性能多指标）"
-  - "发现高维数据中的聚类和关联"
-  - "异常值检测"
+  - "Multidimensional data comparison analysis (e.g., multiple metrics of car performance)"
+  - "Discovering clusters and associations in high-dimensional data"
+  - "Outlier detection"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -34,16 +34,16 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/coordinate/parallel"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = [
-  { name: '产品A', price: 120, sales: 300, rating: 4.5, stock: 80 },
-  { name: '产品B', price: 85,  sales: 450, rating: 3.8, stock: 120 },
-  { name: '产品C', price: 200, sales: 180, rating: 4.9, stock: 40 },
-  { name: '产品D', price: 60,  sales: 600, rating: 3.2, stock: 200 },
+  { name: 'Product A', price: 120, sales: 300, rating: 4.5, stock: 80 },
+  { name: 'Product B', price: 85,  sales: 450, rating: 3.8, stock: 120 },
+  { name: 'Product C', price: 200, sales: 180, rating: 4.9, stock: 40 },
+  { name: 'Product D', price: 60,  sales: 600, rating: 3.2, stock: 200 },
 ];
 
 const chart = new Chart({ container: 'container', width: 600, height: 400 });
@@ -52,9 +52,9 @@ chart.options({
   type: 'line',
   data,
   encode: {
-    position: ['price', 'sales', 'rating', 'stock'],  // 多维字段列表
+    position: ['price', 'sales', 'rating', 'stock'],  // Multi-dimensional field list
   },
-  coordinate: { type: 'parallel' },  // 平行坐标系
+  coordinate: { type: 'parallel' },  // Parallel coordinate system
   style: {
     lineWidth: 1.5,
     strokeOpacity: 0.7,
@@ -65,7 +65,7 @@ chart.options({
 chart.render();
 ```
 
-## 带交互高亮的平行坐标
+## Parallel Coordinates with Interactive Highlighting
 
 ```javascript
 chart.options({
@@ -78,50 +78,50 @@ chart.options({
   coordinate: { type: 'parallel' },
   style: { lineWidth: 1, strokeOpacity: 0.5 },
   interaction: {
-    elementHighlight: { background: true },  // 悬停高亮
+    elementHighlight: { background: true },  // Hover highlight
   },
   axis: {
-    // 为每个维度单独配置标题
-    position0: { title: '气缸数' },
-    position1: { title: '排量' },
-    position2: { title: '马力' },
+    // Configure titles for each dimension individually
+    position0: { title: 'Cylinders' },
+    position1: { title: 'Displacement' },
+    position2: { title: 'Horsepower' },
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：用 x/y encode 替代 position
+### Error 1: Using x/y encode instead of position
 ```javascript
-// ❌ 错误：平行坐标不使用 x/y，必须用 position 通道
+// ❌ Incorrect: Parallel coordinates do not use x/y, must use the position channel
 chart.options({
   type: 'line',
   encode: {
     x: 'price',      // ❌
-    y: 'sales',      // ❌ 只有两个维度，不是平行坐标
+    y: 'sales',      // ❌ Only two dimensions, not parallel coordinates
   },
   coordinate: { type: 'parallel' },
 });
 
-// ✅ 正确：position 通道传入字段数组
+// ✅ Correct: Position channel passes in a field array
 chart.options({
   type: 'line',
   encode: {
-    position: ['price', 'sales', 'rating'],  // ✅ 数组形式
+    position: ['price', 'sales', 'rating'],  // ✅ Array form
   },
   coordinate: { type: 'parallel' },
 });
 ```
 
-### 错误 2：在平行坐标中使用 interval 或 point mark
+### Error 2: Using interval or point mark in parallel coordinates
 ```javascript
-// ❌ 错误：平行坐标系只适合 line mark
+// ❌ Incorrect: Parallel coordinates are only suitable for line mark
 chart.options({
-  type: 'interval',  // ❌ 在平行坐标中没有意义
+  type: 'interval',  // ❌ Meaningless in parallel coordinates
   coordinate: { type: 'parallel' },
 });
 
-// ✅ 正确：配合 line mark
+// ✅ Correct: Use with line mark
 chart.options({
   type: 'line',      // ✅
   coordinate: { type: 'parallel' },

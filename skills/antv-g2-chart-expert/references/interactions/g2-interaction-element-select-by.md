@@ -1,11 +1,11 @@
 ---
 id: "g2-interaction-element-select-by"
-title: "G2 分组选择（elementSelectByColor / elementSelectByX）"
+title: "G2 Group Selection (elementSelectByColor / elementSelectByX)"
 description: |
-  elementSelectByColor：点击某个元素时，选中所有相同颜色（color encode 值）的元素，
-  常用于多系列折线图中点击一条线选中整条。
-  elementSelectByX：点击某个元素时，选中所有相同 X 值的元素，
-  常用于分组柱状图中选中同一 X 分类下所有柱。
+  elementSelectByColor: When clicking on an element, select all elements with the same color (color encode value).
+  Commonly used in multi-series line charts to select an entire line by clicking on a single point.
+  elementSelectByX: When clicking on an element, select all elements with the same X value.
+  Commonly used in grouped bar charts to select all bars under the same X category.
 
 library: "g2"
 version: "5.x"
@@ -13,8 +13,8 @@ category: "interactions"
 tags:
   - "elementSelectByColor"
   - "elementSelectByX"
-  - "分组选择"
-  - "批量选中"
+  - "group selection"
+  - "batch selection"
   - "interaction"
 
 related:
@@ -23,28 +23,24 @@ related:
   - "g2-interaction-legend-filter"
 
 use_cases:
-  - "多系列折线图：点击一个数据点选中整条折线"
-  - "分组柱状图：点击某柱选中同 X 分类的所有柱"
-  - "散点图按颜色分组批量选中"
+  - "Multi-series line chart: Click a data point to select the entire line"
+  - "Grouped bar chart: Click a bar to select all bars under the same X category"
+  - "Scatter plot batch selection by color"
 
 difficulty: "intermediate"
 completeness: "full"
 created: "2025-03-24"
-updated: "2025-03-24"
-author: "antv-team"
-source_url: "https://g2.antv.antgroup.com/manual/core/interaction/element-select"
----
 
-## elementSelectByColor（按颜色分组选中）
+## elementSelectByColor (Select by Color)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = [
-  { month: 'Jan', city: '北京', value: 5 },
-  { month: 'Feb', city: '北京', value: 8 },
-  { month: 'Jan', city: '上海', value: 12 },
-  { month: 'Feb', city: '上海', value: 15 },
+  { month: 'Jan', city: 'Beijing', value: 5 },
+  { month: 'Feb', city: 'Beijing', value: 8 },
+  { month: 'Jan', city: 'Shanghai', value: 12 },
+  { month: 'Feb', city: 'Shanghai', value: 15 },
 ];
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
@@ -54,68 +50,68 @@ chart.options({
   data,
   encode: { x: 'month', y: 'value', color: 'city' },
   interaction: {
-    elementSelectByColor: true,  // 点击任意数据点，选中同色的所有点
+    elementSelectByColor: true,  // Click any data point to select all points of the same color
   },
 });
 
 chart.render();
 ```
 
-## elementSelectByX（按 X 分组选中）
+## elementSelectByX (Select by X Group)
 
 ```javascript
-// 分组柱状图：点击某柱，选中该 X 值下所有分组柱
+// Grouped bar chart: Click on a bar to select all grouped bars under the same X value
 chart.options({
   type: 'interval',
   data: groupedData,
   encode: { x: 'month', y: 'value', color: 'city' },
   transform: [{ type: 'dodgeX' }],
   interaction: {
-    elementSelectByX: true,  // 点击某柱，选中同月份所有分组柱
+    elementSelectByX: true,  // Click on a bar to select all grouped bars in the same month
   },
 });
 ```
 
-## 多重交互组合
+## Multiple Interaction Combinations
 
 ```javascript
-// 结合高亮和选中：悬停高亮同色系列，点击选中
+// Combine highlight and select: hover to highlight the same color series, click to select
 chart.options({
   type: 'line',
   data,
   encode: { x: 'date', y: 'value', color: 'series' },
   interaction: {
-    elementHighlightByColor: true,  // 悬停：高亮同色系列
-    elementSelectByColor: true,     // 点击：选中同色系列
+    elementHighlightByColor: true,  // Hover: highlight the same color series
+    elementSelectByColor: true,     // Click: select the same color series
   },
 });
 ```
 
-## 获取选中事件
+## Get Selected Event
 
 ```javascript
 chart.on('element:select', (event) => {
   const { data } = event.detail;
-  console.log('选中的数据：', data.datum);
+  console.log('Selected data:', data.datum);
 });
 
 chart.on('element:unselect', (event) => {
-  console.log('取消选中');
+  console.log('Unselected');
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：elementSelectByColor 在无 color encode 时无效
+### Error: elementSelectByColor is invalid without color encoding
 ```javascript
-// ❌ 没有 color encode，无法按颜色分组选中
+// ❌ No color encoding, cannot select by color grouping
 chart.options({
   type: 'line',
-  encode: { x: 'month', y: 'value' },   // ❌ 没有 color
-  interaction: { elementSelectByColor: true },  // 无效
+  encode: { x: 'month', y: 'value' },   // ❌ No color
+  interaction: { elementSelectByColor: true },  // Invalid
 });
 
-// ✅ 需要 color encode
+// ✅ Requires color encoding
 chart.options({
   type: 'line',
   encode: { x: 'month', y: 'value', color: 'city' },  // ✅
@@ -123,11 +119,11 @@ chart.options({
 });
 ```
 
-### 错误：elementSelectByColor 与 elementSelect 混淆
+### Error: Confusion between elementSelectByColor and elementSelect
 ```javascript
-// elementSelect：只选中点击的单个元素
+// elementSelect: Selects only the single element that is clicked
 chart.options({ interaction: { elementSelect: true } });
 
-// elementSelectByColor：选中所有相同 color 值的元素（批量选中）
+// elementSelectByColor: Selects all elements with the same color value (batch selection)
 chart.options({ interaction: { elementSelectByColor: true } });
 ```

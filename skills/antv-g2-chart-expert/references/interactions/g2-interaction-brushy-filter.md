@@ -2,18 +2,17 @@
 id: "g2-interaction-brushy-filter"
 title: "G2 BrushYFilter Interaction"
 description: |
-  Y 轴方向刷选过滤交互。用户可以通过拖拽选择 Y 轴范围，
-  过滤显示该范围内的数据。
+  Brush filtering interaction in the Y-axis direction. Users can drag to select a Y-axis range,
+  filtering and displaying data within that range.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
-  - "刷选"
-  - "过滤"
   - "brush"
-  - "Y轴"
-  - "数据筛选"
+  - "filter"
+  - "Y-axis"
+  - "data filtering"
 
 related:
   - "g2-interaction-brush-filter"
@@ -21,12 +20,12 @@ related:
   - "g2-interaction-brushy-highlight"
 
 use_cases:
-  - "数值范围筛选"
-  - "Y 轴区间选择"
-  - "过滤异常值"
+  - "Numerical range filtering"
+  - "Y-axis range selection"
+  - "Filtering outliers"
 
 anti_patterns:
-  - "需要 X 轴方向筛选时改用 BrushXFilter"
+  - "Use BrushXFilter instead when X-axis direction filtering is required"
 
 difficulty: "beginner"
 completeness: "full"
@@ -36,16 +35,16 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction"
 ---
 
-## 核心概念
+## Core Concepts
 
-BrushYFilter 交互允许用户在 Y 轴方向拖拽选择一个区间，图表会自动过滤并只显示该区间内的数据。
+The BrushYFilter interaction allows users to drag and select a range on the Y-axis. The chart will automatically filter and display only the data within the selected range.
 
-**特点：**
-- 只能在 Y 轴方向选择
-- 选择后自动过滤数据
-- 适合数值范围筛选
+**Features:**
+- Selection is only possible on the Y-axis
+- Data is automatically filtered after selection
+- Suitable for numerical range filtering
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -77,9 +76,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 自定义样式
+### Custom Styles
 
 ```javascript
 chart.options({
@@ -98,7 +97,7 @@ chart.options({
 });
 ```
 
-### 设置初始选区
+### Set Initial Selection Area
 
 ```javascript
 chart.options({
@@ -107,13 +106,13 @@ chart.options({
   encode: { x: 'x', y: 'y' },
   interaction: {
     brushYFilter: {
-      selection: [0.3, 0.7],  // 初始选区比例 [start, end]
+      selection: [0.3, 0.7],  // Initial selection ratio [start, end]
     },
   },
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface BrushYFilterInteraction {
@@ -125,45 +124,45 @@ interface BrushYFilterInteraction {
       lineWidth?: number;
     };
     selection?: [number, number];  // [startRatio, endRatio]
-    // 其他配置继承自 BrushFilter
+    // Other configurations inherited from BrushFilter
   };
 }
 ```
 
-## 与 BrushFilter/BrushXFilter 的对比
+## Comparison with BrushFilter/BrushXFilter
 
-| Interaction | 选择方向 | 常用场景 |
+| Interaction | Selection Direction | Common Use Cases |
 |-------------|---------|---------|
-| brushFilter | 任意方向 | 通用筛选 |
-| brushXFilter | 仅 X 方向 | 时间范围筛选 |
-| brushYFilter | 仅 Y 方向 | 数值范围筛选 |
+| brushFilter | Any direction | General filtering |
+| brushXFilter | X direction only | Time range filtering |
+| brushYFilter | Y direction only | Numerical range filtering |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：与其他 brush 交互冲突
+### Error 1: Conflict with Other Brush Interactions
 
 ```javascript
-// ❌ 错误：同时启用多个 brush 交互可能冲突
+// ❌ Incorrect: Enabling multiple brush interactions simultaneously may cause conflicts
 interaction: {
   brushXFilter: true,
   brushYFilter: true,
 }
 
-// ✅ 正确：根据需求选择一个
+// ✅ Correct: Choose one based on requirements
 interaction: {
   brushYFilter: true,
 }
 ```
 
-### 错误 2：selection 参数格式错误
+### Error 2: Incorrect `selection` Parameter Format
 
 ```javascript
-// ❌ 错误：selection 应该是比例值 [0-1]
+// ❌ Incorrect: `selection` should be a ratio value [0-1]
 interaction: {
   brushYFilter: { selection: [100, 200] }
 }
 
-// ✅ 正确：使用比例值
+// ✅ Correct: Use ratio values
 interaction: {
   brushYFilter: { selection: [0.2, 0.6] }
 }

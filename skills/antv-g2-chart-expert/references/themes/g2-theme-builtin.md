@@ -1,9 +1,9 @@
 ---
 id: "g2-theme-builtin"
-title: "G2 内置主题配置"
+title: "G2 Built-in Theme Configuration"
 description: |
-  G2 v5 内置 classic（经典）、classicDark（深色）、academy（学术）三种主题。
-  通过 theme 字段或 Chart 构造函数中的 theme 参数全局切换，也可局部覆盖样式变量。
+  G2 v5 includes three built-in themes: classic, classicDark, and academy.
+  Switch globally using the theme field or the theme parameter in the Chart constructor, or override style variables locally.
 
 library: "g2"
 version: "5.x"
@@ -21,9 +21,9 @@ related:
   - "g2-mark-interval-basic"
 
 use_cases:
-  - "切换图表整体配色风格"
-  - "适配深色模式（Dark Mode）"
-  - "统一多图表的视觉风格"
+  - "Switch overall chart color style"
+  - "Adapt to Dark Mode"
+  - "Unify visual style across multiple charts"
 
 difficulty: "beginner"
 completeness: "full"
@@ -33,25 +33,25 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/theme"
 ---
 
-## 内置主题列表
+## Built-in Theme List
 
-| 主题名 | 说明 |
-|--------|------|
-| `'classic'` | 默认主题（蓝色系，白色背景） |
-| `'classicDark'` | 深色主题（深色背景，明亮配色） |
-| `'academy'` | 学术风主题（灰色调，适合论文/报告） |
+| Theme Name | Description |
+|------------|-------------|
+| `'classic'` | Default theme (blue tones, white background) |
+| `'classicDark'` | Dark theme (dark background, bright colors) |
+| `'academy'` | Academic style theme (gray tones, suitable for papers/reports) |
 
-## 基本用法（切换主题）
+## Basic Usage (Switching Themes)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 方式 1：构造函数中指定
+// Method 1: Specify in the constructor
 const chart = new Chart({
   container: 'container',
   width: 640,
   height: 480,
-  theme: 'classicDark',    // 深色主题
+  theme: 'classicDark',    // Dark theme
 });
 
 chart.options({
@@ -68,20 +68,20 @@ chart.render();
 ```
 
 ```javascript
-// 方式 2：options 中指定
+// Method 2: Specify in options
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
 
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre', y: 'sold', color: 'genre' },
-  theme: 'academy',        // 学术主题
+  theme: 'academy',        // Academic theme
 });
 
 chart.render();
 ```
 
-## 深色主题示例
+## Dark Theme Example
 
 ```javascript
 const chart = new Chart({
@@ -110,7 +110,7 @@ chart.options({
 chart.render();
 ```
 
-## 运行时切换主题
+## Runtime Theme Switching
 
 ```javascript
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
@@ -118,12 +118,12 @@ const chart = new Chart({ container: 'container', width: 640, height: 480 });
 chart.options({ type: 'interval', data, encode: { x: 'x', y: 'y' } });
 chart.render();
 
-// 切换到深色主题（需重新渲染）
+// Switch to dark theme (re-rendering required)
 chart.theme('classicDark');
 chart.render();
 ```
 
-## 局部覆盖主题变量
+## Partial Override of Theme Variables
 
 ```javascript
 chart.options({
@@ -131,9 +131,9 @@ chart.options({
   data,
   encode: { x: 'genre', y: 'sold' },
   theme: {
-    defaultColor: '#ff6b35',         // 默认颜色（第一个系列的颜色）
-    defaultStrokeColor: '#333',      // 默认边框色
-    // 覆盖色板
+    defaultColor: '#ff6b35',         // Default color (color of the first series)
+    defaultStrokeColor: '#333',      // Default stroke color
+    // Override color palette
     colors10: [
       '#ff6b35', '#f7c59f', '#efefd0', '#004e89', '#1a936f',
       '#88d498', '#c6dabf', '#eaf4d3', '#7b2d8b', '#ff3a5c',
@@ -142,17 +142,17 @@ chart.options({
 });
 ```
 
-## 自定义主题注册
+## Custom Theme Registration
 
 ```javascript
 import { Chart, register } from '@antv/g2';
 
-// 注册自定义主题
+// Register custom theme
 register('theme.myTheme', {
   defaultColor: '#e63946',
   background: '#f8f9fa',
   colors10: ['#e63946', '#457b9d', '#1d3557', '#a8dadc', '#f1faee'],
-  // ... 其他变量
+  // ... other variables
 });
 
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
@@ -161,32 +161,32 @@ chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre', y: 'sold', color: 'genre' },
-  theme: 'myTheme',   // 使用自定义主题
+  theme: 'myTheme',   // Use custom theme
 });
 
 chart.render();
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：theme 传入了非字符串/对象类型
+### Error: Non-string/object type passed to theme
 ```javascript
-// ❌ 错误：theme 值不存在
-chart.options({ theme: 'dark' });   // 'dark' 不是内置主题名
+// ❌ Error: theme value does not exist
+chart.options({ theme: 'dark' });   // 'dark' is not a built-in theme name
 
-// ✅ 正确：使用内置主题名
-chart.options({ theme: 'classicDark' });   // 深色主题
-chart.options({ theme: 'classic' });       // 默认主题
-chart.options({ theme: 'academy' });       // 学术主题
+// ✅ Correct: Using built-in theme names
+chart.options({ theme: 'classicDark' });   // Dark theme
+chart.options({ theme: 'classic' });       // Default theme
+chart.options({ theme: 'academy' });       // Academic theme
 ```
 
-### 错误：切换主题后忘记重新渲染
+### Error: Forgot to Re-render After Switching Theme
 ```javascript
-// ❌ 错误：切换主题后没有重新渲染
+// ❌ Error: Did not re-render after switching theme
 chart.theme('classicDark');
-// 图表没有变化！
+// The chart does not change!
 
-// ✅ 正确：切换后需调用 render()
+// ✅ Correct: Call render() after switching
 chart.theme('classicDark');
 chart.render();
 ```

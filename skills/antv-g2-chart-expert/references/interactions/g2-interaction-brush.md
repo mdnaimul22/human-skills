@@ -1,20 +1,19 @@
 ---
 id: "g2-interaction-brush"
-title: "G2 框选交互（brush）"
+title: "G2 Brush Interaction"
 description: |
-  G2 v5 内置框选交互，通过 interaction: [{ type: 'brushHighlight' }] 或 brushFilter
-  实现鼠标拖拽框选、高亮/过滤数据点。常用于散点图、折线图等需要局部聚焦的场景。
+  G2 v5 comes with built-in brush interaction, which can be implemented using interaction: [{ type: 'brushHighlight' }] or brushFilter. It allows users to drag and select, highlight, or filter data points using the mouse. This feature is commonly used in scatter plots, line charts, and other scenarios that require local focus.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
   - "brush"
-  - "框选"
+  - "box selection"
   - "interaction"
   - "brushHighlight"
   - "brushFilter"
-  - "交互"
+  - "interact"
   - "spec"
 
 related:
@@ -23,9 +22,9 @@ related:
   - "g2-core-view-composition"
 
 use_cases:
-  - "散点图中框选关注的数据点区域"
-  - "时间序列图中框选某段时间范围并过滤"
-  - "大数据集局部聚焦分析"
+  - "Select a region of interest in a scatter plot"
+  - "Select a time range in a time series chart and filter"
+  - "Local focus analysis on large datasets"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,9 +34,9 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/brush-highlight"
 ---
 
-## 基本用法（brushHighlight：框选高亮）
+## Basic Usage (brushHighlight: Box Selection Highlight)
 
-拖拽鼠标框选数据点，选中区域高亮，未选中区域变暗：
+Drag the mouse to select data points, the selected area is highlighted, and the unselected area is dimmed:
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -61,16 +60,16 @@ chart.options({
   ],
   encode: { x: 'x', y: 'y', color: 'category', size: 8 },
   interaction: [
-    { type: 'brushHighlight' },   // 框选高亮
+    { type: 'brushHighlight' },   // Box selection highlight
   ],
 });
 
 chart.render();
 ```
 
-## brushFilter：框选过滤
+## brushFilter: Box Selection Filtering
 
-框选后只保留选中区域内的数据点（其余被移除）：
+After box selection, only the data points within the selected area are retained (the rest are removed):
 
 ```javascript
 chart.options({
@@ -78,12 +77,12 @@ chart.options({
   data,
   encode: { x: 'x', y: 'y', color: 'category' },
   interaction: [
-    { type: 'brushFilter' },   // 框选过滤（只显示选中区域的点）
+    { type: 'brushFilter' },   // Box selection filtering (only display points in the selected area)
   ],
 });
 ```
 
-## 散点图 + 框选 + 详情联动
+## Scatter Plot + Box Selection + Detail Linkage
 
 ```javascript
 chart.options({
@@ -100,13 +99,13 @@ chart.options({
   },
   interaction: [
     { type: 'brushHighlight' },
-    { type: 'tooltip' },         // 同时保留 tooltip 交互
+    { type: 'tooltip' },         // Also retain tooltip interaction
   ],
   legend: { color: { position: 'top' } },
 });
 ```
 
-## 单轴框选（只横向/纵向）
+## Single-Axis Brush Selection (Horizontal/Vertical Only)
 
 ```javascript
 chart.options({
@@ -115,20 +114,20 @@ chart.options({
   encode: { x: 'date', y: 'price' },
   interaction: [
     {
-      type: 'brushXHighlight',   // 只允许横向框选（按时间范围）
+      type: 'brushXHighlight',   // Allows horizontal brush selection only (by time range)
     },
   ],
 });
 
-// 纵向框选：brushYHighlight
+// Vertical brush selection: brushYHighlight
 chart.options({
   interaction: [{ type: 'brushYHighlight' }],
 });
 ```
 
-## 框选 + 联动其他图表
+## Brush Selection + Linkage with Other Charts
 
-通过监听事件，实现多图联动：
+By listening to events, achieve multi-chart linkage:
 
 ```javascript
 const chart = new Chart({ container: 'container', width: 700, height: 400 });
@@ -142,32 +141,32 @@ chart.options({
 
 chart.render();
 
-// 监听框选事件
+// Listen for brush selection events
 chart.on('brush:filter', (event) => {
-  const filteredData = event.data.items;   // 框选后的剩余数据
-  console.log('选中数据：', filteredData);
-  // 可据此更新其他图表...
+  const filteredData = event.data.items;   // Remaining data after brush selection
+  console.log('Selected data:', filteredData);
+  // Update other charts based on this...
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：interaction 写成对象而非数组
+### Error: `interaction` is written as an object instead of an array
 ```javascript
-// ❌ 错误：interaction 必须是数组
+// ❌ Error: `interaction` must be an array
 chart.options({
   interaction: { type: 'brushHighlight' },
 });
 
-// ✅ 正确：数组格式
+// ✅ Correct: Array format
 chart.options({
   interaction: [{ type: 'brushHighlight' }],
 });
 ```
 
-### 错误：同时启用 brushHighlight 和 brushFilter
+### Error: Enabling both brushHighlight and brushFilter simultaneously
 ```javascript
-// ❌ 不推荐：两者功能冲突，同时使用会产生意外行为
+// ❌ Not recommended: The two functions conflict, and using them together will result in unexpected behavior
 chart.options({
   interaction: [
     { type: 'brushHighlight' },
@@ -175,10 +174,10 @@ chart.options({
   ],
 });
 
-// ✅ 正确：根据需求选其一
+// ✅ Correct: Choose one based on requirements
 chart.options({
-  interaction: [{ type: 'brushHighlight' }],  // 高亮但保留所有点
-  // 或
-  // interaction: [{ type: 'brushFilter' }],  // 过滤只显示选中点
+  interaction: [{ type: 'brushHighlight' }],  // Highlight but retain all points
+  // or
+  // interaction: [{ type: 'brushFilter' }],  // Filter to show only selected points
 });
 ```

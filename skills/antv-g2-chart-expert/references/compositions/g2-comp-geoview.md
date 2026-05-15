@@ -1,21 +1,21 @@
 ---
 id: "g2-comp-geoview"
-title: "G2 地理视图（geoView）"
+title: "G2 GeoView"
 description: |
-  geoView 基于 D3 地理投影，在 G2 中绘制地图可视化。
-  支持多种投影方式（mercator、equalEarth、orthographic 等），
-  数据需为 GeoJSON 格式，通过 geoPath mark 渲染地理形状。
+  geoView is based on D3 geo projection, enabling map visualization in G2.
+  It supports various projection methods (mercator, equalEarth, orthographic, etc.),
+  and requires data in GeoJSON format, rendering geographic shapes through the geoPath mark.
 
 library: "g2"
 version: "5.x"
 category: "compositions"
 tags:
   - "geoView"
-  - "地图"
-  - "地理"
+  - "map"
+  - "geography"
   - "GeoJSON"
   - "choropleth"
-  - "地理投影"
+  - "geo projection"
   - "composition"
 
 related:
@@ -23,9 +23,9 @@ related:
   - "g2-scale-threshold"
 
 use_cases:
-  - "世界地图着色（choropleth map）"
-  - "国家/省份数据地图展示"
-  - "地理空间数据可视化"
+  - "World choropleth map"
+  - "Country/province data map display"
+  - "Geospatial data visualization"
 
 difficulty: "advanced"
 completeness: "full"
@@ -35,16 +35,16 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/geo/geo/#choropleth"
 ---
 
-## 最小可运行示例（世界地图）
+## Minimum Viable Example (World Map)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 需要提前加载 world.geo.json 数据
+// Need to load world.geo.json data in advance
 fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
   .then(res => res.json())
   .then(world => {
-    // 将 TopoJSON 转换为 GeoJSON（需要 topojson-client）
+    // Convert TopoJSON to GeoJSON (requires topojson-client)
     const countries = topojson.feature(world, world.objects.countries);
 
     const chart = new Chart({ container: 'container', width: 900, height: 500 });
@@ -53,13 +53,13 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
       type: 'geoView',
       coordinate: {
         type: 'projection',
-        projection: 'equalEarth',   // 投影方式
+        projection: 'equalEarth',   // Projection method
       },
       children: [
         {
           type: 'geoPath',
-           countries,
-          encode: { color: 'id' },   // 按国家 id 着色
+          data: countries,
+          encode: { color: 'id' },   // Color by country id
           style: {
             stroke: '#fff',
             lineWidth: 0.5,
@@ -73,10 +73,10 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
   });
 ```
 
-## 数据关联着色（choropleth）
+## Choropleth (Data-Driven Coloring)
 
 ```javascript
-// 将 GeoJSON 与数据表格按 name 关联，实现数据着色
+// Associate GeoJSON with a data table by 'name' to achieve data-driven coloring
 const gdpData = {
   CN: 17.7, US: 25.5, JP: 4.2, DE: 4.1,
   // ...
@@ -88,21 +88,21 @@ chart.options({
   children: [
     {
       type: 'geoPath',
-       geoJsonFeatures,
+      geoJsonFeatures,
       encode: {
-        color: (d) => gdpData[d.properties.iso_a2] || 0,  // 关联 GDP 数据
+        color: (d) => gdpData[d.properties.iso_a2] || 0,  // Associate with GDP data
       },
       scale: {
         color: {
           type: 'sequential',
           palette: 'blues',
-          unknown: '#eee',   // 无数据国家颜色
+          unknown: '#eee',   // Color for countries with no data
         },
       },
       tooltip: {
         items: [
-          { field: 'properties.name', name: '国家' },
-          { callback: (d) => gdpData[d.properties.iso_a2], name: 'GDP（万亿美元）' },
+          { field: 'properties.name', name: 'Country' },
+          { callback: (d) => gdpData[d.properties.iso_a2], name: 'GDP (Trillions USD)' },
         ],
       },
     },
@@ -110,34 +110,34 @@ chart.options({
 });
 ```
 
-## 支持的投影方式
+## Supported Projection Methods
 
 ```javascript
-// 常用投影
-coordinate: { type: 'projection', projection: 'mercator' }       // 墨卡托（Web地图标准）
-coordinate: { type: 'projection', projection: 'equalEarth' }     // 等面积地球投影
-coordinate: { type: 'projection', projection: 'orthographic' }   // 正交（球形）
-coordinate: { type: 'projection', projection: 'naturalEarth1' }  // 自然地球
-coordinate: { type: 'projection', projection: 'albersUsa' }      // 美国阿尔伯斯
+// Common Projections
+coordinate: { type: 'projection', projection: 'mercator' }       // Mercator (Web Map Standard)
+coordinate: { type: 'projection', projection: 'equalEarth' }     // Equal Earth
+coordinate: { type: 'projection', projection: 'orthographic' }   // Orthographic (Spherical)
+coordinate: { type: 'projection', projection: 'naturalEarth1' }  // Natural Earth
+coordinate: { type: 'projection', projection: 'albersUsa' }      // Albers USA
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：数据不是 GeoJSON 格式——直接传统计数据
+### Error: Data is not in GeoJSON format—Directly using traditional data
 ```javascript
-// ❌ geoPath mark 需要 GeoJSON Feature/FeatureCollection 数据
+// ❌ geoPath mark requires GeoJSON Feature/FeatureCollection data
 chart.options({
   children: [{
     type: 'geoPath',
-     [{ country: 'China', gdp: 17.7 }],  // ❌ 不是 GeoJSON
+    [{ country: 'China', gdp: 17.7 }],  // ❌ Not GeoJSON
   }],
 });
 
-// ✅ 需要 GeoJSON 格式
+// ✅ Requires GeoJSON format
 chart.options({
   children: [{
     type: 'geoPath',
-     { type: 'FeatureCollection', features: [...] },  // ✅ GeoJSON
+    { type: 'FeatureCollection', features: [...] },  // ✅ GeoJSON
   }],
 });
 ```

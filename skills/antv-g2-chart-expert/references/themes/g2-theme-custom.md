@@ -1,32 +1,32 @@
 ---
 id: "g2-theme-custom"
-title: "G2 自定义主题创建（register + create）"
+title: "G2 Custom Theme Creation (register + create)"
 description: |
-  G2 v5 支持通过 register('theme.xxx', themeConfig) 注册自定义主题。
-  自定义主题可以覆盖配色、字体、各 Mark 的默认样式等。
-  也可以用 theme 字段传入对象，局部覆盖当前主题的特定属性。
-  内置主题包括 classic、classicDark、academy（详见 g2-theme-builtin）。
+  G2 v5 supports registering custom themes via `register('theme.xxx', themeConfig)`.
+  Custom themes can override color palettes, fonts, default styles for various Marks, etc.
+  You can also pass an object through the `theme` field to partially override specific properties of the current theme.
+  Built-in themes include `classic`, `classicDark`, `academy` (see `g2-theme-builtin` for details).
 
 library: "g2"
 version: "5.x"
 category: "themes"
 tags:
   - "theme"
-  - "自定义主题"
+  - "custom theme"
   - "register"
-  - "主题注册"
+  - "theme registration"
   - "colors10"
   - "colors20"
-  - "配色方案"
+  - "color scheme"
 
 related:
   - "g2-theme-builtin"
   - "g2-core-chart-init"
 
 use_cases:
-  - "企业品牌定制化图表主题"
-  - "统一多图表的配色风格"
-  - "局部覆盖某几项默认样式"
+  - "Corporate brand customized chart themes"
+  - "Unified color styles across multiple charts"
+  - "Partially override specific default styles"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,9 +36,9 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/theme"
 ---
 
-## 方式一：局部覆盖主题（theme 对象）
+## Method 1: Partial Theme Override (theme Object)
 
-最简单的方式是在 options 的 theme 字段中直接传对象，覆盖部分属性：
+The simplest way is to directly pass an object in the theme field of options, overriding some properties:
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -50,13 +50,13 @@ chart.options({
   data,
   encode: { x: 'genre', y: 'sold', color: 'genre' },
   theme: {
-    // 覆盖分类色板
+    // Override categorical color palette
     colors10: [
       '#3B82F6', '#EF4444', '#10B981', '#F59E0B',
       '#8B5CF6', '#F97316', '#06B6D4', '#84CC16',
       '#EC4899', '#6B7280',
     ],
-    // 覆盖默认颜色
+    // Override default color
     defaultColor: '#3B82F6',
   },
 });
@@ -64,18 +64,18 @@ chart.options({
 chart.render();
 ```
 
-## 方式二：注册全局自定义主题
+## Method Two: Register Global Custom Theme
 
 ```javascript
 import { Chart, register } from '@antv/g2';
 
-// 注册自定义主题（基于 classic 主题扩展）
+// Register custom theme (based on classic theme extension)
 register('theme.brand', {
-  // 基础颜色
+  // Base colors
   defaultColor: '#e63946',
   defaultStrokeColor: '#1d1d1d',
 
-  // 分类色板（10色 / 20色）
+  // Categorical color palette (10 colors / 20 colors)
   colors10: [
     '#e63946', '#457b9d', '#1d3557', '#a8dadc',
     '#f1faee', '#e9c46a', '#f4a261', '#e76f51',
@@ -85,56 +85,56 @@ register('theme.brand', {
     '#e63946', '#457b9d', '#1d3557', '#a8dadc',
     '#f1faee', '#e9c46a', '#f4a261', '#e76f51',
     '#264653', '#2a9d8f',
-    // 后 10 种（渐变或变体）
+    // Last 10 colors (gradient or variant)
     '#ff6b6b', '#74b9ff', '#55efc4', '#ffeaa7',
     '#dfe6e9', '#fab1a0', '#fd79a8', '#6c5ce7',
     '#00b894', '#00cec9',
   ],
 });
 
-// 使用自定义主题
+// Use custom theme
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
 
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre', y: 'sold', color: 'genre' },
-  theme: 'brand',   // 使用注册的自定义主题名
+  theme: 'brand',   // Use the registered custom theme name
 });
 
 chart.render();
 ```
 
-## 主题配置项速查
+## Theme Configuration Quick Reference
 
 ```javascript
-// 以下是可覆盖的主要配置项
+// The following are the main configuration items that can be overridden
 const themeConfig = {
-  // ── 基础颜色 ─────────────────────────────
-  defaultColor: '#1890ff',        // 默认颜色（单系列时）
-  defaultStrokeColor: '#ffffff',  // 默认描边颜色
+  // ── Base Colors ─────────────────────────────
+  defaultColor: '#1890ff',        // Default color (for single series)
+  defaultStrokeColor: '#ffffff',  // Default stroke color
 
-  // ── 色板 ──────────────────────────────────
-  colors10: [...],   // 10 色分类色板
-  colors20: [...],   // 20 色分类色板
+  // ── Color Palette ───────────────────────────
+  colors10: [...],   // 10-color categorical palette
+  colors20: [...],   // 20-color categorical palette
 
-  // ── 背景 ──────────────────────────────────
-  background: '#ffffff',    // 图表背景色
+  // ── Background ──────────────────────────────
+  background: '#ffffff',    // Chart background color
 
-  // ── 字体 ──────────────────────────────────
-  fontFamily: 'sans-serif',  // 全局字体
+  // ── Font ────────────────────────────────────
+  fontFamily: 'sans-serif',  // Global font family
 
-  // ── 动画默认时长 ───────────────────────────
+  // ── Default Animation Durations ─────────────
   enter: { duration: 300 },
   update: { duration: 300 },
   exit: { duration: 300 },
 };
 ```
 
-## 深色主题（基于 classicDark 局部覆盖）
+## Dark Theme (Based on Partial Override of classicDark)
 
 ```javascript
-// 在 classicDark 基础上修改
+// Modify based on classicDark
 const chart = new Chart({
   container: 'container',
   theme: 'classicDark',
@@ -144,7 +144,7 @@ chart.options({
   type: 'line',
   data,
   encode: { x: 'date', y: 'value', color: 'type' },
-  // 局部覆盖：修改配色但保留深色背景
+  // Partial override: Modify color palette while retaining dark background
   theme: {
     colors10: ['#60a5fa', '#34d399', '#f87171', '#a78bfa',
                '#fbbf24', '#22d3ee', '#f472b6', '#4ade80',
@@ -153,31 +153,31 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：register 主题名忘加 'theme.' 前缀
+### Error: Forgot to add 'theme.' prefix to the registered theme name
 ```javascript
-// ❌ 错误：注册时必须用 'theme.xxx' 格式
+// ❌ Error: Registration must use the 'theme.xxx' format
 register('brandTheme', { colors10: [...] });    // ❌
-chart.options({ theme: 'brandTheme' });          // 不生效
+chart.options({ theme: 'brandTheme' });          // Does not take effect
 
-// ✅ 正确：必须加 'theme.' 前缀
+// ✅ Correct: Must add 'theme.' prefix
 register('theme.brandTheme', { colors10: [...] });  // ✅
-chart.options({ theme: 'brandTheme' });              // ✅ 使用时不带前缀
+chart.options({ theme: 'brandTheme' });              // ✅ Use without prefix when applying
 ```
 
-### 错误：theme 和 style 混用
+### Error: Mixing theme and style
 ```javascript
-// ❌ 错误：主题配色和单个 mark 的样式混淆
+// ❌ Error: Confusing theme colors with individual mark styles
 chart.options({
   type: 'interval',
-  style: { colors10: [...] },  // ❌ colors10 不在 style 里
+  style: { colors10: [...] },  // ❌ colors10 does not belong in style
 });
 
-// ✅ 颜色主题在 theme 字段
+// ✅ Color theme in the theme field
 chart.options({
   type: 'interval',
   theme: { colors10: [...] },  // ✅
-  style: { fillOpacity: 0.8 }, // ✅ 单 mark 样式在 style 里
+  style: { fillOpacity: 0.8 }, // ✅ Individual mark style in style
 });
 ```

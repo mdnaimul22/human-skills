@@ -1,21 +1,21 @@
 ---
 id: "g2-interaction-drilldown"
-title: "G2 下钻交互（drillDown）"
+title: "G2 Drill Down Interaction (drillDown)"
 description: |
-  drillDown 交互用于层次数据（partition / 旭日图）的点击下钻，
-  点击某个节点后只展示该节点的子树，同时在顶部显示面包屑导航。
-  点击面包屑可以逐层向上回溯。仅适用于 partition mark。
+  The drillDown interaction is used for click-through on hierarchical data (partition / sunburst chart),
+  After clicking a node, only the subtree of that node is displayed, and a breadcrumb navigation is shown at the top.
+  Clicking on the breadcrumbs allows for step-by-step backtracking. Only applicable to partition mark.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
   - "drillDown"
-  - "下钻"
-  - "层次数据"
-  - "旭日图"
+  - "drill down"
+  - "hierarchical data"
+  - "sunburst chart"
   - "partition"
-  - "面包屑"
+  - "breadcrumb"
   - "interaction"
 
 related:
@@ -23,9 +23,9 @@ related:
   - "g2-interaction-element-select"
 
 use_cases:
-  - "旭日图/矩形分区图的层次数据下钻探索"
-  - "组织架构图的逐层查看"
-  - "文件目录树的交互式浏览"
+  - "Hierarchical data drill-down exploration in sunburst chart/rectangular partition chart"
+  - "Layer-by-layer viewing of organizational structure charts"
+  - "Interactive browsing of file directory trees"
 
 difficulty: "advanced"
 completeness: "full"
@@ -35,34 +35,34 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/drill-down"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = {
-  name: '公司',
+  name: 'Company',
   children: [
     {
-      name: '研发部',
+      name: 'R&D Department',
       children: [
-        { name: '前端组', value: 12 },
-        { name: '后端组', value: 18 },
-        { name: '算法组', value: 8 },
+        { name: 'Frontend Team', value: 12 },
+        { name: 'Backend Team', value: 18 },
+        { name: 'Algorithm Team', value: 8 },
       ],
     },
     {
-      name: '市场部',
+      name: 'Marketing Department',
       children: [
-        { name: '品牌组', value: 6 },
-        { name: '运营组', value: 10 },
+        { name: 'Brand Team', value: 6 },
+        { name: 'Operations Team', value: 10 },
       ],
     },
     {
-      name: '设计部',
+      name: 'Design Department',
       children: [
-        { name: 'UX组', value: 7 },
-        { name: '视觉组', value: 5 },
+        { name: 'UX Team', value: 7 },
+        { name: 'Visual Team', value: 5 },
       ],
     },
   ],
@@ -71,18 +71,18 @@ const data = {
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
 
 chart.options({
-  type: 'sunburst',   // 旭日图（partition 的极坐标形式）
+  type: 'sunburst',   // Sunburst chart (polar coordinate form of partition)
   data: { value: data },
   encode: { value: 'value', color: 'name' },
   interaction: {
-    drillDown: true,   // 启用下钻交互
+    drillDown: true,   // Enable drill-down interaction
   },
 });
 
 chart.render();
 ```
 
-## 自定义面包屑样式
+## Customizing Breadcrumb Style
 
 ```javascript
 chart.options({
@@ -92,57 +92,57 @@ chart.options({
   interaction: {
     drillDown: {
       breadCrumb: {
-        rootText: '全公司',         // 根节点面包屑文字，默认 'root'
+        rootText: 'Whole Company',  // Root node breadcrumb text, default 'root'
         style: {
           fill: 'rgba(0,0,0,0.65)',
           fontSize: 13,
         },
         active: {
-          fill: '#1890ff',          // 悬停时面包屑文字颜色
+          fill: '#1890ff',          // Breadcrumb text color on hover
         },
-        y: 8,                       // 面包屑 Y 轴偏移
+        y: 8,                       // Breadcrumb Y-axis offset
       },
     },
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：drillDown 用于 treemap 而非 partition/sunburst
+### Error 1: Using `drillDown` for `treemap` instead of `partition`/`sunburst`
 ```javascript
-// ❌ 错误：drillDown 只适用于 partition 类型（包括旭日图）
-// treemap 有专用的 treemapDrillDown 交互
+// ❌ Incorrect: `drillDown` is only applicable to `partition` types (including sunburst charts)
+// `treemap` has a dedicated `treemapDrillDown` interaction
 chart.options({
   type: 'treemap',
-  interaction: { drillDown: true },  // ❌ 应该用 treemapDrillDown
+  interaction: { drillDown: true },  // ❌ Should use `treemapDrillDown`
 });
 
-// ✅ treemap 用 treemapDrillDown
+// ✅ Correct: Use `treemapDrillDown` for `treemap`
 chart.options({
   type: 'treemap',
   interaction: { treemapDrillDown: true },  // ✅
 });
 
-// ✅ sunburst/partition 用 drillDown
+// ✅ Correct: Use `drillDown` for `sunburst`/`partition`
 chart.options({
   type: 'sunburst',
   interaction: { drillDown: true },  // ✅
 });
 ```
 
-### 错误 2：数据不是层次结构——下钻无法展示子节点
+### Error 2: Data is not hierarchical—Drill-down cannot display child nodes
 ```javascript
-// ❌ 扁平数据没有 children，下钻后没有内容
+// ❌ Flat data has no children, no content after drill-down
 chart.options({
-  data: [{ name: 'A', value: 10 }, { name: 'B', value: 20 }],  // ❌ 扁平
+  data: [{ name: 'A', value: 10 }, { name: 'B', value: 20 }],  // ❌ Flat
   interaction: { drillDown: true },
 });
 
-// ✅ 必须使用带 children 的层次数据
+// ✅ Must use hierarchical data with children
 chart.options({
   data: {
-    value: { name: 'root', children: [...] },  // ✅ 树形
+    value: { name: 'root', children: [...] },  // ✅ Tree-like
   },
   interaction: { drillDown: true },
 });

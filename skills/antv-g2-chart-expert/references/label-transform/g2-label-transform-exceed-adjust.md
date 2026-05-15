@@ -1,9 +1,9 @@
 ---
 id: "g2-label-transform-exceed-adjust"
-title: "G2 ExceedAdjust 标签变换"
+title: "G2 ExceedAdjust Label Transform"
 description: |
-  标签超出调整变换。当标签超出指定范围时自动调整位置，
-  确保标签在可视区域内显示。
+  Label exceed adjustment transform. Automatically adjusts the position of labels when they exceed the specified range,
+  ensuring labels are displayed within the visible area.
 
 library: "g2"
 version: "5.x"
@@ -21,12 +21,12 @@ related:
   - "g2-comp-label-config"
 
 use_cases:
-  - "图表边缘标签调整"
-  - "小尺寸元素标签"
-  - "需要保持标签完整的场景"
+  - "Chart edge label adjustment"
+  - "Small element labels"
+  - "Scenarios requiring complete labels"
 
 anti_patterns:
-  - "标签可以隐藏的场景（改用 overflowHide）"
+  - "Scenarios where labels can be hidden (use overflowHide instead)"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,18 +36,18 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
 
-## 核心概念
+## Core Concepts
 
-ExceedAdjust 标签变换会检测标签是否超出可视区域：
-- 如果超出，自动调整标签位置
-- 确保标签完整显示
+ExceedAdjust label transformation detects whether labels exceed the visible area:
+- If they do, it automatically adjusts the label position
+- Ensures labels are fully displayed
 
-**工作原理：**
-1. 计算标签的边界框
-2. 检测是否超出图表边界
-3. 如果超出，向内调整位置
+**How it Works:**
+1. Calculate the label's bounding box
+2. Detect if it exceeds the chart boundaries
+3. If it does, adjust the position inward
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -63,7 +63,7 @@ chart.options({
   data: [
     { x: 10, y: 100 },
     { x: 20, y: 150 },
-    { x: 30, y: 200 },  // 可能在图表顶部边缘
+    { x: 30, y: 200 },  // may be at the top edge of the chart
   ],
   encode: {
     x: 'x',
@@ -81,9 +81,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 结合其他变换
+### Combine with Other Transformations
 
 ```javascript
 chart.options({
@@ -103,42 +103,42 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface ExceedAdjustTransform {
   type: 'exceedAdjust';
-  // 无额外配置参数
+  // No additional configuration parameters
 }
 ```
 
-## 与其他标签变换的对比
+## Comparison with Other Label Transforms
 
-| Transform | 功能 | 处理方式 |
-|-----------|------|---------|
-| exceedAdjust | 超出调整 | 移动位置 |
-| overflowHide | 溢出隐藏 | 隐藏标签 |
-| overlapDodgeY | 重叠避让 | Y 方向分开 |
+| Transform | Function | Handling Method |
+|-----------|----------|-------------|
+| exceedAdjust | Exceed Adjustment | Move Position |
+| overflowHide | Overflow Hide | Hide Label |
+| overlapDodgeY | Overlap Dodge | Separate in Y Direction |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：transform 格式错误
+### Error 1: Incorrect transform Format
 
 ```javascript
-// ❌ 错误：transform 应该是数组
+// ❌ Incorrect: transform should be an array
 labels: [{ text: 'value', transform: { type: 'exceedAdjust' } }]
 
-// ✅ 正确
+// ✅ Correct
 labels: [{ text: 'value', transform: [{ type: 'exceedAdjust' }] }]
 ```
 
-### 错误 2：与其他变换顺序错误
+### Error 2: Incorrect Order with Other Transformations
 
 ```javascript
-// ⚠️ 注意：变换顺序影响结果
-// 建议先处理超出，再处理重叠
+// ⚠️ Note: Transformation order affects the result
+// It is recommended to handle exceed first, then overlap
 
-// ✅ 正确顺序
+// ✅ Correct Order
 transform: [
   { type: 'exceedAdjust' },
   { type: 'overlapDodgeY' },

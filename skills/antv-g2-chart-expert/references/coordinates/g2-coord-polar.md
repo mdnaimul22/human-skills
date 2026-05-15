@@ -1,18 +1,18 @@
 ---
 id: "g2-coord-polar"
-title: "G2 极坐标系（polar）"
+title: "G2 Polar Coordinate System (polar)"
 description: |
-  极坐标系将直角坐标系映射为圆形区域，x 通道映射为角度，y 通道映射为半径。
-  常用于玫瑰图（极坐标柱状图）、极坐标面积图、环形图等。
-  通过 startAngle / endAngle 控制角度范围，innerRadius 控制内孔大小。
+  The polar coordinate system maps the Cartesian coordinate system to a circular area, where the x channel is mapped to the angle and the y channel is mapped to the radius.
+  It is commonly used in rose charts (polar bar charts), polar area charts, and radial charts.
+  The angle range is controlled by startAngle / endAngle, and the size of the inner hole is controlled by innerRadius.
 
 library: "g2"
 version: "5.x"
 category: "coordinates"
 tags:
   - "polar"
-  - "极坐标"
-  - "玫瑰图"
+  - "polar coordinate"
+  - "rose chart"
   - "nightingale"
   - "coxcomb"
   - "radial"
@@ -24,9 +24,9 @@ related:
   - "g2-mark-interval-stacked"
 
 use_cases:
-  - "玫瑰图 / 南丁格尔玫瑰图（各分类用角度+半径双重编码）"
-  - "极坐标面积图（周期性数据的环形展示）"
-  - "环形进度条"
+  - "Rose Chart / Nightingale Rose Chart (categories encoded by both angle and radius)"
+  - "Polar Area Chart (circular display of periodic data)"
+  - "Radial Progress Bar"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,7 +36,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/coordinate/polar"
 ---
 
-## 最小可运行示例（玫瑰图）
+## Minimum Viable Example (Rose Chart)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -54,17 +54,17 @@ chart.options({
     { month: 'Jun', value: 88 },
   ],
   encode: {
-    x: 'month',   // 映射为角度（方向）
-    y: 'value',   // 映射为半径（长度）
+    x: 'month',   // Maps to angle (direction)
+    y: 'value',   // Maps to radius (length)
     color: 'month',
   },
-  coordinate: { type: 'polar' },  // 关键：极坐标
+  coordinate: { type: 'polar' },  // Key: Polar coordinate
 });
 
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 chart.options({
@@ -73,15 +73,15 @@ chart.options({
   encode: { x: 'month', y: 'value', color: 'month' },
   coordinate: {
     type: 'polar',
-    startAngle: -Math.PI / 2,    // 起始角度，默认 -π/2（12点钟方向）
-    endAngle: (Math.PI * 3) / 2, // 结束角度，默认 3π/2（顺时针一圈）
-    innerRadius: 0,              // 内孔半径，0 = 无孔，0.5 = 半径50% 的孔
-    outerRadius: 1,              // 外径比例，默认 1
+    startAngle: -Math.PI / 2,    // Start angle, default -π/2 (12 o'clock direction)
+    endAngle: (Math.PI * 3) / 2, // End angle, default 3π/2 (clockwise full circle)
+    innerRadius: 0,              // Inner radius, 0 = no hole, 0.5 = 50% of radius as hole
+    outerRadius: 1,              // Outer radius ratio, default 1
   },
 });
 ```
 
-## 半圆玫瑰图
+## Semi-Circular Rose Chart
 
 ```javascript
 chart.options({
@@ -90,13 +90,13 @@ chart.options({
   encode: { x: 'month', y: 'value', color: 'month' },
   coordinate: {
     type: 'polar',
-    startAngle: -Math.PI / 2,   // 从顶部开始
-    endAngle: Math.PI / 2,      // 只到底部，半圆
+    startAngle: -Math.PI / 2,   // Start from the top
+    endAngle: Math.PI / 2,      // Only to the bottom, semi-circle
   },
 });
 ```
 
-## 极坐标堆叠面积图
+## Polar Coordinate Stacked Area Chart
 
 ```javascript
 chart.options({
@@ -109,34 +109,34 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：玫瑰图角度不均匀——x 通道数据类型不是分类
+### Error 1: Uneven Angles in Rose Chart — x Channel Data Type is Not Categorical
 ```javascript
-// ❌ 错误：x 通道是数值，极坐标下角度不均匀
+// ❌ Error: x channel is numerical, resulting in uneven angles in polar coordinates
 chart.options({
-  encode: { x: 'timestamp', y: 'value' },  // ❌ 时间戳为数值
+  encode: { x: 'timestamp', y: 'value' },  // ❌ Timestamp is numerical
   coordinate: { type: 'polar' },
 });
 
-// ✅ 正确：x 通道应为分类字段（字符串）
+// ✅ Correct: x channel should be a categorical field (string)
 chart.options({
-  encode: { x: 'month', y: 'value' },  // ✅ 字符串类别
+  encode: { x: 'month', y: 'value' },  // ✅ String category
   coordinate: { type: 'polar' },
 });
 ```
 
-### 错误 2：与 theta 坐标系混淆
+### Error 2: Confusion with the theta coordinate system
 ```javascript
-// ❌ 饼图用 polar 无效——y 通道不会自动转为扇形角度
+// ❌ Polar is invalid for pie charts — the y channel will not automatically convert to sector angles
 chart.options({
   type: 'interval',
   encode: { y: 'value', color: 'type' },
   transform: [{ type: 'stackY' }],
-  coordinate: { type: 'polar' },  // ❌ 饼图应该用 theta，不是 polar
+  coordinate: { type: 'polar' },  // ❌ Pie charts should use theta, not polar
 });
 
-// ✅ 饼图必须用 theta 坐标系
+// ✅ Pie charts must use the theta coordinate system
 chart.options({
   coordinate: { type: 'theta' },  // ✅
 });

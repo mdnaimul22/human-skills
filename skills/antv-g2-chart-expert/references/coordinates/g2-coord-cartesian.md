@@ -1,20 +1,20 @@
 ---
 id: "g2-coord-cartesian"
-title: "G2 直角坐标系（cartesian）"
+title: "G2 Cartesian Coordinate System"
 description: |
-  cartesian（直角坐标系）是 G2 v5 的默认坐标系，x 和 y 通道分别映射为水平和垂直位置。
-  大多数常见图表（柱状图、折线图、散点图）均使用直角坐标系。
-  通过 coordinate.transform 可以为直角坐标系添加转置（transpose）等变换。
+  The cartesian coordinate system is the default coordinate system in G2 v5, where the x and y channels are mapped to horizontal and vertical positions, respectively.
+  Most common charts (bar charts, line charts, scatter plots) use the cartesian coordinate system.
+  Transformations such as transpose can be added to the cartesian coordinate system via coordinate.transform.
 
 library: "g2"
 version: "5.x"
 category: "coordinates"
 tags:
   - "cartesian"
-  - "直角坐标系"
-  - "默认坐标系"
+  - "Cartesian Coordinate System"
+  - "Default Coordinate System"
   - "coordinate"
-  - "笛卡尔坐标"
+  - "Cartesian"
 
 related:
   - "g2-coord-transpose"
@@ -23,10 +23,10 @@ related:
   - "g2-mark-line-basic"
 
 use_cases:
-  - "柱状图（默认直角坐标）"
-  - "折线图（默认直角坐标）"
-  - "条形图（直角坐标 + 转置）"
-  - "散点图（直角坐标）"
+  - "Bar Chart (Default Cartesian Coordinate)"
+  - "Line Chart (Default Cartesian Coordinate)"
+  - "Horizontal Bar Chart (Cartesian Coordinate + Transpose)"
+  - "Scatter Plot (Cartesian Coordinate)"
 
 difficulty: "beginner"
 completeness: "full"
@@ -36,20 +36,20 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/coordinate/cartesian"
 ---
 
-## 核心概念
+## Core Concepts
 
-直角坐标系是 G2 的**默认坐标系**，无需显式配置 `coordinate` 字段。
+The Cartesian coordinate system is the **default coordinate system** in G2, and does not require explicit configuration of the `coordinate` field.
 
-- x 通道 → 水平位置（从左到右）
-- y 通道 → 垂直位置（从下到上）
-- 支持通过 `coordinate.transform` 添加转置等变换
+- x channel → horizontal position (from left to right)
+- y channel → vertical position (from bottom to top)
+- Supports adding transformations such as transposition via `coordinate.transform`
 
-## 默认使用（无需配置）
+## Default Usage (No Configuration Required)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 直角坐标系是默认值，不需要写 coordinate 配置
+// Cartesian coordinate system is the default, no need to write coordinate configuration
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
 
 chart.options({
@@ -60,24 +60,24 @@ chart.options({
     { genre: 'Action',   sold: 120 },
   ],
   encode: { x: 'genre', y: 'sold' },
-  // 无需 coordinate 配置，默认即为直角坐标系
+  // No need for coordinate configuration, default is Cartesian coordinate system
 });
 
 chart.render();
 ```
 
-## 显式指定（与默认等效）
+## Explicit Specification (Equivalent to Default)
 
 ```javascript
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre', y: 'sold' },
-  coordinate: { type: 'cartesian' },  // 显式指定（与不写等效）
+  coordinate: { type: 'cartesian' },  // Explicit specification (equivalent to omitting)
 });
 ```
 
-## 直角坐标系 + 转置（条形图）
+## Cartesian Coordinate System + Transpose (Bar Chart)
 
 ```javascript
 chart.options({
@@ -86,41 +86,41 @@ chart.options({
   encode: { x: 'genre', y: 'sold' },
   coordinate: {
     type: 'cartesian',
-    transform: [{ type: 'transpose' }],  // 转置：x/y 互换，柱状图变条形图
+    transform: [{ type: 'transpose' }],  // Transpose: Swap x/y axes, converting column chart to bar chart
   },
 });
 ```
 
-## 坐标系配置项
+## Coordinate System Configuration
 
 ```javascript
 chart.options({
   coordinate: {
     type: 'cartesian',
     transform: [
-      { type: 'transpose' },         // 转置（x↔y 互换）
-      { type: 'reflect', x: true },  // X 轴镜像翻转
-      { type: 'reflect', y: true },  // Y 轴镜像翻转
-      { type: 'scale', sx: 1, sy: -1 },  // 自定义缩放
+      { type: 'transpose' },         // Transpose (swap x↔y)
+      { type: 'reflect', x: true },  // Reflect across the X-axis
+      { type: 'reflect', y: true },  // Reflect across the Y-axis
+      { type: 'scale', sx: 1, sy: -1 },  // Custom scaling
     ],
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：配置了 cartesian 坐标系但期望得到环形图
+### Error: Cartesian Coordinate System Configured but Expecting a Pie/Donut Chart
 ```javascript
-// ❌ 错误：饼图/环形图需要 theta 坐标系，不是 cartesian
+// ❌ Error: Pie/Donut charts require a theta coordinate system, not cartesian
 chart.options({
   type: 'interval',
   data,
   encode: { y: 'value', color: 'type' },
   transform: [{ type: 'stackY' }],
-  coordinate: { type: 'cartesian' },  // ❌ 这样会画出普通柱状图
+  coordinate: { type: 'cartesian' },  // ❌ This will render a regular bar chart
 });
 
-// ✅ 饼图/环形图使用 theta 坐标系
+// ✅ Pie/Donut charts use a theta coordinate system
 chart.options({
   type: 'interval',
   data,

@@ -1,10 +1,9 @@
 ---
 id: "g2-core-view-composition"
-title: "G2 视图组合（view + children）"
+title: "G2 View Composition (view + children)"
 description: |
-  G2 v5 通过 type: 'view' 容器和 children 数组实现多 Mark 叠加、
-  共享数据、分面（facet）等复合图表。
-  这是 Spec 模式中组合多个图形层的标准方式。
+  G2 v5 implements multi-Mark overlay, shared data, facets, and other composite charts through the `type: 'view'` container and the `children` array.
+  This is the standard way to compose multiple graphic layers in the Spec mode.
 
 library: "g2"
 version: "5.x"
@@ -12,10 +11,10 @@ category: "core"
 tags:
   - "view"
   - "children"
-  - "视图组合"
-  - "多Mark叠加"
+  - "view composition"
+  - "multi-Mark overlay"
   - "layer"
-  - "复合图表"
+  - "composite chart"
   - "spec"
 
 related:
@@ -24,13 +23,13 @@ related:
   - "g2-comp-facet-rect"
 
 use_cases:
-  - "在同一坐标系中叠加多种图形（折线+散点、面积+折线）"
-  - "为多个子 Mark 共享数据源"
-  - "在图表中添加标注层"
+  - "Overlaying multiple graphics in the same coordinate system (line + scatter, area + line)"
+  - "Sharing a data source for multiple child Marks"
+  - "Adding an annotation layer to a chart"
 
 anti_patterns:
-  - "只有单个 Mark 时不需要 view 容器，直接用对应 type 即可"
-  - "children 中嵌套 type: 'view'——当某个子 Mark 需要独立数据时，直接在该 Mark 上指定 data 字段，而非再套一层 view + children"
+  - "When there is only a single Mark, a view container is not needed; use the corresponding type directly"
+  - "Nesting `type: 'view'` in children—when a child Mark requires independent data, specify the `data` field directly on that Mark instead of adding another layer of view + children"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -40,14 +39,14 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/composition/view"
 ---
 
-## 核心概念
+## Core Concepts
 
 ```
 chart.options({
-  type: 'view',      // 容器类型
-   [...],       // 父级数据（子 Mark 可继承）
-  encode: {...},     // 父级编码（子 Mark 可继承）
-  children: [        // 子 Mark 列表（按顺序渲染，后面的在上层）
+  type: 'view',      // Container type
+   [...],       // Parent data (can be inherited by child Marks)
+  encode: {...},     // Parent encoding (can be inherited by child Marks)
+  children: [        // Child Mark list (rendered in order, later ones on top)
     { type: 'area', ... },
     { type: 'line', ... },
     { type: 'point', ... },
@@ -55,11 +54,11 @@ chart.options({
 });
 ```
 
-**数据继承规则**：
-- 子 Mark 若未指定 `data`，继承父级 `data`
-- 子 Mark 若未指定 `encode`，继承父级 `encode` 中对应通道
+**Data Inheritance Rules**:
+- If a child Mark does not specify `data`, it inherits the parent's `data`
+- If a child Mark does not specify `encode`, it inherits the corresponding channel from the parent's `encode`
 
-## 面积 + 折线 + 散点叠加
+## Area + Line + Scatter Overlay
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -76,8 +75,8 @@ const data = [
 
 chart.options({
   type: 'view',
-  data,                                    // 父级数据，三个子 Mark 共享
-  encode: { x: 'month', y: 'value' },     // 父级编码，子 Mark 继承
+  data,                                    // Parent data, shared by three child Marks
+  encode: { x: 'month', y: 'value' },     // Parent encoding, inherited by child Marks
   children: [
     {
       type: 'area',
@@ -98,7 +97,7 @@ chart.options({
 chart.render();
 ```
 
-## 子 Mark 独立数据（不继承父级）
+## Child Mark Independent Data (Does Not Inherit from Parent)
 
 ```javascript
 chart.options({
@@ -106,20 +105,20 @@ chart.options({
   children: [
     {
       type: 'interval',
-       salesData,       // 独立数据
+       salesData,       // Independent data
       encode: { x: 'month', y: 'revenue' },
     },
     {
       type: 'line',
-       trendData,       // 独立数据
+       trendData,       // Independent data
       encode: { x: 'month', y: 'growth' },
-      scale: { y: { key: 'right' } },   // 独立 y 轴
+      scale: { y: { key: 'right' } },   // Independent y-axis
     },
   ],
 });
 ```
 
-## 折线 + 参考线组合
+## Line + Reference Line Combination
 
 ```javascript
 chart.options({
@@ -131,25 +130,25 @@ chart.options({
       encode: { x: 'month', y: 'value' },
     },
     {
-      type: 'lineY',                       // 水平参考线
-       [{ threshold: 60 }],
+      type: 'lineY',                       // Horizontal reference line
+      thresholds: [{ threshold: 60 }],
       encode: { y: 'threshold' },
       style: { stroke: 'red', lineDash: [4, 4] },
-      labels: [{ text: '目标线', position: 'right', style: { fill: 'red' } }],
+      labels: [{ text: 'Target Line', position: 'right', style: { fill: 'red' } }],
     },
   ],
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：多次调用 options() 覆盖配置
+### Error 1: Overriding Configuration with Multiple Calls to `options()`
 ```javascript
-// ❌ 错误：每次 options() 调用都会覆盖上一次
+// ❌ Incorrect: Each call to `options()` overrides the previous one
 chart.options({ type: 'area', ... });
-chart.options({ type: 'line', ... });   // 覆盖了面积图！
+chart.options({ type: 'line', ... });   // Overrides the area chart!
 
-// ✅ 正确：用 view + children
+// ✅ Correct: Use `view` + `children`
 chart.options({
   type: 'view',
   data,
@@ -160,18 +159,18 @@ chart.options({
 });
 ```
 
-### 错误 2：children 中嵌套 view（为子 Mark 单独变换数据时的常见误区）
+### Error 2: Nesting view in children (Common Pitfall When Transforming Data for Child Marks Individually)
 
 ```javascript
-// ❌ 错误：在 children 里再套一层 type:'view' + children
+// ❌ Incorrect: Nesting type:'view' + children within children
 chart.options({
   type: 'view',
   data,
   children: [
     { type: 'line', encode: { x: 'time', y: 'value' } },
     {
-      type: 'view',                        // ❌ 不必要的嵌套 view
-      data: data.map(d => ({              // 只是想用派生数据
+      type: 'view',                        // ❌ Unnecessary nested view
+      data: data.map(d => ({              // Only intended to use derived data
         time: d.time,
         min: d.value - 0.1,
         max: d.value + 0.1,
@@ -183,7 +182,7 @@ chart.options({
   ],
 });
 
-// ✅ 正确：直接在子 Mark 上指定 data，无需嵌套 view
+// ✅ Correct: Directly specify data on the child Mark without nesting view
 chart.options({
   type: 'view',
   data,
@@ -191,7 +190,7 @@ chart.options({
     { type: 'line', encode: { x: 'time', y: 'value' } },
     {
       type: 'rangeY',
-      data: data.map(d => ({             // ✅ 直接在 Mark 上声明独立 data
+      data: data.map(d => ({             // ✅ Directly declare independent data on the Mark
         time: d.time,
         min: d.value - 0.1,
         max: d.value + 0.1,
@@ -203,13 +202,13 @@ chart.options({
 });
 ```
 
-**规则**：`children` 数组的每个元素必须是 Mark（`line`/`point`/`interval` 等），
-当某个 Mark 需要独立或派生数据时，在该 Mark 节点上直接写 `data`，而不是再包一层 `view`。
-G2 不支持在 `children` 内嵌套 `view`。
+**Rule**: Each element in the `children` array must be a Mark (`line`/`point`/`interval`, etc.).  
+When a Mark requires independent or derived data, directly specify `data` on that Mark node instead of wrapping it in an additional `view`.  
+G2 does not support nesting `view` within `children`.
 
-### 错误 3：子 Mark 的 encode 字段名与数据不匹配
+### Error 3: Sub-Mark's encode Field Names Do Not Match the Data
 ```javascript
-// ❌ 错误：父级和子级 encode 的字段名应保持一致
+// ❌ Error: Field names in parent and child encode should be consistent
 chart.options({
   type: 'view',
   data: [{ month: 'Jan', value: 33 }],
@@ -217,7 +216,7 @@ chart.options({
   children: [
     {
       type: 'point',
-      encode: { x: 'date', y: 'amount' },  // 字段名与数据不匹配！
+      encode: { x: 'date', y: 'amount' },  // Field names do not match the data!
     },
   ],
 });

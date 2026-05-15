@@ -2,18 +2,17 @@
 id: "g2-interaction-brushy-highlight"
 title: "G2 BrushYHighlight Interaction"
 description: |
-  Y 轴方向刷选高亮交互。用户可以通过拖拽选择 Y 轴范围，
-  高亮显示该范围内的数据元素。
+  Brush selection and highlight interaction in the Y-axis direction. Users can drag to select a Y-axis range,
+  highlighting data elements within that range.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
-  - "刷选"
-  - "高亮"
   - "brush"
-  - "Y轴"
-  - "数据探索"
+  - "highlight"
+  - "Y-axis"
+  - "data exploration"
 
 related:
   - "g2-interaction-brush"
@@ -21,13 +20,13 @@ related:
   - "g2-interaction-brushy-filter"
 
 use_cases:
-  - "数值范围高亮"
-  - "Y 轴区间选择高亮"
-  - "异常值识别"
+  - "Numeric range highlighting"
+  - "Y-axis range selection highlighting"
+  - "Outlier identification"
 
 anti_patterns:
-  - "需要过滤数据时改用 BrushYFilter"
-  - "需要 X 轴方向选择时改用 BrushXHighlight"
+  - "Use BrushYFilter instead when data filtering is required"
+  - "Use BrushXHighlight instead when X-axis selection is needed"
 
 difficulty: "beginner"
 completeness: "full"
@@ -37,16 +36,16 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction"
 ---
 
-## 核心概念
+## Core Concepts
 
-BrushYHighlight 交互允许用户在 Y 轴方向拖拽选择一个区间，选区内的数据元素会被高亮显示，其他元素变暗。
+The BrushYHighlight interaction allows users to drag and select a range along the Y-axis. Data elements within the selected area are highlighted, while others are dimmed.
 
-**特点：**
-- 只能在 Y 轴方向选择
-- 高亮而非过滤数据
-- 适合数值范围的数据探索
+**Features:**
+- Selection is only possible along the Y-axis
+- Highlights data instead of filtering it
+- Suitable for exploring data within numerical ranges
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -78,9 +77,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 自定义刷选样式
+### Custom Brush Style
 
 ```javascript
 chart.options({
@@ -98,7 +97,7 @@ chart.options({
 });
 ```
 
-### 自定义高亮状态
+### Custom Highlight State
 
 ```javascript
 chart.options({
@@ -107,7 +106,7 @@ chart.options({
   encode: { x: 'x', y: 'y' },
   interaction: {
     brushYHighlight: {
-      selectedHandles: ['handle-n', 'handle-s'],  // 显示的拖拽手柄
+      selectedHandles: ['handle-n', 'handle-s'],  // Displayed drag handles
     },
   },
   state: {
@@ -122,7 +121,7 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface BrushYHighlightInteraction {
@@ -133,45 +132,45 @@ interface BrushYHighlightInteraction {
       stroke?: string;
     };
     selectedHandles?: string[];  // ['handle-n', 'handle-s']
-    // 其他配置继承自 BrushHighlight
+    // Other configurations inherited from BrushHighlight
   };
 }
 ```
 
-## 与 BrushHighlight/BrushXHighlight 的对比
+## Comparison with BrushHighlight/BrushXHighlight
 
-| Interaction | 选择方向 | 常用场景 |
+| Interaction | Selection Direction | Common Use Cases |
 |-------------|---------|---------|
-| brushHighlight | 任意方向 | 通用高亮 |
-| brushXHighlight | 仅 X 方向 | 分类/时间范围高亮 |
-| brushYHighlight | 仅 Y 方向 | 数值范围高亮 |
+| brushHighlight | Any direction | General highlighting |
+| brushXHighlight | X direction only | Categorical/time range highlighting |
+| brushYHighlight | Y direction only | Numerical range highlighting |
 
-## 与 BrushYFilter 的区别
+## Differences from BrushYFilter
 
-| 特性 | BrushYHighlight | BrushYFilter |
-|------|-----------------|--------------|
-| 数据处理 | 高亮显示 | 过滤隐藏 |
-| 非选区数据 | 变暗但可见 | 完全隐藏 |
-| 适用场景 | 数据探索、对比 | 数据筛选、缩放 |
+| Feature          | BrushYHighlight | BrushYFilter |
+|------------------|-----------------|--------------|
+| Data Processing  | Highlight       | Filter & Hide|
+| Non-Selected Data| Dimmed but Visible | Completely Hidden |
+| Applicable Scenarios | Data Exploration, Comparison | Data Filtering, Zooming |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：与 Filter 交互混淆
+### Error 1: Confusion with Filter Interaction
 
 ```javascript
-// ❌ 错误：想要过滤数据却用了 highlight
+// ❌ Incorrect: Using highlight instead of filtering data
 interaction: { brushYHighlight: true }
 
-// ✅ 正确：根据需求选择
-// 需要高亮：brushYHighlight
-// 需要过滤：brushYFilter
+// ✅ Correct: Choose based on requirements
+// Need highlighting: brushYHighlight
+// Need filtering: brushYFilter
 ```
 
-### 错误 2：未配置 state 样式
+### Error 2: State Style Not Configured
 
 ```javascript
-// ⚠️ 注意：默认高亮效果可能不明显
-// 建议配置 state 以获得更好的视觉效果
+// ⚠️ Note: Default highlight effect may not be obvious
+// It is recommended to configure state for better visual effects
 chart.options({
   type: 'point',
   data,

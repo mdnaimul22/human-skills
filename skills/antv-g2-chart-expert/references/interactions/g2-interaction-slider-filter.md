@@ -1,18 +1,17 @@
 ---
 id: "g2-interaction-slider-filter"
-title: "G2 缩略轴过滤（slider filter）"
+title: "G2 Slider Filter"
 description: |
-  G2 v5 缩略轴通过 slider: { x: true } 或 interaction: [{ type: 'sliderFilter' }] 启用，
-  拖动滑块过滤 x/y 轴数据范围，常用于时序图的局部时间段筛选。
+  G2 v5 enables the slider filter via `slider: { x: true }` or `interaction: [{ type: 'sliderFilter' }]`,
+  allowing users to drag the slider to filter data ranges on the x/y axis. This is commonly used for partial time period filtering in time series charts.
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
-  - "缩略轴"
   - "slider"
-  - "过滤"
-  - "时序"
-  - "范围筛选"
+  - "filter"
+  - "time series"
+  - "range filter"
   - "spec"
 
 related:
@@ -21,9 +20,9 @@ related:
   - "g2-scale-time"
 
 use_cases:
-  - "时序折线图拖动查看局部时间段"
-  - "大数据量图表局部放大查看"
-  - "联动多图表的时间范围"
+  - "Drag to view partial time periods in time series line charts"
+  - "Zoom in on specific areas of large datasets"
+  - "Synchronize time ranges across multiple charts"
 
 difficulty: "beginner"
 completeness: "full"
@@ -33,9 +32,9 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/component/slider"
 ---
 
-## 基本用法（时序折线图 + x 轴缩略轴）
+## Basic Usage (Time Series Line Chart + X-Axis Thumbnail Axis)
 
-在折线图底部添加缩略轴，拖动滑块筛选时间范围：
+Add a thumbnail axis at the bottom of the line chart and drag the slider to filter the time range:
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -46,7 +45,7 @@ const chart = new Chart({
   height: 480,
 });
 
-// 生成 30 天时序数据
+// Generate 30 days of time series data
 const data = Array.from({ length: 30 }, (_, i) => ({
   date: new Date(2024, 0, i + 1).toISOString().slice(0, 10),
   value: Math.round(200 + Math.random() * 300),
@@ -57,16 +56,16 @@ chart.options({
   data,
   encode: { x: 'date', y: 'value' },
   slider: {
-    x: true,   // 在 x 轴下方显示缩略轴
+    x: true,   // Display thumbnail axis below the x-axis
   },
 });
 
 chart.render();
 ```
 
-## 设置初始显示范围
+## Set Initial Display Range
 
-`values` 接受 `[0, 1]` 区间的比例值，控制缩略轴初始选中范围：
+`values` accepts a ratio value within the range `[0, 1]`, controlling the initial selected range of the thumbnail axis:
 
 ```javascript
 chart.options({
@@ -75,15 +74,15 @@ chart.options({
   encode: { x: 'date', y: 'value' },
   slider: {
     x: {
-      values: [0.6, 1.0],   // 初始只显示后 40% 的数据
+      values: [0.6, 1.0],   // Initially display only the last 40% of the data
     },
   },
 });
 ```
 
-## 双轴缩略轴（x 轴 + y 轴同时过滤）
+## Dual-Axis Thumbnail Axes (Filtering Both X and Y Axes Simultaneously)
 
-同时在 x 轴和 y 轴添加缩略轴，适合散点图等二维数据探索：
+Add thumbnail axes to both the x-axis and y-axis, suitable for scatter plots and other two-dimensional data exploration:
 
 ```javascript
 chart.options({
@@ -100,18 +99,18 @@ chart.options({
   encode: { x: 'price', y: 'score', color: 'brand' },
   slider: {
     x: {
-      values: [0, 0.7],   // x 轴初始显示 0-70%
+      values: [0, 0.7],   // Initial x-axis display: 0-70%
     },
     y: {
-      values: [0.2, 1.0], // y 轴初始显示 20%-100%
+      values: [0.2, 1.0], // Initial y-axis display: 20%-100%
     },
   },
 });
 ```
 
-## 自定义 label 格式
+## Custom Label Format
 
-通过 `labelFormatter` 格式化缩略轴两端的标签显示：
+Format the label display at both ends of the slider axis using `labelFormatter`:
 
 ```javascript
 chart.options({
@@ -122,7 +121,7 @@ chart.options({
     x: {
       values: [0.4, 1.0],
       labelFormatter: (value) => {
-        // value 是实际数据值（经过比例换算后的原始数据）
+        // value is the actual data value (original data after scale conversion)
         const date = new Date(value);
         return `${date.getMonth() + 1}月${date.getDate()}日`;
       },
@@ -131,12 +130,12 @@ chart.options({
 });
 ```
 
-## 使用 interaction 方式启用
+## Enable Using the Interaction Method
 
-也可以通过 `interaction` 数组启用 sliderFilter，两种写法效果相同：
+You can also enable `sliderFilter` through the `interaction` array. Both methods produce the same effect:
 
 ```javascript
-// 方式一：slider 属性（推荐，更简洁）
+// Method 1: slider property (recommended, more concise)
 chart.options({
   type: 'line',
   data,
@@ -144,7 +143,7 @@ chart.options({
   slider: { x: true },
 });
 
-// 方式二：interaction 数组
+// Method 2: interaction array
 chart.options({
   type: 'line',
   data,
@@ -155,74 +154,74 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：values 超出 [0, 1] 范围
+### Error: values exceed the range [0, 1]
 
 ```javascript
-// ❌ values 必须在 [0, 1] 区间，代表数据比例
+// ❌ values must be within the range [0, 1], representing data proportions
 chart.options({
   slider: {
-    x: { values: [10, 80] },   // 错误：不是像素或索引，是 0-1 比例
+    x: { values: [10, 80] },   // Error: not pixels or indices, but 0-1 proportions
   },
 });
 
-// ✅ 正确：使用 0-1 之间的小数
+// ✅ Correct: use decimals between 0 and 1
 chart.options({
   slider: {
-    x: { values: [0.1, 0.8] },   // 显示 10% 到 80% 的数据
+    x: { values: [0.1, 0.8] },   // Displays 10% to 80% of the data
   },
 });
 ```
 
-### 错误：在离散分类轴上使用 sliderFilter
+### Error: Using sliderFilter on a Discrete Categorical Axis
 
 ```javascript
-// ❌ slider 主要适合连续轴（时间轴、数值轴），
-// 在纯分类 x 轴上效果不佳，过滤逻辑可能不符合预期
+// ❌ slider is primarily suitable for continuous axes (time axes, numerical axes),
+// and performs poorly on purely categorical x-axes, with filtering logic that may not meet expectations
 chart.options({
   type: 'interval',
   data: [{ genre: 'Sports', sold: 275 }, { genre: 'Action', sold: 120 }],
-  encode: { x: 'genre', y: 'sold' },   // genre 是离散分类
+  encode: { x: 'genre', y: 'sold' },   // genre is discrete categorical
   slider: { x: true },
 });
 
-// ✅ sliderFilter 最适合时序数据或大量连续数值数据
+// ✅ sliderFilter is best suited for time series data or large amounts of continuous numerical data
 chart.options({
   type: 'line',
   data: timeSeriesData,
-  encode: { x: 'date', y: 'value' },   // date 是时间轴
+  encode: { x: 'date', y: 'value' },   // date is a time axis
   slider: { x: true },
 });
 ```
 
-### 错误：slider 写成数组
+### Error: slider written as an array
 
 ```javascript
-// ❌ slider 是对象，不是数组
+// ❌ slider is an object, not an array
 chart.options({
   slider: [{ x: true }],
 });
 
-// ✅ slider 是对象，x/y 是其属性
+// ✅ slider is an object, x/y are its properties
 chart.options({
   slider: { x: true },
-  // 或同时启用双轴
+  // or enable dual axes simultaneously
   // slider: { x: true, y: true },
 });
 ```
 
-### 错误：values 顺序写反（起始值大于结束值）
+### Error: Incorrect Order of `values` (Start Value Greater Than End Value)
 
 ```javascript
-// ❌ 起始值不能大于结束值
+// ❌ Start value cannot be greater than end value
 chart.options({
   slider: {
     x: { values: [0.8, 0.2] },
   },
 });
 
-// ✅ 第一个值为起始位置，第二个值为结束位置（均为 0-1 比例）
+// ✅ First value is the start position, second value is the end position (both are 0-1 ratios)
 chart.options({
   slider: {
     x: { values: [0.2, 0.8] },

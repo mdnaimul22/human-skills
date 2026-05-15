@@ -1,20 +1,19 @@
 ---
 id: "g2-interaction-legend-filter"
-title: "G2 图例过滤交互（legendFilter）"
+title: "G2 Legend Filter Interaction (legendFilter)"
 description: |
-  legendFilter 让用户通过点击图例项来显示/隐藏对应的数据系列。
-  在 G2 v5 中默认已启用，点击图例项即可切换对应系列的可见性。
-  可通过配置关闭或自定义样式。legendHighlight 则是鼠标悬停时高亮对应系列。
+  legendFilter allows users to show/hide corresponding data series by clicking on legend items.
+  In G2 v5, it is enabled by default, and clicking a legend item toggles the visibility of the corresponding series.
+  It can be disabled or customized through configuration. legendHighlight highlights the corresponding series when the mouse hovers over a legend item.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
   - "legendFilter"
-  - "图例过滤"
-  - "图例高亮"
+  - "legend filtering"
+  - "legend highlighting"
   - "legendHighlight"
-  - "交互"
   - "interaction"
 
 related:
@@ -22,9 +21,9 @@ related:
   - "g2-interaction-element-highlight"
 
 use_cases:
-  - "多系列折线图中按需显示/隐藏特定系列"
-  - "堆叠图中临时隐藏某个类别"
-  - "大量系列时的选择性查看"
+  - "Show/hide specific series on demand in multi-series line charts"
+  - "Temporarily hide a category in stacked charts"
+  - "Selective viewing when there are a large number of series"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,18 +33,18 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/legend-filter"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = [
-  { month: 'Jan', city: '北京', temp: -3 },
-  { month: 'Feb', city: '北京', temp: 0 },
-  { month: 'Jan', city: '上海', temp: 5 },
-  { month: 'Feb', city: '上海', temp: 7 },
-  { month: 'Jan', city: '广州', temp: 15 },
-  { month: 'Feb', city: '广州', temp: 16 },
+  { month: 'Jan', city: 'Beijing', temp: -3 },
+  { month: 'Feb', city: 'Beijing', temp: 0 },
+  { month: 'Jan', city: 'Shanghai', temp: 5 },
+  { month: 'Feb', city: 'Shanghai', temp: 7 },
+  { month: 'Jan', city: 'Guangzhou', temp: 15 },
+  { month: 'Feb', city: 'Guangzhou', temp: 16 },
 ];
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
@@ -54,28 +53,28 @@ chart.options({
   type: 'line',
   data,
   encode: { x: 'month', y: 'temp', color: 'city' },
-  // legendFilter 默认已启用，无需显式配置
-  // 点击图例中的城市名称即可切换可见性
+  // legendFilter is enabled by default, no explicit configuration needed
+  // Click on the city name in the legend to toggle visibility
 });
 
 chart.render();
 ```
 
-## 显式启用 legendFilter
+## Explicitly Enable legendFilter
 
 ```javascript
-// 如果被禁用，可以显式重新启用
+// If disabled, it can be explicitly re-enabled
 chart.options({
   type: 'line',
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
   interaction: {
-    legendFilter: true,   // 点击图例切换显示/隐藏
+    legendFilter: true,   // Click legend to toggle show/hide
   },
 });
 ```
 
-## 同时启用 legendHighlight（悬停高亮）
+## Enable legendHighlight (Hover Highlight) Simultaneously
 
 ```javascript
 chart.options({
@@ -83,48 +82,48 @@ chart.options({
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
   interaction: {
-    legendFilter: true,    // 点击：过滤数据
-    legendHighlight: true, // 悬停：高亮系列
+    legendFilter: true,    // Click: Filter data
+    legendHighlight: true, // Hover: Highlight series
   },
 });
 ```
 
-## 禁用图例交互
+## Disable Legend Interaction
 
 ```javascript
-// 禁用图例过滤（图例仅用于展示，不可点击）
+// Disable legend filtering (legend is for display only, not clickable)
 chart.options({
   interaction: {
-    legendFilter: false,  // 禁用点击过滤
+    legendFilter: false,  // Disable click filtering
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：以为 legendFilter 需要手动配置——实际上 G2 v5 默认启用
+### Error: Mistakenly believed that legendFilter requires manual configuration - actually, it is enabled by default in G2 v5
 ```javascript
-// ℹ️  G2 v5 默认已启用 legendFilter，无需额外配置
-// 只有以下情况才需要显式配置：
+// ℹ️  legendFilter is enabled by default in G2 v5, no additional configuration is needed
+// Explicit configuration is only required in the following cases:
 
-// 1. 想要禁用时
+// 1. When you want to disable it
 chart.options({ interaction: { legendFilter: false } });
 
-// 2. 想要自定义样式或行为时
-chart.options({ interaction: { legendFilter: { /* 自定义选项 */ } } });
+// 2. When you want to customize the style or behavior
+chart.options({ interaction: { legendFilter: { /* custom options */ } } });
 ```
 
-### 错误：legend: false 时仍想要 legendFilter——图例隐藏后无法交互
+### Error: Still Wanting legendFilter When legend: false - Unable to Interact After Hiding Legend
 ```javascript
-// ❌ 隐藏了图例但还想要图例过滤——图例不可见就无法点击
+// ❌ Hiding the legend but still wanting legend filtering - cannot click when legend is invisible
 chart.options({
   legend: false,
-  interaction: { legendFilter: true },  // ❌ 没有图例，过滤无从触发
+  interaction: { legendFilter: true },  // ❌ No legend, filtering cannot be triggered
 });
 
-// ✅ legendFilter 需要可见图例配合
+// ✅ legendFilter requires a visible legend to work
 chart.options({
-  legend: { color: { position: 'top' } },  // ✅ 保留图例
+  legend: { color: { position: 'top' } },  // ✅ Retain the legend
   interaction: { legendFilter: true },
 });
 ```

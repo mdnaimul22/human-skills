@@ -1,20 +1,20 @@
 ---
 id: "g2-comp-space-layer"
-title: "G2 图层叠加（spaceLayer / view 多 mark）"
+title: "G2 Layer Overlay (spaceLayer / Multiple Marks in a View)"
 description: |
-  spaceLayer 将多个视图堆叠在同一区域（共享坐标轴），
-  实现折线图 + 柱状图叠加、折线图 + 散点图叠加等复合图表。
-  更常见的用法是在单个 view 中使用 children 数组配置多个 mark。
+  spaceLayer stacks multiple views in the same area (sharing axes),
+  enabling combinations like line chart + bar chart, line chart + scatter plot, and other composite charts.
+  A more common approach is to configure multiple marks using the children array within a single view.
 
 library: "g2"
 version: "5.x"
 category: "compositions"
 tags:
   - "spaceLayer"
-  - "图层"
-  - "叠加"
-  - "复合图表"
-  - "双轴图"
+  - "layer"
+  - "overlay"
+  - "composite chart"
+  - "dual-axis chart"
   - "view"
   - "children"
 
@@ -23,9 +23,9 @@ related:
   - "g2-comp-facet-rect"
 
 use_cases:
-  - "柱状图 + 折线图叠加（双指标对比）"
-  - "散点图 + 趋势线叠加"
-  - "折线图 + 置信区间面积叠加"
+  - "Bar Chart + Line Chart Overlay (Dual Metric Comparison)"
+  - "Scatter Plot + Trend Line Overlay"
+  - "Line Chart + Confidence Interval Area Overlay"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,7 +35,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/composition/space-layer"
 ---
 
-## 最小可运行示例（柱状图 + 折线图）
+## Minimum Viable Example (Bar Chart + Line Chart)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -50,25 +50,25 @@ const data = [
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
 
-// 方式一：type: 'view' + children（推荐，最简洁）
+// Method 1: type: 'view' + children (Recommended, most concise)
 chart.options({
   type: 'view',
   data,
   children: [
-    // 柱状图：展示销售额
+    // Bar Chart: Display sales
     {
       type: 'interval',
       encode: { x: 'month', y: 'sales', color: '#5B8FF9' },
       style: { fillOpacity: 0.8 },
-      axis: { y: { title: '销售额' } },
+      axis: { y: { title: 'Sales' } },
     },
-    // 折线图：展示增长率（共享 x 轴）
+    // Line Chart: Display growth rate (shared x-axis)
     {
       type: 'line',
       encode: { x: 'month', y: 'growth' },
-      scale: { y: { independent: true } },  // 独立 y 轴（双 Y 轴）
+      scale: { y: { independent: true } },  // Independent y-axis (dual Y-axis)
       style: { lineWidth: 2.5, stroke: '#F4664A' },
-      axis: { y: { position: 'right', title: '增长率 (%)' } },
+      axis: { y: { position: 'right', title: 'Growth Rate (%)' } },
     },
   ],
 });
@@ -76,7 +76,7 @@ chart.options({
 chart.render();
 ```
 
-## 折线图 + 散点（mark 复合）
+## Line Chart + Scatter (Mark Composite)
 
 ```javascript
 chart.options({
@@ -97,20 +97,20 @@ chart.options({
 });
 ```
 
-## 面积图 + 折线（置信区间）
+## Area Chart + Line (Confidence Interval)
 
 ```javascript
 chart.options({
   type: 'view',
   data: confidenceData,
   children: [
-    // 置信区间（面积）
+    // Confidence Interval (Area)
     {
       type: 'area',
       encode: { x: 'date', y: 'upper', y1: 'lower', color: '#5B8FF9' },
       style: { fillOpacity: 0.2 },
     },
-    // 中线（折线）
+    // Mean Line (Line)
     {
       type: 'line',
       encode: { x: 'date', y: 'mean' },
@@ -120,20 +120,20 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：双 Y 轴不设置 independent: true——两组数据被映射到同一 y 轴范围
+### Error: Dual Y-axis without setting independent: true—Both datasets are mapped to the same y-axis range
 ```javascript
-// ❌ sales（0~400）和 growth（-10~25）共用一个 y 轴，growth 曲线近乎水平
+// ❌ sales (0~400) and growth (-10~25) share a single y-axis, growth curve appears nearly horizontal
 chart.options({
   type: 'view',
   children: [
     { type: 'interval', encode: { x: 'month', y: 'sales' } },
-    { type: 'line',     encode: { x: 'month', y: 'growth' } },  // ❌ 没有独立 y 轴
+    { type: 'line',     encode: { x: 'month', y: 'growth' } },  // ❌ No independent y-axis
   ],
 });
 
-// ✅ 第二个 y 轴设置 independent: true
+// ✅ Second y-axis set with independent: true
 chart.options({
   type: 'view',
   children: [
@@ -141,8 +141,8 @@ chart.options({
     {
       type: 'line',
       encode: { x: 'month', y: 'growth' },
-      scale: { y: { independent: true } },  // ✅ 独立比例尺
-      axis: { y: { position: 'right' } },    // ✅ 放在右侧
+      scale: { y: { independent: true } },  // ✅ Independent scale
+      axis: { y: { position: 'right' } },    // ✅ Positioned on the right
     },
   ],
 });

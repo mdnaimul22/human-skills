@@ -1,16 +1,16 @@
 ---
 id: "g2-interaction-element-highlight"
-title: "G2 元素高亮交互（elementHighlight）"
+title: "G2 Element Highlight Interaction (elementHighlight)"
 description: |
-  elementHighlight 是 G2 v5 中最常用的交互之一，鼠标悬停时高亮当前元素、
-  同时可选择高亮同系列元素或联动其他视图。支持柱状图、折线图、散点图等所有 Mark 类型。
+  elementHighlight is one of the most commonly used interactions in G2 v5, highlighting the current element on mouse hover,
+  while also allowing the option to highlight elements of the same series or link to other views. It supports all Mark types, including bar charts, line charts, scatter plots, and more.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
   - "elementHighlight"
-  - "高亮"
+  - "highlight"
   - "interaction"
   - "hover"
   - "交互"
@@ -22,9 +22,9 @@ related:
   - "g2-mark-line-basic"
 
 use_cases:
-  - "柱状图悬停高亮当前柱子"
-  - "折线图悬停高亮当前系列"
-  - "散点图悬停高亮同类数据点"
+  - "Bar chart hover highlights the current bar"
+  - "Line chart hover highlights the current series"
+  - "Scatter plot hover highlights data points of the same category"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,7 +34,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/element-highlight"
 ---
 
-## 基本用法（柱状图高亮）
+## Basic Usage (Bar Chart Highlight)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -55,13 +55,13 @@ chart.options({
     { genre: 'Other',    sold: 150 },
   ],
   encode: { x: 'genre', y: 'sold' },
-  interaction: { elementHighlight: true },   // 悬停高亮当前柱子
+  interaction: { elementHighlight: true },   // Highlight the current bar on hover
 });
 
 chart.render();
 ```
 
-## 高亮背景色配置
+## Highlight Background Color Configuration
 
 ```javascript
 chart.options({
@@ -70,14 +70,14 @@ chart.options({
   encode: { x: 'genre', y: 'sold', color: 'genre' },
   interaction: {
     elementHighlight: {
-      background: true,              // 是否显示高亮背景
-      backgroundFill: '#f0f0f0',    // 背景填充色
+      background: true,              // Whether to display the highlight background
+      backgroundFill: '#f0f0f0',    // Background fill color
     },
   },
 });
 ```
 
-## 折线图：高亮当前系列
+## Line Chart: Highlight Current Series
 
 ```javascript
 chart.options({
@@ -85,42 +85,42 @@ chart.options({
   data,
   encode: { x: 'month', y: 'value', color: 'series' },
   interaction: {
-    elementHighlight: true,        // 悬停高亮当前折线
+    elementHighlight: true,        // Hover to highlight the current line
   },
 });
 ```
 
-## elementHighlightByColor：高亮同色系列
+## elementHighlightByColor: Highlight Elements of the Same Color Series
 
 ```javascript
-// 悬停时高亮所有相同颜色（系列）的元素
+// Highlight all elements of the same color (series) on hover
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [{ type: 'dodgeX' }],
   interaction: {
-    elementHighlightByColor: true,   // 高亮同系列所有柱子
+    elementHighlightByColor: true,   // Highlight all bars of the same series
   },
 });
 ```
 
-## elementHighlightByX：高亮同 x 位置的元素
+## elementHighlightByX: Highlight Elements at the Same X Position
 
 ```javascript
-// 悬停时高亮同一 x 值的所有元素（适合分组柱状图）
+// Highlight all elements with the same x value on hover (suitable for grouped bar charts)
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [{ type: 'stackY' }],
   interaction: {
-    elementHighlightByX: true,    // 高亮同组（同 x 位置）的所有元素
+    elementHighlightByX: true,    // Highlight all elements in the same group (same x position)
   },
 });
 ```
 
-## 同时启用 tooltip + 高亮
+## Enable Tooltip + Highlight Simultaneously
 
 ```javascript
 chart.options({
@@ -129,8 +129,8 @@ chart.options({
   encode: { x: 'month', y: 'revenue', color: 'product' },
   transform: [{ type: 'dodgeX' }],
   interaction: {
-    elementHighlight: true,    // 元素高亮
-    tooltip: true,             // Tooltip 提示
+    elementHighlight: true,    // Element Highlight
+    tooltip: true,             // Tooltip
   },
   tooltip: {
     title: 'month',
@@ -141,37 +141,37 @@ chart.options({
 });
 ```
 
-## 监听高亮事件
+## Listening to Highlight Events
 
 ```javascript
 chart.on('element:highlight', (event) => {
   const datum = event.data?.data;
-  console.log('高亮元素数据：', datum);
+  console.log('Highlighted element data:', datum);
 });
 
 chart.on('element:unhighlight', () => {
-  console.log('取消高亮');
+  console.log('Unhighlighted');
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：interaction 写成对象
+### Error: interaction written as an object
 ```javascript
-// ❌ 错误：interaction 必须是数组（旧版写法）
+// ❌ Error: interaction must be an array (old syntax)
 chart.options({
   interaction: { type: 'elementHighlight' },
 });
 
-// ✅ 正确（新版支持对象形式）
+// ✅ Correct (new version supports object form)
 chart.options({
   interaction: { elementHighlight: true },
 });
 ```
 
-### 错误：混淆 elementHighlight 与 elementHighlightByColor
+### Error: Confusing elementHighlight with elementHighlightByColor
 ```javascript
-// ❌ 同时使用会导致重复响应
+// ❌ Using both simultaneously causes duplicate responses
 chart.options({
   interaction: {
     elementHighlight: true,
@@ -179,26 +179,26 @@ chart.options({
   },
 });
 
-// ✅ 根据需求选择一种
-// - elementHighlight: 只高亮鼠标悬停的单个元素
-// - elementHighlightByColor: 高亮同颜色（系列）的所有元素
-// - elementHighlightByX: 高亮同 x 位置的所有元素
+// ✅ Choose one based on requirements
+// - elementHighlight: Highlights only the single element under the mouse cursor
+// - elementHighlightByColor: Highlights all elements of the same color (series)
+// - elementHighlightByX: Highlights all elements at the same x-position
 ```
 
-### 错误：在 view 的 children 中嵌套 view 导致白屏
+### Error: Nested view in view's children causes a white screen
 ```javascript
-// ❌ 错误：在 children 中嵌套 view 会导致渲染失败
+// ❌ Error: Nesting view in children leads to rendering failure
 chart.options({
   type: 'view',
   children: [
     {
-      type: 'view', // 不允许嵌套 view
+      type: 'view', // Nested view is not allowed
       children: [...]
     }
   ]
 });
 
-// ✅ 正确：使用顶层容器或单一 view 结构
+// ✅ Correct: Use a top-level container or a single view structure
 chart.options({
   type: 'view',
   children: [
@@ -208,20 +208,20 @@ chart.options({
 });
 ```
 
-### 错误：未正确设置 image 标记导致无法显示
+### Error: Image Mark Not Displayed Due to Incorrect Configuration
 ```javascript
-// ❌ 错误：缺少必要的 encode 和 style 配置
+// ❌ Error: Missing necessary encode and style configurations
 {
   type: 'image',
   data: [{ url: '...' }],
-  encode: { x: () => 0, y: () => 0 } // 不适用于居中显示
+  encode: { x: () => 0, y: () => 0 } // Not suitable for centering
 }
 
-// ✅ 正确：使用 style 设置固定位置和尺寸
+// ✅ Correct: Using style to set fixed position and size
 {
   type: 'image',
   style: {
-    x: '50%', // 居中
+    x: '50%', // Centered
     y: '50%',
     width: 80,
     height: 80

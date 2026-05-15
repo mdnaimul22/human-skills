@@ -1,20 +1,20 @@
 ---
 id: "g2-comp-repeat-matrix"
-title: "G2 重复矩阵（repeatMatrix）"
+title: "G2 Repeat Matrix (repeatMatrix)"
 description: |
-  G2 v5 repeatMatrix 组合类型将同一图表按两个维度字段重复排列成矩阵，
-  每个格子共享相同的 Mark 配置，x 轴和 y 轴分别对应一个分类字段，
-  适合展示多变量之间的两两关系（散点图矩阵）。
+  The G2 v5 repeatMatrix composition type arranges the same chart in a matrix according to two dimensional fields,
+  with each cell sharing the same Mark configuration. The x-axis and y-axis correspond to a categorical field each,
+  suitable for displaying pairwise relationships between multiple variables (scatter plot matrix).
 
 library: "g2"
 version: "5.x"
 category: "compositions"
 tags:
-  - "重复矩阵"
+  - "repeat matrix"
   - "repeatMatrix"
-  - "散点图矩阵"
-  - "多变量"
-  - "分面"
+  - "scatter plot matrix"
+  - "multi-variable"
+  - "facet"
   - "spec"
 
 related:
@@ -23,9 +23,9 @@ related:
   - "g2-core-view-composition"
 
 use_cases:
-  - "多变量两两散点图矩阵"
-  - "多维度数据的相关性探索"
-  - "对角线展示分布直方图"
+  - "Pairwise scatter plot matrix for multiple variables"
+  - "Exploring correlations in multi-dimensional data"
+  - "Diagonal display of distribution histograms"
 
 difficulty: "advanced"
 completeness: "full"
@@ -35,7 +35,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/examples/general/matrix"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -46,22 +46,22 @@ const chart = new Chart({
   height: 800,
 });
 
-// 多维度数据（每行是一个样本，多个数值字段）
+// Multi-dimensional data (each row is a sample with multiple numerical fields)
 const data = [
   { sepalLength: 5.1, sepalWidth: 3.5, petalLength: 1.4, petalWidth: 0.2, species: 'setosa' },
   { sepalLength: 4.9, sepalWidth: 3.0, petalLength: 1.4, petalWidth: 0.2, species: 'setosa' },
   { sepalLength: 7.0, sepalWidth: 3.2, petalLength: 4.7, petalWidth: 1.4, species: 'versicolor' },
   { sepalLength: 6.4, sepalWidth: 3.2, petalLength: 4.5, petalWidth: 1.5, species: 'versicolor' },
   { sepalLength: 6.3, sepalWidth: 3.3, petalLength: 6.0, petalWidth: 2.5, species: 'virginica' },
-  // ...更多数据
+  // ...more data
 ];
 
 chart.options({
   type: 'repeatMatrix',
   data,
   encode: {
-    x: ['sepalLength', 'sepalWidth', 'petalLength'],   // 列变量
-    y: ['sepalLength', 'sepalWidth', 'petalLength'],   // 行变量
+    x: ['sepalLength', 'sepalWidth', 'petalLength'],   // Column variables
+    y: ['sepalLength', 'sepalWidth', 'petalLength'],   // Row variables
   },
   children: [
     {
@@ -75,7 +75,7 @@ chart.options({
 chart.render();
 ```
 
-## 完整散点图矩阵（含对角线）
+## Complete Scatter Plot Matrix (Including Diagonal)
 
 ```javascript
 chart.options({
@@ -85,7 +85,7 @@ chart.options({
     x: ['sepalLength', 'sepalWidth', 'petalLength', 'petalWidth'],
     y: ['sepalLength', 'sepalWidth', 'petalLength', 'petalWidth'],
   },
-  // 格子间距
+  // Grid spacing
   padding: 10,
   children: [
     {
@@ -98,10 +98,10 @@ chart.options({
 });
 ```
 
-## 与 facetRect 的对比
+## Comparison with facetRect
 
 ```javascript
-// repeatMatrix：x/y encode 均为变量数组，自动排列成 n×n 矩阵
+// repeatMatrix: Both x/y encode are variable arrays, automatically arranged into an n×n matrix
 chart.options({
   type: 'repeatMatrix',
   encode: {
@@ -111,10 +111,10 @@ chart.options({
   children: [{ type: 'point', encode: { color: 'category' } }],
 });
 
-// facetRect：按单个分类字段的不同值分面（每个值一个格子，排成一行或一列）
+// facetRect: Facet by different values of a single categorical field (one panel per value, arranged in a row or column)
 chart.options({
   type: 'facetRect',
-  encode: { x: 'region' },   // 按 region 的不同值分成多列
+  encode: { x: 'region' },   // Split into multiple columns by different values of region
   children: [
     {
       type: 'interval',
@@ -124,42 +124,42 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：encode.x/y 写成单个字段而非数组
+### Error 1: encode.x/y Written as a Single Field Instead of an Array
 
 ```javascript
-// ❌ 错误：repeatMatrix 的 encode.x/y 必须是字段名数组
+// ❌ Incorrect: encode.x/y in repeatMatrix must be an array of field names
 chart.options({
   type: 'repeatMatrix',
   encode: {
-    x: 'sepalLength',   // ❌ 单个字段名
+    x: 'sepalLength',   // ❌ Single field name
     y: 'sepalWidth',
   },
 });
 
-// ✅ 正确：x/y 都必须是数组
+// ✅ Correct: Both x and y must be arrays
 chart.options({
   type: 'repeatMatrix',
   encode: {
-    x: ['sepalLength', 'sepalWidth', 'petalLength'],   // ✅ 数组
+    x: ['sepalLength', 'sepalWidth', 'petalLength'],   // ✅ Array
     y: ['sepalLength', 'sepalWidth', 'petalLength'],
   },
 });
 ```
 
-### 错误 2：将散点图矩阵与普通分面混淆
+### Error 2: Confusing Scatterplot Matrix with Regular Faceting
 
 ```javascript
-// ❌ 错误：想做散点图矩阵却用了 facetRect
+// ❌ Incorrect: Attempting to create a scatterplot matrix using facetRect
 chart.options({
   type: 'facetRect',
   encode: {
-    x: ['sepalLength', 'sepalWidth'],   // ❌ facetRect 的 encode.x 只接受单个字段
+    x: ['sepalLength', 'sepalWidth'],   // ❌ encode.x in facetRect only accepts a single field
   },
 });
 
-// ✅ 正确：多变量两两比较用 repeatMatrix
+// ✅ Correct: Use repeatMatrix for pairwise comparisons of multiple variables
 chart.options({
   type: 'repeatMatrix',
   encode: {

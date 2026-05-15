@@ -1,18 +1,18 @@
 ---
 id: "g2-interaction-element-hover-scale"
-title: "G2 悬停缩放交互（elementHoverScale）"
+title: "G2 Element Hover Scale Interaction (elementHoverScale)"
 description: |
-  elementHoverScale 在鼠标悬停时对元素进行缩放放大，提供立体感和视觉反馈。
-  适合饼图、点图等独立元素的交互增强，比普通高亮更有视觉冲击力。
+  elementHoverScale scales up elements when the mouse hovers over them, providing a three-dimensional effect and visual feedback.
+  It is suitable for enhancing interactions in charts with discrete elements like pie charts and scatter plots, offering a more visually striking effect than regular highlighting.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
   - "elementHoverScale"
-  - "悬停缩放"
+  - "hover scale"
   - "hover"
-  - "缩放"
+  - "scale"
   - "interaction"
 
 related:
@@ -20,9 +20,9 @@ related:
   - "g2-mark-arc-pie"
 
 use_cases:
-  - "饼图/环形图悬停时扇形外弹放大"
-  - "散点图悬停时数据点放大"
-  - "仪表盘卡片悬停放大效果"
+  - "Pie/Donut chart sector pop-out on hover"
+  - "Scatter plot data point enlargement on hover"
+  - "Dashboard card scale-up effect on hover"
 
 difficulty: "beginner"
 completeness: "full"
@@ -32,7 +32,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/element-hover-scale"
 ---
 
-## 最小可运行示例（饼图悬停放大）
+## Minimum Viable Example (Pie Chart Hover Zoom)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -42,68 +42,68 @@ const chart = new Chart({ container: 'container', width: 480, height: 480 });
 chart.options({
   type: 'interval',
   data: [
-    { type: '电子', value: 40 },
-    { type: '服装', value: 25 },
-    { type: '食品', value: 20 },
-    { type: '其他', value: 15 },
+    { type: 'Electronics', value: 40 },
+    { type: 'Clothing', value: 25 },
+    { type: 'Food', value: 20 },
+    { type: 'Others', value: 15 },
   ],
   encode: { y: 'value', color: 'type' },
   transform: [{ type: 'stackY' }],
   coordinate: { type: 'theta', outerRadius: 0.85 },
   interaction: {
-    elementHoverScale: true,   // 悬停时扇形外弹放大
+    elementHoverScale: true,   // Sector pops out when hovered
   },
 });
 
 chart.render();
 ```
 
-## 配置缩放比例
+## Configure Zoom Scale
 
 ```javascript
 chart.options({
   interaction: {
     elementHoverScale: {
-      scale: 1.1,    // 缩放倍数，默认约 1.1（放大 10%）
+      scale: 1.1,    // Zoom factor, default is approximately 1.1 (10% enlargement),
     },
   },
 });
 ```
 
-## 与其他交互组合
+## Combination with Other Interactions
 
 ```javascript
-// 饼图：悬停放大 + tooltip
+// Pie Chart: Hover to Zoom + Tooltip
 chart.options({
   type: 'interval',
   encode: { y: 'value', color: 'type' },
   transform: [{ type: 'stackY' }],
   coordinate: { type: 'theta' },
   interaction: {
-    elementHoverScale: true,   // 放大
-    tooltip: true,             // 同时显示 tooltip
+    elementHoverScale: true,   // Zoom
+    tooltip: true,             // Display tooltip simultaneously
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：与 elementHighlight 同时使用——视觉效果冲突
+### Error: Using elementHighlight Simultaneously—Visual Effect Conflict
 ```javascript
-// ❌ 两者同时启用，被悬停元素既放大又改透明度，效果混乱
+// ❌ Both enabled, hovered element both scales and changes opacity, resulting in a chaotic effect
 chart.options({
   interaction: {
     elementHoverScale: true,
-    elementHighlight: true,   // ❌ 与 hoverScale 冲突
+    elementHighlight: true,   // ❌ Conflicts with hoverScale
   },
 });
 
-// ✅ 只选一种悬停交互
+// ✅ Choose only one hover interaction
 chart.options({
   interaction: {
-    elementHoverScale: true,  // ✅ 缩放效果
-    // 或
-    // elementHighlight: true,  // ✅ 暗淡效果
+    elementHoverScale: true,  // ✅ Scaling effect
+    // or
+    // elementHighlight: true,  // ✅ Fading effect
   },
 });
 ```

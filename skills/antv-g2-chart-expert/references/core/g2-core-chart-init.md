@@ -1,21 +1,21 @@
 ---
 id: "g2-core-chart-init"
-title: "G2 Chart 初始化与基础配置"
+title: "G2 Chart Initialization and Basic Configuration"
 description: |
-  介绍 G2 v5 中 Chart 对象的创建方式、必填与可选参数、
-  自适应尺寸、主题配置及生命周期管理。
-  必须使用 Spec 声明式写法（chart.options({})），禁止使用链式 API。
+  Introduces the creation of Chart objects in G2 v5, required and optional parameters,
+  adaptive sizing, theme configuration, and lifecycle management.
+  Must use declarative Spec syntax (chart.options({})), and chained APIs are prohibited.
 
 library: "g2"
 version: "5.x"
 category: "core"
 tags:
   - "Chart"
-  - "初始化"
-  - "容器"
+  - "Initialization"
+  - "Container"
   - "autoFit"
-  - "主题"
-  - "生命周期"
+  - "Theme"
+  - "Lifecycle"
   - "init"
   - "spec"
   - "options"
@@ -26,7 +26,7 @@ tags:
   - "paddingBottom"
   - "margin"
   - "inset"
-  - "布局"
+  - "Layout"
 
 related:
   - "g2-core-encode-channel"
@@ -35,14 +35,14 @@ related:
   - "g2-theme-builtin"
 
 use_cases:
-  - "开始创建任何 G2 图表"
-  - "配置图表画布尺寸和容器"
-  - "设置全局主题和内边距"
+  - "Start creating any G2 chart"
+  - "Configure chart canvas size and container"
+  - "Set global theme and padding"
 
 anti_patterns:
-  - "不要在同一个容器上多次 new Chart（会产生多个画布）"
-  - "禁止使用链式 API（chart.interval().encode()...）"
-  - "禁止在同一图表中多次调用 chart.options({})（后者会完全覆盖前者）——合并配置时应合并为一次调用；叠加多个 mark 时应使用 type: 'view' + children"
+  - "Do not create multiple Chart instances on the same container (this will result in multiple canvases)"
+  - "Chained APIs are prohibited (chart.interval().encode()...)"
+  - "Do not call chart.options({}) multiple times on the same chart (later calls will completely overwrite earlier ones) — when merging configurations, combine them into a single call; when stacking multiple marks, use type: 'view' + children"
 
 difficulty: "beginner"
 completeness: "partial"
@@ -52,15 +52,15 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/chart"
 ---
 
-## 核心概念
+## Core Concepts
 
-`Chart` 是 G2 中最顶层的容器对象，负责管理画布、视图、坐标系和渲染。
+`Chart` is the top-level container object in G2, responsible for managing the canvas, views, coordinate systems, and rendering.
 
-**必须使用 Spec 模式**：通过 `chart.options({})` 一次性传入完整描述对象，结构清晰，易于序列化和动态生成。
+**Must use Spec mode**: Pass the complete description object at once via `chart.options({})`, ensuring a clear structure that is easy to serialize and dynamically generate.
 
-**禁止使用链式 API**：`chart.interval().encode()` 等链式调用禁止使用。
+**Prohibit chained APIs**: Chained calls such as `chart.interval().encode()` are prohibited.
 
-## 最小可运行示例（Spec 模式）
+## Minimum Viable Example (Spec Mode)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -72,7 +72,7 @@ const chart = new Chart({
 });
 
 chart.options({
-  type: 'line',        // Mark 类型
+  type: 'line',        // Mark type
   data: [
     { x: 1, y: 10 },
     { x: 2, y: 30 },
@@ -84,97 +84,97 @@ chart.options({
 chart.render();
 ```
 
-## 完整 Chart 容器配置项
+## Complete Chart Container Configuration Options
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
-  // ── 必填 ──────────────────────────────
-  container: 'container',        // string | HTMLElement：DOM 容器
+  // ── Required ──────────────────────────────
+  container: 'container',        // string | HTMLElement: DOM container
 
-  // ── 尺寸 ──────────────────────────────
-  width: 640,                    // 画布宽度（px），默认 640
-  height: 480,                   // 画布高度（px），默认 480
-  autoFit: true,                 // 自动适应容器尺寸（忽略 width/height）
+  // ── Dimensions ──────────────────────────────
+  width: 640,                    // Canvas width (px), default 640
+  height: 480,                   // Canvas height (px), default 480
+  autoFit: true,                 // Automatically fit container size (ignores width/height)
 
-  // ── 内边距 ────────────────────────────
-  // padding 只接受 number 或 'auto'，不支持数组形式
-  // 默认 'auto'：G2 根据坐标轴/图例等组件自动计算，无需手动设置
-  padding: 'auto',               // 'auto' | number（四边统一值）
-  // 需要分方向控制时，使用以下单独配置（优先级高于 padding）
+  // ── Padding ────────────────────────────
+  // padding only accepts number or 'auto', does not support array format
+  // Default 'auto': G2 automatically calculates based on axes/legends, no manual setting required
+  padding: 'auto',               // 'auto' | number (uniform value for all sides)
+  // Use the following individual configurations when directional control is needed (higher priority than padding)
   paddingTop: 40,
   paddingRight: 20,
   paddingBottom: 40,
   paddingLeft: 60,
-  inset: 0,                      // 数据区域内缩（防止数据点紧贴边缘）
+  inset: 0,                      // Data area inset (prevents data points from touching edges)
 
-  // ── 主题 ──────────────────────────────
+  // ── Theme ──────────────────────────────
   theme: 'classic',              // 'classic' | 'classicDark' | 'academy'
 
-  // ── 渲染器 ────────────────────────────
-  renderer: undefined,           // 默认 Canvas，可传入 SVG 渲染器
+  // ── Renderer ────────────────────────────
+  renderer: undefined,           // Default Canvas, can pass SVG renderer
 
-  // ── 像素比 ────────────────────────────
+  // ── Pixel Ratio ────────────────────────────
   devicePixelRatio: window.devicePixelRatio,
 });
 ```
 
-## Spec 模式完整结构
+## Complete Structure of Spec Mode
 
 ```javascript
 chart.options({
-  // Mark 类型
+  // Mark type
   type: 'interval',
 
-  // 数据，不同 Mark 直接存在结构上的差异，优先使用对应 mark 中的数据结构
+  // Data, different Marks have structural differences, prioritize using the data structure corresponding to the Mark
   data: [...],
 
-  // 视觉通道映射
+  // Visual channel mapping
   encode: {
     x: 'genre',
     y: 'sold',
     color: 'genre',
   },
 
-  // 数据变换
+  // Data transformation
   transform: [{ type: 'stackY' }],
 
-  // 比例尺
+  // Scale
   scale: {
     y: { domain: [0, 500] },
     color: { range: ['#1890ff', '#52c41a'] },
   },
 
-  // 坐标系
+  // Coordinate system
   coordinate: { transform: [{ type: 'transpose' }] },
 
-  // 样式
+  // Style
   style: { radius: 4 },
 
-  // 数据标签
+  // Data labels
   labels: [{ text: 'sold', position: 'outside' }],
 
   // Tooltip
-  tooltip: { title: 'genre', items: [{ field: 'sold', name: '销量' }] },
+  tooltip: { title: 'genre', items: [{ field: 'sold', name: 'Sales' }] },
 
-  // 坐标轴
+  // Axis
   axis: {
-    x: { title: '游戏类型' },
-    y: { title: '销量' },
+    x: { title: 'Game Type' },
+    y: { title: 'Sales' },
   },
 
-  // 图例
+  // Legend
   legend: {
     color: { position: 'top' },
   },
 });
 ```
 
-## Spec 模式标准写法
+## Spec Mode Standard Writing
 
 ```javascript
-// ✅ 正确：Spec 模式（唯一推荐写法）
+// ✅ Correct: Spec Mode (the only recommended way)
 chart.options({
   type: 'interval',
   data: [...],
@@ -182,7 +182,7 @@ chart.options({
   style: { radius: 4 },
 });
 
-// ❌ 禁止：链式 API 模式
+// ❌ Prohibited: Chained API Mode
 chart.interval()
   .data([...])
   .encode('x', 'genre')
@@ -191,11 +191,10 @@ chart.interval()
   .style({ radius: 4 });
 ```
 
-
-## 响应式自适应
+## Responsive Adaptation
 
 ```javascript
-// autoFit：宽度跟随容器，高度可固定
+// autoFit: Width follows the container, height can be fixed
 const chart = new Chart({
   container: 'container',
   autoFit: true,
@@ -206,69 +205,69 @@ chart.options({ type: 'line', data: [...], encode: { x: 'x', y: 'y' } });
 chart.render();
 ```
 
-## 生命周期
+## Lifecycle
 
 ```javascript
-// 初次渲染
+// Initial rendering
 chart.render();
 
-// 更新 Spec 后重新渲染（changeData 只更新数据）
+// Re-render after updating Spec (changeData only updates data)
 chart.options({ type: 'bar',  newData, encode: { x: 'x', y: 'y' } });
 chart.render();
 
-// 仅更新数据（性能更好）
+// Update data only (better performance)
 chart.changeData(newData);
 
-// 销毁
+// Destroy
 chart.destroy();
 
-// 事件监听
-chart.on('afterrender', () => console.log('渲染完成'));
+// Event listening
+chart.on('afterrender', () => console.log('Rendering complete'));
 ```
 
-## 布局模型：margin / padding / inset
+## Layout Model: margin / padding / inset
 
-G2 v5 的视图空间分为四层，从外到内：
+In G2 v5, the view space is divided into four layers, from outer to inner:
 
 ```
-View Area（width × height）
-  └─ margin（外边距，默认 16，View Area 与 Plot Area 之间的固定留白）
-      └─ Plot Area（绘制区域）
-          └─ padding（内边距，默认 auto，自动为 axis/legend/title 等组件计算空间）
-              └─ Main Area（主区域）
-                  └─ inset（呼吸范围，默认 0，防止数据点紧贴边缘）
-                      └─ Content Area（数据标记绘制区域）
+View Area (width × height)
+  └─ margin (outer margin, default 16, fixed whitespace between View Area and Plot Area)
+      └─ Plot Area (drawing area)
+          └─ padding (inner margin, default 'auto', automatically calculates space for axis/legend/title, etc.)
+              └─ Main Area (main area)
+                  └─ inset (breathing space, default 0, prevents data points from touching the edges)
+                      └─ Content Area (data mark drawing area)
 ```
 
-- **`margin`**：外边距，`number`，默认 `16`，View Area 与 Plot Area 之间的固定留白，不直接关联组件渲染
-- **`padding`**：内边距，`number | 'auto'`，默认 `'auto'`，由 G2 自动计算为 axis/legend/title 等组件预留空间；手动设置会关闭自适应
-- **`inset`**：呼吸范围，`number`，默认 `0`，散点图等防止点紧贴边缘时使用
+- **`margin`**: outer margin, `number`, default `16`, fixed whitespace between View Area and Plot Area, not directly related to component rendering
+- **`padding`**: inner margin, `number | 'auto'`, default `'auto'`, automatically calculated by G2 to reserve space for axis/legend/title, etc.; manual setting disables auto-adaptation
+- **`inset`**: breathing space, `number`, default `0`, used in scatter plots, etc., to prevent points from touching the edges
 
 ```javascript
 const chart = new Chart({
   container: 'container',
   width: 640,
   height: 480,
-  margin: 16,        // 默认，通常不需要修改
-  // padding: 'auto',  // 默认，通常不需要修改
-  paddingLeft: 80,   // 仅需要调整某侧时，单独设置
-  inset: 8,          // 散点图建议设置，防止数据点被裁剪
+  margin: 16,        // default, usually no need to modify
+  // padding: 'auto',  // default, usually no need to modify
+  paddingLeft: 80,   // set individually when only one side needs adjustment
+  inset: 8,          // recommended for scatter plots to prevent data points from being clipped
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 0：多次调用 chart.options({})
+### Error 0: Multiple Calls to `chart.options({})`
 
-`chart.options()` 是**全量替换**，不是合并。第二次调用会完全覆盖第一次，导致前面的配置全部丢失。
+`chart.options()` is a **complete replacement**, not a merge. The second call will completely overwrite the first, causing all previous configurations to be lost.
 
-**场景 A：合并配置**
+**Scenario A: Merging Configurations**
 ```javascript
-// ❌ 错误：第二次 options() 覆盖第一次，type/encode 丢失
+// ❌ Error: Second options() call overwrites the first, type/encode lost
 chart.options({ type: 'interval', encode: { x: 'genre', y: 'sold' } });
-chart.options({ style: { radius: 4 } }); // type/encode 已消失！
+chart.options({ style: { radius: 4 } }); // type/encode is gone!
 
-// ✅ 正确：所有配置合并为一次 chart.options({}) 调用
+// ✅ Correct: All configurations merged into a single chart.options({}) call
 chart.options({
   type: 'interval',
   encode: { x: 'genre', y: 'sold' },
@@ -276,9 +275,9 @@ chart.options({
 });
 ```
 
-**场景 B：叠加多个 mark（如主图 + 文字注解）**
+**Scenario B: Overlaying Multiple Marks (e.g., Main Chart + Text Annotation)**
 ```javascript
-// ❌ 错误：第二次 options() 覆盖第一次，interval 被 text 替换
+// ❌ Error: Second options() call overwrites the first, interval replaced by text
 chart.options({
   type: 'interval',
   data: [...],
@@ -286,11 +285,11 @@ chart.options({
 });
 chart.options({
   type: 'text',
-  data: [{ x: 0.5, y: 0.1, text: '注解文字' }],
+  data: [{ x: 0.5, y: 0.1, text: 'Annotation Text' }],
   encode: { x: 'x', y: 'y', text: 'text' },
-}); // interval 已消失！
+}); // interval is gone!
 
-// ✅ 正确：多 mark 叠加用 type: 'view' + children
+// ✅ Correct: Multiple marks overlaid using type: 'view' + children
 chart.options({
   type: 'view',
   children: [
@@ -301,7 +300,7 @@ chart.options({
     },
     {
       type: 'text',
-      data: [{ x: 0.5, y: 0.1, text: '注解文字' }],
+      data: [{ x: 0.5, y: 0.1, text: 'Annotation Text' }],
       encode: { x: 'x', y: 'y', text: 'text' },
       style: { fill: '#E63946', fontSize: 14, textAlign: 'center' },
     },
@@ -309,13 +308,12 @@ chart.options({
 });
 ```
 
-
-### 错误 1：container 指向不存在的 ID
+### Error 1: Container Points to a Non-Existent ID
 ```javascript
-// ❌ 错误：DOM 还未加载
+// ❌ Incorrect: DOM is not yet loaded
 const chart = new Chart({ container: 'chart' });
 
-// ✅ 正确：确保 DOM 已存在
+// ✅ Correct: Ensure DOM exists
 document.addEventListener('DOMContentLoaded', () => {
   const chart = new Chart({ container: 'chart', width: 640, height: 400 });
   chart.options({ type: 'line',  [...], encode: { x: 'x', y: 'y' } });
@@ -323,39 +321,39 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 ```
 
-### 错误 2：重复初始化同一容器
+### Error 2: Repeated Initialization of the Same Container
 ```javascript
-// ❌ 错误：会创建两个画布叠加
+// ❌ Incorrect: Creates two overlapping canvases
 const chart1 = new Chart({ container: 'container' });
 const chart2 = new Chart({ container: 'container' });
 
-// ✅ 正确：先销毁旧实例
+// ✅ Correct: Destroy the old instance first
 chart1.destroy();
 const chart2 = new Chart({ container: 'container' });
 ```
 
-### 错误 3：autoFit 与固定宽度混用
+### Error 3: Mixing autoFit with Fixed Width
 ```javascript
-// ❌ 错误：autoFit 会覆盖 width
+// ❌ Incorrect: autoFit will override width
 const chart = new Chart({ container: 'c', autoFit: true, width: 640 });
 
-// ✅ 正确：autoFit 时只设 height
+// ✅ Correct: Set only height when using autoFit
 const chart = new Chart({ container: 'c', autoFit: true, height: 400 });
 ```
 
-### 错误 4：padding 使用数组形式（CSS 简写）
+### Error 4: Using Array Form for padding (CSS Shorthand)
 ```javascript
-// ❌ 错误：padding 不支持数组，G2 v5 的类型是 number | 'auto'
+// ❌ Incorrect: padding does not support arrays, in G2 v5 the type is number | 'auto'
 const chart = new Chart({
   container: 'container',
   autoFit: true,
-  padding: [40, 30, 40, 50],   // ❌ 无效，会被忽略或引发异常
+  padding: [40, 30, 40, 50],   // ❌ Invalid, will be ignored or throw an exception
 });
 
-// ✅ 正确：四边统一
+// ✅ Correct: Uniform padding on all four sides
 const chart = new Chart({ container: 'container', padding: 40 });
 
-// ✅ 正确：分方向控制，使用 paddingTop/Right/Bottom/Left
+// ✅ Correct: Directional control using paddingTop/Right/Bottom/Left
 const chart = new Chart({
   container: 'container',
   autoFit: true,
@@ -366,13 +364,13 @@ const chart = new Chart({
 });
 ```
 
-### 错误 5：padding 设为 0 导致坐标轴被截断
+### Error 5: Setting padding to 0 causes the axis to be truncated
 ```javascript
-// ❌ 错误：padding=0 会关闭自动计算，坐标轴/图例可能显示不全
+// ❌ Incorrect: padding=0 disables automatic calculation, and the axis/legend may not display fully
 const chart = new Chart({ container: 'container', padding: 0 });
 
-// ✅ 正确：默认 'auto' 即可；只需要调整某一方向时，单独设置对应方向
+// ✅ Correct: Default to 'auto'; adjust only the required direction when needed
 const chart = new Chart({ container: 'container', paddingLeft: 80 });
-// 或保持默认自动计算
+// Or maintain default automatic calculation
 const chart = new Chart({ container: 'container' });
 ```

@@ -1,20 +1,19 @@
 ---
 id: "g2-interaction-adaptive-filter"
-title: "G2 AdaptiveFilter 自适应过滤交互"
+title: "G2 AdaptiveFilter Adaptive Filtering Interaction"
 description: |
-  adaptiveFilter 是 G2 v5 的交互，当数据量过大导致图表渲染性能下降时，
-  自动对数据进行采样或聚合，保持图表响应流畅。
-  适用于大数据量折线图、散点图等场景，结合 sliderFilter 或 scrollbarFilter 使用效果更佳。
+  adaptiveFilter is an interaction in G2 v5 that automatically samples or aggregates data when the dataset is too large, causing chart rendering performance to degrade, thus maintaining smooth chart responsiveness.
+  It is suitable for scenarios with large datasets such as line charts and scatter plots, and works best when combined with sliderFilter or scrollbarFilter.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
   - "adaptiveFilter"
-  - "自适应过滤"
-  - "大数据"
-  - "性能优化"
-  - "采样"
+  - "adaptive filtering"
+  - "big data"
+  - "performance optimization"
+  - "sampling"
   - "interaction"
 
 related:
@@ -23,9 +22,9 @@ related:
   - "g2-mark-line-basic"
 
 use_cases:
-  - "大数据量折线图自动降采样保持流畅"
-  - "滑动窗口过滤时动态调整数据密度"
-  - "散点图数据量超过阈值时自动聚合"
+  - "Automatic downsampling for large dataset line charts to maintain smoothness"
+  - "Dynamically adjusting data density during sliding window filtering"
+  - "Automatic aggregation for scatter plots when data volume exceeds threshold"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,14 +34,14 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/adaptive-filter"
 ---
 
-## 核心概念
+## Core Concepts
 
-`adaptiveFilter` 监听图表的视口变化和数据规模，当可见数据量超过像素容量时，
-自动应用采样策略（LTTB 算法等）减少渲染点数，避免过度绘制导致的性能问题。
+`adaptiveFilter` listens to the chart's viewport changes and data scale. When the visible data volume exceeds the pixel capacity,
+it automatically applies a sampling strategy (e.g., LTTB algorithm) to reduce the number of rendering points, avoiding performance issues caused by over-drawing.
 
-通常与 `sliderFilter` 或 `scrollbarFilter` 配合使用，实现"滑动时自动适配数据量"。
+It is typically used in conjunction with `sliderFilter` or `scrollbarFilter` to achieve "automatic data volume adaptation during sliding".
 
-## 基本用法
+## Basic Usage
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -51,17 +50,17 @@ const chart = new Chart({ container: 'container', width: 800, height: 400 });
 
 chart.options({
   type: 'line',
-  data: largeDataArray,   // 数千条以上数据
+  data: largeDataArray,   // Thousands of data entries
   encode: { x: 'date', y: 'value' },
   interaction: {
-    adaptiveFilter: true,   // 启用自适应过滤
+    adaptiveFilter: true,   // Enable adaptive filtering
   },
 });
 
 chart.render();
 ```
 
-## 与 sliderFilter 配合使用
+## Use with sliderFilter
 
 ```javascript
 chart.options({
@@ -77,40 +76,40 @@ chart.options({
     sliderFilter: {
       x: { labelFormatter: (v) => new Date(v).toLocaleDateString() },
     },
-    adaptiveFilter: true,   // 滑动窗口过滤后自动采样
+    adaptiveFilter: true,   // Automatically sample after sliding window filtering
   },
   slider: {
-    x: { values: [0, 0.3] },   // 初始显示前 30% 数据
+    x: { values: [0, 0.3] },   // Initially display the first 30% of data
   },
 });
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 chart.options({
   interaction: {
     adaptiveFilter: {
-      // 触发自适应采样的数据量阈值（默认 2000）
-      // 可见数据点数超过此值时开始采样
+      // Data volume threshold for triggering adaptive sampling (default 2000)
+      // Sampling begins when the number of visible data points exceeds this value
       maxPoints: 2000,
     },
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：小数据量也启用 adaptiveFilter 导致数据被意外过滤
+### Error: Enabling adaptiveFilter for small datasets causes unexpected data filtering
 ```javascript
-// ❌ 不必要：数据量小时无需启用，反而可能造成数据丢失误解
+// ❌ Unnecessary: No need to enable for small datasets, may cause data loss misinterpretation
 chart.options({
-   smallData,   // 只有 50 条数据
+   smallData,   // Only 50 data entries
   interaction: { adaptiveFilter: true },
 });
 
-// ✅ 仅在大数据量场景启用
-// adaptiveFilter 适用于 > 1000 条数据的场景
+// ✅ Enable only for large datasets
+// adaptiveFilter is suitable for scenarios with > 1000 data entries
 chart.options({
   data: massiveData,
   interaction: { adaptiveFilter: true },

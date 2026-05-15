@@ -1,11 +1,11 @@
 ---
 id: "g2-interaction-brush-xy"
-title: "G2 单轴框选（brushXHighlight / brushYHighlight / brushXFilter / brushYFilter）"
+title: "G2 Single-Axis Brush Selection (brushXHighlight / brushYHighlight / brushXFilter / brushYFilter)"
 description: |
-  单轴框选交互限制刷选只在一个方向上生效：
-  - brushXHighlight/brushYHighlight：框选高亮，不过滤数据
-  - brushXFilter/brushYFilter：框选并过滤数据（隐藏框选范围外的元素）
-  X 方向框选适合时间序列的区间选择，Y 方向框选适合数值范围筛选。
+  Single-axis brush selection interaction restricts brushing to only one direction:
+  - brushXHighlight/brushYHighlight: Brush to highlight, without filtering data
+  - brushXFilter/brushYFilter: Brush and filter data (hide elements outside the brushed range)
+  X-axis brushing is suitable for time series interval selection, while Y-axis brushing is suitable for numerical range filtering.
 
 library: "g2"
 version: "5.x"
@@ -25,9 +25,9 @@ related:
   - "g2-comp-slider"
 
 use_cases:
-  - "时间序列图表：X 方向框选时间区间高亮"
-  - "散点图：Y 方向框选数值范围筛选"
-  - "折线图区间对比标注"
+  - "Time series charts: X-axis brush selection for time interval highlighting"
+  - "Scatter plots: Y-axis brush selection for numerical range filtering"
+  - "Line chart interval comparison annotations"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -37,7 +37,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/brush-highlight"
 ---
 
-## brushXHighlight（X 方向框选高亮）
+## brushXHighlight (X-axis Box Selection Highlight)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -49,70 +49,70 @@ chart.options({
   data: timeSeriesData,
   encode: { x: 'date', y: 'value', color: 'series' },
   interaction: {
-    brushXHighlight: true,  // 横向框选，高亮选中区间的折线
+    brushXHighlight: true,  // Horizontal box selection, highlights the selected range of the line chart
   },
 });
 
 chart.render();
 ```
 
-## brushXFilter（X 方向框选过滤）
+## brushXFilter (X-axis Brush Filtering)
 
 ```javascript
-// 框选后只显示框选区间内的数据
+// After brushing, only display data within the brushed range
 chart.options({
   type: 'point',
   data: scatterData,
   encode: { x: 'date', y: 'value', color: 'category' },
   interaction: {
-    brushXFilter: true,   // 框选 X 范围，过滤范围外的点
+    brushXFilter: true,   // Brush X-axis range, filter out points outside the range
   },
 });
 ```
 
-## brushYFilter（Y 方向框选过滤）
+## brushYFilter (Y-axis Box Selection Filter)
 
 ```javascript
-// 框选数值范围，只显示 Y 值在选中区间内的数据
+// Box select value range, only display data with Y values within the selected interval
 chart.options({
   type: 'point',
   data,
   encode: { x: 'x', y: 'y', color: 'category', size: 'value' },
   interaction: {
-    brushYFilter: true,   // 纵向框选，过滤 Y 范围外的点
+    brushYFilter: true,   // Vertical box selection, filter out points outside the Y range
   },
 });
 ```
 
-## 四种框选交互对比
+## Comparison of Four Types of Box Selection Interactions
 
 ```javascript
-// brushHighlight   → 二维框选，高亮（不过滤）
-// brushFilter      → 二维框选，过滤数据
-// brushXHighlight  → X 方向框选，高亮
-// brushXFilter     → X 方向框选，过滤
-// brushYHighlight  → Y 方向框选，高亮
-// brushYFilter     → Y 方向框选，过滤
+// brushHighlight   → 2D box selection, highlight (no filter)
+// brushFilter      → 2D box selection, filter data
+// brushXHighlight  → X-axis box selection, highlight
+// brushXFilter     → X-axis box selection, filter
+// brushYHighlight  → Y-axis box selection, highlight
+// brushYFilter     → Y-axis box selection, filter
 
-// 在散点图上同时支持高亮（单 X 轴框选）
+// Supports highlighting on scatter plots (single X-axis box selection)
 chart.options({
   interaction: {
     brushXHighlight: {
-      series: true,        // 是否高亮同系列其他点
+      series: true,        // Whether to highlight other points in the same series
     },
   },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：brushXFilter 与 brushFilter 效果相同的误解
+### Error: Misunderstanding that brushXFilter and brushFilter have the same effect
 ```javascript
-// brushFilter 可以在 X/Y 两个方向同时框选一个矩形区域
-chart.options({ interaction: { brushFilter: true } });  // 二维矩形框选
+// brushFilter can select a rectangular area in both X and Y directions simultaneously
+chart.options({ interaction: { brushFilter: true } });  // 2D rectangular selection
 
-// brushXFilter 只能在 X 方向拖拽，形成一个竖直条带
-chart.options({ interaction: { brushXFilter: true } }); // 仅 X 轴方向
+// brushXFilter can only be dragged in the X direction, forming a vertical strip
+chart.options({ interaction: { brushXFilter: true } }); // X-axis direction only
 
-// 使用场景不同：时间序列用 brushXFilter 更直观
+// Different use cases: brushXFilter is more intuitive for time series
 ```

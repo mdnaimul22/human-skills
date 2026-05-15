@@ -1,22 +1,22 @@
 ---
 id: "g2-coord-radial"
-title: "G2 径向坐标系（radial）"
+title: "G2 Radial Coordinate System (radial)"
 description: |
-  radial（径向坐标系）是 G2 v5 中极坐标系的一种变体，
-  将转置后的直角坐标映射为圆形布局：x 轴映射为半径，y 轴映射为角度。
-  与 polar（极坐标）相反（polar 是 x→角度，y→半径），
-  radial 适合绘制径向柱状图（向心柱状图）、径向折线图等。
+  radial (radial coordinate system) is a variant of the polar coordinate system in G2 v5,
+  which maps the transposed Cartesian coordinates to a circular layout: the x-axis is mapped to the radius, and the y-axis is mapped to the angle.
+  Contrary to polar (where x→angle, y→radius),
+  radial is suitable for rendering radial bar charts (centripetal bar charts), radial line charts, and more.
 
 library: "g2"
 version: "5.x"
 category: "coordinates"
 tags:
   - "radial"
-  - "径向坐标"
-  - "向心柱状图"
-  - "径向图"
+  - "radial coordinate"
+  - "centripetal bar chart"
+  - "radial chart"
   - "coordinate"
-  - "圆形布局"
+  - "circular layout"
 
 related:
   - "g2-coord-polar"
@@ -24,9 +24,9 @@ related:
   - "g2-mark-interval-basic"
 
 use_cases:
-  - "径向柱状图（向外辐射的柱状图）"
-  - "环形条形图（各类别从圆心向外延伸）"
-  - "时间序列的圆形布局展示"
+  - "Radial bar chart (outward radiating bar chart)"
+  - "Circular bar chart (categories extending outward from the center)"
+  - "Circular layout display of time series"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,16 +36,16 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/coordinate/radial"
 ---
 
-## 核心概念
+## Core Concepts
 
-径向坐标系（radial）与极坐标系（polar）的映射关系相反：
+The mapping relationship between the radial coordinate system and the polar coordinate system is opposite:
 
-| 坐标系 | x 通道 | y 通道 | 典型图表 |
-|--------|--------|--------|----------|
-| `polar` | → 角度（圆周方向） | → 半径（距中心距离） | 玫瑰图 |
-| `radial` | → 半径（距中心距离） | → 角度（圆周方向） | 径向柱状图 |
+| Coordinate System | x Channel | y Channel | Typical Chart |
+|-------------------|-----------|-----------|---------------|
+| `polar`           | → Angle (Circumferential Direction) | → Radius (Distance from Center) | Rose Chart |
+| `radial`          | → Radius (Distance from Center) | → Angle (Circumferential Direction) | Radial Bar Chart |
 
-## 最小可运行示例（径向柱状图）
+## Minimum Viable Example (Radial Bar Chart)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -63,8 +63,8 @@ chart.options({
     { month: 'Jun', value: 85 },
   ],
   encode: {
-    x: 'month',    // x 通道 → 角度（圆周位置）
-    y: 'value',    // y 通道 → 半径（柱子长度）
+    x: 'month',    // x channel → angle (circumferential position)
+    y: 'value',    // y channel → radius (bar length)
     color: 'month',
   },
   coordinate: { type: 'radial', innerRadius: 0.1, outerRadius: 0.8 },
@@ -73,21 +73,21 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 chart.options({
   coordinate: {
     type: 'radial',
-    innerRadius: 0.1,            // 内环半径（0=从中心开始），默认 0
-    outerRadius: 1,              // 外环半径比例，默认 1
-    startAngle: -Math.PI / 2,   // 起始角度，默认 -π/2（12点钟方向）
-    endAngle: (Math.PI * 3) / 2, // 结束角度，默认 3π/2（顺时针一圈）
+    innerRadius: 0.1,            // Inner radius (0 = from center), default 0
+    outerRadius: 1,              // Outer radius ratio, default 1
+    startAngle: -Math.PI / 2,    // Start angle, default -π/2 (12 o'clock direction)
+    endAngle: (Math.PI * 3) / 2, // End angle, default 3π/2 (clockwise full circle)
   },
 });
 ```
 
-## 带内孔的径向柱状图（环形）
+## Radial Column Chart with Inner Hole (Ring)
 
 ```javascript
 chart.options({
@@ -96,55 +96,55 @@ chart.options({
   encode: { x: 'category', y: 'value', color: 'category' },
   coordinate: {
     type: 'radial',
-    innerRadius: 0.3,   // 留出中心空间
+    innerRadius: 0.3,   // Reserve space in the center
     outerRadius: 0.9,
   },
   style: { fillOpacity: 0.85 },
 });
 ```
 
-## 与 polar 坐标系的区别
+## Difference from Polar Coordinate System
 
 ```javascript
-// polar：x→角度，y→半径（玫瑰图效果）
+// polar: x→angle, y→radius (rose chart effect)
 chart.options({
   type: 'interval',
   data,
-  encode: { x: 'month', y: 'value' },  // x 为分类（角度），y 为数值（半径）
+  encode: { x: 'month', y: 'value' },  // x is categorical (angle), y is numerical (radius)
   coordinate: { type: 'polar' },
 });
 
-// radial：x→半径，y→角度（径向柱状图效果）
+// radial: x→radius, y→angle (radial bar chart effect)
 chart.options({
   type: 'interval',
   data,
-  encode: { x: 'month', y: 'value' },  // x 为分类（角度），y 为数值（半径）
+  encode: { x: 'month', y: 'value' },  // x is categorical (radius), y is numerical (angle)
   coordinate: { type: 'radial' },
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：encode x/y 与预期方向相反
+### Error: Encoding of x/y is opposite to the expected direction
 ```javascript
-// ❌ 错误：radial 中 x 应该是角度方向（类别），y 是半径方向（数值）
+// ❌ Error: In radial coordinates, x should represent the angular direction (category), and y should represent the radial direction (value)
 chart.options({
   type: 'interval',
-  encode: { x: 'value', y: 'month' },  // ❌ 数值作为角度，月份作为半径
+  encode: { x: 'value', y: 'month' },  // ❌ Value as angle, month as radius
   coordinate: { type: 'radial' },
 });
 
-// ✅ 正确：将分类字段作为 x（映射为角度），数值字段作为 y（映射为半径）
+// ✅ Correct: Use the categorical field as x (mapped to angle) and the numerical field as y (mapped to radius)
 chart.options({
   type: 'interval',
-  encode: { x: 'month', y: 'value' },  // ✅ 月份→角度，数值→半径
+  encode: { x: 'month', y: 'value' },  // ✅ Month→angle, value→radius
   coordinate: { type: 'radial' },
 });
 ```
 
-### 错误：中心图片未正确显示
+### Error: Centered Image Not Displayed Correctly
 ```javascript
-// ❌ 错误：使用固定坐标 (0,0) 显示图片无法保证其位于中心
+// ❌ Error: Using fixed coordinates (0,0) to display the image does not guarantee it will be centered
 chart.options({
   type: 'image',
   data: [{ url: 'https://example.com/logo.png' }],
@@ -159,37 +159,37 @@ chart.options({
   }
 });
 
-// ✅ 正确：使用 style.x 和 style.y 设置相对位置，确保图片居中
+// ✅ Correct: Use style.x and style.y to set relative positions, ensuring the image is centered
 chart.options({
   type: 'image',
   data: [{ src: 'https://example.com/logo.png' }],
   style: {
-    x: '50%',      // 相对于容器宽度的 50%
-    y: '50%',      // 相对于容器高度的 50%
+    x: '50%',      // 50% relative to the container width
+    y: '50%',      // 50% relative to the container height
     width: 80,
     height: 80
   }
 });
 ```
 
-### 错误：多个视图叠加导致坐标系冲突
+### Error: Multiple View Overlays Causing Coordinate System Conflicts
 ```javascript
-// ❌ 错误：在 view 中重复定义 coordinate 导致渲染异常
+// ❌ Error: Redefining coordinate in view leads to rendering anomalies
 chart.options({
   type: 'view',
   children: [
     {
       type: 'interval',
-      coordinate: { type: 'radial' }  // 子视图中定义坐标系可能导致冲突
+      coordinate: { type: 'radial' }  // Defining coordinate in child view may cause conflicts
     },
     {
       type: 'image',
-      coordinate: { type: 'radial' }  // 图片标记不需要坐标系
+      coordinate: { type: 'radial' }  // Image markers do not require a coordinate system
     }
   ]
 });
 
-// ✅ 正确：在顶层 view 定义 coordinate，子元素继承即可
+// ✅ Correct: Define coordinate in the top-level view, and child elements inherit it
 chart.options({
   type: 'view',
   coordinate: { type: 'radial', innerRadius: 0.3 },

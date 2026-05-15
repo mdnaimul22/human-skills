@@ -1,10 +1,10 @@
 ---
 id: "g2-concept-chart-selection"
-title: "G2 图表类型选择指南"
+title: "G2 Chart Type Selection Guide"
 description: |
-  根据数据特征和分析目的选择合适的图表类型。
-  覆盖比较、趋势、占比、分布、关系六大场景，
-  对应 G2 的具体实现方式，帮助避免"用错图表"的常见错误。
+  Choose the appropriate chart type based on data characteristics and analysis objectives.
+  Covers six major scenarios: comparison, trend, proportion, distribution, and relationship,
+  with corresponding G2 implementation methods to help avoid the common mistake of "using the wrong chart."
 
 library: "g2"
 version: "5.x"
@@ -13,11 +13,11 @@ tags:
   - "图表选择"
   - "chart selection"
   - "可视化设计"
-  - "柱状图"
-  - "折线图"
-  - "饼图"
-  - "散点图"
-  - "决策"
+  - "bar chart"
+  - "line chart"
+  - "pie chart"
+  - "scatter plot"
+  - "decision-making"
 
 related:
   - "g2-concept-visual-channels"
@@ -27,9 +27,9 @@ related:
   - "g2-mark-point-scatter"
 
 use_cases:
-  - "根据用户需求选择正确的图表类型"
-  - "避免在不合适场景使用饼图或折线图"
-  - "理解何时用 G2 图表 vs G6 图分析"
+  - "Select the correct chart type based on user requirements"
+  - "Avoid using pie charts or line charts in inappropriate scenarios"
+  - "Understand when to use G2 charts vs G6 graph analysis"
 
 difficulty: "beginner"
 completeness: "full"
@@ -38,53 +38,53 @@ updated: "2025-03-01"
 author: "antv-team"
 ---
 
-## 核心决策树
+## Core Decision Tree
 
 ```
-你的数据和目的是什么？
+What is your data and purpose?
 
-├── 比较类别间的大小 → 柱状图 / 条形图
-├── 展示随时间的变化趋势 → 折线图 / 面积图
-├── 展示部分与整体的占比 → 饼图 / 环形图 / 堆叠柱状图
-├── 展示两个变量的相关性 → 散点图 / 气泡图
-├── 展示数据的分布规律 → 直方图 / 箱线图 / 小提琴图
-└── 展示节点间的关系网络 → G6 图（force/dagre/tree 布局）
+├── Compare sizes between categories → Bar Chart / Column Chart
+├── Show trends over time → Line Chart / Area Chart
+├── Display proportions of parts to the whole → Pie Chart / Ring Chart / Stacked Bar Chart
+├── Show correlation between two variables → Scatter Plot / Bubble Chart
+├── Display distribution patterns of data → Histogram / Box Plot / Violin Plot
+└── Show relationship networks between nodes → G6 Graph (force/dagre/tree layout)
 ```
 
-## 场景一：比较（Comparison）
+## Scenario One: Comparison
 
-**目的**：比较不同类别/时间点的数值大小
+**Objective**: Compare the magnitude of values across different categories/time points.
 
-| 数据特征 | 推荐图表 | G2 实现 |
+| Data Characteristics | Recommended Chart | G2 Implementation |
 |---------|---------|---------|
-| 类别 ≤ 10，竖向标签可读 | **柱状图** | `type: 'interval'` |
-| 类别名称较长 / 类别多 | **条形图**（水平） | `type: 'interval'` + `coordinate: { transform: [{ type: 'transpose' }] }` |
-| 多个系列并排比较 | **分组柱状图** | `transform: [{ type: 'dodgeX' }]` |
-| 展示子类在总量中的贡献 | **堆叠柱状图** | `transform: [{ type: 'stackY' }]` |
+| Categories ≤ 10, vertical labels readable | **Bar Chart** | `type: 'interval'` |
+| Long category names / Many categories | **Horizontal Bar Chart** | `type: 'interval'` + `coordinate: { transform: [{ type: 'transpose' }] }` |
+| Multiple series side-by-side comparison | **Grouped Bar Chart** | `transform: [{ type: 'dodgeX' }]` |
+| Show subclass contribution to total | **Stacked Bar Chart** | `transform: [{ type: 'stackY' }]` |
 
 ```javascript
-// 柱状图（最常见的比较图）
+// Bar Chart (most common comparison chart)
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'category', y: 'value', color: 'category' },
-  transform: [{ type: 'sortX', by: 'y', reverse: true }],  // 按值降序
+  transform: [{ type: 'sortX', by: 'y', reverse: true }],  // Sort by value in descending order
 });
 ```
 
-## 场景二：趋势（Trend）
+## Scenario Two: Trend
 
-**目的**：展示数值随时间或序列的变化
+**Purpose**: Display the change of numerical values over time or sequence.
 
-| 数据特征 | 推荐图表 | G2 实现 |
+| Data Characteristics | Recommended Chart | G2 Implementation |
 |---------|---------|---------|
-| 单一指标时间趋势 | **折线图** | `type: 'line'` |
-| 多指标对比趋势 | **多系列折线图** | `type: 'line'` + `encode.color: 'series'` |
-| 强调面积/累积量 | **面积图** | `type: 'area'` |
-| 展示数量随时间增减 | **面积图**（堆叠）| `type: 'area'` + `transform: [{ type: 'stackY' }]` |
+| Single Metric Time Trend | **Line Chart** | `type: 'line'` |
+| Multi-Metric Comparative Trend | **Multi-Series Line Chart** | `type: 'line'` + `encode.color: 'series'` |
+| Emphasize Area/Cumulative Amount | **Area Chart** | `type: 'area'` |
+| Show Quantity Increase/Decrease Over Time | **Stacked Area Chart** | `type: 'area'` + `transform: [{ type: 'stackY' }]` |
 
 ```javascript
-// 多系列折线图
+// Multi-Series Line Chart
 chart.options({
   type: 'line',
   data,
@@ -93,19 +93,19 @@ chart.options({
 });
 ```
 
-## 场景三：占比（Part-to-Whole）
+## Scenario Three: Part-to-Whole Ratio
 
-**目的**：展示部分占整体的比例
+**Objective**: Display the proportion of a part to the whole.
 
-| 数据特征 | 推荐图表 | G2 实现 | 注意 |
+| Data Characteristics | Recommended Chart | G2 Implementation | Notes |
 |---------|---------|---------|------|
-| 类别 ≤ 5，强调比例 | **饼图** | `interval` + `theta` 坐标 | 类别多时难区分 |
-| 需要中心留白 | **环形图** | 饼图 + `innerRadius` | 可在中心放总数 |
-| 类别多，强调排名 | **百分比堆叠柱状图** | `stackY` + `normalizeY` | |
-| 多层级占比 | **旭日图** | 暂用 `sunburst` 插件 | |
+| Categories ≤ 5, emphasis on proportion | **Pie Chart** | `interval` + `theta` coordinate | Difficult to distinguish between categories when there are many |
+| Requires center whitespace | **Donut Chart** | Pie Chart + `innerRadius` | Can display total in the center |
+| Many categories, emphasis on ranking | **Percentage Stacked Bar Chart** | `stackY` + `normalizeY` | |
+| Multi-level proportions | **Sunburst Chart** | Temporarily use `sunburst` plugin | |
 
 ```javascript
-// 饼图（类别 ≤ 5 时）
+// Pie Chart (Categories ≤ 5)
 chart.options({
   type: 'interval',
   data,
@@ -120,44 +120,44 @@ chart.options({
 });
 ```
 
-## 场景四：相关性（Correlation）
+## Scenario Four: Correlation
 
-**目的**：探索两个或多个变量之间的关系
+**Objective**: Explore the relationship between two or more variables
 
-| 数据特征 | 推荐图表 | G2 实现 |
+| Data Characteristics | Recommended Chart | G2 Implementation |
 |---------|---------|---------|
-| 两个数值变量 | **散点图** | `type: 'point'` |
-| 两个数值 + 第三数值维度 | **气泡图** | `point` + `encode.size` |
-| 多变量热力矩阵 | **热力图** | `type: 'cell'` |
-| 展示分布+相关 | **散点图 + 趋势线** | `view` + `point` + `line` |
+| Two numerical variables | **Scatter Plot** | `type: 'point'` |
+| Two numerical + third numerical dimension | **Bubble Chart** | `point` + `encode.size` |
+| Multi-variable heat matrix | **Heatmap** | `type: 'cell'` |
+| Show distribution + correlation | **Scatter Plot + Trend Line** | `view` + `point` + `line` |
 
 ```javascript
-// 气泡图
+// Bubble Chart
 chart.options({
   type: 'point',
   data,
   encode: {
     x: 'income',
     y: 'happiness',
-    size: 'population',  // 第三数值维度
+    size: 'population',  // Third numerical dimension
     color: 'region',
   },
   scale: { size: { range: [4, 30] } },
 });
 ```
 
-## 场景五：分布（Distribution）
+## Scenario Five: Distribution
 
-**目的**：了解数据的分布规律
+**Objective**: Understand the distribution pattern of data
 
-| 数据特征 | 推荐图表 | G2 实现 |
-|---------|---------|---------|
-| 单变量分布 | **直方图** | `type: 'interval'` + `transform: [{ type: 'binX' }]` |
-| 多组分布比较 | **箱线图** | `type: 'boxplot'` |
-| 展示中位数/四分位 | **箱线图** | `type: 'boxplot'` |
+| Data Feature | Recommended Chart | G2 Implementation |
+|--------------||-------------------|-------------------|
+| Single Variable Distribution | **Histogram** | `type: 'interval'` + `transform: [{ type: 'binX' }]` |
+| Multi-group Distribution Comparison | **Box Plot** | `type: 'boxplot'` |
+| Display Median/Quartiles | **Box Plot** | `type: 'boxplot'` |
 
 ```javascript
-// 直方图
+// Histogram
 chart.options({
   type: 'interval',
   data,
@@ -166,19 +166,19 @@ chart.options({
 });
 ```
 
-## 场景六：关系网络（Relationship）
+## Scenario Six: Relationship Network
 
-**目的**：展示实体间的连接关系、层次结构、流向
+**Objective**: Display connections, hierarchical structures, and flows between entities.
 
-| 数据特征 | 推荐库 | G6 布局 |
+| Data Characteristics | Recommended Library | G6 Layout |
 |---------|--------|---------|
-| 无层级的网络关系 | **G6** | `force`（力导向） |
-| 有方向的流程/依赖 | **G6** | `dagre`（有向无环图） |
-| 单根树形层级 | **G6** | `compactBox`（树形）|
-| 对等环状关系 | **G6** | `circular`（环形） |
+| Non-hierarchical network relationships | **G6** | `force` (Force-directed) |
+| Directed processes/dependencies | **G6** | `dagre` (Directed Acyclic Graph) |
+| Single-root tree hierarchy | **G6** | `compactBox` (Tree) |
+| Peer-to-peer circular relationships | **G6** | `circular` (Circular) |
 
 ```javascript
-// G6 知识图谱（力导向）
+// G6 Knowledge Graph (Force-directed)
 const graph = new Graph({
   layout: { type: 'force', preventOverlap: true },
   data: { nodes, edges },
@@ -186,45 +186,46 @@ const graph = new Graph({
 await graph.render();
 ```
 
-## 快速选择口诀
+## Quick Chart Selection Mnemonics
 
 ```
-比较用柱状，趋势用折线，
-占比用饼图，关系用散点，
-分布用直方，层级用树形，
-网络用 G6，复杂用组合。
+Compare with columns, trends with lines,
+Proportions with pies, relationships with scatter,
+Distributions with histograms, hierarchies with trees,
+Networks with G6, complexity with combinations.
 ```
 
-## 常见错误
+## Common Errors
 
-### 错误 1：用折线图表示无时间顺序的分类数据
+### Error 1: Using Line Charts for Categorical Data Without Temporal Order
 
 ```javascript
-// ❌ 误用：城市名称没有顺序，不应该用折线（会误导"趋势"感知）
+// ❌ Misuse: City names have no inherent order, line charts imply a "trend" which is misleading
 chart.options({
   type: 'line',
-   [{ city: '北京', gdp: 3.6 }, { city: '上海', gdp: 4.3 }],
-  encode: { x: 'city', y: 'gdp' },   // ❌ 城市是无序分类，不是时序
+  data: [{ city: 'Beijing', gdp: 3.6 }, { city: 'Shanghai', gdp: 4.3 }],
+  encode: { x: 'city', y: 'gdp' },   // ❌ Cities are unordered categories, not temporal data
 });
 
-// ✅ 正确：分类比较用柱状图
+// ✅ Correct: Use bar charts for categorical comparisons
 chart.options({
   type: 'interval',
+  data: [{ city: 'Beijing', gdp: 3.6 }, { city: 'Shanghai', gdp: 4.3 }],
   encode: { x: 'city', y: 'gdp' },
 });
 ```
 
-### 错误 2：用饼图展示 8+ 个类别
+### Error 2: Using Pie Charts for 8+ Categories
 
 ```javascript
-// ❌ 误用：10个类别的饼图，各扇区难以区分
+// ❌ Incorrect: Pie chart with 10 categories, sectors are hard to distinguish
 chart.options({
   type: 'interval',
   coordinate: { type: 'theta' },
-  // 如果有 10 个国家/地区...很难读取
+  // If there are 10 countries/regions... difficult to read
 });
 
-// ✅ 正确：超过 5 类改用排序条形图
+// ✅ Correct: Use sorted bar chart for more than 5 categories
 chart.options({
   type: 'interval',
   encode: { x: 'country', y: 'value' },

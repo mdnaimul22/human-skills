@@ -1,10 +1,10 @@
 ---
 id: "g2-interaction-fisheye"
-title: "G2 鱼眼交互（fisheye interaction）"
+title: "G2 Fisheye Interaction"
 description: |
-  fisheye 交互让鱼眼效果的焦点跟随鼠标移动，实现动态的焦点+上下文放大。
-  需要配合 fisheye 坐标系使用，或独立启用（会自动在 coordinate.transform 中添加 fisheye）。
-  鼠标移出图表区域时自动恢复正常视图。
+  The fisheye interaction allows the focal point of the fisheye effect to follow the mouse movement, achieving dynamic focus + context magnification.
+  It requires the use of the fisheye coordinate system or can be enabled independently (automatically adds fisheye to coordinate.transform).
+  Automatically reverts to the normal view when the mouse leaves the chart area.
 
 library: "g2"
 version: "5.x"
@@ -21,9 +21,9 @@ related:
   - "g2-mark-point-scatter"
 
 use_cases:
-  - "密集散点图的动态局部放大"
-  - "大量数据点的交互式细节查看"
-  - "时间序列密集区域的探索"
+  - "Dynamic local magnification of dense scatter plots"
+  - "Interactive detail viewing of large data points"
+  - "Exploration of dense areas in time series"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -33,7 +33,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/fisheye"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -51,16 +51,16 @@ chart.options({
   data,
   encode: { x: 'x', y: 'y', color: 'group', shape: 'point' },
   scale: { color: { type: 'ordinal' } },
-  coordinate: { transform: [ { type: 'fisheye' } ] },  // 配合鱼眼坐标系
+  coordinate: { transform: [ { type: 'fisheye' } ] },  // Combined with fisheye coordinate system
   interaction: {
-    fisheye: true,   // 焦点跟随鼠标
+    fisheye: true,   // Focus follows mouse
   },
 });
 
 chart.render();
 ```
 
-## 配置鱼眼强度
+## Configure Fisheye Intensity
 
 ```javascript
 chart.options({
@@ -70,15 +70,15 @@ chart.options({
   coordinate: { transform: [ { type: 'fisheye' } ] },
   interaction: {
     fisheye: {
-      wait: 30,       // 节流等待时间（毫秒），默认 30，值越小越灵敏
-      leading: true,  // 节流 leading edge 执行，默认 undefined
-      trailing: false, // 节流 trailing edge 执行，默认 false
+      wait: 30,       // Throttle wait time (milliseconds), default 30, smaller values are more sensitive
+      leading: true,  // Throttle leading edge execution, default undefined
+      trailing: false, // Throttle trailing edge execution, default false
     },
   },
 });
 ```
 
-## 仅 X 方向鱼眼（折线图密集区域探索）
+## Fisheye Effect Only in X Direction (Exploring Dense Areas in Line Charts)
 
 ```javascript
 chart.options({
@@ -89,8 +89,8 @@ chart.options({
     transform: [
       {
         type: 'fisheye',
-        distortionX: 4,   // X 方向放大强度
-        distortionY: 0,   // Y 方向不变形
+        distortionX: 4,   // Magnification intensity in X direction
+        distortionY: 0,   // No distortion in Y direction
       }
     ]
   },
@@ -98,18 +98,18 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：只设置 interaction.fisheye 没有设置坐标系——鱼眼效果不生效
+### Error: Only `interaction.fisheye` is set without setting the coordinate system—fisheye effect does not take effect
 ```javascript
-// ⚠️  interaction.fisheye 会自动添加 fisheye coordinate.transform
-// 但如果 coordinate 有其他设置，可能需要显式配置
+// ⚠️  interaction.fisheye will automatically add fisheye coordinate.transform
+// but if coordinate has other settings, explicit configuration may be required
 chart.options({
-  coordinate: { type: 'cartesian' },  // ⚠️  明确设置了笛卡尔坐标，fisheye 会追加变换
-  interaction: { fisheye: true },     // 会自动在 coordinate.transform 中插入 fisheye
+  coordinate: { type: 'cartesian' },  // ⚠️  Explicitly set Cartesian coordinates, fisheye will append transformation
+  interaction: { fisheye: true },     // Will automatically insert fisheye in coordinate.transform
 });
 
-// ✅ 最简洁的写法：直接指定 fisheye 坐标系
+// ✅ Most concise approach: Directly specify fisheye coordinate system
 chart.options({
   coordinate: { transform: [ { type: 'fisheye' } ] },
   interaction: { fisheye: true },

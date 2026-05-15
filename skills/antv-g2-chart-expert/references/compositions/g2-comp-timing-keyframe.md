@@ -1,21 +1,21 @@
 ---
 id: "g2-comp-timing-keyframe"
-title: "G2 timingKeyframe 关键帧动画组合"
+title: "G2 timingKeyframe Keyframe Animation Composition"
 description: |
-  timingKeyframe 是 G2 v5 的组合类型，将多个图表视图按时序播放形成关键帧动画。
-  各子视图依次渲染并在相邻帧之间自动插值过渡，实现数据故事讲述效果。
-  参见 g2-animation-keyframe 获取详细配置和示例。
+  timingKeyframe is a composition type in G2 v5 that plays multiple chart views in sequence to form keyframe animations.
+  Each sub-view is rendered in turn, with automatic interpolation transitions between adjacent frames, achieving a data storytelling effect.
+  Refer to g2-animation-keyframe for detailed configuration and examples.
 
 library: "g2"
 version: "5.x"
 category: "compositions"
 tags:
   - "timingKeyframe"
-  - "关键帧动画"
-  - "数据故事"
+  - "keyframe animation"
+  - "data storytelling"
   - "morphing"
   - "composition"
-  - "动画组合"
+  - "animation composition"
 
 related:
   - "g2-animation-keyframe"
@@ -23,26 +23,24 @@ related:
   - "g2-core-view-composition"
 
 use_cases:
-  - "图表类型间的形变动画（柱状图→折线图）"
-  - "数据随时间演变的动画展示"
-  - "可视化数据故事讲述"
+  - "Morphing animations between chart types (bar chart → line chart)"
+  - "Animated display of data evolution over time"
+  - "Visual data storytelling"
 
 difficulty: "advanced"
 completeness: "full"
 created: "2025-03-24"
 updated: "2025-03-24"
-author: "antv-team"
-source_url: "https://g2.antv.antgroup.com/manual/core/composition/timing-keyframe"
----
+author: "ant
 
-## 核心概念
+## Core Concepts
 
-`timingKeyframe` 是 composition 类型，每个 child 是一个"关键帧"视图。
-系统自动在相邻关键帧之间进行数据和图形的插值过渡动画。
+`timingKeyframe` is a composition type, where each child is a "keyframe" view.
+The system automatically interpolates data and graphics between adjacent keyframes to create transition animations.
 
-详细配置和示例请参见 [g2-animation-keyframe](./g2-animation-keyframe.md)。
+For detailed configuration and examples, please refer to [g2-animation-keyframe](./g2-animation-keyframe.md).
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -77,15 +75,15 @@ chart.options({
 chart.render();
 ```
 
-## 配置项速查
+## Configuration Quick Reference
 
 ```javascript
 chart.options({
   type: 'timingKeyframe',
-  duration: 1000,                  // 关键帧间过渡时长（毫秒）
-  iterationCount: 1,               // 循环次数（'infinite' = 无限）
+  duration: 1000,                  // Transition duration between keyframes (milliseconds)
+  iterationCount: 1,               // Number of iterations ('infinite' = infinite)
   direction: 'normal',             // 'normal' | 'reverse' | 'alternate' | 'reverse-alternate'
-  easing: 'ease-in-out-sine',     // 缓动函数
-  children: [/* 各关键帧视图 */],
+  easing: 'ease-in-out-sine',      // Easing function
+  children: [/* Keyframe views */],
 });
 ```

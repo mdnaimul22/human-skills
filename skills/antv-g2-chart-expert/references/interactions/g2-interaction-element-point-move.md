@@ -1,20 +1,20 @@
 ---
 id: "g2-interaction-element-point-move"
-title: "G2 ElementPointMove 数据点拖拽编辑"
+title: "G2 ElementPointMove Data Point Drag-and-Drop Editing"
 description: |
-  elementPointMove 是 G2 v5 的交互，允许用户通过鼠标拖拽图表中的数据点来修改数值。
-  支持折线图、柱状图、饼图、面积图等，拖拽后触发 'element-point:moved' 事件回调新数据。
-  适用于可视化数据编辑、交互式预算调整、预测值手动修正等场景。
+  elementPointMove is an interaction in G2 v5 that allows users to modify data values by dragging data points on the chart using the mouse.
+  It supports line charts, bar charts, pie charts, area charts, etc., and triggers the 'element-point:moved' event callback with new data after dragging.
+  It is suitable for scenarios such as data visualization editing, interactive budget adjustments, and manual correction of predicted values.
 
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
   - "elementPointMove"
-  - "数据编辑"
-  - "拖拽"
-  - "可交互"
-  - "数据修改"
+  - "data editing"
+  - "drag-and-drop"
+  - "interactive"
+  - "data modification"
   - "interaction"
 
 related:
@@ -23,9 +23,9 @@ related:
   - "g2-interaction-element-select"
 
 use_cases:
-  - "预算分配可视化编辑（拖拽柱体调整数值）"
-  - "折线图手动调整预测趋势"
-  - "饼图交互式调整各类别占比"
+  - "Visual budget allocation editing (drag bars to adjust values)"
+  - "Manual adjustment of predicted trends in line charts"
+  - "Interactive adjustment of category proportions in pie charts"
 
 difficulty: "advanced"
 completeness: "full"
@@ -35,17 +35,17 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/element-point-move"
 ---
 
-## 核心概念
+## Core Concepts
 
-`elementPointMove` 在图表元素上渲染可拖拽的控制点，鼠标按下拖拽时实时更新数据并重绘图表。
-拖拽结束后触发 `element-point:moved` 事件，回调参数包含修改后的数据。
+`elementPointMove` renders draggable control points on chart elements, updating data and redrawing the chart in real-time as the mouse is pressed and dragged.
+After the drag ends, the `element-point:moved` event is triggered, with the callback parameter containing the modified data.
 
-支持的 Mark 类型：
-- `line`（折线图）：每个数据点均可拖拽
-- `area`（面积图）：每个顶点可拖拽
-- `interval`（柱状图/条形图/饼图）：柱顶点可拖拽
+Supported Mark Types:
+- `line` (Line Chart): Each data point is draggable
+- `area` (Area Chart): Each vertex is draggable
+- `interval` (Bar Chart/Column Chart/Pie Chart): Bar vertices are draggable
 
-## 折线图数据点拖拽
+## Line Chart Data Point Dragging
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -65,21 +65,21 @@ chart.options({
   data,
   encode: { x: 'month', y: 'value' },
   interaction: {
-    elementPointMove: true,   // 启用数据点拖拽
+    elementPointMove: true,   // Enable data point dragging
   },
 });
 
-// 监听数据变更事件
+// Listen for data change events
 chart.on('element-point:moved', (event) => {
   const { changeData, data } = event.data;
-  console.log('修改后的单条数据:', changeData);
-  console.log('完整新数据:', data);
+  console.log('Modified single data:', changeData);
+  console.log('Complete new data:', data);
 });
 
 chart.render();
 ```
 
-## 柱状图数据点拖拽
+## Bar Chart Data Point Dragging
 
 ```javascript
 chart.options({
@@ -88,28 +88,28 @@ chart.options({
   encode: { x: 'department', y: 'budget', color: 'department' },
   interaction: {
     elementPointMove: {
-      precision: 0,   // 拖拽提示精度（小数位数），默认 2
+      precision: 0,   // Dragging tooltip precision (decimal places), default is 2
     },
   },
 });
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 chart.options({
   interaction: {
     elementPointMove: {
-      precision: 2,             // 实时提示标签的小数位数，默认 2
-      selection: [],            // 初始选中的数据点索引 [elementIndex, pointIndex]
-      // 控制点样式
-      pointR: 6,                // 控制点半径，默认 6
-      pointStroke: '#888',      // 控制点描边颜色
-      pointActiveStroke: '#f5f5f5',  // 激活时描边颜色
-      // 辅助线样式
+      precision: 2,             // Decimal places for real-time tooltip, default 2
+      selection: [],            // Initial selected data point indices [elementIndex, pointIndex]
+      // Control point style
+      pointR: 6,                // Control point radius, default 6
+      pointStroke: '#888',      // Control point stroke color
+      pointActiveStroke: '#f5f5f5',  // Active stroke color
+      // Auxiliary line style
       pathStroke: '#888',
       pathLineDash: [3, 4],
-      // 提示标签样式
+      // Tooltip label style
       labelFontSize: 12,
       labelFill: '#888',
     },
@@ -117,34 +117,34 @@ chart.options({
 });
 ```
 
-## 监听事件
+## Event Listening
 
 ```javascript
-// 拖拽结束事件（数据已更新）
-chart.on('element-point:moved', ({  { changeData, data } }) => {
-  // changeData: 被修改的单条记录 { month: 'Feb', value: 75 }
-  // data: 修改后的完整数据数组
+// Drag-end event (data has been updated)
+chart.on('element-point:moved', ({ changeData, data }) => {
+  // changeData: The modified single record { month: 'Feb', value: 75 }
+  // data: The complete updated data array
   syncToServer(changeData);
 });
 
-// 选中控制点事件
-chart.on('element-point:select', ({  { selection } }) => {
+// Control point selection event
+chart.on('element-point:select', ({ selection }) => {
   // selection: [elementIndex, pointIndex]
-  console.log('选中点索引:', selection);
+  console.log('Selected point index:', selection);
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：在 scatter 点图上使用（不支持）
+### Error: Using (Unsupported) on Scatter Plot
 ```javascript
-// ❌ point mark 不支持 elementPointMove
+// ❌ point mark does not support elementPointMove
 chart.options({
   type: 'point',
-  interaction: { elementPointMove: true },  // 无效
+  interaction: { elementPointMove: true },  // Invalid
 });
 
-// ✅ 支持的类型：line、area、interval
+// ✅ Supported types: line, area, interval
 chart.options({
   type: 'line',
   interaction: { elementPointMove: true },  // ✅

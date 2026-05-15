@@ -1,18 +1,18 @@
 ---
 id: "g2-interaction-element-select"
-title: "G2 元素选中交互（elementSelect）"
+title: "G2 Element Select Interaction (elementSelect)"
 description: |
-  G2 v5 元素选中交互通过 interaction: [{ type: 'elementSelect' }] 启用，
-  点击图形元素切换 selected 状态，支持 selected/active 状态样式自定义，
-  可配合 elementSelectByX/elementSelectByColor 实现批量选中。
+  G2 v5 element select interaction is enabled via interaction: [{ type: 'elementSelect' }].
+  Clicking on a graphical element toggles its selected state, supporting custom styles for selected/active states.
+  It can be combined with elementSelectByX/elementSelectByColor to achieve batch selection.
 library: "g2"
 version: "5.x"
 category: "interactions"
 tags:
-  - "选中"
+  - "select"
   - "elementSelect"
-  - "交互"
-  - "状态"
+  - "interaction"
+  - "state"
   - "click"
   - "spec"
 
@@ -22,9 +22,9 @@ related:
   - "g2-interaction-tooltip"
 
 use_cases:
-  - "点击柱子高亮选中，其他柱变灰"
-  - "点击图例项过滤图表"
-  - "联动外部数据面板显示选中详情"
+  - "Click on a bar to highlight it, while other bars turn gray"
+  - "Click on a legend item to filter the chart"
+  - "Link with an external data panel to display selected details"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,9 +34,9 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction"
 ---
 
-## 基本用法（柱状图点击选中）
+## Basic Usage (Bar Chart Click Selection)
 
-点击柱子切换 selected 状态，再次点击取消选中：
+Click on a bar to toggle its selected state, and click again to deselect:
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -58,16 +58,16 @@ chart.options({
   ],
   encode: { x: 'genre', y: 'sold', color: 'genre' },
   interaction: [
-    { type: 'elementSelect' },   // 点击元素切换 selected 状态
+    { type: 'elementSelect' },   // Click element to toggle selected state
   ],
 });
 
 chart.render();
 ```
 
-## elementSelectByX（按 x 值批量选中）
+## elementSelectByX (Batch Selection by X Value)
 
-适合分组柱状图或堆叠图，点击任意一组元素时选中同一 x 位置的所有元素：
+Suitable for grouped bar charts or stacked charts, selects all elements at the same x position when any group of elements is clicked:
 
 ```javascript
 chart.options({
@@ -83,14 +83,14 @@ chart.options({
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [{ type: 'dodgeX' }],
   interaction: [
-    { type: 'elementSelectByX' },   // 点击任意柱子，选中同 x 位置的所有柱子
+    { type: 'elementSelectByX' },   // Click any bar to select all bars at the same x position
   ],
 });
 ```
 
-## 自定义选中状态样式
+## Customizing Selected State Styles
 
-通过 `state.selected` 指定选中时的视觉样式，未选中的元素样式会相应降低：
+Use `state.selected` to specify the visual style when an element is selected. The style of unselected elements will be correspondingly reduced:
 
 ```javascript
 chart.options({
@@ -105,13 +105,13 @@ chart.options({
   encode: { x: 'genre', y: 'sold', color: 'genre' },
   state: {
     selected: {
-      fill: '#1890ff',          // 选中时填充色
-      fillOpacity: 1,           // 选中时不透明度
-      stroke: '#003a8c',        // 选中时描边色
-      lineWidth: 2,             // 选中时描边宽度
+      fill: '#1890ff',          // Fill color when selected
+      fillOpacity: 1,           // Opacity when selected
+      stroke: '#003a8c',        // Stroke color when selected
+      lineWidth: 2,             // Stroke width when selected
     },
     unselected: {
-      fillOpacity: 0.3,         // 未选中元素半透明
+      fillOpacity: 0.3,         // Semi-transparent for unselected elements
     },
   },
   interaction: [
@@ -120,9 +120,9 @@ chart.options({
 });
 ```
 
-## 组合使用 highlight + select
+## Combined Use of Highlight + Select
 
-鼠标悬停触发高亮，点击触发选中，两者可同时启用：
+Mouse hover triggers highlight, and click triggers selection. Both can be enabled simultaneously:
 
 ```javascript
 chart.options({
@@ -137,11 +137,11 @@ chart.options({
   encode: { x: 'genre', y: 'sold', color: 'genre' },
   state: {
     active: {
-      fill: '#69c0ff',        // 悬停高亮色（active 状态）
+      fill: '#69c0ff',        // Hover highlight color (active state)
       fillOpacity: 0.9,
     },
     selected: {
-      fill: '#1890ff',        // 点击选中色（selected 状态）
+      fill: '#1890ff',        // Click selection color (selected state)
       fillOpacity: 1,
       stroke: '#003a8c',
       lineWidth: 2,
@@ -151,72 +151,72 @@ chart.options({
     },
   },
   interaction: [
-    { type: 'elementHighlight' },   // 悬停高亮（active 状态）
-    { type: 'elementSelect' },      // 点击选中（selected 状态）
+    { type: 'elementHighlight' },   // Hover highlight (active state)
+    { type: 'elementSelect' },      // Click selection (selected state)
     { type: 'tooltip' },
   ],
 });
 ```
 
-## 监听选中事件
+## Listening to Selection Events
 
 ```javascript
-// 监听选中和取消选中事件
+// Listen to selection and unselection events
 chart.on('element:select', (event) => {
   const datum = event.data?.data;
-  console.log('选中元素数据：', datum);
-  // 可在此处联动外部面板、更新状态等
+  console.log('Selected element data:', datum);
+  // Can interact with external panels, update states, etc., here
 });
 
 chart.on('element:unselect', (event) => {
-  console.log('取消选中');
+  console.log('Unselected');
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：interaction 写成对象而非数组
+### Error: `interaction` is written as an object instead of an array
 
 ```javascript
-// ❌ 错误：interaction 必须是数组
+// ❌ Error: `interaction` must be an array
 chart.options({
   interaction: { type: 'elementSelect' },
 });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({
   interaction: [{ type: 'elementSelect' }],
 });
 ```
 
-### 错误：使用了不存在的交互名称
+### Error: Using a Non-existent Interaction Name
 
 ```javascript
-// ❌ 错误：G2 中没有 'elementClick' 这个交互类型
+// ❌ Error: 'elementClick' interaction type does not exist in G2
 chart.options({
   interaction: [{ type: 'elementClick' }],
 });
 
-// ✅ 正确的名称
+// ✅ Correct Name
 chart.options({
-  interaction: [{ type: 'elementSelect' }],         // 单个元素选中
-  // 或
-  // interaction: [{ type: 'elementSelectByX' }],   // 按 x 值批量选中
-  // interaction: [{ type: 'elementSelectByColor' }], // 按颜色批量选中
+  interaction: [{ type: 'elementSelect' }],         // Select a single element
+  // or
+  // interaction: [{ type: 'elementSelectByX' }],   // Batch select by x value
+  // interaction: [{ type: 'elementSelectByColor' }], // Batch select by color
 });
 ```
 
-### 错误：选中样式不生效（state 位置错误）
+### Error: Selected Style Not Applied (Incorrect State Position)
 
 ```javascript
-// ❌ 错误：state 不能嵌套在 style 里
+// ❌ Incorrect: state should not be nested inside style
 chart.options({
   style: {
     state: { selected: { fill: '#1890ff' } },
   },
 });
 
-// ✅ 正确：state 与 encode、style 并列，在 Mark 配置的顶层
+// ✅ Correct: state should be at the top level of Mark configuration, alongside encode and style
 chart.options({
   type: 'interval',
   data,
@@ -228,10 +228,10 @@ chart.options({
 });
 ```
 
-### 错误：同时使用 elementSelect 和 elementSelectByX 导致冲突
+### Error: Conflict caused by using both elementSelect and elementSelectByX
 
 ```javascript
-// ❌ 两者同时启用时行为不可预期，点击会触发双重选中逻辑
+// ❌ Unpredictable behavior when both are enabled, click triggers double selection logic
 chart.options({
   interaction: [
     { type: 'elementSelect' },
@@ -239,10 +239,10 @@ chart.options({
   ],
 });
 
-// ✅ 根据需求选择一种
-// - elementSelect: 只选中点击的单个元素
-// - elementSelectByX: 选中同一 x 值的所有元素（适合分组/堆叠图）
-// - elementSelectByColor: 选中同一颜色（系列）的所有元素
+// ✅ Choose one based on requirements
+// - elementSelect: Select only the clicked single element
+// - elementSelectByX: Select all elements with the same x value (suitable for grouped/stacked charts)
+// - elementSelectByColor: Select all elements with the same color (series)
 chart.options({
   interaction: [{ type: 'elementSelectByX' }],
 });
