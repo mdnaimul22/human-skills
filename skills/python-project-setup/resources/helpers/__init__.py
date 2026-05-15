@@ -15,7 +15,7 @@ from .exceptions import (
 )
 from .date_utils import get_now_iso, parse_iso, format_iso, relative_time
 from .retry import retry_on_failure, retry_async_on_failure
-from .network import get_pids_on_port, kill_process_on_port
+from .port_utils import get_pids_on_port, kill_process_on_port
 
 __all__ = [
     # Exceptions
