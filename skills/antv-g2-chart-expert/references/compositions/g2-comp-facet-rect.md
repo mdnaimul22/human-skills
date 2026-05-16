@@ -10,11 +10,10 @@ version: "5.x"
 category: "compositions"
 tags:
   - "facetRect"
-  - "分面"
   - "facet"
-  - "小多图"
+  - "small multiples"
   - "trellis"
-  - "网格布局"
+  - "grid layout"
   - "spec"
 
 related:
