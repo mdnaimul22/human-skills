@@ -14,6 +14,7 @@ tags:
   - "溢出"
   - "隐藏"
   - "overflow"
+  - "hide"
 
 related:
   - "g2-label-transform-overlap-hide"
@@ -35,7 +36,6 @@ updated: "2025-03-26"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
-
 ## Core Concepts
 
 The OverflowHide label transformation detects whether a label exceeds the boundaries of its parent element:

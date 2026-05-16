@@ -9,10 +9,8 @@ library: "g2"
 version: "5.x"
 category: "label-transform"
 tags:
-  - "标签"
   - "label"
-  - "重叠"
-  - "避让"
+  - "overlap"
   - "dodge"
 
 related:
@@ -35,7 +33,6 @@ updated: "2025-03-26"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
-
 ## Core Concepts
 
 The OverlapDodgeY label transform adjusts label positions in the Y direction using an iterative algorithm:

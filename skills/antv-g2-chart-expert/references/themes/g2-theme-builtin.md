@@ -10,9 +10,9 @@ version: "5.x"
 category: "themes"
 tags:
   - "theme"
-  - "主题"
+  - "theme"
   - "dark"
-  - "深色主题"
+  - "dark theme"
   - "classicDark"
   - "spec"
 
@@ -32,7 +32,6 @@ updated: "2025-03-01"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/theme"
 ---
-
 ## Built-in Theme List
 
 | Theme Name | Description |

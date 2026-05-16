@@ -10,15 +10,14 @@ library: "g2"
 version: "5.x"
 category: "concepts"
 tags:
-  - "视觉通道"
   - "visual channels"
   - "encode"
-  - "感知效率"
-  - "数据映射"
-  - "可视化设计"
-  - "颜色"
-  - "大小"
-  - "位置"
+  - "perceptual efficiency"
+  - "data mapping"
+  - "visualization design"
+  - "color"
+  - "size"
+  - "position"
 
 related:
   - "g2-core-encode-channel"
@@ -35,7 +34,6 @@ created: "2024-01-01"
 updated: "2025-03-01"
 author: "antv-team"
 ---
-
 ## Core Concepts
 
 Visual Channel is the medium that maps **data attributes** to **visual attributes**. In G2, this mapping is achieved through the `encode` field:

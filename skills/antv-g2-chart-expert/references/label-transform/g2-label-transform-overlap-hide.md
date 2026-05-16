@@ -9,10 +9,10 @@ library: "g2"
 version: "5.x"
 category: "label-transform"
 tags:
-  - "标签"
+  - "tag"
   - "label"
-  - "重叠"
-  - "隐藏"
+  - "overlap"
+  - "hide"
   - "overlap"
 
 related:
@@ -35,7 +35,6 @@ updated: "2025-03-26"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
-
 ## Core Concepts
 
 The OverlapHide label transform hides some labels by detecting label overlaps:

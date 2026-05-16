@@ -194,7 +194,7 @@ chart.options({
   type: 'geoView',
   children: [{
     type: 'geoPath',
-     [{ province: '广东', lng: 113, lat: 23 }],  // ❌ Regular latitude and longitude data is not acceptable
+     [{ province: 'Guangdong', lng: 113, lat: 23 }],  // ❌ Regular latitude and longitude data is not acceptable
   }],
 });
 

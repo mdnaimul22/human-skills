@@ -10,9 +10,8 @@ library: "g2"
 version: "5.x"
 category: "concepts"
 tags:
-  - "图表选择"
   - "chart selection"
-  - "可视化设计"
+  - "visualization design"
   - "bar chart"
   - "line chart"
   - "pie chart"
@@ -37,7 +36,6 @@ created: "2024-01-01"
 updated: "2025-03-01"
 author: "antv-team"
 ---
-
 ## Core Decision Tree
 
 ```

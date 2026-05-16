@@ -129,7 +129,6 @@ chart.options({
   },
 });
 ```
-
 ## Enable Using the Interaction Method
 
 You can also enable `sliderFilter` through the `interaction` array. Both methods produce the same effect:

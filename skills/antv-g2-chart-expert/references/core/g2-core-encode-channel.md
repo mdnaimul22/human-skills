@@ -10,9 +10,8 @@ version: "5.x"
 category: "core"
 tags:
   - "encode"
-  - "通道"
   - "channel"
-  - "数据映射"
+  - "data mapping"
   - "x"
   - "y"
   - "color"
@@ -38,7 +37,6 @@ updated: "2025-03-01"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/encode"
 ---
-
 ## Core Concepts
 
 **Channel** is an abstraction of graphical attributes. In Spec mode, `encode` is a field of the `options` object,

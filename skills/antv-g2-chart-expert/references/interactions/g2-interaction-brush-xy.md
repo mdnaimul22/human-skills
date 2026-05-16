@@ -15,8 +15,8 @@ tags:
   - "brushYHighlight"
   - "brushXFilter"
   - "brushYFilter"
-  - "单轴框选"
-  - "刷选"
+  - "single-axis brush selection"
+  - "brush selection"
   - "interaction"
 
 related:
@@ -36,7 +36,6 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/interaction/brush-highlight"
 ---
-
 ## brushXHighlight (X-axis Box Selection Highlight)
 
 ```javascript

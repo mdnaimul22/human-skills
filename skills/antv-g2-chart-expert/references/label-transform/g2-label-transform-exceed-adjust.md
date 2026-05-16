@@ -14,6 +14,7 @@ tags:
   - "超出"
   - "调整"
   - "exceed"
+  - "adjust"
 
 related:
   - "g2-label-transform-overflow-hide"
@@ -35,7 +36,6 @@ updated: "2025-03-26"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
-
 ## Core Concepts
 
 ExceedAdjust label transformation detects whether labels exceed the visible area:

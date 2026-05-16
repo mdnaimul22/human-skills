@@ -9,11 +9,9 @@ library: "g2"
 version: "5.x"
 category: "label-transform"
 tags:
-  - "标签"
   - "label"
-  - "对比度"
-  - "颜色"
   - "contrast"
+  - "color"
 
 related:
   - "g2-label-transform-overflow-hide"
@@ -34,7 +32,6 @@ updated: "2025-03-26"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
-
 ## Core Concepts
 
 The ContrastReverse label transformation automatically adjusts label colors based on the element's color:

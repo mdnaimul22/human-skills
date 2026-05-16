@@ -11,10 +11,8 @@ version: "5.x"
 category: "interactions"
 tags:
   - "Tooltip"
-  - "提示框"
   - "tooltip"
-  - "交互"
-  - "悬停"
+  - "interaction"
   - "hover"
   - "spec"
 
@@ -34,7 +32,6 @@ updated: "2025-03-01"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/component/tooltip"
 ---
-
 ## Core Concepts
 
 In G2 Spec mode, Tooltip has two configuration locations:

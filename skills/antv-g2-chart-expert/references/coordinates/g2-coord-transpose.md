@@ -35,7 +35,6 @@ updated: "2025-03-01"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/coordinate/transpose"
 ---
-
 ## Minimum Viable Example (Bar Chart to Column Chart)
 
 ```javascript

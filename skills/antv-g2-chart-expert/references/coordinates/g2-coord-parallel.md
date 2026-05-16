@@ -11,7 +11,6 @@ version: "5.x"
 category: "coordinates"
 tags:
   - "parallel"
-  - "平行坐标"
   - "parallel coordinates"
   - "multidimensional"
   - "high-dimensional data"
@@ -33,7 +32,6 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/coordinate/parallel"
 ---
-
 ## Minimum Viable Example
 
 ```javascript

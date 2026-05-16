@@ -10,13 +10,11 @@ library: "g2"
 version: "5.x"
 category: "concepts"
 tags:
-  - "配色"
   - "color"
-  - "色板"
-  - "顺序色阶"
-  - "发散色阶"
-  - "分类色板"
   - "palette"
+  - "sequential color scale"
+  - "diverging color scale"
+  - "categorical palette"
   - "scale.color"
 
 related:
@@ -35,7 +33,6 @@ created: "2024-01-01"
 updated: "2025-03-01"
 author: "antv-team"
 ---
-
 ## Three Color Usage Modes
 
 ### 1. Categorical Palette

@@ -181,7 +181,6 @@ The [sales revenue](metric_name) reached [¥1.5 million](metric_value) this quar
 ```
 Revenue grew by [15.3%](ratio_value, origin=0.153, assessment="positive") compared to last year.
 ```
-
 ### Entity Types Reference
 
 Use these entity types to annotate different kinds of data:

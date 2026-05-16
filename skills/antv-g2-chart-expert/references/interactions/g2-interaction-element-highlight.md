@@ -13,7 +13,7 @@ tags:
   - "highlight"
   - "interaction"
   - "hover"
-  - "交互"
+  - "interaction"
   - "spec"
 
 related:
@@ -140,7 +140,6 @@ chart.options({
   },
 });
 ```
-
 ## Listening to Highlight Events
 
 ```javascript

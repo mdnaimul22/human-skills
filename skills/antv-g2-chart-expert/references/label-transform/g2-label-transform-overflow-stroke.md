@@ -9,10 +9,9 @@ library: "g2"
 version: "5.x"
 category: "label-transform"
 tags:
-  - "标签"
+  - "tag"
   - "label"
-  - "溢出"
-  - "描边"
+  - "overflow"
   - "stroke"
 
 related:
@@ -35,7 +34,6 @@ updated: "2025-03-26"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/label"
 ---
-
 ## Core Concepts
 
 The OverflowStroke label transformation detects whether a label exceeds the element boundaries:
