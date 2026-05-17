@@ -181,6 +181,7 @@ The [sales revenue](metric_name) reached [¥1.5 million](metric_value) this quar
 ```
 Revenue grew by [15.3%](ratio_value, origin=0.153, assessment="positive") compared to last year.
 ```
+
 ### Entity Types Reference
 
 Use these entity types to annotate different kinds of data:
@@ -250,17 +251,17 @@ Additional context or breakdown data for chart rendering. Required for certain e
 
 **Required for these entity types:**
 
-- `rank`: Array of numbers representing ranking data
-  - Example: `[top performer](rank, detail=[5, 8, 12, 15, 20])`
-- `difference`: Array of numbers showing comparative values
-  - Example: `[gap narrowing](difference, detail=[100, 80, 60, 40])`
-- `anomaly`: Array of numbers highlighting outliers
-  - Example: `[unusual spike](anomaly, detail=[10, 12, 11, 45, 13])`
-- `association`: Array of {x, y} objects for correlation data
-  - Example: `[strong correlation](association, detail=[{"x":1,"y":2},{"x":2,"y":4},{"x":3,"y":6}])`
-- `distribution`: Array of numbers showing data spread
-  - Example: `[uneven distribution](distribution, detail=[5, 15, 45, 25, 10])`
-- `seasonality`: Object with data array and optional range
+- `rank`: Array of numbers representing ranking data  
+  - Example: `[top performer](rank, detail=[5, 8, 12, 15, 20])`  
+- `difference`: Array of numbers showing comparative values  
+  - Example: `[gap narrowing](difference, detail=[100, 80, 60, 40])`  
+- `anomaly`: Array of numbers highlighting outliers  
+  - Example: `[unusual spike](anomaly, detail=[10, 12, 11, 45, 13])`  
+- `association`: Array of {x, y} objects for correlation data  
+  - Example: `[strong correlation](association, detail=[{"x":1,"y":2},{"x":2,"y":4},{"x":3,"y":6}])`  
+- `distribution`: Array of numbers showing data spread  
+  - Example: `[uneven distribution](distribution, detail=[5, 15, 45, 25, 10])`  
+- `seasonality`: Object with data array and optional range  
   - Example: `[Q4 peak](seasonality, detail={"data":[10,12,15,30],"range":[0,40]})`
 
 **Optional for other types:**
