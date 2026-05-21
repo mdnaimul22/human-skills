@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import uvicorn
 
-from src.config import Settings, setup_logger, shutdown as shutdown_logger, PROJECT_ROOT
+from src.config import Settings, setup_logger, shutdown_logger, PROJECT_ROOT
 from src.helpers import (
     register_cors,
     register_middleware,

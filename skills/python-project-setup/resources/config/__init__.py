@@ -11,7 +11,7 @@ from .files import (
 )
 from .dotenv import load_dotenv, set_value, get_value, remove_value
 from .settings import Settings
-from .logger import setup_logger, shutdown
+from .logger import setup_logger, shutdown_logger
 
 # Auto-load environment variables on import
 load_dotenv()
@@ -40,5 +40,5 @@ __all__ = [
     "remove_value",
     "Settings",
     "setup_logger",
-    "shutdown",
+    "shutdown_logger",
 ]
