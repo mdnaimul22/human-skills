@@ -30,6 +30,7 @@ Usage:
     result = await run_with_retry(some_async_fn, arg1, arg2, max_attempts=3)
 """
 
+import logging
 from typing import TypeVar, Callable, Any
 
 from tenacity import (
@@ -77,7 +78,6 @@ def retry_on_failure(
         "reraise": True,
     }
     if logger:
-        import logging
         kwargs["before_sleep"] = before_sleep_log(logger, logging.WARNING)
 
     return retry(**kwargs)
@@ -109,7 +109,6 @@ def retry_async_on_failure(
         "reraise": True,
     }
     if logger:
-        import logging
         kwargs["before_sleep"] = before_sleep_log(logger, logging.WARNING)
 
     return retry(**kwargs)

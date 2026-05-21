@@ -23,6 +23,72 @@ Every Python project shares identical foundational layers. This skill pre-builds
 
 ---
 
+## Bootstrap
+> *"One command. Full project skeleton."*
+
+Initializes a complete, production-ready project from scratch — directories, config layer, helpers layer, rules, and a FastAPI-ready `main.py` entry point.
+
+### How to use?
+```bash
+human-skills '{
+    "tool_name": "bootstrap",
+    "tool_args": {
+        "destination": "/path/to/new_project"
+    }
+}'
+```
+
+### What bootstrap creates
+
+```
+project_root/
+├── main.py                  ← FastAPI entry point with auto-kill, health check, lifespan
+├── .env                     ← Environment variables (empty, fill from .env.example)
+├── .env.example             ← Template for required env vars
+├── .gitignore               ← Pre-configured for Python projects
+├── README.md
+├── LICENSE                  ← MIT License
+├── docs/
+├── logs/
+├── tests/
+│   └── __init__.py
+├── .agents/rules/           ← Coding standards synced from human-skills
+│   ├── coding-standards.md
+│   ├── architecture-patterns.md
+│   ├── maintenance-testing.md
+│   ├── config-path-rules.md
+│   ├── config-usage-rules.md
+│   ├── project-config-example.md
+│   └── project-tree-example.md
+└── src/
+    ├── __init__.py
+    ├── requirements.txt
+    ├── config/              ← [setconfig] Settings, env, file I/O, logger
+    ├── helpers/             ← [sethelpers] Exceptions, retry, middleware, DB
+    ├── core/
+    ├── providers/
+    ├── schema/
+    ├── services/
+    └── routers/
+```
+
+### main.py Skeleton Features
+
+The generated `main.py` includes:
+
+1. **FastAPI app** with lifespan (startup/shutdown hooks)
+2. **Logger** initialized via `setup_logger`
+3. **CORS, Middleware, Error Handlers** auto-registered from `src/helpers`
+4. **Database** hooks (commented out, uncomment when needed)
+5. **Health check** endpoint at `/health`
+6. **Auto-kill switch** — `kill_pid(port)` frees the port before starting
+
+> [!CAUTION]
+> **`kill_pid(port)` কখনোই main.py থেকে রিমুভ করবেন না!**
+> এই ফাংশনটি সার্ভার স্টার্ট হওয়ার আগে পোর্টে আটকে থাকা পুরনো প্রসেস অটোমেটিক কিল করে দেয়। এটি না থাকলে `Address already in use` এরর আসবে এবং সার্ভার স্টার্ট হবে না। এজেন্ট যদি main.py রিফ্যাক্টর করে, তবুও এই কলটি অবশ্যই রাখতে হবে।
+
+---
+
 ## SetConfig
 > *"One command. Zero boilerplate."*
 
@@ -110,9 +176,16 @@ Scaffolds battle-tested helper modules that every Python project needs. These ar
 ### Helpers Structure
 ```
 helpers/
-├── exceptions.py   ← AppError → NotFoundError, ValidationError, ExternalServiceError, PermissionDeniedError, ConflictError, RateLimitError
-├── date_utils.py   ← ISO 8601, timezone-aware parsing, human-readable relative time
-└── retry.py        ← Tenacity-based exponential backoff with jitter (sync + async)
+├── __init__.py       ← Single export point with graceful degradation
+├── exceptions.py     ← AppError → NotFoundError, ValidationError, etc.
+├── date_utils.py     ← ISO 8601, timezone-aware parsing, relative time
+├── retry.py          ← Tenacity-based exponential backoff (sync + async)
+├── port_utils.py     ← Auto-kill orphaned server processes
+├── cors.py           ← [Optional] CORS configuration (requires FastAPI)
+├── middleware.py     ← [Optional] Request logging middleware (requires FastAPI)
+├── error_handlers.py ← [Optional] Global exception handlers (requires FastAPI)
+├── connection.py     ← [Optional] Async database engine (requires SQLAlchemy)
+└── repository.py     ← [Optional] Base CRUD repository (requires SQLAlchemy)
 ```
 
 ### What each file provides
@@ -154,6 +227,36 @@ async def fetch_data():
         resp.raise_for_status()
 ```
 
+**`port_utils.py`** — Auto-kill orphaned server processes:
+```python
+from src.helpers.port_utils import kill_pid, get_pid
+
+kill_pid(8000)   # Kills any process holding port 8000
+get_pid(8000)    # Returns list of PIDs on port 8000
+```
+
+### Graceful Degradation Pattern
+
+`helpers/__init__.py` uses a **graceful degradation** pattern for optional dependencies. This means:
+
+- **Core helpers** (exceptions, date_utils, retry, port_utils) — **always available**, no extra dependencies needed
+- **Web helpers** (cors, middleware, error_handlers) — **only available if FastAPI is installed**
+- **DB helpers** (connection, repository) — **only available if SQLAlchemy is installed**
+
+```python
+# ── Always works (no optional dependencies) ──
+from src.helpers import AppError, NotFoundError, retry_on_failure, kill_pid
+
+# ── Only works if FastAPI is installed ──
+from src.helpers import register_cors, register_middleware, register_error_handlers
+
+# ── Only works if SQLAlchemy is installed ──
+from src.helpers import init_db, get_session, shutdown_db, BaseRepository
+```
+
+> [!IMPORTANT]
+> **যখন কোনো অপশনাল ডিপেন্ডেন্সি ইন্সটল নেই**, তখন শুধু সেই নির্দিষ্ট কম্পোনেন্টগুলো লোড হবে না — বাকি সব হেল্পার স্বাভাবিকভাবে কাজ করবে। এটি `__init__.py` তে `try-except ImportError: pass` ব্লক দিয়ে করা হয়েছে। এই `except: pass` ব্লকগুলো **ইচ্ছাকৃত** এবং লিন্টার ভায়োলেশন নয়।
+
 ### How to use?
 
 #### 1. Fresh project (safe mode — only adds new files, never touches existing)
@@ -192,6 +295,7 @@ human-skills '{
 - [ ] Add project-specific fields to `src/config/settings.py`
 - [ ] Rename `AppError` in `exceptions.py` to your project name (optional)
 - [ ] Add required dependencies to `pyproject.toml` (e.g. `tenacity`, `fastapi`, `sqlalchemy[asyncio]`, `aiosqlite`)
+- [ ] ⚠️ Never remove `kill_pid(port)` from `main.py`
 
 **For an existing project:**
 - [ ] Run `setconfig` → scaffolds `src/config/`

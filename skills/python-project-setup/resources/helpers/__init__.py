@@ -51,7 +51,7 @@ try:
         "register_error_handlers",
     ])
 except ImportError:
-    pass
+    pass  # Intentional: FastAPI not installed — web components (CORS, middleware, error handlers) are skipped
 
 # ── Optional: Database Components ─────────────────────────────────────────────
 try:
@@ -65,4 +65,4 @@ try:
         "BaseRepository",
     ])
 except ImportError:
-    pass
+    pass  # Intentional: SQLAlchemy not installed — database layer (init_db, sessions, repository) is skipped

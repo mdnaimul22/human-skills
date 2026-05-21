@@ -66,7 +66,8 @@ if __name__ == "__main__":
     host = getattr(Settings, "API_HOST", "127.0.0.1")
     port = getattr(Settings, "API_PORT", 8000)
     
-    # Ensure port is free before starting
+    # ⚠️ DO NOT REMOVE — Auto-kills any orphaned server process holding this port.
+    # Without this, you'll get "Address already in use" errors on restart.
     kill_pid(port)
     
     uvicorn.run(
