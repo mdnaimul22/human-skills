@@ -84,8 +84,8 @@ The generated `main.py` includes:
 6. **Auto-kill switch** — `kill_pid(port)` frees the port before starting
 
 > [!CAUTION]
-> **`kill_pid(port)` কখনোই main.py থেকে রিমুভ করবেন না!**
-> এই ফাংশনটি সার্ভার স্টার্ট হওয়ার আগে পোর্টে আটকে থাকা পুরনো প্রসেস অটোমেটিক কিল করে দেয়। এটি না থাকলে `Address already in use` এরর আসবে এবং সার্ভার স্টার্ট হবে না। এজেন্ট যদি main.py রিফ্যাক্টর করে, তবুও এই কলটি অবশ্যই রাখতে হবে।
+> **Never remove `kill_pid(port)` from main.py!**
+> This function auto-kills any orphaned server process holding the port before startup. Without it, you'll get `Address already in use` errors and the server won't start. Even if an agent refactors main.py, this call must always be preserved.
 
 ---
 
@@ -255,7 +255,7 @@ from src.helpers import init_db, get_session, shutdown_db, BaseRepository
 ```
 
 > [!IMPORTANT]
-> **যখন কোনো অপশনাল ডিপেন্ডেন্সি ইন্সটল নেই**, তখন শুধু সেই নির্দিষ্ট কম্পোনেন্টগুলো লোড হবে না — বাকি সব হেল্পার স্বাভাবিকভাবে কাজ করবে। এটি `__init__.py` তে `try-except ImportError: pass` ব্লক দিয়ে করা হয়েছে। এই `except: pass` ব্লকগুলো **ইচ্ছাকৃত** এবং লিন্টার ভায়োলেশন নয়।
+> **When an optional dependency is not installed**, only those specific components will be unavailable — all other helpers will continue to work normally. This is achieved via `try-except ImportError: pass` blocks in `__init__.py`. These `except: pass` blocks are **intentional** and are not linter violations.
 
 ### How to use?
 
