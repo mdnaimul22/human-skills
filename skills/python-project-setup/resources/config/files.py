@@ -29,7 +29,18 @@ def read_json(relative_path: str) -> Any:
 def write_json(relative_path: str, data: Any, indent: int = 2) -> None:
     write_text(relative_path, json.dumps(data, indent=indent, ensure_ascii=False))
 
+def read_pickle(path: str) -> Any:
+    with open(_abs(path), 'rb') as f:
+        return pickle.load(f)
 
+
+def write_pickle(data: Any, path: str) -> None:
+    p = _abs(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(p, 'wb') as f:
+        pickle.dump(data, f)
+
+        
 def exists(relative_path: str) -> bool:
     return _abs(relative_path).exists()
 
