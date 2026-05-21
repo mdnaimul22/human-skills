@@ -20,6 +20,7 @@ Every Python project shares identical foundational layers. This skill pre-builds
 | `bootstrap` | `human-skills '{"tool_name": "bootstrap", ...}'` | Initializes a complete new project skeleton (Dirs, Config, Helpers) |
 | `setconfig` | `human-skills '{"tool_name": "setconfig", ...}'` | `src/config/` — Settings, env, file I/O, logger |
 | `sethelpers` | `human-skills '{"tool_name": "sethelpers", ...}'` | `src/helpers/` — Exceptions, utils, middleware, DB |
+| `setui` | `human-skills '{"tool_name": "setui", ...}'` | `web/` — Next.js + shadcn/ui + 9 themes + layout + auth |
 
 ---
 
@@ -300,3 +301,119 @@ human-skills '{
 **For an existing project:**
 - [ ] Run `setconfig` → scaffolds `src/config/`
 - [ ] Run `sethelpers` → scaffolds `src/helpers/` (Exceptions, Utils, Retry, FastAPI Middleware, Async DB Layer)
+- [ ] Run `setui` → scaffolds `web/` (Next.js frontend with themes, layout, auth)
+
+---
+
+## SetUI
+> *"One command. Full frontend."*
+
+Scaffolds a complete **Next.js + shadcn/ui + Tailwind CSS** frontend layer (`web/`) with 9 built-in themes, layout components, OAuth auth pages, and a secure FastAPI API client.
+
+### How to use?
+
+```bash
+human-skills '{
+    "tool_name": "setui",
+    "tool_args": {
+        "destination": "/path/to/your_project"
+    }
+}'
+```
+
+### What setui creates
+
+```
+web/
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx              ← Root layout + ThemeProvider (anti-flicker)
+│   │   ├── globals.css             ← 9 themes + design tokens + shadcn vars
+│   │   ├── (auth)/                 ← Auth pages (no sidebar/navbar)
+│   │   │   ├── layout.tsx          ← Centered card layout
+│   │   │   └── login/page.tsx      ← OAuth + email/password form
+│   │   └── (dashboard)/            ← Dashboard pages (with sidebar/navbar)
+│   │       ├── layout.tsx          ← Sidebar + Navbar wrapper
+│   │       └── page.tsx            ← Dashboard home (placeholder)
+│   │
+│   ├── components/
+│   │   ├── ui/                     ← shadcn components (30+ auto-installed)
+│   │   ├── layout/
+│   │   │   ├── app-shell.tsx       ← Root layout wrapper
+│   │   │   ├── sidebar.tsx         ← Collapsible sidebar (280px ↔ 64px)
+│   │   │   ├── navbar.tsx          ← Top bar (search, notifications, avatar)
+│   │   │   ├── page-header.tsx     ← Page title + action buttons
+│   │   │   └── theme-switcher.tsx  ← Theme dropdown (9 themes)
+│   │   └── auth/
+│   │       └── login-form.tsx      ← Google + GitHub OAuth buttons
+│   │
+│   ├── lib/
+│   │   ├── api.ts                  ← Secure FastAPI client (timeout, typed errors)
+│   │   └── utils.ts                ← cn() utility (clsx + tailwind-merge)
+│   │
+│   ├── hooks/
+│   │   └── use-sidebar.ts          ← Sidebar state (Zustand, persisted)
+│   │
+│   └── types/
+│       └── api.ts                  ← Auto-generated from FastAPI (placeholder)
+│
+├── scripts/
+│   └── generate-types.sh           ← OpenAPI → TypeScript auto-gen
+│
+├── components.json                 ← shadcn config
+├── tailwind.config.ts
+├── next.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+### Theme System
+
+9 themes are included (7 dark + 2 light):
+
+| Theme | Accent | Type |
+|:---|:---|:---|
+| Default Dark | `#3b82f6` (Blue) | 🌙 Dark |
+| Matrix | `#10b981` (Green) | 🌙 Dark |
+| Monokai | `#a6e22e` (Lime) | 🌙 Dark |
+| VS Code | `#007acc` (Blue) | 🌙 Dark |
+| Dracula | `#bd93f9` (Purple) | 🌙 Dark |
+| One Dark | `#61afef` (Blue) | 🌙 Dark |
+| Nord | `#88c0d0` (Cyan) | 🌙 Dark |
+| Clear Ice | `#1d4ed8` (Deep Blue) | ☀️ Light |
+| Snow | `#3b82f6` (Blue) | ☀️ Light |
+
+#### Three-Layer Token Architecture
+
+```
+Theme Definition (raw)    →  --accent: #10b981
+         ↓
+Bridge Mapping (auto)     →  --color-primary: var(--accent)
+         ↓
+shadcn/ui Mapping (auto)  →  --primary: var(--color-primary)
+```
+
+**Adding a new theme** = define ~25 CSS variables. The bridge + shadcn mapping auto-handles everything. All shadcn components instantly work.
+
+### Anti-Flicker Strategy
+
+Theme switching is flicker-free:
+1. `next-themes` reads theme from `localStorage` **before first paint** via inline `<script>`
+2. `suppressHydrationWarning` on `<html>` prevents React hydration mismatch
+3. Background transitions are disabled on first load, then enabled after mount via `body.theme-loaded`
+4. `enableSystem={false}` — no OS detection race condition
+
+### Security Measures
+
+- **API Client:** Request timeout (15s), `credentials: "include"` for httpOnly cookies, typed errors
+- **Auth:** OAuth via server-side redirects (not client-side token storage)
+- **No localStorage tokens:** Auth tokens live in httpOnly cookies only
+- **XSS Protection:** No `innerHTML` or `eval()` — JSON.parse only
+
+### After Scaffolding
+
+1. `cd web && npm run dev` → Open http://localhost:3000
+2. Add `NEXT_PUBLIC_API_URL=http://localhost:8000` to `web/.env.local`
+3. Generate types: `bash web/scripts/generate-types.sh`
+4. Edit `NAV_ITEMS` in `sidebar.tsx` to add navigation links
+5. Add new pages under `app/(dashboard)/`
