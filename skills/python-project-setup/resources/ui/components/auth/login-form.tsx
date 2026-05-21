@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Login Form — OAuth buttons + email/password.
  *

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { ThemeLoadedScript } from "@/components/layout/theme-loaded-script";
 import "./globals.css";
 
 /**
@@ -68,13 +69,7 @@ export default function RootLayout({
                 >
                     {children}
                 </ThemeProvider>
-
-                {/* Anti-flicker: enable bg transitions only after first paint */}
-                <script
-                    dangerouslySetInnerHTML={{
-                        __html: `requestAnimationFrame(()=>document.body.classList.add('theme-loaded'))`,
-                    }}
-                />
+                <ThemeLoadedScript />
             </body>
         </html>
     );
