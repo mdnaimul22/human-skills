@@ -21,7 +21,7 @@ def run_tests():
     print("-" * 75)
 
     for case in TEST_CASES:
-        actual_score = linter.evaluate(None, case["code"])
+        actual_score, _ = linter.evaluate(None, case["code"])
         status = "✅ PASS" if abs(actual_score - case["expected_score"]) < 0.01 else "❌ FAIL"
         if status == "✅ PASS":
             passed += 1

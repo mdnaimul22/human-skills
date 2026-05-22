@@ -26,7 +26,7 @@ def run_benchmarks():
     
     passed = 0
     for case in TEST_CASES:
-        actual_score = tool.evaluate(None, case["code"])
+        actual_score, _ = tool.evaluate(None, case["code"])
         
         # Tolerance check (since scoring can be floating point)
         diff = abs(actual_score - case["expected_score"])

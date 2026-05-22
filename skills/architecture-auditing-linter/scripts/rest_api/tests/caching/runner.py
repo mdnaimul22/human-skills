@@ -11,10 +11,10 @@ def run_tests():
     print(f"{'ID':<30} | {'Expected':<10} | {'Actual':<10} | {'Status'}")
     print("-" * 70)
     for case in TEST_CASES:
-        actual = linter.evaluate(None, case["code"])
-        status = "✅ PASS" if abs(actual - case["expected_score"]) < 0.01 else "❌ FAIL"
+        actual_score, _ = linter.evaluate(None, case["code"])
+        status = "✅ PASS" if abs(actual_score - case["expected_score"]) < 0.01 else "❌ FAIL"
         if status == "✅ PASS": passed += 1
-        print(f"{case['id']:<30} | {case['expected_score']:<10.4f} | {actual:<10.4f} | {status}")
+        print(f"{case['id']:<30} | {case['expected_score']:<10.4f} | {actual_score:<10.4f} | {status}")
     print("-" * 70)
     print(f"Result: {passed}/{len(TEST_CASES)} passed.\\n")
 

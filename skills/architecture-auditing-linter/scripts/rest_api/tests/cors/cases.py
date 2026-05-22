@@ -65,7 +65,7 @@ app.options("*", cors())
     {
         "id": "perfect_express_cors",
         "description": "Express cors(): origin whitelist function, credentials, preflight route",
-        "expected_score": 0.75,
+        "expected_score": 1.0,
         "code": """
 const cors = require('cors');
 const allowedOrigins = ['https://app.example.com', 'https://beta.example.com'];
@@ -85,7 +85,7 @@ app.options('*', cors());
     {
         "id": "perfect_spring_cors",
         "description": "Spring @CrossOrigin: explicit origins, allowCredentials, methods, headers",
-        "expected_score": 0.0,
+        "expected_score": 1.0,
         "code": """
 @CrossOrigin(
     origins = {"https://app.example.com"},
@@ -101,7 +101,7 @@ public class UserController {}
     {
         "id": "perfect_gin_cors",
         "description": "Gin cors.Config: AllowOrigins list, AllowCredentials, methods, headers",
-        "expected_score": 0.85,
+        "expected_score": 1.0,
         "code": """
 import "github.com/gin-contrib/cors"
 r.Use(cors.New(cors.Config{
@@ -137,7 +137,7 @@ app.add_middleware(
     {
         "id": "good_express_no_preflight",
         "description": "Express: cors() with whitelist and credentials but no app.options(*)",
-        "expected_score": 0.35,
+        "expected_score": 0.9,
         "code": """
 const cors = require('cors');
 app.use(cors({
@@ -174,7 +174,7 @@ CORS_ALLOW_HEADERS = ["authorization", "content-type", "x-request-id"]
     {
         "id": "wildcard_no_credentials",
         "description": "Wildcard origin with no credentials — acceptable for public read-only API",
-        "expected_score": 0.25,
+        "expected_score": 0.5,
         "code": """
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
@@ -219,7 +219,7 @@ app.add_middleware(
     {
         "id": "critical_express_wildcard_creds",
         "description": "Express: Access-Control-Allow-Origin: * + Allow-Credentials: true",
-        "expected_score": 0.1,
+        "expected_score": 0.0,
         "code": """
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');

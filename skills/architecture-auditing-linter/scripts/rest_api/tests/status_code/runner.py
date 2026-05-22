@@ -20,7 +20,7 @@ def run_tests():
     print("-" * 65)
 
     for case in TEST_CASES:
-        actual_score = tool.evaluate(None, case["code"])
+        actual_score, _ = tool.evaluate(None, case["code"])
         status = "✅ PASS" if abs(actual_score - case["expected_score"]) < 0.001 else "❌ FAIL"
         
         if status == "✅ PASS":
