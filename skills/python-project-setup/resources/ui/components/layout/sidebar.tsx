@@ -176,18 +176,31 @@ export function Sidebar() {
                 </div>
 
                 {/* ── Resize handle (right border) ────────────── */}
+                {/* 8px invisible hit area — visible bar shows on hover with smooth fade */}
                 <div
                     onMouseDown={handleMouseDown}
                     className="
                         hidden lg:block
-                        absolute top-0 -right-px w-1.5 h-full
+                        absolute top-0 h-full
                         cursor-col-resize group
                         z-[60]
                     "
+                    style={{
+                        right: "-4px",
+                        width: "8px",
+                    }}
                     title="Drag to resize"
                 >
-                    {/* Visible bar — appears on hover */}
-                    <div className="w-full h-full bg-transparent hover:bg-[var(--color-primary)] active:bg-[var(--color-primary)] opacity-0 hover:opacity-50 active:opacity-70 transition-opacity rounded-full" />
+                    {/* Visible 2px bar — centered within hit area, smooth fade */}
+                    <div
+                        className="
+                            absolute top-0 left-1/2 -translate-x-1/2
+                            w-[2px] h-full rounded-full
+                            bg-[var(--color-primary)]
+                            opacity-0 group-hover:opacity-50 group-active:opacity-70
+                            transition-opacity duration-300 ease-out
+                        "
+                    />
                 </div>
             </aside>
         </>
