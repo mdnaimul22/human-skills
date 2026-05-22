@@ -34,10 +34,11 @@ const MAX_WIDTH = 400;
  * - Keyboard accessible (Escape to close)
  */
 export function Sidebar() {
-    const { isOpen, isCollapsed, close, toggleCollapse, setCollapsed } = useSidebar();
+    const { isOpen, isCollapsed, close, toggleCollapse, setCollapsed, customWidth, setCustomWidth } = useSidebar();
     const pathname = usePathname();
     const sidebarRef = useRef<HTMLElement>(null);
     const isResizing = useRef(false);
+    const lastWidth = useRef<number>(0);
 
     // Close mobile sidebar on route change
     useEffect(() => {
@@ -58,6 +59,7 @@ export function Sidebar() {
         (e: React.MouseEvent) => {
             e.preventDefault();
             isResizing.current = true;
+            lastWidth.current = 0;
             document.body.style.cursor = "col-resize";
             document.body.style.userSelect = "none";
 
@@ -68,10 +70,12 @@ export function Sidebar() {
                 if (newWidth < MIN_WIDTH / 2) {
                     setCollapsed(true);
                     sidebarRef.current.style.width = "";
+                    lastWidth.current = 0;
                 } else {
                     setCollapsed(false);
                     const clamped = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
                     sidebarRef.current.style.width = `${clamped}px`;
+                    lastWidth.current = clamped;
                 }
             }
 
@@ -79,8 +83,11 @@ export function Sidebar() {
                 isResizing.current = false;
                 document.body.style.cursor = "";
                 document.body.style.userSelect = "";
-                // Clear inline width so CSS classes (lg:w-16 / lg:w-[var(--sidebar-width)])
-                // can properly control width after resize ends
+                // Persist the final dragged width to store (survives re-renders)
+                if (lastWidth.current > 0) {
+                    setCustomWidth(lastWidth.current);
+                }
+                // Clear inline style — width is now driven by store via style prop
                 if (sidebarRef.current) {
                     sidebarRef.current.style.width = "";
                 }
@@ -91,8 +98,12 @@ export function Sidebar() {
             document.addEventListener("mousemove", onMouseMove);
             document.addEventListener("mouseup", onMouseUp);
         },
-        [setCollapsed],
+        [setCollapsed, setCustomWidth],
     );
+
+    // Compute sidebar width style
+    const sidebarStyle: React.CSSProperties | undefined =
+        !isCollapsed && customWidth ? { width: `${customWidth}px` } : undefined;
 
     return (
         <>
@@ -108,6 +119,7 @@ export function Sidebar() {
             {/* Sidebar panel */}
             <aside
                 ref={sidebarRef}
+                style={sidebarStyle}
                 className={`
                     fixed lg:relative inset-y-0 left-0 z-50
                     flex flex-col

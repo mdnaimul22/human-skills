@@ -195,7 +195,13 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
                             onMouseEnter={() => { setFontMenuOpen(true); setThemeMenuOpen(false); }}
                             onMouseLeave={() => setFontMenuOpen(false)}
                         >
-                            <div className="flex items-center justify-between gap-2 cursor-pointer py-1">
+                            <div
+                                className="flex items-center justify-between gap-2 cursor-pointer py-1"
+                                onClick={() => {
+                                    const idx = FONTS.findIndex((f) => f.key === fontKey);
+                                    setFont(FONTS[(idx + 1) % FONTS.length].key);
+                                }}
+                            >
                                 <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 font-medium">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M4 21V3l8 9 8-9v18" />
@@ -244,7 +250,13 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
                             onMouseEnter={() => { setThemeMenuOpen(true); setFontMenuOpen(false); }}
                             onMouseLeave={() => setThemeMenuOpen(false)}
                         >
-                            <div className="flex items-center justify-between gap-2 cursor-pointer py-1">
+                            <div
+                                className="flex items-center justify-between gap-2 cursor-pointer py-1"
+                                onClick={() => {
+                                    const idx = THEMES.findIndex((t) => t.id === theme);
+                                    setTheme(THEMES[(idx + 1) % THEMES.length].id);
+                                }}
+                            >
                                 <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 font-medium">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <circle cx="12" cy="12" r="5" />
