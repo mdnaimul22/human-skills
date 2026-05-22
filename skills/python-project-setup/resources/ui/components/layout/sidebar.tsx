@@ -1,7 +1,6 @@
 "use client";
 
 import { useSidebar } from "@/hooks/use-sidebar";
-import { ThemeSwitcher } from "./theme-switcher";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useCallback, useRef } from "react";
@@ -19,7 +18,7 @@ const NAV_ITEMS: NavItem[] = [
     { label: "Settings",  href: "/settings", icon: "⚙️" },
 ];
 
-const MIN_WIDTH = 200;
+const MIN_WIDTH = 180;
 const MAX_WIDTH = 400;
 
 /**
@@ -30,7 +29,6 @@ const MAX_WIDTH = 400;
  * - Collapsible on desktop (icon-rail mode)
  * - Drawer overlay on mobile
  * - Active link highlighting
- * - Theme switcher at bottom (always visible)
  * - Close on route change (mobile)
  * - Keyboard accessible (Escape to close)
  */
@@ -67,7 +65,6 @@ export function Sidebar() {
                 const newWidth = ev.clientX;
 
                 if (newWidth < MIN_WIDTH / 2) {
-                    // Snap to collapsed
                     setCollapsed(true);
                     sidebarRef.current.style.width = "";
                 } else {
@@ -118,26 +115,29 @@ export function Sidebar() {
                 aria-label="Main navigation"
             >
                 {/* Header */}
-                <div className="flex items-center justify-between h-14 px-3 border-b border-[var(--color-border)]">
+                <div className="flex items-center h-14 px-3 border-b border-[var(--color-border)]">
                     {!isCollapsed && (
-                        <span className="text-base font-bold text-[var(--color-text)] truncate pl-1">
+                        <span className="text-base font-bold text-[var(--color-text)] truncate pl-1 flex-1">
                             ⚡ App
                         </span>
                     )}
                     <button
                         onClick={toggleCollapse}
-                        className="hidden lg:flex w-8 h-8 items-center justify-center rounded-md hover:bg-[var(--color-primary-light)] text-[var(--color-text-muted)] transition-colors ml-auto"
+                        className="hidden lg:flex w-9 h-9 items-center justify-center rounded-md border border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-primary-light)] text-[var(--color-text-muted)] transition-all"
                         title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                     >
-                        {/* Chevron SVG icons */}
                         {isCollapsed ? (
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M6 3l5 5-5 5" />
+                            /* >> expand icon */
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M13 5l7 7-7 7" />
+                                <path d="M4 5l7 7-7 7" />
                             </svg>
                         ) : (
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M10 3L5 8l5 5" />
+                            /* << collapse icon */
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 19l-7-7 7-7" />
+                                <path d="M20 19l-7-7 7-7" />
                             </svg>
                         )}
                     </button>
@@ -169,25 +169,20 @@ export function Sidebar() {
                     })}
                 </nav>
 
-                {/* Bottom section: Theme Switcher */}
-                <div className="p-2 border-t border-[var(--color-border)]">
-                    <ThemeSwitcher collapsed={isCollapsed} />
-                </div>
-
                 {/* ── Resize handle (right border) ────────────── */}
                 <div
                     onMouseDown={handleMouseDown}
                     className="
                         hidden lg:block
-                        absolute top-0 right-0 w-1 h-full
-                        cursor-col-resize
-                        hover:bg-[var(--color-primary)] hover:opacity-60
-                        active:bg-[var(--color-primary)] active:opacity-80
-                        transition-colors duration-150
+                        absolute top-0 -right-px w-1.5 h-full
+                        cursor-col-resize group
                         z-[60]
                     "
                     title="Drag to resize"
-                />
+                >
+                    {/* Visible bar — appears on hover */}
+                    <div className="w-full h-full bg-transparent hover:bg-[var(--color-primary)] active:bg-[var(--color-primary)] opacity-0 hover:opacity-50 active:opacity-70 transition-opacity rounded-full" />
+                </div>
             </aside>
         </>
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /** Theme metadata for the selector UI */
 interface ThemeMeta {
@@ -23,84 +23,61 @@ const THEMES: ThemeMeta[] = [
     { id: "snow",        name: "Snow",      accent: "#3b82f6", type: "light" },
 ];
 
-interface ThemeSwitcherProps {
-    /** When true, shows only a compact icon button */
-    collapsed?: boolean;
-}
-
 /**
- * Theme Switcher Component (ChainCV dropdown pattern)
+ * Theme Switcher — Navbar icon button with dropdown.
  *
- * Anti-flicker: renders nothing until mounted to prevent hydration mismatch.
- * Supports collapsed mode for sidebar icon-rail.
+ * Renders a small accent-color dot that opens a full theme list on click.
+ * Anti-flicker: skeleton until client mount.
  */
-export function ThemeSwitcher({ collapsed = false }: ThemeSwitcherProps) {
+export function ThemeSwitcher() {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
     const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
 
-    // Prevent hydration mismatch — only render after client mount
     useEffect(() => setMounted(true), []);
-    if (!mounted) return <ThemeSwitcherSkeleton collapsed={collapsed} />;
 
-    const current = THEMES.find((t) => t.id === theme) ?? THEMES[0];
+    // Close on outside click
+    useEffect(() => {
+        if (!open) return;
+        function handler(e: MouseEvent) {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, [open]);
 
-    /** Cycle to next theme on click */
-    function cycleTheme() {
-        const idx = THEMES.findIndex((t) => t.id === theme);
-        const next = THEMES[(idx + 1) % THEMES.length];
-        setTheme(next.id);
-    }
-
-    // ── Collapsed mode: icon-only button ──────────────────────
-    if (collapsed) {
+    if (!mounted) {
         return (
-            <button
-                onClick={cycleTheme}
-                className="w-full flex items-center justify-center h-9 rounded-lg hover:bg-[var(--color-primary-light)] transition-colors"
-                title={`Theme: ${current.name} — click to cycle`}
-            >
-                <span
-                    className="w-3 h-3 rounded-full ring-2 ring-[var(--color-border)]"
-                    style={{ backgroundColor: current.accent }}
-                />
-            </button>
+            <div className="w-8 h-8 rounded-md bg-[var(--color-surface)] animate-pulse" />
         );
     }
 
-    // ── Expanded mode: full dropdown ──────────────────────────
+    const current = THEMES.find((t) => t.id === theme) ?? THEMES[0];
+
     return (
-        <div className="relative" onMouseLeave={() => setOpen(false)}>
-            {/* Active theme button */}
-            <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden h-9">
-                <button
-                    onClick={cycleTheme}
-                    className="flex items-center gap-2 px-3 h-full flex-1 hover:bg-[var(--color-primary-light)] transition-colors"
-                    title={`Theme: ${current.name} — click to cycle`}
-                >
-                    <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: current.accent }}
-                    />
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                        {current.name}
-                    </span>
-                </button>
-
-                <div className="w-px h-4 bg-[var(--color-border)]" />
-
-                <button
-                    onClick={() => setOpen(!open)}
-                    className="px-2 h-full hover:bg-[var(--color-primary-light)] text-[10px] text-[var(--color-text-muted)] transition-colors"
-                    aria-label="Open theme list"
-                >
-                    ▾
-                </button>
-            </div>
+        <div className="relative" ref={ref}>
+            {/* Trigger button */}
+            <button
+                onClick={() => setOpen(!open)}
+                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[var(--color-primary-light)] transition-colors"
+                title={`Theme: ${current.name}`}
+                aria-label="Change theme"
+            >
+                <span
+                    className="w-3.5 h-3.5 rounded-full ring-2 ring-[var(--color-border)]"
+                    style={{ backgroundColor: current.accent }}
+                />
+            </button>
 
             {/* Dropdown */}
             {open && (
-                <div className="absolute bottom-full left-0 mb-2 w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-lg p-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <div className="absolute top-full right-0 mt-2 w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-lg p-1 z-[100]">
+                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                        Theme
+                    </div>
                     {THEMES.map((t) => (
                         <button
                             key={t.id}
@@ -108,7 +85,7 @@ export function ThemeSwitcher({ collapsed = false }: ThemeSwitcherProps) {
                                 setTheme(t.id);
                                 setOpen(false);
                             }}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
                                 theme === t.id
                                     ? "bg-[var(--color-primary-light)]"
                                     : "hover:bg-[var(--color-primary-light)]"
@@ -119,7 +96,7 @@ export function ThemeSwitcher({ collapsed = false }: ThemeSwitcherProps) {
                                 style={{ backgroundColor: t.accent }}
                             />
                             <span
-                                className={`text-[11px] font-medium flex-1 ${
+                                className={`text-xs font-medium flex-1 ${
                                     theme === t.id
                                         ? "text-[var(--color-primary)]"
                                         : "text-[var(--color-text-secondary)]"
@@ -127,26 +104,16 @@ export function ThemeSwitcher({ collapsed = false }: ThemeSwitcherProps) {
                             >
                                 {t.name}
                             </span>
-                            <span className="text-[10px] opacity-50">
-                                {t.type === "light" ? "☀️" : "🌙"}
+                            <span className="text-[10px] opacity-40">
+                                {t.type === "light" ? "☀" : "🌙"}
                             </span>
                             {theme === t.id && (
-                                <span className="text-[var(--color-primary)] text-xs">✓</span>
+                                <span className="text-[var(--color-primary)] text-xs font-bold">✓</span>
                             )}
                         </button>
                     ))}
                 </div>
             )}
         </div>
-    );
-}
-
-/** Skeleton placeholder to avoid layout shift before mount */
-function ThemeSwitcherSkeleton({ collapsed }: { collapsed?: boolean }) {
-    if (collapsed) {
-        return <div className="h-9 w-9 mx-auto rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] animate-pulse" />;
-    }
-    return (
-        <div className="h-9 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] animate-pulse" />
     );
 }
