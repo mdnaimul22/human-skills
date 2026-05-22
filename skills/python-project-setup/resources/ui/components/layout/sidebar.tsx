@@ -79,6 +79,11 @@ export function Sidebar() {
                 isResizing.current = false;
                 document.body.style.cursor = "";
                 document.body.style.userSelect = "";
+                // Clear inline width so CSS classes (lg:w-16 / lg:w-[var(--sidebar-width)])
+                // can properly control width after resize ends
+                if (sidebarRef.current) {
+                    sidebarRef.current.style.width = "";
+                }
                 document.removeEventListener("mousemove", onMouseMove);
                 document.removeEventListener("mouseup", onMouseUp);
             }

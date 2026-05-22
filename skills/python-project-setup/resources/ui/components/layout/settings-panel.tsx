@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 
 /* ── Font & Scale definitions ────────────────────────────── */
@@ -30,6 +31,26 @@ const SCALES: ScaleDef[] = [
     { key: "m",  label: "M",  size: "16px" },
     { key: "l",  label: "L",  size: "18px" },
     { key: "xl", label: "XL", size: "20px" },
+];
+
+/* ── Theme definitions ────────────────────────────────────── */
+
+interface ThemeMeta {
+    id: string;
+    name: string;
+    accent: string;
+}
+
+const THEMES: ThemeMeta[] = [
+    { id: "dark",        name: "Default",   accent: "#3b82f6" },
+    { id: "matrix",      name: "Matrix",    accent: "#10b981" },
+    { id: "cream",       name: "Monokai",   accent: "#a6e22e" },
+    { id: "matte-black", name: "VS Code",   accent: "#007acc" },
+    { id: "black-brown", name: "Dracula",   accent: "#bd93f9" },
+    { id: "jam-black",   name: "One Dark",  accent: "#61afef" },
+    { id: "jam-navy",    name: "Nord",      accent: "#88c0d0" },
+    { id: "light",       name: "Clear Ice", accent: "#1d4ed8" },
+    { id: "snow",        name: "Snow",      accent: "#3b82f6" },
 ];
 
 /* ── Zustand store (persisted to localStorage) ───────────── */
@@ -77,9 +98,14 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
     const { fontKey, scaleKey, setFont, setScale } = useAppSettings();
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     const [open, setOpen] = useState(false);
     const [fontMenuOpen, setFontMenuOpen] = useState(false);
+    const [themeMenuOpen, setThemeMenuOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => setMounted(true), []);
 
     // Apply settings to DOM
     useApplySettings();
@@ -91,6 +117,7 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
             if (ref.current && !ref.current.contains(e.target as Node)) {
                 setOpen(false);
                 setFontMenuOpen(false);
+                setThemeMenuOpen(false);
             }
         }
         document.addEventListener("mousedown", handler);
@@ -98,12 +125,15 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
     }, [open]);
 
     const currentFont = FONTS.find((f) => f.key === fontKey) ?? FONTS[0];
+    const currentTheme = mounted
+        ? (THEMES.find((t) => t.id === theme) ?? THEMES[0])
+        : THEMES[0];
 
     return (
         <div className="relative" ref={ref}>
             {/* Settings trigger button */}
             <button
-                onClick={() => { setOpen(!open); setFontMenuOpen(false); }}
+                onClick={() => { setOpen(!open); setFontMenuOpen(false); setThemeMenuOpen(false); }}
                 className={`
                     w-full flex items-center gap-3 rounded-lg transition-all
                     text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-primary-light)]
@@ -162,7 +192,7 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
                         {/* ── Font Family (hover submenu) ── */}
                         <div
                             className="relative"
-                            onMouseEnter={() => setFontMenuOpen(true)}
+                            onMouseEnter={() => { setFontMenuOpen(true); setThemeMenuOpen(false); }}
                             onMouseLeave={() => setFontMenuOpen(false)}
                         >
                             <div className="flex items-center justify-between gap-2 cursor-pointer py-1">
@@ -197,6 +227,63 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
                                             >
                                                 <span>{f.label}</span>
                                                 {fontKey === f.key && (
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M20 6L9 17l-5-5" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Theme (hover submenu) ── */}
+                        <div
+                            className="relative"
+                            onMouseEnter={() => { setThemeMenuOpen(true); setFontMenuOpen(false); }}
+                            onMouseLeave={() => setThemeMenuOpen(false)}
+                        >
+                            <div className="flex items-center justify-between gap-2 cursor-pointer py-1">
+                                <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 font-medium">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="5" />
+                                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                                    </svg>
+                                    Theme
+                                </span>
+                                <div className="flex items-center gap-1">
+                                    <span
+                                        className="w-2.5 h-2.5 rounded-full ring-1 ring-[var(--color-border)]"
+                                        style={{ backgroundColor: currentTheme.accent }}
+                                    />
+                                    <span className="text-[10px] text-[var(--color-text-muted)]">{currentTheme.name}</span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                        <path d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            {/* Theme submenu */}
+                            {themeMenuOpen && mounted && (
+                                <div className="absolute bottom-0 left-full pl-1 z-[110]">
+                                    <div className="w-48 bg-[var(--color-card)] rounded-xl shadow-xl border border-[var(--color-border)] py-1 max-h-72 overflow-y-auto">
+                                        {THEMES.map((t) => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => { setTheme(t.id); setThemeMenuOpen(false); }}
+                                                className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--color-primary-light)] transition-colors flex items-center gap-2.5 ${
+                                                    theme === t.id
+                                                        ? "text-[var(--color-primary)] font-bold"
+                                                        : "text-[var(--color-text)]"
+                                                }`}
+                                            >
+                                                <span
+                                                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                                                    style={{ backgroundColor: t.accent }}
+                                                />
+                                                <span className="flex-1">{t.name}</span>
+                                                {theme === t.id && (
                                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                                         <path d="M20 6L9 17l-5-5" />
                                                     </svg>
