@@ -1,7 +1,7 @@
 "use client";
 
 import { useSidebar } from "@/hooks/use-sidebar";
-import { SettingsPanel } from "./settings-panel";
+import { SettingsPanel } from "./settings";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useCallback, useRef } from "react";

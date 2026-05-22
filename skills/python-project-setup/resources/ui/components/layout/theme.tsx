@@ -3,6 +3,31 @@
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 
+/* ═══════════════════════════════════════════════════════════════
+   ThemeLoadedScript
+   
+   Adds `theme-loaded` class to body after first paint.
+   This enables smooth background-color transitions AFTER
+   the initial theme is resolved — preventing flicker.
+   ═══════════════════════════════════════════════════════════════ */
+
+export function ThemeLoadedScript() {
+    useEffect(() => {
+        requestAnimationFrame(() => {
+            document.body.classList.add("theme-loaded");
+        });
+    }, []);
+
+    return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ThemeSwitcher — Navbar icon button with dropdown.
+
+   Renders a small accent-color dot that opens a full theme list
+   on click. Anti-flicker: skeleton until client mount.
+   ═══════════════════════════════════════════════════════════════ */
+
 /** Theme metadata for the selector UI */
 interface ThemeMeta {
     id: string;
@@ -23,12 +48,6 @@ const THEMES: ThemeMeta[] = [
     { id: "snow",        name: "Snow",      accent: "#3b82f6", type: "light" },
 ];
 
-/**
- * Theme Switcher — Navbar icon button with dropdown.
- *
- * Renders a small accent-color dot that opens a full theme list on click.
- * Anti-flicker: skeleton until client mount.
- */
 export function ThemeSwitcher() {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);

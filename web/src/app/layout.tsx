@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Poppins, Roboto } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import { ThemeLoadedScript } from "@/components/layout/theme-loaded-script";
+import { ThemeLoadedScript } from "@/components/layout/theme";
 import { ToastContainer } from "@/components/layout/toast";
 import "./globals.css";
 
