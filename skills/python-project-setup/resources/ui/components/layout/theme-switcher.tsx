@@ -23,21 +23,25 @@ const THEMES: ThemeMeta[] = [
     { id: "snow",        name: "Snow",      accent: "#3b82f6", type: "light" },
 ];
 
+interface ThemeSwitcherProps {
+    /** When true, shows only a compact icon button */
+    collapsed?: boolean;
+}
+
 /**
  * Theme Switcher Component (ChainCV dropdown pattern)
  *
  * Anti-flicker: renders nothing until mounted to prevent hydration mismatch.
- * next-themes resolves the theme from localStorage before first paint,
- * so the dropdown correctly shows the active theme without flicker.
+ * Supports collapsed mode for sidebar icon-rail.
  */
-export function ThemeSwitcher() {
+export function ThemeSwitcher({ collapsed = false }: ThemeSwitcherProps) {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
     const [open, setOpen] = useState(false);
 
     // Prevent hydration mismatch — only render after client mount
     useEffect(() => setMounted(true), []);
-    if (!mounted) return <ThemeSwitcherSkeleton />;
+    if (!mounted) return <ThemeSwitcherSkeleton collapsed={collapsed} />;
 
     const current = THEMES.find((t) => t.id === theme) ?? THEMES[0];
 
@@ -48,14 +52,31 @@ export function ThemeSwitcher() {
         setTheme(next.id);
     }
 
+    // ── Collapsed mode: icon-only button ──────────────────────
+    if (collapsed) {
+        return (
+            <button
+                onClick={cycleTheme}
+                className="w-full flex items-center justify-center h-9 rounded-lg hover:bg-[var(--color-primary-light)] transition-colors"
+                title={`Theme: ${current.name} — click to cycle`}
+            >
+                <span
+                    className="w-3 h-3 rounded-full ring-2 ring-[var(--color-border)]"
+                    style={{ backgroundColor: current.accent }}
+                />
+            </button>
+        );
+    }
+
+    // ── Expanded mode: full dropdown ──────────────────────────
     return (
         <div className="relative" onMouseLeave={() => setOpen(false)}>
             {/* Active theme button */}
             <div className="flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden h-9">
                 <button
                     onClick={cycleTheme}
-                    className="flex items-center gap-2 px-3 h-full hover:bg-[var(--color-primary-light)] transition-colors"
-                    title={`Theme: ${current.name}`}
+                    className="flex items-center gap-2 px-3 h-full flex-1 hover:bg-[var(--color-primary-light)] transition-colors"
+                    title={`Theme: ${current.name} — click to cycle`}
                 >
                     <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -121,8 +142,11 @@ export function ThemeSwitcher() {
 }
 
 /** Skeleton placeholder to avoid layout shift before mount */
-function ThemeSwitcherSkeleton() {
+function ThemeSwitcherSkeleton({ collapsed }: { collapsed?: boolean }) {
+    if (collapsed) {
+        return <div className="h-9 w-9 mx-auto rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] animate-pulse" />;
+    }
     return (
-        <div className="h-9 w-28 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] animate-pulse" />
+        <div className="h-9 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] animate-pulse" />
     );
 }
