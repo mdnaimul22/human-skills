@@ -76,6 +76,7 @@ class Linter(Tool):
         }
         bypass_dirs.update(ignored_list)
 
+        # ── Phase 1: Per-file AST violations ──────────────────────────────────
         audit_results = self.audit_project(scan_path, bypass_dirs)
         total_violations = sum(len(v) for v in audit_results.values())
 
@@ -96,7 +97,13 @@ class Linter(Tool):
             report_path = scan_path / "REFACTORING_TASKS.md"
             self.generate_markdown_report(report_path, scan_path, audit_results)
             console_msg += f"📝 Task list generated: {report_path.name}\n"
-            console_msg += "💡 Tip: Open the markdown file to track your refactoring progress."
+            console_msg += "💡 Tip: Open the markdown file to track your refactoring progress.\n"
+
+        # ── Phase 2: Project-wide import graph analysis ───────────────────────
+        if scan_path.is_dir():
+            graph_msg = self._analyze_import_graph(scan_path, bypass_dirs)
+            if graph_msg:
+                console_msg += "\n" + graph_msg
 
         return Response(message=console_msg, break_loop=False)
 
@@ -268,6 +275,123 @@ class Linter(Tool):
     def _score_bar(score: float) -> str:
         filled = int(score * 10)
         return "[" + "█" * filled + "░" * (10 - filled) + "]"
+
+    def _analyze_import_graph(self, scan_path: Path, bypass_dirs: set[str]) -> str:
+        """Phase 2: Build project-wide import graph, detect circular deps, calculate coupling."""
+        import re
+        from collections import defaultdict
+
+        # Collect all Python files
+        py_files = [
+            f for f in sorted(scan_path.rglob("*.py"))
+            if not any(part in bypass_dirs for part in f.relative_to(scan_path).parts)
+            and not any(part.startswith(".") for part in f.parts)
+            and f.name not in self.CONFIG_INFRA_FILES
+        ]
+
+        if not py_files:
+            return ""
+
+        # ── Build module → imports graph ──────────────────────────────────────
+        internal_modules: dict[str, set[str]] = defaultdict(set)
+
+        for py_file in py_files:
+            rel = py_file.relative_to(scan_path)
+            module = rel.parts[0] if len(rel.parts) > 1 else "root"
+
+            try:
+                content = py_file.read_text(encoding="utf-8", errors="ignore")
+                # Extract Python imports — first component only
+                for match in re.finditer(r"^(?:from|import)\s+([\w.]+)", content, re.MULTILINE):
+                    imported = match.group(1).split(".")[0]
+                    if imported != module:
+                        internal_modules[module].add(imported)
+            except Exception:
+                continue
+
+        if not internal_modules:
+            return ""
+
+        # Filter to only internal modules (both sides must exist as directories)
+        all_modules = set(internal_modules.keys())
+        graph: dict[str, set[str]] = defaultdict(set)
+
+        for module, imports in internal_modules.items():
+            for imp in imports:
+                if imp in all_modules:
+                    graph[module].add(imp)
+
+        # ── Detect circular dependencies (DFS) ────────────────────────────────
+        visited: set[str] = set()
+        rec_stack: set[str] = set()
+        cycles: list[list[str]] = []
+
+        def find_cycles(node: str, path: list[str]) -> None:
+            visited.add(node)
+            rec_stack.add(node)
+            path.append(node)
+
+            for neighbor in graph.get(node, set()):
+                if neighbor not in visited:
+                    find_cycles(neighbor, path)
+                elif neighbor in rec_stack:
+                    cycle_start = path.index(neighbor)
+                    cycle = path[cycle_start:] + [neighbor]
+                    if cycle not in cycles:
+                        cycles.append(cycle)
+
+            path.pop()
+            rec_stack.remove(node)
+
+        for module in all_modules:
+            if module not in visited:
+                find_cycles(module, [])
+
+        # ── Calculate coupling score (0-100) ──────────────────────────────────
+        total_modules = len(all_modules)
+        total_connections = sum(len(deps) for deps in graph.values())
+        max_connections = total_modules * (total_modules - 1) if total_modules > 1 else 1
+        coupling_score = min(100, int((total_connections / max_connections) * 100))
+        coupling_score = min(100, coupling_score + len(cycles) * 10)
+
+        # ── Format output ─────────────────────────────────────────────────────
+        msg = "=" * 65 + "\n"
+        msg += "Import Graph Analysis\n"
+        msg += "=" * 65 + "\n"
+        msg += f"  Modules scanned: {total_modules}\n"
+        msg += f"  Internal connections: {total_connections}\n"
+
+        # Coupling score with visual indicator
+        if coupling_score < 30:
+            coupling_icon = "🟢"
+            coupling_label = "Low (good)"
+        elif coupling_score < 70:
+            coupling_icon = "🟡"
+            coupling_label = "Moderate"
+        else:
+            coupling_icon = "🔴"
+            coupling_label = "High — consider refactoring"
+
+        msg += f"  Coupling score: {coupling_score}/100 {coupling_icon} {coupling_label}\n"
+
+        if cycles:
+            msg += f"\n  ⚠️  Circular dependencies detected ({len(cycles)}):\n"
+            for cycle in cycles:
+                msg += f"    🔄 {' → '.join(cycle)}\n"
+            msg += "  💡 Extract shared interfaces or create a common module to break cycles.\n"
+        else:
+            msg += f"\n  ✅ No circular dependencies found.\n"
+
+        # Show module dependency map
+        if graph:
+            msg += f"\n  📊 Module dependency map:\n"
+            for module in sorted(graph.keys()):
+                deps = sorted(graph[module])
+                if deps:
+                    msg += f"    {module} → {', '.join(deps)}\n"
+
+        msg += "=" * 65 + "\n"
+        return msg
 
     def audit_project(self, target_path: Path, bypass_dirs: set[str]) -> dict:
         if target_path.is_file():
