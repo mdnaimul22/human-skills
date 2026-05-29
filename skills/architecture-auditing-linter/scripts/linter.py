@@ -471,6 +471,10 @@ class Linter(Tool):
         report_path.write_text("\n".join(content), encoding="utf-8")
 
 class CodeAuditor(ast.NodeVisitor):
+    # Exceptions that are project-specific business errors — raising raw built-in
+    # exceptions for business logic is forbidden when helpers/exceptions.py exists.
+    _RAW_EXCEPTION_TYPES = {"Exception", "ValueError", "RuntimeError", "TypeError", "KeyError"}
+
     def __init__(self, filename: Path, root_dir: Path, bypass_dirs: set[str]):
         self.filename = filename
         self.violations = []
@@ -480,6 +484,11 @@ class CodeAuditor(ast.NodeVisitor):
         self.is_config_file = filename.name in _PATHLIB_EXEMPT and in_config_dir
         # settings.py is scanned for Field(default=...) silent defaults
         self.is_settings_file = filename.name == "settings.py" and in_config_dir
+        # Helpers files are exempt from helpers enforcement checks
+        in_helpers_dir = "helpers" in filename.parts
+        self.is_helpers_file = in_helpers_dir
+        # Track if file has time.sleep inside a loop (manual retry pattern)
+        self._inside_loop = False
 
     def add_violation(self, node, message):
         self.violations.append(f"L{node.lineno}: {message}")
@@ -556,6 +565,27 @@ class CodeAuditor(ast.NodeVisitor):
                 if len(node.args) >= 2 or any(kw.arg == "default" for kw in node.keywords):
                     self.add_violation(node, "⚠️ [Silent Default] os.getenv() with fallback default found. Use Settings class — missing env vars should fail loudly.")
 
+        # ── Helpers Enforcement ────────────────────────────────────────────────
+        if not self.is_helpers_file and not self.is_config_file:
+
+            # 8. Raw datetime.now() / datetime.utcnow() — use get_now_iso()
+            if isinstance(node.func, ast.Attribute) and node.func.attr in ("now", "utcnow"):
+                if isinstance(node.func.value, ast.Name) and node.func.value.id == "datetime":
+                    self.add_violation(node, "⚠️ [Helpers Violation] Direct 'datetime.now()/utcnow()' used. Use 'get_now_iso()' from src.helpers instead.")
+
+            # 9. create_async_engine() — use init_db() from helpers
+            if isinstance(node.func, ast.Name) and node.func.id == "create_async_engine":
+                self.add_violation(node, "❌ [Helpers Violation] Direct 'create_async_engine()' used. Use 'init_db()' from src.helpers instead.")
+
+            # 10. time.sleep() inside a loop — manual retry pattern
+            if self._inside_loop:
+                if isinstance(node.func, ast.Attribute) and node.func.attr == "sleep":
+                    if isinstance(node.func.value, ast.Name) and node.func.value.id == "time":
+                        self.add_violation(node, "⚠️ [Helpers Violation] Manual retry pattern detected (time.sleep in loop). Use '@retry_on_failure' from src.helpers instead.")
+                if isinstance(node.func, ast.Attribute) and node.func.attr == "sleep":
+                    if isinstance(node.func.value, ast.Name) and node.func.value.id == "asyncio":
+                        self.add_violation(node, "⚠️ [Helpers Violation] Manual async retry pattern detected (asyncio.sleep in loop). Use '@retry_async_on_failure' from src.helpers instead.")
+
         self.generic_visit(node)
 
     def visit_With(self, node):
@@ -617,3 +647,28 @@ class CodeAuditor(ast.NodeVisitor):
             if len(handler.body) == 1 and isinstance(handler.body[0], ast.Pass):
                 self.add_violation(handler, "❌ [Silent Exception] 'except: pass' found. Do not swallow exceptions silently.")
         self.generic_visit(node)
+
+    def visit_Raise(self, node):
+        """Detect raw raise Exception/ValueError/RuntimeError — suggest AppError hierarchy."""
+        if not self.is_helpers_file and not self.is_config_file and node.exc:
+            # raise ExceptionType(...) or raise ExceptionType
+            exc_node = node.exc
+            exc_name = None
+            if isinstance(exc_node, ast.Call) and isinstance(exc_node.func, ast.Name):
+                exc_name = exc_node.func.id
+            elif isinstance(exc_node, ast.Name):
+                exc_name = exc_node.id
+            if exc_name and exc_name in self._RAW_EXCEPTION_TYPES:
+                self.add_violation(node, f"⚠️ [Helpers Violation] Raw 'raise {exc_name}(...)' used. Use AppError subclasses (NotFoundError, ValidationError, etc.) from src.helpers instead.")
+        self.generic_visit(node)
+
+    # ── Loop tracking for manual retry detection ──────────────────────────────
+    def visit_For(self, node):
+        self._inside_loop = True
+        self.generic_visit(node)
+        self._inside_loop = False
+
+    def visit_While(self, node):
+        self._inside_loop = True
+        self.generic_visit(node)
+        self._inside_loop = False
