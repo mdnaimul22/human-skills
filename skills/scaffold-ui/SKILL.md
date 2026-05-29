@@ -1,23 +1,38 @@
 ---
 name: scaffold-ui
-description: Scaffolds a complete Next.js + shadcn/ui + Tailwind CSS frontend with 9 built-in themes, layout components, OAuth auth pages, and a secure FastAPI API client.
+description: Scaffolds a complete Next.js + shadcn/ui + Tailwind CSS frontend with 9 built-in themes, layout components, OAuth auth pages, and a secure FastAPI API client. Bridges with ui-ux-pro-max for AI-powered custom themes.
 ---
 
 # Scaffold UI
-> *"One command. Full frontend."*
+> *"One command. Full frontend. Intelligent theming."*
 
 Scaffolds a complete **Next.js + shadcn/ui + Tailwind CSS** frontend layer (`web/`) with 9 built-in themes, layout components, OAuth auth pages, and a secure FastAPI API client.
 
 ## How to Use
 
+### Basic (9 built-in themes)
+
 ```bash
-human-skills '{
-    "tool_name": "setui",
-    "tool_args": {
-        "destination": "/path/to/your_project"
-    }
-}'
+human-skills '{"tool_name": "setui", "tool_args": {"destination": "/path/to/project"}}'
 ```
+
+### With AI Design System (bridge to ui-ux-pro-max)
+
+```bash
+human-skills '{"tool_name": "setui", "tool_args": {
+    "destination": "/path/to/project",
+    "design_query": "beauty spa wellness premium"
+}}'
+```
+
+When `design_query` is provided:
+1. **ui-ux-pro-max** generates a complete design system (colors, fonts, style)
+2. A custom `[data-theme="custom"]` CSS block is injected into `globals.css`
+3. Google Fonts `<link>` tags are added to `layout.tsx`
+4. `--font-sans` is patched with the recommended font pairing
+5. Default theme is set to `"custom"`
+
+> All 9 built-in themes remain available. The custom theme is additive.
 
 ---
 
@@ -27,43 +42,40 @@ human-skills '{
 web/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx              ← Root layout + ThemeProvider (anti-flicker)
-│   │   ├── globals.css             ← 9 themes + design tokens + shadcn vars
+│   │   ├── layout.tsx              ← Root layout + ThemeProvider
+│   │   ├── globals.css             ← 9 themes + custom AI theme + shadcn vars
 │   │   ├── (auth)/                 ← Auth pages (no sidebar/navbar)
 │   │   │   ├── layout.tsx          ← Centered card layout
 │   │   │   └── login/page.tsx      ← OAuth + email/password form
 │   │   └── (dashboard)/            ← Dashboard pages (with sidebar/navbar)
 │   │       ├── layout.tsx          ← Sidebar + Navbar wrapper
-│   │       └── page.tsx            ← Dashboard home (placeholder)
+│   │       └── page.tsx            ← Dashboard home
 │   │
 │   ├── components/
 │   │   ├── ui/                     ← shadcn components (30+ auto-installed)
 │   │   ├── layout/
-│   │   │   ├── app-shell.tsx       ← Root layout wrapper
-│   │   │   ├── sidebar.tsx         ← Collapsible sidebar (280px ↔ 64px)
-│   │   │   ├── navbar.tsx          ← Top bar (search, notifications, avatar)
+│   │   │   ├── sidebar.tsx         ← Collapsible sidebar
+│   │   │   ├── navbar.tsx          ← Top bar
 │   │   │   ├── page-header.tsx     ← Page title + action buttons
-│   │   │   └── theme-switcher.tsx  ← Theme dropdown (9 themes)
+│   │   │   └── theme-switcher.tsx  ← Theme dropdown (9+1 themes)
 │   │   └── auth/
-│   │       └── login-form.tsx      ← Google + GitHub OAuth buttons
+│   │       └── login-form.tsx      ← OAuth buttons
 │   │
 │   ├── lib/
-│   │   ├── api.ts                  ← Secure FastAPI client (timeout, typed errors)
-│   │   └── utils.ts                ← cn() utility (clsx + tailwind-merge)
+│   │   ├── api.ts                  ← Secure FastAPI client
+│   │   └── utils.ts                ← cn() utility
 │   │
 │   ├── hooks/
-│   │   └── use-sidebar.ts          ← Sidebar state (Zustand, persisted)
+│   │   └── use-sidebar.ts          ← Sidebar state (Zustand)
 │   │
 │   └── types/
-│       └── api.ts                  ← Auto-generated from FastAPI (placeholder)
+│       └── api.ts                  ← OpenAPI auto-gen placeholder
 │
 ├── scripts/
-│   └── generate-types.sh           ← OpenAPI → TypeScript auto-gen
-│
-├── components.json                 ← shadcn config
+│   └── generate-types.sh
+├── components.json
 ├── tailwind.config.ts
 ├── next.config.ts
-├── tsconfig.json
 └── package.json
 ```
 
@@ -71,19 +83,20 @@ web/
 
 ## Theme System
 
-9 themes are included (7 dark + 2 light):
+9 built-in themes + 1 optional AI-generated custom theme:
 
 | Theme | Accent | Type |
 |:---|:---|:---|
-| Default Dark | `#3b82f6` (Blue) | 🌙 Dark |
-| Matrix | `#10b981` (Green) | 🌙 Dark |
-| Monokai | `#a6e22e` (Lime) | 🌙 Dark |
-| VS Code | `#007acc` (Blue) | 🌙 Dark |
-| Dracula | `#bd93f9` (Purple) | 🌙 Dark |
-| One Dark | `#61afef` (Blue) | 🌙 Dark |
-| Nord | `#88c0d0` (Cyan) | 🌙 Dark |
-| Clear Ice | `#1d4ed8` (Deep Blue) | ☀️ Light |
-| Snow | `#3b82f6` (Blue) | ☀️ Light |
+| Default Dark | Blue | 🌙 Dark |
+| Matrix | Green | 🌙 Dark |
+| Monokai | Lime | 🌙 Dark |
+| VS Code | Blue | 🌙 Dark |
+| Dracula | Purple | 🌙 Dark |
+| One Dark | Blue | 🌙 Dark |
+| Nord | Cyan | 🌙 Dark |
+| Clear Ice | Deep Blue | ☀️ Light |
+| Snow | Blue | ☀️ Light |
+| **Custom** | **AI-generated** | **Auto-detected** |
 
 ### Three-Layer Token Architecture
 
@@ -95,24 +108,23 @@ Bridge Mapping (auto)     →  --color-primary: var(--accent)
 shadcn/ui Mapping (auto)  →  --primary: var(--color-primary)
 ```
 
-**Adding a new theme** = define ~25 CSS variables. The bridge + shadcn mapping auto-handles everything.
-
 ---
 
-## Anti-Flicker Strategy
+## Arguments
 
-Theme switching is flicker-free:
-1. `next-themes` reads theme from `localStorage` **before first paint** via inline `<script>`
-2. `suppressHydrationWarning` on `<html>` prevents React hydration mismatch
-3. Background transitions disabled on first load, enabled after mount via `body.theme-loaded`
-4. `enableSystem={false}` — no OS detection race condition
+| Argument | Required | Description |
+|:---|:---|:---|
+| `destination` | ✅ | Project root path |
+| `design_query` | ❌ | Product/industry query for AI theme generation |
 
-## Security
+### design_query Examples
 
-- **API Client:** Request timeout (15s), `credentials: "include"` for httpOnly cookies
-- **Auth:** OAuth via server-side redirects (not client-side token storage)
-- **No localStorage tokens** — auth tokens live in httpOnly cookies only
-- **XSS Protection:** No `innerHTML` or `eval()` — JSON.parse only
+| Query | What AI generates |
+|:---|:---|
+| `"beauty spa wellness"` | Soft pinks, sage greens, elegant serif fonts |
+| `"fintech crypto dashboard"` | Dark mode, sharp blues, monospace accents |
+| `"SaaS analytics platform"` | Professional blues, clean sans-serif |
+| `"gaming esports"` | Neon accents, cyberpunk style, dark base |
 
 ---
 
