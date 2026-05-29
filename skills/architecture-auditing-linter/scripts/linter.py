@@ -428,7 +428,14 @@ class Linter(Tool):
                 
                 auditor = CodeAuditor(py_file, root_dir, bypass_dirs)
                 auditor.visit(tree)
-                
+
+                # Post-visit: kill switch check for main.py
+                if auditor.is_main_file and auditor._has_uvicorn_run and not auditor._has_kill_pid:
+                    auditor.violations.append(
+                        f"L{auditor._uvicorn_run_line}: ❌ [Kill Switch Missing] 'uvicorn.run()' found without 'kill_pid(port)'. "
+                        f"Add 'kill_pid(port)' before uvicorn.run() to prevent 'Address already in use' errors."
+                    )
+
                 if auditor.violations:
                     results[str(rel_path)] = auditor.violations
             except Exception as e:
@@ -489,6 +496,11 @@ class CodeAuditor(ast.NodeVisitor):
         self.is_helpers_file = in_helpers_dir
         # Track if file has time.sleep inside a loop (manual retry pattern)
         self._inside_loop = False
+        # Kill switch tracking — main.py must call kill_pid() before uvicorn.run()
+        self.is_main_file = filename.name == "main.py"
+        self._has_kill_pid = False
+        self._has_uvicorn_run = False
+        self._uvicorn_run_line = 0
 
     def add_violation(self, node, message):
         self.violations.append(f"L{node.lineno}: {message}")
@@ -522,6 +534,15 @@ class CodeAuditor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Call(self, node):
+        # 0. Kill switch tracking (main.py only)
+        if self.is_main_file:
+            if isinstance(node.func, ast.Name) and node.func.id == "kill_pid":
+                self._has_kill_pid = True
+            if isinstance(node.func, ast.Attribute) and node.func.attr == "run":
+                if isinstance(node.func.value, ast.Name) and node.func.value.id == "uvicorn":
+                    self._has_uvicorn_run = True
+                    self._uvicorn_run_line = node.lineno
+
         # 1. Print statement
         if isinstance(node.func, ast.Name) and node.func.id == "print":
             self.add_violation(node, "⚠️ [Print Statement] Manual 'print()' found. Use a logger for production code.")
