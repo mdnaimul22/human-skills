@@ -2,18 +2,17 @@
 id: "g2-transform-jittery"
 title: "G2 JitterY Transform"
 description: |
-  在 Y 方向对数据进行抖动处理，避免点重叠。
-  常用于散点图中分类数据点的分散显示。
+  Applies jittering to data in the Y direction to prevent point overlap.
+  Commonly used in scatter plots to disperse categorized data points.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
-  - "抖动"
   - "jitter"
-  - "散点图"
-  - "防重叠"
-  - "Y轴"
+  - "scatter plot"
+  - "overlap prevention"
+  - "Y-axis"
 
 related:
   - "g2-transform-jitter"
@@ -21,13 +20,13 @@ related:
   - "g2-mark-point-scatter"
 
 use_cases:
-  - "分类散点图中避免点重叠"
-  - "水平方向分类数据的分布展示"
-  - "转置坐标系下的抖动"
+  - "Preventing point overlap in categorized scatter plots"
+  - "Displaying the distribution of categorized data in the horizontal direction"
+  - "Jittering in transposed coordinate systems"
 
 anti_patterns:
-  - "连续数值数据不需要抖动"
-  - "点数量过少时抖动效果不明显"
+  - "Continuous numerical data does not require jittering"
+  - "Jittering is less effective with a small number of points"
 
 difficulty: "beginner"
 completeness: "full"
@@ -37,16 +36,16 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform"
 ---
 
-## 核心概念
+## Core Concepts
 
-JitterY Transform 在 Y 方向对数据点进行随机偏移，使重叠的点分散显示。与 JitterX 对称，适用于 Y 轴为分类数据的情况。
+The JitterY Transform applies random offsets to data points in the Y direction, dispersing overlapping points for better visibility. Symmetrical to JitterX, it is suitable for cases where the Y-axis represents categorical data.
 
-**工作原理：**
-1. 根据 Y 轴比例尺确定每个类别的范围
-2. 在范围内随机偏移每个点的 Y 位置
-3. 通过 `padding` 控制偏移范围
+**How It Works:**
+1. Determine the range for each category based on the Y-axis scale
+2. Randomly offset the Y position of each point within the range
+3. Control the offset range using `padding`
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -78,9 +77,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 控制抖动范围
+### Control Jitter Range
 
 ```javascript
 chart.options({
@@ -90,13 +89,13 @@ chart.options({
   transform: [
     {
       type: 'jitterY',
-      padding: 0.2,  // 抖动范围比例
+      padding: 0.2,  // Jitter range ratio
     },
   ],
 });
 ```
 
-### 结合 JitterX 使用
+### Using with JitterX
 
 ```javascript
 chart.options({
@@ -110,7 +109,7 @@ chart.options({
 });
 ```
 
-### 自定义随机函数
+### Custom Random Function
 
 ```javascript
 chart.options({
@@ -126,30 +125,30 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface JitterYTransform {
   type: 'jitterY';
-  padding?: number;      // 抖动范围的内边距，默认 0
-  random?: () => number; // 随机数生成函数，默认 Math.random
+  padding?: number;      // Padding for the jitter range, default is 0
+  random?: () => number; // Random number generation function, default is Math.random
 }
 ```
 
-## 与 Jitter/JitterX 的对比
+## Comparison with Jitter/JitterX
 
-| Transform | 抖动方向 | 常用场景 |
-|-----------|---------|---------|
-| jitter | X 和 Y | 二维分类数据 |
-| jitterX | 仅 X | X 轴分类数据 |
-| jitterY | 仅 Y | Y 轴分类数据 |
+| Transform | Jitter Direction | Common Use Cases |
+|-----------|------------------|------------------|
+| jitter    | X and Y          | 2D categorical data |
+| jitterX   | X only           | X-axis categorical data |
+| jitterY   | Y only           | Y-axis categorical data |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：对连续数据使用抖动
+### Error 1: Using Jitter on Continuous Data
 
 ```javascript
-// ❌ 不推荐：Y 轴是连续数值时抖动可能造成误解
+// ❌ Not Recommended: Jitter on the Y-axis with continuous values may cause misinterpretation
 chart.options({
   type: 'point',
   data,
@@ -157,7 +156,7 @@ chart.options({
   transform: [{ type: 'jitterY' }],
 });
 
-// ✅ 正确：Y 轴是分类数据时使用
+// ✅ Correct: Use jitter when the Y-axis represents categorical data
 chart.options({
   type: 'point',
   data,
@@ -166,12 +165,12 @@ chart.options({
 });
 ```
 
-### 错误 2：padding 值过大
+### Error 2: Excessive padding value
 
 ```javascript
-// ❌ 错误：padding 过大会导致点溢出到相邻类别
+// ❌ Incorrect: Excessive padding causes points to overflow into adjacent categories
 transform: [{ type: 'jitterY', padding: 0.8 }]
 
-// ✅ 正确：合理的 padding 值
+// ✅ Correct: Appropriate padding value
 transform: [{ type: 'jitterY', padding: 0.2 }]
 ```

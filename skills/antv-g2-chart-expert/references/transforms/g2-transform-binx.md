@@ -1,20 +1,20 @@
 ---
 id: "g2-transform-binx"
-title: "G2 BinX 分箱变换（直方图）"
+title: "G2 BinX Binning Transform (Histogram)"
 description: |
-  BinX 将连续 x 值按指定区间（bin）分组，自动统计每个区间内的记录数（或聚合值），
-  是绘制频率直方图的核心 Transform。与 Interval Mark 组合直接使用原始数据即可生成直方图。
+  BinX groups continuous x values into specified bins and automatically counts the number of records (or aggregated values) in each bin. 
+  It is the core Transform for creating frequency histograms. When combined with Interval Mark, it can directly generate histograms using raw data.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "BinX"
-  - "直方图"
+  - "Histogram"
   - "histogram"
-  - "分箱"
-  - "分布"
-  - "频率"
+  - "binning"
+  - "distribution"
+  - "frequency"
   - "transform"
   - "spec"
 
@@ -23,11 +23,11 @@ related:
   - "g2-transform-stacky"
 
 use_cases:
-  - "展示连续数值数据的频率分布"
-  - "探索数据的分布形态（正态、偏态等）"
+  - "Displaying frequency distribution of continuous numerical data"
+  - "Exploring data distribution patterns (normal, skewed, etc.)"
 
 anti_patterns:
-  - "数据是离散分类时不需要 binX，直接用 interval 即可"
+  - "BinX is not needed for discrete categorical data; use interval directly instead"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -37,7 +37,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/bin-x"
 ---
 
-## 最小可运行示例（直方图）
+## Minimum Viable Example (Histogram)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -48,7 +48,7 @@ const chart = new Chart({
   height: 400,
 });
 
-// 原始连续数值数据
+// Raw continuous numerical data
 const rawData = Array.from({ length: 200 }, () => ({
   value: Math.random() * 100,
 }));
@@ -60,62 +60,62 @@ chart.options({
   transform: [
     {
       type: 'binX',
-      y: 'count',      // 统计每个 bin 内的记录数，结果存入 y 通道
-      thresholds: 20,  // 分成约 20 个 bin
+      y: 'count',      // Count the number of records in each bin, store the result in the y channel
+      thresholds: 20,  // Divide into approximately 20 bins
     },
   ],
-  style: { inset: 0.5 },    // 柱体间留细缝
+  style: { inset: 0.5 },    // Leave a small gap between bars
 });
 
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 transform: [
   {
     type: 'binX',
-    // 统计目标
-    y: 'count',       // 'count'（默认，计数）| 'sum' | 'mean' | 'max' | 'min'
-    // 如果是 sum/mean 等，还需指定聚合的字段：
+    // Statistical target
+    y: 'count',       // 'count' (default, count) | 'sum' | 'mean' | 'max' | 'min'
+    // If using sum/mean, also specify the aggregated field:
     // y: 'sum', field: 'amount',
 
-    // 分箱数量控制（三选一）
-    thresholds: 20,           // 目标分箱数（近似值，库会自动调整）
-    // domain: [0, 100],      // 指定值域范围
-    // step: 5,               // 每个 bin 的宽度（与 thresholds 互斥）
+    // Binning control (choose one)
+    thresholds: 20,           // Target number of bins (approximate, adjusted automatically by the library)
+    // domain: [0, 100],      // Specify value domain range
+    // step: 5,               // Width of each bin (mutually exclusive with thresholds)
   },
 ],
 ```
 
-## 分组直方图（按类别着色）
+## Grouped Histogram (Colored by Category)
 
 ```javascript
 chart.options({
   type: 'interval',
-   data,  // [{ value: 42, group: 'A' }, ...]
+  data,  // [{ value: 42, group: 'A' }, ...]
   encode: { x: 'value', color: 'group' },
   transform: [
     { type: 'binX', y: 'count', thresholds: 15 },
-    { type: 'stackY' },   // 堆叠同一 bin 内不同分组的计数
+    { type: 'stackY' },   // Stack counts of different groups within the same bin
   ],
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：对离散分类数据使用 binX
+### Error: Using binX for Discrete Categorical Data
 ```javascript
-// ❌ 错误：genre 是分类字段，不需要 binX
+// ❌ Error: genre is a categorical field and does not require binX
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre' },
-  transform: [{ type: 'binX', y: 'count' }],  // 不必要！
+  transform: [{ type: 'binX', y: 'count' }],  // Unnecessary!
 });
 
-// ✅ 正确：分类数据直接用 interval，不需要 binX
+// ✅ Correct: Use interval directly for categorical data, no binX needed
 chart.options({
   type: 'interval',
   data,
@@ -123,11 +123,11 @@ chart.options({
 });
 ```
 
-### 错误：忘记指定 y 统计量
+### Error: Forgot to Specify y Metric
 ```javascript
-// ❌ 错误：没有 y 参数，不知道统计什么
+// ❌ Error: No y parameter, don't know what to calculate
 chart.options({ transform: [{ type: 'binX', thresholds: 20 }] });
 
-// ✅ 正确：必须指定 y
+// ✅ Correct: Must specify y
 chart.options({ transform: [{ type: 'binX', y: 'count', thresholds: 20 }] });
 ```

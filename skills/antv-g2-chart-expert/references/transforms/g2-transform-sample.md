@@ -1,21 +1,21 @@
 ---
 id: "g2-transform-sample"
-title: "G2 Sample 数据采样变换"
+title: "G2 Sample Data Transformation"
 description: |
-  sample 变换在数据超过阈值（默认 2000 条）时自动对数据降采样，
-  避免大数据集渲染过慢或视觉过于密集。
-  支持 first、last、min、max、median、lttb（最大三角形，保留趋势）等多种策略。
+  The sample transformation automatically downsamples data when it exceeds a threshold (default 2000 entries),
+  preventing slow rendering or overly dense visualizations for large datasets.
+  Supports multiple strategies including first, last, min, max, median, and lttb (Largest Triangle Three Buckets, preserves trends).
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "sample"
-  - "采样"
-  - "大数据"
-  - "性能优化"
+  - "sampling"
+  - "big data"
+  - "performance optimization"
   - "lttb"
-  - "降采样"
+  - "downsampling"
   - "transform"
 
 related:
@@ -23,9 +23,9 @@ related:
   - "g2-transform-filter"
 
 use_cases:
-  - "折线图数据超过 2000 条时保留视觉趋势的采样"
-  - "实时数据流的性能优化"
-  - "股票K线等大时间序列可视化"
+  - "Sampling line charts with over 2000 data points while preserving visual trends"
+  - "Performance optimization for real-time data streams"
+  - "Large time-series visualizations such as stock K-line charts"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,12 +35,12 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/sample"
 ---
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 模拟 5000 条时间序列数据
+// Simulate 5000 time series data points
 const data = Array.from({ length: 5000 }, (_, i) => ({
   time: new Date(2020, 0, 1 + Math.floor(i / 10)).toISOString(),
   value: Math.sin(i / 50) * 100 + Math.random() * 20,
@@ -55,8 +55,8 @@ chart.options({
   transform: [
     {
       type: 'sample',
-      thresholds: 500,     // 超过 500 条才触发采样
-      strategy: 'lttb',   // 最大三角形采样，最佳保留视觉趋势
+      thresholds: 500,     // Trigger sampling only when exceeding 500 data points
+      strategy: 'lttb',   // Largest Triangle Three Buckets sampling, best for preserving visual trends
     },
   ],
 });
@@ -64,26 +64,26 @@ chart.options({
 chart.render();
 ```
 
-## 采样策略对比
+## Sampling Strategy Comparison
 
 ```javascript
-// lttb（推荐）：最大三角形三桶算法，视觉保真度最高
+// lttb (recommended): Largest Triangle Three Buckets algorithm, highest visual fidelity
 transform: [{ type: 'sample', strategy: 'lttb', thresholds: 500 }]
 
-// median：取每桶中位数，平滑但可能丢失极值
+// median: Takes the median of each bucket, smooth but may lose extreme values
 transform: [{ type: 'sample', strategy: 'median', thresholds: 1000 }]
 
-// min/max：保留每桶最小/最大值，适合保留极值场景
+// min/max: Retains the minimum/maximum value of each bucket, suitable for preserving extreme values
 transform: [{ type: 'sample', strategy: 'max', thresholds: 800 }]
 
-// first/last：取每桶第一/最后一条，性能最好但精度最低
+// first/last: Takes the first/last item of each bucket, best performance but lowest accuracy
 transform: [{ type: 'sample', strategy: 'first', thresholds: 2000 }]
 ```
 
-## 多系列分组采样
+## Multi-Series Group Sampling
 
 ```javascript
-// groupBy 指定分组字段，每个系列独立采样
+// groupBy specifies the grouping field, each series is sampled independently
 chart.options({
   type: 'line',
   data: multiSeriesData,
@@ -93,48 +93,48 @@ chart.options({
       type: 'sample',
       thresholds: 300,
       strategy: 'lttb',
-      groupBy: ['series', 'color'],  // 按系列分组，每组独立降采样
+      groupBy: ['series', 'color'],  // Group by series, each group is downsampled independently
     },
   ],
 });
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 transform: [
   {
     type: 'sample',
-    strategy: 'median',   // 采样策略：'first'|'last'|'min'|'max'|'median'|'lttb'|function
-                          // 默认 'median'
-    thresholds: 2000,     // 触发采样的数据量阈值，默认 2000
-    groupBy: ['series', 'color'],  // 分组字段，默认 ['series', 'color']
+    strategy: 'median',   // Sampling strategy: 'first'|'last'|'min'|'max'|'median'|'lttb'|function
+                          // Default: 'median'
+    thresholds: 2000,     // Data volume threshold to trigger sampling, default: 2000
+    groupBy: ['series', 'color'],  // Grouping fields, default: ['series', 'color']
   },
 ]
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：thresholds 设置太高——数据虽大但不触发采样
+### Error 1: Thresholds Set Too High—Large Data Does Not Trigger Sampling
 ```javascript
-// ❌ 10000 条数据，thresholds 是默认的 2000，但策略不对
-transform: [{ type: 'sample' }]  // 默认 thresholds: 2000，strategy: 'median'
-// ⚠️  对 10000 条数据只降到 2000 条，可能还是太多
+// ❌ 10,000 data points, thresholds is the default 2000, but the strategy is incorrect
+transform: [{ type: 'sample' }]  // Default thresholds: 2000, strategy: 'median'
+// ⚠️ Reducing 10,000 data points to only 2,000 might still be too many
 
-// ✅ 根据渲染目标明确设置 thresholds
+// ✅ Explicitly set thresholds based on the rendering target
 transform: [{ type: 'sample', thresholds: 300, strategy: 'lttb' }]
 ```
 
-### 错误 2：对柱状图使用 sample——破坏完整分类
+### Error 2: Using `sample` on Bar Charts—Disrupts Complete Categorization
 ```javascript
-// ❌ 柱状图采样后，某些分类会消失，视觉上有断层
+// ❌ Sampling in bar charts causes some categories to disappear, creating visual discontinuity
 chart.options({
   type: 'interval',
   encode: { x: 'category', y: 'value' },
-  transform: [{ type: 'sample' }],  // ❌ 柱状图通常不需要采样
+  transform: [{ type: 'sample' }],  // ❌ Sampling is typically unnecessary for bar charts
 });
 
-// ✅ sample 主要用于折线图等连续数据
+// ✅ `sample` is primarily used for line charts and other continuous data
 chart.options({
   type: 'line',
   encode: { x: 'time', y: 'value' },

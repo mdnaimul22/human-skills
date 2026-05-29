@@ -1,20 +1,20 @@
 ---
 id: "g2-transform-dodgex"
-title: "G2 DodgeX 分组变换"
+title: "G2 DodgeX Group Transform"
 description: |
-  DodgeX 是 G2 v5 中用于分组展示的 Transform，
-  将同一 x 位置的多系列元素在水平方向上错开排列，
-  是分组柱状图的核心依赖。
+  DodgeX is a Transform in G2 v5 used for grouped displays,
+  arranging multiple series elements at the same x-position in a staggered manner horizontally.
+  It is the core dependency for grouped bar charts.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "dodgeX"
-  - "分组"
-  - "并排"
+  - "group"
+  - "side-by-side"
   - "transform"
-  - "分组柱状图"
+  - "grouped bar chart"
   - "spec"
 
 related:
@@ -22,8 +22,8 @@ related:
   - "g2-transform-stacky"
 
 use_cases:
-  - "创建分组柱状图（并排展示多系列）"
-  - "分组散点图"
+  - "Creating grouped bar charts (side-by-side display of multiple series)"
+  - "Grouped scatter plots"
 
 difficulty: "beginner"
 completeness: "partial"
@@ -33,7 +33,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/dodge-x"
 ---
 
-## 基本用法
+## Basic Usage
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -50,7 +50,7 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 chart.options({
@@ -60,31 +60,31 @@ chart.options({
   transform: [
     {
       type: 'dodgeX',
-      padding: 0,          // 组内各柱之间的间距（相对于每组宽度，0-1），默认 0
-      paddingOuter: 0.1,   // 整组与相邻组的外边距
-      reverse: false,      // 是否反转分组顺序
+      padding: 0,          // Spacing between bars within a group (relative to group width, 0-1), default 0
+      paddingOuter: 0.1,   // Outer margin between entire groups and adjacent groups
+      reverse: false,      // Whether to reverse the group order
     },
   ],
 });
 ```
 
-## 与 stackY 的区别
+## Difference from stackY
 
 ```javascript
-// dodgeX：各系列并排展示，便于直接对比绝对值
+// dodgeX: Each series is displayed side by side, facilitating direct comparison of absolute values
 chart.options({ transform: [{ type: 'dodgeX' }] });
 
-// stackY：各系列堆叠展示，便于对比总量和占比
+// stackY: Each series is stacked, facilitating comparison of totals and proportions
 chart.options({ transform: [{ type: 'stackY' }] });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：transform 写成对象
+### Error: transform written as an object
 ```javascript
-// ❌ 错误
+// ❌ Incorrect
 chart.options({ transform: { type: 'dodgeX' } });
 
-// ✅ 正确：必须是数组
+// ✅ Correct: must be an array
 chart.options({ transform: [{ type: 'dodgeX' }] });
 ```

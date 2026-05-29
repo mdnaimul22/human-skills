@@ -1,20 +1,20 @@
 ---
 id: "g2-transform-jitter"
-title: "G2 Jitter 抖动变换（散开重叠点）"
+title: "G2 Jitter Transform (Scatter Overlapping Points)"
 description: |
-  jitter 变换为分类轴上的数据点添加随机偏移，避免相同类别下数据点完全重叠。
-  jitter 同时抖动 X 和 Y，jitterX 只抖动 X（常用于条形图上的点），
-  jitterY 只抖动 Y。常与 point mark 配合展示分类数据分布。
+  The jitter transform adds random offsets to data points on a categorical axis, preventing complete overlap of points within the same category.
+  jitter applies random offsets to both X and Y, jitterX only to X (commonly used for points on bar charts),
+  and jitterY only to Y. It is often used with the point mark to display the distribution of categorical data.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "jitter"
-  - "抖动"
-  - "点图"
-  - "分布"
-  - "重叠"
+  - "scatter"
+  - "point chart"
+  - "distribution"
+  - "overlap"
   - "beeswarm"
   - "transform"
 
@@ -24,9 +24,9 @@ related:
   - "g2-transform-stacky"
 
 use_cases:
-  - "展示各类别下数据点的分布密度（比箱线图更详细）"
-  - "类别轴上多个数据点防止重叠"
-  - "与箱线图叠加，同时显示统计摘要和原始数据"
+  - "Display the distribution density of data points within each category (more detailed than box plots)"
+  - "Prevent overlapping of multiple data points on a categorical axis"
+  - "Overlay with box plots to show both statistical summaries and raw data"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,7 +36,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/jitter"
 ---
 
-## 最小可运行示例（jitter 防止分类散点图重叠）
+## Minimum Viable Example (Jitter to Prevent Overlapping in Categorical Scatter Plot)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -46,28 +46,28 @@ const chart = new Chart({ container: 'container', width: 640, height: 480 });
 chart.options({
   type: 'point',
   data: [
-    { dept: '研发', salary: 18000 }, { dept: '研发', salary: 22000 },
-    { dept: '研发', salary: 15000 }, { dept: '研发', salary: 19000 },
-    { dept: '销售', salary: 12000 }, { dept: '销售', salary: 16000 },
-    { dept: '销售', salary: 14000 }, { dept: '销售', salary: 11000 },
-    { dept: '设计', salary: 17000 }, { dept: '设计', salary: 20000 },
+    { dept: 'R&D', salary: 18000 }, { dept: 'R&D', salary: 22000 },
+    { dept: 'R&D', salary: 15000 }, { dept: 'R&D', salary: 19000 },
+    { dept: 'Sales', salary: 12000 }, { dept: 'Sales', salary: 16000 },
+    { dept: 'Sales', salary: 14000 }, { dept: 'Sales', salary: 11000 },
+    { dept: 'Design', salary: 17000 }, { dept: 'Design', salary: 20000 },
   ],
   encode: {
-    x: 'dept',     // 分类轴（会在此方向抖动）
+    x: 'dept',     // Categorical axis (jitter will be applied in this direction)
     y: 'salary',
     color: 'dept',
   },
-  transform: [{ type: 'jitter' }],   // 在 x 和 y 方向添加随机抖动
+  transform: [{ type: 'jitter' }],   // Add random jitter in x and y directions
   style: { fillOpacity: 0.7, r: 4 },
 });
 
 chart.render();
 ```
 
-## jitterX（仅水平抖动）
+## jitterX (Horizontal Jitter Only)
 
 ```javascript
-// 适合竖向分类轴 — 仅在 x 方向展开，y 方向保持精确数值
+// Suitable for vertical categorical axes — expands only in the x-direction, maintains precise values in the y-direction
 chart.options({
   type: 'point',
   data,
@@ -75,27 +75,27 @@ chart.options({
   transform: [
     {
       type: 'jitterX',
-      padding: 0.1,    // 类别宽度比例（0~0.5），默认 0
-      random: Math.random,  // 自定义随机函数（可用固定种子）
+      padding: 0.1,    // Category width ratio (0~0.5), default 0
+      random: Math.random,  // Custom random function (can use a fixed seed)
     },
   ],
 });
 ```
 
-## 与箱线图叠加
+## Overlay with Box Plot
 
 ```javascript
 chart.options({
   type: 'view',
   children: [
-    // 箱线图（显示统计摘要）
+    // Box Plot (Display Statistical Summary)
     {
       type: 'boxplot',
       data,
       encode: { x: 'dept', y: 'salary' },
       style: { boxFill: 'transparent', lineWidth: 1.5 },
     },
-    // 散点（显示原始数据分布）
+    // Scatter Plot (Display Raw Data Distribution)
     {
       type: 'point',
       data,
@@ -107,43 +107,43 @@ chart.options({
 });
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 transform: [
   {
-    type: 'jitter',    // 或 'jitterX' / 'jitterY'
-    padding: 0,        // 类别边界留白（0~0.5），默认 0
-    paddingX: 0,       // 单独设置 X 留白（覆盖 padding）
-    paddingY: 0,       // 单独设置 Y 留白（覆盖 padding）
-    random: Math.random, // 随机函数，可替换为固定种子伪随机
+    type: 'jitter',    // or 'jitterX' / 'jitterY'
+    padding: 0,        // category boundary padding (0~0.5), default 0
+    paddingX: 0,       // set X padding separately (overrides padding)
+    paddingY: 0,       // set Y padding separately (overrides padding)
+    random: Math.random, // random function, can be replaced with a fixed seed pseudo-random function
   },
 ]
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：在数值轴上使用 jitter——两个方向都是数值时效果混乱
+### Error 1: Using jitter on numerical axes—chaotic effect when both directions are numerical
 ```javascript
-// ❌ 错误：x 和 y 都是数值时，jitter 会破坏精确的数值关系
+// ❌ Error: When both x and y are numerical, jitter disrupts precise numerical relationships
 chart.options({
   type: 'point',
-  encode: { x: 'price', y: 'sales' },  // 都是数值轴
-  transform: [{ type: 'jitter' }],      // ❌ 散点图本就不重叠，不需要
+  encode: { x: 'price', y: 'sales' },  // Both are numerical axes
+  transform: [{ type: 'jitter' }],      // ❌ Scatter plots inherently do not overlap, no need for jitter
 });
 
-// ✅ jitter 应用于有分类轴的场景
+// ✅ Jitter applied to scenarios with categorical axes
 chart.options({
-  encode: { x: 'category', y: 'value' },  // x 是分类
+  encode: { x: 'category', y: 'value' },  // x is categorical
   transform: [{ type: 'jitter' }],         // ✅
 });
 ```
 
-### 错误 2：point mark 数据量大时抖动效果不明显——padding 太小
+### Error 2: Jitter Effect is Insignificant with Large Point Mark Data Volume—Padding is Too Small
 ```javascript
-// ❌ 默认 padding: 0 时，所有点只在类别宽度极小范围内抖动
-transform: [{ type: 'jitter' }]  // padding 默认 0，抖动范围很小
+// ❌ With default padding: 0, all points jitter only within an extremely small category width range
+transform: [{ type: 'jitter' }]  // Default padding is 0, jitter range is very small
 
-// ✅ 适当增大 padding
-transform: [{ type: 'jitter', padding: 0.15 }]  // 类别宽度 15% 作为抖动范围
+// ✅ Increase padding appropriately
+transform: [{ type: 'jitter', padding: 0.15 }]  // Use 15% of category width as jitter range
 ```

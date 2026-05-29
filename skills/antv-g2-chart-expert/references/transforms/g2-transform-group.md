@@ -1,11 +1,11 @@
 ---
 id: "g2-transform-group"
-title: "G2 Group / GroupX / GroupY 分组聚合变换"
+title: "G2 Group / GroupX / GroupY Group Aggregation Transform"
 description: |
-  Group、GroupX、GroupY 是 G2 v5 中用于分组聚合的 Transform。
-  Group 按 x 和 y 通道双维度分组；GroupX 按 x 通道分组；GroupY 按 y 通道分组。
-  支持 mean、sum、count、min、max、median、first、last 等聚合函数。
-  常用于直方图、统计柱状图、聚合折线图等场景。
+  Group, GroupX, and GroupY are Transforms in G2 v5 used for group aggregation.
+  Group aggregates by both x and y channels; GroupX aggregates by the x channel; GroupY aggregates by the y channel.
+  Supports aggregation functions such as mean, sum, count, min, max, median, first, and last.
+  Commonly used in scenarios like histograms, statistical bar charts, and aggregated line charts.
 
 library: "g2"
 version: "5.x"
@@ -14,9 +14,9 @@ tags:
   - "group"
   - "groupX"
   - "groupY"
-  - "分组聚合"
+  - "group aggregation"
   - "transform"
-  - "统计"
+  - "statistics"
   - "mean"
   - "sum"
 
@@ -26,9 +26,9 @@ related:
   - "g2-mark-interval-basic"
 
 use_cases:
-  - "按类别计算平均值（均值柱状图）"
-  - "按 X 分组后求和展示总量"
-  - "将明细数据聚合为统计摘要"
+  - "Calculate average values by category (mean bar chart)"
+  - "Sum and display total quantities after grouping by X"
+  - "Aggregate detailed data into statistical summaries"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -38,18 +38,18 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/group-x"
 ---
 
-## 核心概念
+## Core Concepts
 
-| Transform | 分组维度 | 典型场景 |
-|-----------|----------|----------|
-| `groupX` | x 通道（+ color/series） | 同类别取均值/求和 |
-| `groupY` | y 通道 | 按 Y 分组聚合 |
-| `group` | x + y 双通道 | 二维分组聚合 |
+| Transform | Grouping Dimension | Typical Scenario |
+|-----------|--------------------|------------------|
+| `groupX`  | x channel (+ color/series) | Average/sum within the same category |
+| `groupY`  | y channel | Aggregation by Y grouping |
+| `group`   | x + y dual channels | Two-dimensional grouping aggregation |
 
-聚合函数通过 `y: 'mean'` 等形式指定，支持：
-`mean`（均值）、`sum`（求和）、`count`（计数）、`min`、`max`、`median`、`first`、`last`
+Aggregation functions are specified in the form of `y: 'mean'`, supporting:  
+`mean` (average), `sum` (sum), `count` (count), `min`, `max`, `median`, `first`, `last`
 
-## GroupX 基本用法（按类别求均值）
+## Basic Usage of GroupX (Calculate Mean by Category)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -69,16 +69,16 @@ chart.options({
   transform: [
     {
       type: 'groupX',
-      y: 'mean',   // 按 x 分组，y 取均值
+      y: 'mean',   // Group by x, calculate mean of y
     },
   ],
 });
 
 chart.render();
-// 结果：A 显示均值 20，B 显示均值 45
+// Result: A displays mean 20, B displays mean 45
 ```
 
-## GroupX 聚合函数一览
+## GroupX Aggregation Functions Overview
 
 ```javascript
 chart.options({
@@ -88,50 +88,50 @@ chart.options({
   transform: [
     {
       type: 'groupX',
-      y: 'mean',      // 均值
-      // y: 'sum',    // 求和
-      // y: 'count',  // 计数（忽略 y 通道值，统计条数）
-      // y: 'max',    // 最大值
-      // y: 'min',    // 最小值
-      // y: 'median', // 中位数
+      y: 'mean',      // Mean
+      // y: 'sum',    // Sum
+      // y: 'count',  // Count (ignores y channel value, counts the number of bars)
+      // y: 'max',    // Maximum
+      // y: 'min',    // Minimum
+      // y: 'median', // Median
     },
   ],
 });
 ```
 
-## 统计计数（频率分布）
+## Statistical Count (Frequency Distribution)
 
 ```javascript
-// 统计各类别出现次数
+// Count occurrences of each category
 chart.options({
   type: 'interval',
   data: rawData,
-  encode: { x: 'category' },    // 无需 y 通道
+  encode: { x: 'category' },    // No need for y channel
   transform: [
-    { type: 'groupX', y: 'count' },  // y 会自动生成为计数值
+    { type: 'groupX', y: 'count' },  // y will be automatically generated as the count value
   ],
 });
 ```
 
-## GroupY 用法（按 Y 分组）
+## GroupY Usage (Group by Y)
 
 ```javascript
-// 水平方向按 y 分组求均值（常用于横向柱状图）
+// Group by y in the horizontal direction and calculate the mean (commonly used in horizontal bar charts)
 chart.options({
   type: 'interval',
   data: rawData,
   encode: { y: 'category', x: 'value' },
   transform: [
-    { type: 'groupY', x: 'mean' },  // 按 y 分组，x 取均值
+    { type: 'groupY', x: 'mean' },  // Group by y, calculate the mean of x
   ],
   coordinate: { transform: [{ type: 'transpose' }] },
 });
 ```
 
-## 多字段聚合
+## Multi-Field Aggregation
 
 ```javascript
-// 同时对多个字段聚合
+// Aggregate multiple fields simultaneously
 chart.options({
   type: 'point',
   data: rawData,
@@ -139,16 +139,16 @@ chart.options({
   transform: [
     {
       type: 'groupX',
-      y: 'mean',       // y 取均值
-      size: 'sum',     // size 通道取求和
+      y: 'mean',       // Calculate mean for y
+      size: 'sum',     // Calculate sum for size channel
     },
   ],
 });
 ```
 
-## Cell 图表中的 Group 使用
+## Using Group in Cell Charts
 
-对于 `cell` 类型的图表，通常需要先对数据进行分组聚合再渲染。例如，按日期的 UTC 日和 UTC 月分组，并取最高温度的最大值：
+For charts of type `cell`, it is often necessary to group and aggregate the data before rendering. For example, grouping by UTC day and UTC month of the date, and taking the maximum value of the highest temperature:
 
 ```javascript
 const chart = new Chart({
@@ -163,7 +163,7 @@ chart.options({
     value: [
       { date: '2012-01-01', temp_max: 12.8 },
       { date: '2012-01-02', temp_max: 10.6 },
-      // 更多数据...
+      // More data...
     ]
   },
   encode: {
@@ -179,35 +179,35 @@ chart.options({
 chart.render();
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：transform 写成对象而非数组
+### Error 1: `transform` written as an object instead of an array
 ```javascript
-// ❌ 错误
+// ❌ Incorrect
 chart.options({ transform: { type: 'groupX', y: 'mean' } });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({ transform: [{ type: 'groupX', y: 'mean' }] });
 ```
 
-### 错误 2：count 聚合时仍传 y encode
+### Error 2: Still passing y encode during count aggregation
 ```javascript
-// ❌ count 聚合时不需要 y 通道
+// ❌ y channel is not needed during count aggregation
 chart.options({
   encode: { x: 'category', y: 'someField' },
-  transform: [{ type: 'groupX', y: 'count' }],  // y: 'count' 会忽略 encode.y
+  transform: [{ type: 'groupX', y: 'count' }],  // y: 'count' will ignore encode.y
 });
 
-// ✅ count 聚合只需 x 通道
+// ✅ Only x channel is needed for count aggregation
 chart.options({
-  encode: { x: 'category' },    // 不需要 y
+  encode: { x: 'category' },    // y is not needed
   transform: [{ type: 'groupX', y: 'count' }],
 });
 ```
 
-### 错误 3：Cell 图表未正确使用 Group 聚合
+### Error 3: Incorrect Use of Group Aggregation in Cell Charts
 ```javascript
-// ❌ 错误：没有对重复的 x/y 组合做聚合，导致渲染异常
+// ❌ Incorrect: No aggregation for duplicate x/y combinations, causing rendering anomalies
 chart.options({
   type: 'cell',
   data: weatherData,
@@ -216,10 +216,10 @@ chart.options({
     y: (d) => new Date(d.date).getUTCMonth(),
     color: 'temp_max'
   },
-  transform: []  // 缺少必要的 group 聚合
+  transform: []  // Missing necessary group aggregation
 });
 
-// ✅ 正确：使用 group 并指定 color 聚合方式
+// ✅ Correct: Using group and specifying color aggregation method
 chart.options({
   type: 'cell',
   data: weatherData,
@@ -228,6 +228,6 @@ chart.options({
     y: (d) => new Date(d.date).getUTCMonth(),
     color: 'temp_max'
   },
-  transform: [{ type: 'group', color: 'max' }]  // 必须聚合 color 通道
+  transform: [{ type: 'group', color: 'max' }]  // Must aggregate color channel
 });
 ```

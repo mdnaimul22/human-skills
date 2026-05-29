@@ -2,17 +2,17 @@
 id: "g2-transform-groupy"
 title: "G2 GroupY Transform"
 description: |
-  按 Y 通道对数据进行分组聚合。与 GroupX 对称，
-  用于按 Y 维度聚合数据的场景。
+  Group and aggregate data by the Y channel. Symmetrical to GroupX,
+  it is used for scenarios where data is aggregated by the Y dimension.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
-  - "分组"
-  - "聚合"
-  - "Y轴"
-  - "统计"
+  - "grouping"
+  - "aggregation"
+  - "Y-axis"
+  - "statistics"
 
 related:
   - "g2-transform-groupx"
@@ -20,12 +20,12 @@ related:
   - "g2-transform-group"
 
 use_cases:
-  - "按 Y 维度统计"
-  - "水平条形图聚合"
-  - "转置坐标系下的分组聚合"
+  - "Statistics by Y dimension"
+  - "Horizontal bar chart aggregation"
+  - "Group aggregation under transposed coordinate systems"
 
 anti_patterns:
-  - "Y 通道为连续数值时分组效果不佳"
+  - "Poor grouping effect when Y channel is a continuous value"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,15 +35,15 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform"
 ---
 
-## 核心概念
+## Core Concepts
 
-GroupY Transform 按 `y` 通道的值对数据进行分组，同时考虑 `color` 和 `series` 通道，然后对每组进行聚合计算。
+The GroupY Transform groups data by the values of the `y` channel, while considering the `color` and `series` channels, and then performs aggregation calculations on each group.
 
-**分组维度：**
-- 主维度：`y` 通道
-- 附加维度：`color`、`series`
+**Grouping Dimensions:**
+- Primary Dimension: `y` channel
+- Additional Dimensions: `color`, `series`
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -56,7 +56,7 @@ const chart = new Chart({
 
 chart.options({
   type: 'interval',
-  coordinate: { transform: [{ type: 'transpose' }] },  // 转置为水平条形图
+  coordinate: { transform: [{ type: 'transpose' }] },  // Transpose to horizontal bar chart
   data: [
     { category: 'A', group: 'X', value: 10 },
     { category: 'A', group: 'Y', value: 20 },
@@ -71,7 +71,7 @@ chart.options({
   transform: [
     {
       type: 'groupY',
-      x: 'sum',  // 对每组求和
+      x: 'sum',  // Sum each group
     },
   ],
 });
@@ -79,9 +79,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 计算平均值
+### Calculate Average
 
 ```javascript
 chart.options({
@@ -95,7 +95,7 @@ chart.options({
 });
 ```
 
-### 计数统计
+### Count Statistics
 
 ```javascript
 chart.options({
@@ -109,7 +109,7 @@ chart.options({
 });
 ```
 
-### 多通道聚合
+### Multi-Channel Aggregation
 
 ```javascript
 chart.options({
@@ -127,36 +127,36 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface GroupYTransform {
   type: 'groupY';
   x?: Reducer;
-  // 其他通道也可以聚合
+  // Other channels can also be aggregated
   [channel: string]: Reducer;
 }
 
 type Reducer = 'sum' | 'mean' | 'median' | 'max' | 'min' | 'count' | 'first' | 'last' | ((I: number[], V: any[]) => any);
 ```
 
-## 与 GroupX 的对比
+## Comparison with GroupX
 
-| 特性 | GroupX | GroupY |
-|------|--------|--------|
-| 分组维度 | x, color, series | y, color, series |
-| 常用场景 | 竖向柱状图 | 水平条形图 |
-| 聚合通道 | 通常是 y | 通常是 x |
+| Feature | GroupX | GroupY |
+|---------|--------|--------|
+| Grouping Dimensions | x, color, series | y, color, series |
+| Common Use Cases | Vertical Bar Chart | Horizontal Bar Chart |
+| Aggregation Channel | Typically y | Typically x |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：在非转置坐标系中使用
+### Error 1: Using in Non-Transposed Coordinate Systems
 
 ```javascript
-// ⚠️ 注意：在普通坐标系中，GroupY 通常用于 Y 为分类轴的情况
-// 如果 Y 是数值轴，分组可能没有意义
+// ⚠️ Note: In a regular coordinate system, GroupY is typically used when Y is a categorical axis
+// If Y is a numerical axis, grouping may not make sense
 
-// ✅ 正确：转置坐标系 + GroupY
+// ✅ Correct: Transposed Coordinate System + GroupY
 chart.options({
   type: 'interval',
   coordinate: { transform: [{ type: 'transpose' }] },

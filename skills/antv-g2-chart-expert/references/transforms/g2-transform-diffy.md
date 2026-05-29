@@ -1,21 +1,21 @@
 ---
 id: "g2-transform-diffy"
-title: "G2 DiffY 差值区域变换"
+title: "G2 DiffY Difference Area Transform"
 description: |
-  diffY 计算两条折线之间的差值区间（y0 到 y1），用于绘制差值面积图。
-  保持上方折线的 y 值不变，计算下方折线相对于上方的差值作为 y1，
-  视觉上展示两系列之间的正/负差异区域。
+  diffY calculates the difference interval (y0 to y1) between two line charts, used for drawing difference area charts.
+  It keeps the y values of the upper line unchanged and calculates the difference of the lower line relative to the upper line as y1,
+  visually displaying the positive/negative difference areas between the two series.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "diffY"
-  - "差值"
-  - "差异面积"
-  - "对比"
+  - "difference"
+  - "difference area"
+  - "comparison"
   - "transform"
-  - "区间面积"
+  - "interval area"
 
 related:
   - "g2-mark-area-stacked"
@@ -23,9 +23,9 @@ related:
   - "g2-mark-line-basic"
 
 use_cases:
-  - "展示两条折线之间的正/负差异区域"
-  - "实际值 vs 预测值的偏差可视化"
-  - "价格上下区间的差值展示"
+  - "Displaying positive/negative difference areas between two line charts"
+  - "Visualization of deviations between actual and predicted values"
+  - "Displaying differences in price ranges"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,7 +35,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/diff-y"
 ---
 
-## 最小可运行示例（实际 vs 预测差异）
+## Minimum Viable Example (Actual vs Forecast Difference)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -49,10 +49,10 @@ const data = [
   { month: 'Jun', actual: 88,  forecast: 95 },
 ];
 
-// 转换为长表格式
+// Convert to long table format
 const longData = data.flatMap(d => [
-  { month: d.month, value: d.actual,   type: '实际' },
-  { month: d.month, value: d.forecast, type: '预测' },
+  { month: d.month, value: d.actual,   type: 'Actual' },
+  { month: d.month, value: d.forecast, type: 'Forecast' },
 ]);
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
@@ -60,20 +60,20 @@ const chart = new Chart({ container: 'container', width: 640, height: 400 });
 chart.options({
   type: 'view',
   children: [
-    // 差值面积（正差异：实际>预测 显示绿色，负差异：实际<预测 显示红色）
+    // Difference area (Positive difference: Actual > Forecast shows green, Negative difference: Actual < Forecast shows red)
     {
       type: 'area',
-       longData,
+      data: longData,
       encode: { x: 'month', y: 'value', color: 'type', series: 'type' },
-      transform: [{ type: 'diffY' }],   // 计算两系列间的差值区间
+      transform: [{ type: 'diffY' }],   // Calculate the difference range between the two series
       style: {
         fillOpacity: 0.3,
       },
     },
-    // 主折线
+    // Main line
     {
       type: 'line',
-       longData,
+      data: longData,
       encode: { x: 'month', y: 'value', color: 'type' },
       style: { lineWidth: 2 },
     },
@@ -83,48 +83,48 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 transform: [
   {
     type: 'diffY',
-    groupBy: 'x',   // 按 x 通道分组对齐，默认 'x'
+    groupBy: 'x',   // Group and align by the 'x' channel, default is 'x'
   },
 ]
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：数据没有两个系列——diffY 需要至少两个 series 才能计算差值
+### Error: Data does not have two series - diffY requires at least two series to calculate the difference
 ```javascript
-// ❌ 只有一个系列，diffY 没有对比基准，差值为 0
+// ❌ Only one series, diffY has no comparison baseline, difference is 0
 chart.options({
   type: 'area',
   data: singleSeriesData,
-  encode: { x: 'date', y: 'value' },  // ❌ 没有 series/color 区分两组
+  encode: { x: 'date', y: 'value' },  // ❌ No series/color to distinguish between two groups
   transform: [{ type: 'diffY' }],
 });
 
-// ✅ 必须有两个系列（通过 color/series 区分）
+// ✅ Must have two series (distinguished by color/series)
 chart.options({
   type: 'area',
   data: twoSeriesData,
   encode: {
     x: 'date',
     y: 'value',
-    color: 'type',   // ✅ 区分两个系列
+    color: 'type',   // ✅ Distinguish between two series
     series: 'type',
   },
   transform: [{ type: 'diffY' }],
 });
 ```
 
-### 错误：diffY 与 stackY 混淆——stackY 是累积，diffY 是差值
+### Error: Confusion between diffY and stackY — stackY is cumulative, diffY is the difference
 ```javascript
-// stackY：将多个系列的 y 值累积（适合堆叠图）
+// stackY: Accumulates the y values of multiple series (suitable for stacked charts)
 transform: [{ type: 'stackY' }]
 
-// diffY：计算两个系列之间的差值区间（适合差值面积图）
+// diffY: Calculates the difference range between two series (suitable for difference area charts)
 transform: [{ type: 'diffY' }]
 ```

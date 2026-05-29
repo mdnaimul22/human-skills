@@ -1,10 +1,10 @@
 ---
 id: "g2-transform-sorty"
-title: "G2 SortY 按 Y 值排序变换"
+title: "G2 SortY Transformation for Sorting by Y Values"
 description: |
-  sortY 在每个 x 分组内按 y 值对数据记录排序，常用于堆叠图中控制各分类的堆叠顺序，
-  确保较大的值在底部或顶部。sortX 按 x 通道值对全局数据排序，
-  sortColor 则按颜色通道值排序。
+  sortY sorts data records by y values within each x group, commonly used in stacked charts to control the stacking order of categories,
+  ensuring larger values are at the bottom or top. sortX sorts global data by x channel values,
+  while sortColor sorts by color channel values.
 
 library: "g2"
 version: "5.x"
@@ -12,8 +12,8 @@ category: "transforms"
 tags:
   - "sortY"
   - "sortX"
-  - "排序"
-  - "堆叠顺序"
+  - "sorting"
+  - "stacking order"
   - "transform"
 
 related:
@@ -22,8 +22,8 @@ related:
   - "g2-mark-interval-stacked"
 
 use_cases:
-  - "堆叠柱状图中控制各分类的堆叠顺序（大值在底）"
-  - "确保视觉上更稳定的堆叠布局"
+  - "Controlling stacking order in stacked bar charts (larger values at the bottom)"
+  - "Ensuring visually stable stacked layouts"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -33,7 +33,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/sort"
 ---
 
-## 最小可运行示例（堆叠柱状图排序）
+## Minimum Viable Example (Stacked Bar Chart Sorting)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -54,64 +54,64 @@ chart.options({
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [
-    { type: 'sortY', reverse: false },  // 每个 x 分组内按 y 值升序排列
-    { type: 'stackY' },                 // 再堆叠（大值在顶部）
+    { type: 'sortY', reverse: false },  // Sort each x group in ascending order by y value
+    { type: 'stackY' },                 // Then stack (larger values on top)
   ],
 });
 
 chart.render();
 ```
 
-## sortX（全局按 x 值排序）
+## sortX (Global Sorting by X Value)
 
 ```javascript
-// 条形图按数值降序排列（最大值在顶）
+// Bar chart sorted in descending order by value (maximum value at the top)
 chart.options({
   type: 'interval',
   data: rankingData,
   encode: { x: 'name', y: 'value' },
   transform: [
-    { type: 'sortX', by: 'y', reverse: true },  // 按 y 值降序
+    { type: 'sortX', by: 'y', reverse: true },  // Sort in descending order by y value
   ],
   coordinate: { transform: [{ type: 'transpose' }] },
 });
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
-// sortY：在每个 x 分组内排序
+// sortY: Sort within each x group
 transform: [
   {
     type: 'sortY',
-    reverse: false,   // false = 升序（小值先），true = 降序（大值先），默认 false
-    by: 'y',          // 排序依据通道，默认 'y'
+    reverse: false,   // false = ascending (smaller values first), true = descending (larger values first), default false
+    by: 'y',          // sorting channel, default 'y'
   },
 ]
 
-// sortX：全局按 x 通道值排序
+// sortX: Global sorting by x channel values
 transform: [
   {
     type: 'sortX',
-    by: 'y',          // 排序依据：'x'（按 x 值）或 'y'（按 y 值大小）
-    reverse: true,    // true = 降序，默认 false
+    by: 'y',          // sorting basis: 'x' (by x values) or 'y' (by y values),
+    reverse: true,    // true = descending, default false
   },
 ]
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：sortY 在 stackY 之后执行——堆叠后 y 值已变化，排序基准错误
+### Error: sortY Executed After stackY—Y Values Changed After Stacking, Incorrect Sorting Criteria
 ```javascript
-// ❌ 错误顺序：stackY 之后的 y 值是累积值，sortY 基于累积值排序
+// ❌ Incorrect Order: Y values after stackY are cumulative, sortY sorts based on cumulative values
 transform: [
-  { type: 'stackY' },  // ❌ 先堆叠
-  { type: 'sortY' },   // ❌ 后排序，此时 y 已是累积值
+  { type: 'stackY' },  // ❌ Stack first
+  { type: 'sortY' },   // ❌ Sort after, at this point y is already cumulative
 ]
 
-// ✅ 正确：先排序后堆叠
+// ✅ Correct: Sort Before Stacking
 transform: [
-  { type: 'sortY' },   // ✅ 先按原始 y 值排序
-  { type: 'stackY' },  // ✅ 再堆叠（堆叠顺序按排序结果）
+  { type: 'sortY' },   // ✅ Sort by original y values first
+  { type: 'stackY' },  // ✅ Stack after (stacking order follows sorting result)
 ]
 ```

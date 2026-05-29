@@ -2,29 +2,29 @@
 id: "g2-transform-selectx"
 title: "G2 SelectX Transform"
 description: |
-  按 X 通道选择数据子集。用于筛选每个 X 类别的特定数据点，
-  如最大值、最小值、首个、末个等。
+  Select a subset of data by the X channel. Used to filter specific data points for each X category,
+  such as maximum, minimum, first, last, etc.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
-  - "选择"
-  - "筛选"
-  - "X轴"
-  - "极值"
+  - "select"
+  - "filter"
+  - "X-axis"
+  - "extremes"
 
 related:
   - "g2-transform-select"
   - "g2-transform-selecty"
 
 use_cases:
-  - "只显示每个类别的最大值"
-  - "筛选每个 X 分组的首个/末个数据点"
-  - "突出显示极值点"
+  - "Display only the maximum value for each category"
+  - "Filter the first/last data point for each X group"
+  - "Highlight extreme points"
 
 anti_patterns:
-  - "需要保留所有数据时不应使用"
+  - "Should not be used when all data needs to be retained"
 
 difficulty: "beginner"
 completeness: "full"
@@ -34,16 +34,16 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform"
 ---
 
-## 核心概念
+## Core Concepts
 
-SelectX Transform 按 X 通道分组，然后从每组中选择特定的数据点。选择器支持：
-- `max`：Y 值最大的点
-- `min`：Y 值最小的点
-- `first`：首个数据点
-- `last`：末个数据点
-- 自定义选择函数
+SelectX Transform groups data by the X channel and then selects specific data points from each group. The supported selectors are:
+- `max`: The point with the maximum Y value
+- `min`: The point with the minimum Y value
+- `first`: The first data point
+- `last`: The last data point
+- Custom selection function
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -71,7 +71,7 @@ chart.options({
   transform: [
     {
       type: 'selectX',
-      selector: 'max',  // 只保留每个类别的最大值点
+      selector: 'max',  // Only keep the maximum value point for each category
     },
   ],
 });
@@ -79,9 +79,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 选择最小值
+### Select Minimum Value
 
 ```javascript
 chart.options({
@@ -94,10 +94,10 @@ chart.options({
 });
 ```
 
-### 选择首个/末个
+### Select First/Last
 
 ```javascript
-// 选择每个类别的第一个数据点
+// Select the first data point of each category
 chart.options({
   type: 'point',
   data,
@@ -107,7 +107,7 @@ chart.options({
   ],
 });
 
-// 选择每个类别的最后一个数据点
+// Select the last data point of each category
 chart.options({
   type: 'point',
   data,
@@ -118,7 +118,7 @@ chart.options({
 });
 ```
 
-### 自定义选择器
+### Custom Selector
 
 ```javascript
 chart.options({
@@ -129,9 +129,9 @@ chart.options({
     {
       type: 'selectX',
       selector: (I, Y) => {
-        // I: 组内索引数组
-        // Y: Y 通道的值数组
-        // 返回选中的索引
+        // I: Array of indices within the group
+        // Y: Array of values in the Y channel
+        // Return the selected index
         return I.reduce((maxIdx, i) => Y[i] > Y[maxIdx] ? i : maxIdx, I[0]);
       },
     },
@@ -139,7 +139,7 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface SelectXTransform {
@@ -148,32 +148,32 @@ interface SelectXTransform {
 }
 ```
 
-## 与 Select/SelectY 的对比
+## Comparison with Select/SelectY
 
-| Transform | 分组维度 | 常用场景 |
-|-----------|---------|---------|
-| select | 按指定通道 | 通用选择 |
-| selectX | 按 X 通道 | X 轴分类筛选 |
-| selectY | 按 Y 通道 | Y 轴分类筛选 |
+| Transform | Grouping Dimension | Common Use Cases |
+|-----------|--------------------|------------------|
+| select    | By specified channel | General selection |
+| selectX   | By X channel        | X-axis categorical filtering |
+| selectY   | By Y channel        | Y-axis categorical filtering |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：selector 拼写错误
+### Error 1: Incorrect Spelling of `selector`
 
 ```javascript
-// ❌ 错误
+// ❌ Incorrect
 transform: [{ type: 'selectX', selector: 'maximum' }]
 
-// ✅ 正确
+// ✅ Correct
 transform: [{ type: 'selectX', selector: 'max' }]
 ```
 
-### 错误 2：自定义选择器返回值错误
+### Error 2: Custom Selector Returns Incorrect Value
 
 ```javascript
-// ❌ 错误：返回了值而非索引
+// ❌ Incorrect: Returns a value instead of an index
 selector: (I, Y) => Math.max(...I.map(i => Y[i]))
 
-// ✅ 正确：返回索引
+// ✅ Correct: Returns an index
 selector: (I, Y) => I.reduce((maxIdx, i) => Y[i] > Y[maxIdx] ? i : maxIdx, I[0])
 ```

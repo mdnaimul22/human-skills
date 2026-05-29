@@ -1,20 +1,19 @@
 ---
 id: "g2-transform-symmetryy"
-title: "G2 SymmetryY 对称变换（蝴蝶图 / 人口金字塔）"
+title: "G2 SymmetryY Transform (Butterfly Chart / Population Pyramid)"
 description: |
-  symmetryY 对 y 通道应用偏移使数据关于 y=0 轴对称，
-  典型应用是人口金字塔（两个方向的柱状图对称展示）和蝴蝶图。
-  通常与 transpose（转置）坐标系配合，实现水平对称条形图。
+  symmetryY applies an offset to the y channel, making the data symmetric about the y=0 axis.
+  Typical applications include population pyramids (symmetric bar charts in two directions) and butterfly charts.
+  It is often used in conjunction with the transpose coordinate system to achieve horizontal symmetric bar charts.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "symmetryY"
-  - "对称"
-  - "人口金字塔"
-  - "蝴蝶图"
+  - "symmetry"
   - "population pyramid"
+  - "butterfly chart"
   - "transform"
 
 related:
@@ -23,9 +22,9 @@ related:
   - "g2-mark-interval-stacked"
 
 use_cases:
-  - "人口金字塔（男女年龄分布对称展示）"
-  - "A/B 对比的蝴蝶图"
-  - "正负值关于中心对称的图表"
+  - "Population pyramid (symmetric display of male and female age distribution)"
+  - "A/B comparison butterfly chart"
+  - "Charts with positive and negative values symmetric about the center"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,22 +34,22 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/symmetry-y"
 ---
 
-## 最小可运行示例（人口金字塔）
+## Minimum Viable Example (Population Pyramid)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
 const data = [
-  { age: '0-9',   gender: '男', value: 8500 },
-  { age: '10-19', gender: '男', value: 9200 },
-  { age: '20-29', gender: '男', value: 10300 },
-  { age: '30-39', gender: '男', value: 9800 },
-  { age: '40-49', gender: '男', value: 8900 },
-  { age: '0-9',   gender: '女', value: 8100 },
-  { age: '10-19', gender: '女', value: 8800 },
-  { age: '20-29', gender: '女', value: 9900 },
-  { age: '30-39', gender: '女', value: 9500 },
-  { age: '40-49', gender: '女', value: 8700 },
+  { age: '0-9',   gender: 'Male', value: 8500 },
+  { age: '10-19', gender: 'Male', value: 9200 },
+  { age: '20-29', gender: 'Male', value: 10300 },
+  { age: '30-39', gender: 'Male', value: 9800 },
+  { age: '40-49', gender: 'Male', value: 8900 },
+  { age: '0-9',   gender: 'Female', value: 8100 },
+  { age: '10-19', gender: 'Female', value: 8800 },
+  { age: '20-29', gender: 'Female', value: 9900 },
+  { age: '30-39', gender: 'Female', value: 9500 },
+  { age: '40-49', gender: 'Female', value: 8700 },
 ];
 
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
@@ -64,13 +63,13 @@ chart.options({
     color: 'gender',
   },
   transform: [
-    { type: 'stackY' },     // 先堆叠
-    { type: 'symmetryY' },  // 再对称（以 y=0 为中轴）
+    { type: 'stackY' },     // Stack first
+    { type: 'symmetryY' },  // Then symmetrize (with y=0 as the axis)
   ],
-  coordinate: { transform: [{ type: 'transpose' }] },  // 转置为水平条形
+  coordinate: { transform: [{ type: 'transpose' }] },  // Transpose to horizontal bars
   axis: {
     y: {
-      labelFormatter: (v) => Math.abs(v).toLocaleString(),  // 负值显示为正数
+      labelFormatter: (v) => Math.abs(v).toLocaleString(),  // Display negative values as positive
     },
   },
 });
@@ -78,18 +77,18 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 transform: [
   {
     type: 'symmetryY',
-    groupBy: 'x',   // 按哪个通道分组，默认 'x'
+    groupBy: 'x',   // Group by which channel, default is 'x'
   },
 ]
 ```
 
-## 蝴蝶图（两个类别左右对称）
+## Butterfly Chart (Symmetrical for Two Categories)
 
 ```javascript
 chart.options({
@@ -105,18 +104,18 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：symmetryY 前忘记 stackY——分组数据不会对称
+### Error: Missing `stackY` before `symmetryY`—Grouped data will not be symmetric
 ```javascript
-// ❌ 没有 stackY，两个 gender 的柱体重叠在同侧，对称失效
+// ❌ Without stackY, bars for both genders overlap on the same side, symmetry fails
 transform: [
-  { type: 'symmetryY' },  // ❌ 少了前置 stackY
+  { type: 'symmetryY' },  // ❌ Missing preceding stackY
 ]
 
-// ✅ 必须先 stackY 再 symmetryY
+// ✅ Must apply stackY before symmetryY
 transform: [
-  { type: 'stackY' },     // ✅ 先堆叠（分组数据叠在一起）
-  { type: 'symmetryY' },  // ✅ 再对称（两组各自偏移到两侧）
+  { type: 'stackY' },     // ✅ Stack first (group data together)
+  { type: 'symmetryY' },  // ✅ Then symmetrize (shift each group to opposite sides)
 ]
 ```

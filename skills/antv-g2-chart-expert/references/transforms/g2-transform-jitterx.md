@@ -2,18 +2,17 @@
 id: "g2-transform-jitterx"
 title: "G2 JitterX Transform"
 description: |
-  在 X 方向对数据进行抖动处理，避免点重叠。
-  常用于散点图中分类数据点的分散显示。
+  Applies jittering to data in the X direction to prevent point overlap.
+  Commonly used in scatter plots to disperse categorical data points.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
-  - "抖动"
   - "jitter"
-  - "散点图"
-  - "防重叠"
-  - "X轴"
+  - "scatter plot"
+  - "overlap prevention"
+  - "X-axis"
 
 related:
   - "g2-transform-jitter"
@@ -21,13 +20,13 @@ related:
   - "g2-mark-point-scatter"
 
 use_cases:
-  - "分类散点图中避免点重叠"
-  - "展示分类数据的分布密度"
-  - "一维数据分布可视化"
+  - "Preventing point overlap in categorical scatter plots"
+  - "Visualizing the distribution density of categorical data"
+  - "One-dimensional data distribution visualization"
 
 anti_patterns:
-  - "连续数值数据不需要抖动"
-  - "点数量过少时抖动效果不明显"
+  - "Jittering is unnecessary for continuous numerical data"
+  - "Jittering effect is insignificant with too few points"
 
 difficulty: "beginner"
 completeness: "full"
@@ -37,16 +36,16 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform"
 ---
 
-## 核心概念
+## Core Concepts
 
-JitterX Transform 在 X 方向对数据点进行随机偏移，使重叠的点分散显示。这对于分类数据的散点图特别有用。
+The JitterX Transform applies a random offset to data points along the X-axis, dispersing overlapping points for better visibility. This is particularly useful for scatter plots with categorical data.
 
-**工作原理：**
-1. 根据 X 轴比例尺确定每个类别的范围
-2. 在范围内随机偏移每个点的 X 位置
-3. 通过 `padding` 控制偏移范围
+**How it works:**
+1. Determine the range for each category based on the X-axis scale
+2. Randomly offset the X position of each point within the range
+3. Control the offset range using `padding`
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -78,25 +77,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 控制抖动范围
-
-```javascript
-chart.options({
-  type: 'point',
-  data,
-  encode: { x: 'category', y: 'value' },
-  transform: [
-    {
-      type: 'jitterX',
-      padding: 0.2,  // 抖动范围比例，默认 0
-    },
-  ],
-});
-```
-
-### 自定义随机函数
+### Control Jitter Range
 
 ```javascript
 chart.options({
@@ -106,13 +89,29 @@ chart.options({
   transform: [
     {
       type: 'jitterX',
-      random: () => Math.random(),  // 默认 Math.random
+      padding: 0.2,  // Jitter range ratio, default 0
     },
   ],
 });
 ```
 
-### 结合 JitterY 使用
+### Custom Random Function
+
+```javascript
+chart.options({
+  type: 'point',
+  data,
+  encode: { x: 'category', y: 'value' },
+  transform: [
+    {
+      type: 'jitterX',
+      random: () => Math.random(),  // Default Math.random
+    },
+  ],
+});
+```
+
+### Using with JitterY
 
 ```javascript
 chart.options({
@@ -126,30 +125,30 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface JitterXTransform {
   type: 'jitterX';
-  padding?: number;      // 抖动范围的内边距，默认 0
-  random?: () => number; // 随机数生成函数，默认 Math.random
+  padding?: number;      // Padding for the jitter range, default 0
+  random?: () => number; // Random number generation function, default Math.random
 }
 ```
 
-## 与 Jitter/JitterY 的对比
+## Comparison with Jitter/JitterY
 
-| Transform | 抖动方向 | 常用场景 |
-|-----------|---------|---------|
-| jitter | X 和 Y | 二维分类数据 |
-| jitterX | 仅 X | X 轴分类数据 |
-| jitterY | 仅 Y | Y 轴分类数据 |
+| Transform | Jitter Direction | Common Use Cases |
+|-----------|------------------|------------------|
+| jitter    | X and Y          | 2D categorical data |
+| jitterX   | X only           | X-axis categorical data |
+| jitterY   | Y only           | Y-axis categorical data |
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：对连续数据使用抖动
+### Error 1: Using Jitter for Continuous Data
 
 ```javascript
-// ❌ 不推荐：X 轴是连续数值时抖动可能造成误解
+// ❌ Not Recommended: Jitter on continuous X-axis may cause misinterpretation
 chart.options({
   type: 'point',
   data,
@@ -157,7 +156,7 @@ chart.options({
   transform: [{ type: 'jitterX' }],
 });
 
-// ✅ 正确：X 轴是分类数据时使用
+// ✅ Correct: Use jitter when X-axis is categorical
 chart.options({
   type: 'point',
   data,
@@ -166,12 +165,12 @@ chart.options({
 });
 ```
 
-### 错误 2：padding 值过大
+### Error 2: Excessive padding value
 
 ```javascript
-// ❌ 错误：padding 过大会导致点溢出到相邻类别
+// ❌ Incorrect: Excessive padding causes points to overflow into adjacent categories
 transform: [{ type: 'jitterX', padding: 0.8 }]
 
-// ✅ 正确：合理的 padding 值
+// ✅ Correct: Appropriate padding value
 transform: [{ type: 'jitterX', padding: 0.2 }]
 ```

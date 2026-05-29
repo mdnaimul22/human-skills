@@ -1,20 +1,20 @@
 ---
 id: "g2-transform-flexx"
-title: "G2 FlexX 弹性宽度变换（马赛克图 / 不等宽柱）"
+title: "G2 FlexX Elastic Width Transform (Mosaic Chart / Uneven Bar Width)"
 description: |
-  flexX 根据数据值动态调整 x 轴比例尺的 flex 属性，使每个柱的宽度与数值成比例。
-  常用于马赛克图（Marimekko chart）：柱宽表示一个维度，柱高表示另一个维度。
-  通过 field 指定控制宽度的字段，reducer 指定聚合方式。
+  flexX dynamically adjusts the flex property of the x-axis scale based on data values, making each bar's width proportional to its value.
+  Commonly used in Mosaic charts (Marimekko chart): bar width represents one dimension, and bar height represents another.
+  Specify the field controlling the width via field, and the aggregation method via reducer.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "flexX"
-  - "不等宽柱"
-  - "马赛克图"
+  - "uneven bar width"
+  - "mosaic chart"
   - "Marimekko"
-  - "弹性宽度"
+  - "elastic width"
   - "transform"
 
 related:
@@ -22,9 +22,9 @@ related:
   - "g2-mark-interval-stacked"
 
 use_cases:
-  - "马赛克图（双维度占比：柱宽 × 柱高）"
-  - "不等宽柱状图（柱宽代表样本量/权重）"
-  - "市场份额图（宽度=市场规模，高度=占比）"
+  - "Mosaic Chart (Dual-dimension proportion: bar width × bar height)"
+  - "Uneven Bar Chart (bar width represents sample size/weight)"
+  - "Market Share Chart (width = market size, height = proportion)"
 
 difficulty: "advanced"
 completeness: "full"
@@ -34,19 +34,19 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/flex-x"
 ---
 
-## 最小可运行示例（马赛克图）
+## Minimum Viable Example (Mosaic Plot)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 马赛克图：x 类别，y 子类别比例，value 控制柱宽（市场规模）
+// Mosaic Plot: x category, y sub-category proportion, value controls bar width (market size)
 const data = [
-  { region: '华北', type: '线上', revenue: 300, share: 0.6 },
-  { region: '华北', type: '线下', revenue: 300, share: 0.4 },
-  { region: '华东', type: '线上', revenue: 500, share: 0.7 },
-  { region: '华东', type: '线下', revenue: 500, share: 0.3 },
-  { region: '华南', type: '线上', revenue: 200, share: 0.5 },
-  { region: '华南', type: '线下', revenue: 200, share: 0.5 },
+  { region: 'North China', type: 'Online', revenue: 300, share: 0.6 },
+  { region: 'North China', type: 'Offline', revenue: 300, share: 0.4 },
+  { region: 'East China', type: 'Online', revenue: 500, share: 0.7 },
+  { region: 'East China', type: 'Offline', revenue: 500, share: 0.3 },
+  { region: 'South China', type: 'Online', revenue: 200, share: 0.5 },
+  { region: 'South China', type: 'Offline', revenue: 200, share: 0.5 },
 ];
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
@@ -62,10 +62,10 @@ chart.options({
   transform: [
     {
       type: 'flexX',
-      field: 'revenue',    // 控制柱宽的字段
-      reducer: 'sum',      // 聚合方式（同一 x 类别可能有多行，需要 sum）
+      field: 'revenue',    // Field controlling bar width
+      reducer: 'sum',      // Aggregation method (same x category may have multiple rows, requires sum)
     },
-    { type: 'stackY' },   // 再堆叠 y 方向（百分比）
+    { type: 'stackY' },   // Then stack in the y direction (percentage)
   ],
   axis: {
     y: { labelFormatter: (v) => `${(v * 100).toFixed(0)}%` },
@@ -75,41 +75,41 @@ chart.options({
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 transform: [
   {
     type: 'flexX',
-    field: 'sampleSize',  // 控制宽度的字段名（每个 x 类别的权重）
-    channel: 'y',         // 依据哪个通道的值计算弹性（默认 'y'）
-    reducer: 'sum',       // 同一 x 类别下 field 值的聚合方式（'sum' 是最常用的）
+    field: 'sampleSize',  // Field name controlling width (weight of each x category)
+    channel: 'y',         // Channel value used to calculate elasticity (default 'y')
+    reducer: 'sum',       // Aggregation method for field values under the same x category ('sum' is most commonly used)
   },
 ]
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：flexX 和 stackY 顺序错误——先 stackY 后 flexX
+### Error: Incorrect Order of flexX and stackY—stackY Should Come Before flexX
 ```javascript
-// ❌ 错误：应该先 flexX 再 stackY
+// ❌ Incorrect: flexX should come before stackY
 transform: [
-  { type: 'stackY' },   // ❌ stackY 先执行，flexX 后调整宽度，比例关系出错
+  { type: 'stackY' },   // ❌ stackY is executed first, flexX adjusts width later, causing proportion errors
   { type: 'flexX', field: 'revenue' },
 ]
 
-// ✅ 正确顺序：先 flexX（设置宽度弹性），再 stackY（堆叠高度）
+// ✅ Correct Order: flexX (set elastic width) first, then stackY (stack height)
 transform: [
-  { type: 'flexX', field: 'revenue', reducer: 'sum' },  // ✅ 先设置弹性宽度
-  { type: 'stackY' },                                     // ✅ 再堆叠
+  { type: 'flexX', field: 'revenue', reducer: 'sum' },  // ✅ Set elastic width first
+  { type: 'stackY' },                                     // ✅ Then stack
 ]
 ```
 
-### 错误：没有设置 reducer——同一 x 有多行时宽度计算不一致
+### Error: No Reducer Set - Inconsistent Width Calculation When Multiple Rows Share the Same X Value
 ```javascript
-// ❌ 未设置 reducer，同一 region 有多行（线上/线下），flexX 不知如何聚合宽度
-transform: [{ type: 'flexX', field: 'revenue' }]  // ❌ 缺少 reducer
+// ❌ No reducer set, multiple rows (online/offline) in the same region, flexX doesn't know how to aggregate width
+transform: [{ type: 'flexX', field: 'revenue' }]  // ❌ Missing reducer
 
-// ✅ 设置 reducer: 'sum' 对同一 x 的 field 求和
+// ✅ Set reducer: 'sum' to sum the field for the same x
 transform: [{ type: 'flexX', field: 'revenue', reducer: 'sum' }]  // ✅
 ```

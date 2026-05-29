@@ -1,11 +1,11 @@
 ---
 id: "g2-transform-select"
-title: "G2 Select / SelectX / SelectY 筛选变换"
+title: "G2 Select / SelectX / SelectY Filter Transform"
 description: |
-  select 系列变换从分组数据中筛选出特定的数据行用于标注。
-  selectX 按 x 通道分组后筛选（常用于折线图末端标签），
-  selectY 按 y 通道分组后筛选。
-  selector 支持 'first'、'last'、'min'、'max' 等预设值或自定义函数。
+  The select series of transforms filters specific data rows from grouped data for annotation.
+  selectX filters after grouping by the x channel (commonly used for end labels in line charts),
+  selectY filters after grouping by the y channel.
+  The selector supports preset values such as 'first', 'last', 'min', 'max', or custom functions.
 
 library: "g2"
 version: "5.x"
@@ -14,9 +14,9 @@ tags:
   - "select"
   - "selectX"
   - "selectY"
-  - "筛选"
-  - "末端标签"
-  - "极值标注"
+  - "filter"
+  - "end label"
+  - "extreme value annotation"
   - "transform"
 
 related:
@@ -25,9 +25,9 @@ related:
   - "g2-comp-annotation"
 
 use_cases:
-  - "在折线图末端显示最新数据标签"
-  - "标注每条线的最大值或最小值"
-  - "在特定 x 位置放置注释标签"
+  - "Display the latest data label at the end of a line chart"
+  - "Annotate the maximum or minimum value of each line"
+  - "Place annotation labels at specific x positions"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -37,7 +37,7 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/select"
 ---
 
-## 最小可运行示例（折线图末端标签）
+## Minimum Viable Example (Line Chart End Label)
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -53,24 +53,24 @@ const data = [
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
 
-// 主折线图
+// Main line chart
 chart.options({
   type: 'view',
   children: [
     {
       type: 'line',
-       data,
+      data,
       encode: { x: 'month', y: 'value', color: 'type' },
     },
-    // 末端标签：text mark + selectX（取每条线的最后一个点）
+    // End label: text mark + selectX (select the last point of each line)
     {
       type: 'text',
-       data,
+      data,
       encode: { x: 'month', y: 'value', color: 'type', text: 'type' },
       transform: [
         {
           type: 'selectX',
-          selector: 'last',   // 取每组（每条线）x 最大的点
+          selector: 'last',   // Select the point with the largest x value in each group (each line)
         },
       ],
       style: { textAnchor: 'start', dx: 6 },
@@ -81,10 +81,10 @@ chart.options({
 chart.render();
 ```
 
-## 标注最大值
+## Annotate Maximum Value
 
 ```javascript
-// 在折线图最高点添加标注
+// Add annotation at the highest point of the line chart
 {
   type: 'point',
   data,
@@ -92,46 +92,46 @@ chart.render();
   transform: [
     {
       type: 'selectY',
-      selector: 'max',   // 每组取 y 值最大的点
+      selector: 'max',   // Select the point with the maximum y value in each group
     },
   ],
   style: { r: 6, lineWidth: 2 },
-  labels: [{ text: (d) => `最高: ${d.value}`, position: 'top' }],
+  labels: [{ text: (d) => `Max: ${d.value}`, position: 'top' }],
 }
 ```
 
-## selector 速查
+## selector Quick Reference
 
 ```javascript
-// 取最后一个点（常用于末端标签）
+// Select the last point (commonly used for end labels)
 transform: [{ type: 'selectX', selector: 'last' }]
 
-// 取第一个点
+// Select the first point
 transform: [{ type: 'selectX', selector: 'first' }]
 
-// 取 y 值最大的点
+// Select the point with the maximum y value
 transform: [{ type: 'selectY', selector: 'max' }]
 
-// 取 y 值最小的点
+// Select the point with the minimum y value
 transform: [{ type: 'selectY', selector: 'min' }]
 
-// 自定义：取第 N 个点
+// Custom: Select the Nth point
 transform: [{ type: 'selectX', selector: (data) => data[Math.floor(data.length / 2)] }]
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：select 用在 line mark 自身——应用在独立的 text/point mark
+### Error: select used on the line mark itself—applied to an independent text/point mark
 ```javascript
-// ❌ 在 line mark 上用 selectX，整条线只剩一个点
+// ❌ Using selectX on a line mark, the entire line is reduced to a single point
 chart.options({
   type: 'line',
   data,
   encode: { x: 'month', y: 'value' },
-  transform: [{ type: 'selectX', selector: 'last' }],  // ❌ 会把折线变成单点
+  transform: [{ type: 'selectX', selector: 'last' }],  // ❌ Turns the line into a single point
 });
 
-// ✅ select 用在额外的 text 或 point mark，与 line 并列
+// ✅ select applied to an additional text or point mark, parallel to the line
 chart.options({
   type: 'view',
   children: [
@@ -140,7 +140,7 @@ chart.options({
       type: 'text',
       data,
       encode: { x: 'month', y: 'value', text: 'value' },
-      transform: [{ type: 'selectX', selector: 'last' }],  // ✅ 独立 mark
+      transform: [{ type: 'selectX', selector: 'last' }],  // ✅ Independent mark
     },
   ],
 });

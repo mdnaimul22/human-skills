@@ -1,21 +1,21 @@
 ---
 id: "g2-transform-stacky"
-title: "G2 StackY 堆叠变换"
+title: "G2 StackY Stack Transform"
 description: |
-  StackY 是 G2 v5 中用于实现数据堆叠的 Mark Transform，
-  将同一 x 位置的多个数值依次叠加，生成 y0/y1 区间。
-  配置在 transform 数组中（与 data、encode 同级），是堆叠柱状图、堆叠面积图、饼图的核心依赖。
+  StackY is a Mark Transform in G2 v5 used to implement data stacking,
+  stacking multiple values at the same x position sequentially to generate a y0/y1 range.
+  Configured in the transform array (at the same level as data and encode), it is a core dependency for stacked bar charts, stacked area charts, and pie charts.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "StackY"
-  - "堆叠"
+  - "stack"
   - "stackY"
   - "mark transform"
-  - "堆叠柱状图"
-  - "堆叠面积图"
+  - "stacked bar chart"
+  - "stacked area chart"
   - "spec"
 
 related:
@@ -26,9 +26,9 @@ related:
   - "g2-data-fold"
 
 use_cases:
-  - "创建堆叠柱状图"
-  - "创建堆叠面积图"
-  - "创建饼图（配合 theta 坐标系）"
+  - "Create stacked bar charts"
+  - "Create stacked area charts"
+  - "Create pie charts (with theta coordinate system)"
 
 difficulty: "beginner"
 completeness: "partial"
@@ -38,33 +38,33 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/stack-y"
 ---
 
-## 核心概念
+## Core Concepts
 
-**StackY 是标记变换（Mark Transform），不是数据变换（Data Transform）**
+**StackY is a Mark Transform, not a Data Transform**
 
-- 标记变换配置在 `transform` 数组中（与 `data`、`encode` 同级）
-- 在标记渲染过程中执行，修改视觉通道值
-- **不要**放在 `data.transform` 中
+- Mark transform is configured in the `transform` array (at the same level as `data` and `encode`)
+- Executed during the mark rendering process, modifying visual channel values
+- **Do not** place it in `data.transform`
 
-StackY 对每个 x 分组内的数据进行累积计算：
-- 输入：`y` 值（各子类别的原始数值）
-- 输出：`y0`（底部位置）和 `y1`（顶部位置），驱动柱体/面积的起止位置
+StackY performs cumulative calculations on data within each x group:
+- Input: `y` values (raw numerical values of sub-categories)
+- Output: `y0` (bottom position) and ` y1` (top position), driving the start and end positions of bars/areas
 
 ```javascript
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
-  transform: [{ type: 'stackY' }],  // ✅ Mark Transform：与 data/encode 同级
+  transform: [{ type: 'stackY' }],  // ✅ Mark Transform: at the same level as data/encode
 });
 ```
 
-## 基本用法（Spec 模式）
+## Basic Usage (Spec Mode)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 堆叠柱状图
+// Stacked Bar Chart
 const chart = new Chart({ container: 'container', width: 640, height: 480 });
 
 chart.options({
@@ -76,13 +76,13 @@ chart.options({
     { month: 'Feb', type: 'B', value: 180 },
   ],
   encode: { x: 'month', y: 'value', color: 'type' },
-  transform: [{ type: 'stackY' }],   // 声明堆叠变换
+  transform: [{ type: 'stackY' }],   // Declare stacking transformation
 });
 
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 chart.options({
@@ -92,26 +92,26 @@ chart.options({
   transform: [
     {
       type: 'stackY',
-      orderBy: null,     // null | 'value' | 'sum' | 'series' — 控制堆叠顺序
-      reverse: false,    // 是否反转堆叠顺序
-      y: 'y',            // 输入 y 通道名（默认 'y'）
-      y1: 'y1',          // 输出底部通道名（默认 'y1'）
+      orderBy: null,     // null | 'value' | 'sum' | 'series' — Controls the stacking order
+      reverse: false,    // Whether to reverse the stacking order
+      y: 'y',            // Input y channel name (default 'y')
+      y1: 'y1',          // Output bottom channel name (default 'y1')
     },
   ],
 });
 ```
 
-## 与 normalizeY 组合（百分比堆叠）
+## Combination with normalizeY (Percentage Stacking)
 
 ```javascript
-// transform 数组支持多个变换链式执行
+// transform array supports multiple transformations in a chain
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [
-    { type: 'stackY' },       // 先堆叠
-    { type: 'normalizeY' },   // 再归一化到 [0, 1]
+    { type: 'stackY' },       // Stack first
+    { type: 'normalizeY' },   // Then normalize to [0, 1]
   ],
   axis: {
     y: { labelFormatter: (v) => `${(v * 100).toFixed(0)}%` },
@@ -119,23 +119,23 @@ chart.options({
 });
 ```
 
-## 用于饼图（配合 theta 坐标系）
+## For Pie Charts (with theta coordinate system)
 
 ```javascript
 chart.options({
   type: 'interval',
   data: [
-    { type: '分类一', value: 40 },
-    { type: '分类二', value: 30 },
-    { type: '分类三', value: 30 },
+    { type: 'Category One', value: 40 },
+    { type: 'Category Two', value: 30 },
+    { type: 'Category Three', value: 30 },
   ],
   encode: { y: 'value', color: 'type' },
-  transform: [{ type: 'stackY' }],           // 将数值转为角度区间
+  transform: [{ type: 'stackY' }],           // Convert values to angular intervals
   coordinate: { type: 'theta', outerRadius: 0.8 },
 });
 ```
 
-## 用于堆叠面积图
+## For Stacked Area Charts
 
 ```javascript
 chart.options({
@@ -146,73 +146,73 @@ chart.options({
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：stackY 放在 data.transform 中
+### Error 1: stackY placed in data.transform
 
 ```javascript
-// ❌ 错误：stackY 是 Mark Transform，不能放在 data.transform 中
+// ❌ Incorrect: stackY is a Mark Transform and cannot be placed in data.transform
 chart.options({
   type: 'interval',
-   {
+  {
     type: 'inline',
     value: data,
-    transform: [{ type: 'stackY' }],  // ❌ 错误位置
+    transform: [{ type: 'stackY' }],  // ❌ Incorrect location
   },
 });
 
-// ✅ 正确：stackY 放在 mark 的 transform 中（与 data/encode 同级）
+// ✅ Correct: stackY placed in mark's transform (same level as data/encode)
 chart.options({
   type: 'interval',
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
-  transform: [{ type: 'stackY' }],  // ✅ 正确
+  transform: [{ type: 'stackY' }],  // ✅ Correct
 });
 ```
 
-### 错误 2：transform 写成对象而非数组
+### Error 2: `transform` written as an object instead of an array
 ```javascript
-// ❌ 错误：transform 必须是数组
+// ❌ Incorrect: `transform` must be an array
 chart.options({ transform: { type: 'stackY' } });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({ transform: [{ type: 'stackY' }] });
 ```
 
-### 错误 3：饼图忘记 stackY
+### Error 3: Forgot to stackY in Pie Chart
 ```javascript
-// ❌ 错误：theta 坐标系中没有 stackY，所有扇形角度从 0 开始，完全重叠
+// ❌ Incorrect: No stackY in theta coordinate, all sectors start from 0 and completely overlap
 chart.options({
   type: 'interval',
   data,
   encode: { y: 'value', color: 'type' },
   coordinate: { type: 'theta' },
-  // 缺少 transform！
+  // Missing transform!
 });
 
-// ✅ 正确
+// ✅ Correct
 chart.options({
   type: 'interval',
   data,
   encode: { y: 'value', color: 'type' },
-  transform: [{ type: 'stackY' }],   // 必须！
+  transform: [{ type: 'stackY' }],   // Mandatory!
   coordinate: { type: 'theta' },
 });
 ```
 
-### 错误 4：多系列数据不堆叠直接显示导致重叠
+### Error 4: Multiple Series Data Not Stacked Directly Displayed Leading to Overlap
 ```javascript
-// ❌ 错误：多类型 interval 没有 stackY 或 dodgeX，柱体在同位置堆叠
+// ❌ Error: Multiple type intervals without stackY or dodgeX, bars stacked at the same position
 chart.options({
   type: 'interval',
   data: multiTypeData,
   encode: { x: 'month', y: 'value', color: 'type' },
-  // 既没有 stackY（堆叠）也没有 dodgeX（分组）
+  // Neither stackY (stack) nor dodgeX (dodge) is applied
 });
 
-// ✅ 堆叠展示
+// ✅ Stacked Display
 chart.options({ transform: [{ type: 'stackY' }], ... });
 
-// ✅ 分组展示
+// ✅ Dodged Display
 chart.options({ transform: [{ type: 'dodgeX' }], ... });
 ```

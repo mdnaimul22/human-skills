@@ -2,17 +2,17 @@
 id: "g2-transform-groupcolor"
 title: "G2 GroupColor Transform"
 description: |
-  按 color 通道对数据进行分组聚合。常用于分类聚合场景，
-  如按类别统计总和、平均值等。
+  Group and aggregate data by the color channel. Commonly used in categorical aggregation scenarios,
+  such as calculating sums, averages, etc., by category.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
-  - "分组"
-  - "聚合"
+  - "grouping"
+  - "aggregation"
   - "color"
-  - "分类统计"
+  - "categorical statistics"
 
 related:
   - "g2-transform-groupx"
@@ -20,12 +20,12 @@ related:
   - "g2-transform-group"
 
 use_cases:
-  - "按类别统计总和"
-  - "按颜色维度聚合数据"
-  - "计算各类别的平均值、最大值"
+  - "Calculate sums by category"
+  - "Aggregate data by color dimension"
+  - "Compute averages, maximum values by category"
 
 anti_patterns:
-  - "需要保留原始数据时不应使用"
+  - "Should not be used when retaining original data is required"
 
 difficulty: "beginner"
 completeness: "full"
@@ -35,21 +35,21 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform"
 ---
 
-## 核心概念
+## Core Concepts
 
-GroupColor Transform 按 `color` 通道的值对数据进行分组，然后对每组进行聚合计算。
+GroupColor Transform groups data by the value of the `color` channel and then performs aggregation calculations on each group.
 
-**聚合函数支持：**
-- `sum`：求和
-- `mean`：平均值
-- `median`：中位数
-- `max`：最大值
-- `min`：最小值
-- `count`：计数
-- `first`：取第一个值
-- `last`：取最后一个值
+**Supported Aggregation Functions:**
+- `sum`：sum
+- `mean`：mean
+- `median`：median
+- `max`：maximum
+- `min`：minimum
+- `count`：count
+- `first`：first value
+- `last`：last value
 
-## 最小可运行示例
+## Minimum Viable Example
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -71,12 +71,12 @@ chart.options({
   encode: {
     x: 'category',
     y: 'value',
-    color: 'type',  // 按 type 分组
+    color: 'type',  // Group by type
   },
   transform: [
     {
       type: 'groupColor',
-      y: 'sum',  // 对每组求和
+      y: 'sum',  // Sum each group
     },
   ],
 });
@@ -84,9 +84,9 @@ chart.options({
 chart.render();
 ```
 
-## 常用变体
+## Common Variants
 
-### 计算平均值
+### Calculate the Mean
 
 ```javascript
 chart.options({
@@ -99,7 +99,7 @@ chart.options({
 });
 ```
 
-### 多通道聚合
+### Multi-Channel Aggregation
 
 ```javascript
 chart.options({
@@ -110,13 +110,13 @@ chart.options({
     {
       type: 'groupColor',
       y: 'sum',
-      size: 'count',  // 同时聚合 size 通道
+      size: 'count',  // Aggregate size channel simultaneously
     },
   ],
 });
 ```
 
-### 自定义聚合函数
+### Custom Aggregation Function
 
 ```javascript
 chart.options({
@@ -127,8 +127,8 @@ chart.options({
     {
       type: 'groupColor',
       y: (I, V) => {
-        // I: 组内索引数组
-        // V: 该通道的值数组
+        // I: Array of indices within the group
+        // V: Array of values for this channel
         return I.reduce((sum, i) => sum + V[i], 0) / I.length;
       },
     },
@@ -136,25 +136,25 @@ chart.options({
 });
 ```
 
-## 完整类型参考
+## Complete Type Reference
 
 ```typescript
 interface GroupColorTransform {
   type: 'groupColor';
   y?: 'sum' | 'mean' | 'median' | 'max' | 'min' | 'count' | 'first' | 'last' | ((I: number[], V: any[]) => any);
-  // 其他通道也可以聚合
+  // Other channels can also be aggregated
   [channel: string]: Reducer;
 }
 
 type Reducer = 'sum' | 'mean' | 'median' | 'max' | 'min' | 'count' | 'first' | 'last' | ((I: number[], V: any[]) => any);
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：未指定 color 通道
+### Error 1: Color Channel Not Specified
 
 ```javascript
-// ❌ 错误：没有 color 通道，groupColor 无效
+// ❌ Error: No color channel, groupColor is invalid
 chart.options({
   type: 'interval',
   data,
@@ -162,7 +162,7 @@ chart.options({
   transform: [{ type: 'groupColor', y: 'sum' }],
 });
 
-// ✅ 正确：添加 color 通道
+// ✅ Correct: Add color channel
 chart.options({
   type: 'interval',
   data,
@@ -171,12 +171,12 @@ chart.options({
 });
 ```
 
-### 错误 2：聚合函数名拼写错误
+### Error 2: Incorrect Spelling of Aggregation Function Name
 
 ```javascript
-// ❌ 错误
+// ❌ Incorrect
 transform: [{ type: 'groupColor', y: 'average' }]
 
-// ✅ 正确
+// ✅ Correct
 transform: [{ type: 'groupColor', y: 'mean' }]
 ```

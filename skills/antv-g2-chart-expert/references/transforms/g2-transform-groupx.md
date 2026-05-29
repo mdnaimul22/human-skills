@@ -1,23 +1,23 @@
 ---
 id: "g2-transform-groupx"
-title: "G2 GroupX 分组聚合变换"
+title: "G2 GroupX Grouping and Aggregation Transformation"
 description: |
-  groupX 按 x 通道的值对数据分组，并对 y 通道进行聚合计算（count、sum、mean、min、max 等）。
-  常用于从原始行级数据直接计算统计量，无需预先聚合数据。
-  groupY、groupColor、groupN 是其变体，分别按 y、color 通道或固定数量分组。
+  groupX groups data by the values of the x channel and performs aggregation calculations (count, sum, mean, min, max, etc.) on the y channel.
+  It is commonly used to directly compute statistical measures from raw row-level data without the need for pre-aggregated data.
+  groupY, groupColor, and groupN are its variants, grouping by the y channel, color channel, or a fixed number of groups, respectively.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "groupX"
-  - "分组"
-  - "聚合"
+  - "grouping"
+  - "aggregation"
   - "count"
   - "sum"
   - "mean"
   - "transform"
-  - "统计"
+  - "statistics"
 
 related:
   - "g2-transform-stacky"
@@ -25,9 +25,9 @@ related:
   - "g2-mark-interval-basic"
 
 use_cases:
-  - "从行级原始数据统计各类别的数量（频率柱状图）"
-  - "从明细数据聚合出各组的均值/求和"
-  - "词频统计可视化"
+  - "Counting the number of categories from raw row-level data (frequency bar chart)"
+  - "Aggregating mean/sum values for each group from detailed data"
+  - "Word frequency visualization"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -37,16 +37,16 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/group"
 ---
 
-## 最小可运行示例（计数频率柱状图）
+## Minimum Viable Example (Frequency Count Bar Chart)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 原始行级数据，不需要预先统计频次
+// Raw row-level data, no need for pre-calculated frequencies
 const rawData = [
-  { dept: '研发' }, { dept: '研发' }, { dept: '研发' },
-  { dept: '销售' }, { dept: '销售' },
-  { dept: '设计' }, { dept: '设计' }, { dept: '设计' }, { dept: '设计' },
+  { dept: 'R&D' }, { dept: 'R&D' }, { dept: 'R&D' },
+  { dept: 'Sales' }, { dept: 'Sales' },
+  { dept: 'Design' }, { dept: 'Design' }, { dept: 'Design' }, { dept: 'Design' },
   { dept: 'HR' },
 ];
 
@@ -56,14 +56,14 @@ chart.options({
   type: 'interval',
   data: rawData,
   encode: {
-    x: 'dept',  // 分组字段
-    y: '★',     // 占位符，实际 y 值由 groupX 计算
+    x: 'dept',  // Grouping field
+    y: '★',     // Placeholder, actual y value calculated by groupX
     color: 'dept',
   },
   transform: [
     {
       type: 'groupX',
-      y: 'count',    // 对 y 通道的聚合方式：统计每组数量
+      y: 'count',    // Aggregation method for y channel: count per group
     },
   ],
 });
@@ -71,45 +71,45 @@ chart.options({
 chart.render();
 ```
 
-## 聚合方式速查
+## Aggregation Methods Quick Reference
 
 ```javascript
-// 计数（每组有多少条记录）
+// Count (number of records in each group)
 transform: [{ type: 'groupX', y: 'count' }]
 
-// 求和（每组 y 字段的总和）
+// Sum (sum of y field in each group)
 transform: [{ type: 'groupX', y: 'sum' }]
 
-// 均值（每组 y 字段的平均值）
+// Mean (average of y field in each group)
 transform: [{ type: 'groupX', y: 'mean' }]
 
-// 最大值 / 最小值
+// Maximum / Minimum
 transform: [{ type: 'groupX', y: 'max' }]
 transform: [{ type: 'groupX', y: 'min' }]
 
-// 中位数
+// Median
 transform: [{ type: 'groupX', y: 'median' }]
 
-// 自定义聚合函数
+// Custom aggregation function
 transform: [{ type: 'groupX', y: (values) => values.reduce((a, b) => a + b, 0) / values.length }]
 ```
 
-## 按颜色分组（groupColor）
+## Group by Color (groupColor)
 
 ```javascript
-// 统计各部门男女人数
+// Count the number of males and females in each department
 chart.options({
   type: 'interval',
   data: rawEmployeeData,
   encode: { x: 'dept', y: '★', color: 'gender' },
   transform: [
-    { type: 'groupX', y: 'count' },   // 先按 x 和 color 组合分组统计
-    { type: 'dodgeX' },               // 再分组并排
+    { type: 'groupX', y: 'count' },   // First, group and count by x and color combination
+    { type: 'dodgeX' },               // Then, group and arrange side by side
   ],
 });
 ```
 
-## 均值折线图（从明细数据直接绘制）
+## Mean Line Chart (Drawn Directly from Detailed Data)
 
 ```javascript
 chart.options({
@@ -117,15 +117,15 @@ chart.options({
   data: dailySalesData,
   encode: { x: 'month', y: 'dailySales' },
   transform: [
-    { type: 'groupX', y: 'mean' },  // 计算每月平均日销售额
+    { type: 'groupX', y: 'mean' },  // Calculate the mean daily sales for each month
   ],
   style: { lineWidth: 2 },
 });
 ```
 
-## 密度图中的 KDE 分组说明
+## KDE Grouping Explanation in Density Charts
 
-在使用 `density` 图表类型配合 `kde` 变换时，需要注意 `kde` 变换本身不依赖 `groupX`，而是通过 `groupBy` 参数指定分组字段。例如：
+When using the `density` chart type with the `kde` transformation, note that the `kde` transformation itself does not rely on `groupX`. Instead, grouping is specified through the `groupBy` parameter. For example:
 
 ```javascript
 chart.options({
@@ -136,7 +136,7 @@ chart.options({
     transform: [{
       type: 'kde',
       field: 'y',
-      groupBy: ['x', 'species'],  // 按 x 和 species 字段分组进行 KDE 计算
+      groupBy: ['x', 'species'],  // Perform KDE calculation grouped by 'x' and 'species' fields
     }],
   },
   encode: {
@@ -149,50 +149,50 @@ chart.options({
 });
 ```
 
-在这种情况下，`kde` 变换会自动完成分组和密度计算，无需额外添加 `groupX`。
+In this case, the `kde` transformation automatically handles grouping and density calculation, eliminating the need for an additional `groupX`.
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：encode.y 写成实际字段名——groupX 应用后 y 通道被覆盖
+### Error 1: Using the actual field name `encode.y` as `groupX` overrides the y channel
 ```javascript
-// ❌ 如果想让 groupX 计算 count，encode.y 不需要写实际字段
+// ❌ If you want `groupX` to calculate count, do not use the actual field in `encode.y`
 chart.options({
   encode: { x: 'dept', y: 'salary' },
-  transform: [{ type: 'groupX', y: 'count' }],  // ⚠️  count 会覆盖 salary
+  transform: [{ type: 'groupX', y: 'count' }],  // ⚠️ `count` overrides `salary`
 });
-// 结果：y 轴显示的是 count，不是 salary 的总和
+// Result: The y-axis displays `count`, not the sum of `salary`
 
-// ✅ 如果想要 count，y 字段名无所谓（通常写 '★' 或任意占位符）
+// ✅ If you want `count`, the y field name does not matter (typically use '★' or any placeholder)
 chart.options({
   encode: { x: 'dept', y: '★' },
-  transform: [{ type: 'groupX', y: 'count' }],  // ✅ 统计每组数量
+  transform: [{ type: 'groupX', y: 'count' }],  // ✅ Counts the number in each group
 });
 
-// ✅ 如果想要 sum(salary)，encode.y 必须写 'salary'
+// ✅ If you want `sum(salary)`, `encode.y` must be 'salary'
 chart.options({
   encode: { x: 'dept', y: 'salary' },
-  transform: [{ type: 'groupX', y: 'sum' }],  // ✅ 统计每组 salary 总和
+  transform: [{ type: 'groupX', y: 'sum' }],  // ✅ Calculates the sum of `salary` for each group
 });
 ```
 
-### 错误 2：与 binX 混淆——groupX 用于已有分类，binX 用于数值分桶
+### Error 2: Confusion with binX — groupX is for existing categories, binX is for numerical binning
 ```javascript
-// ❌ 对数值 x 用 groupX，每个唯一值都是一组，组太多
+// ❌ Using groupX for numerical x, each unique value is a group, too many groups
 chart.options({
   encode: { x: 'age', y: '★' },
-  transform: [{ type: 'groupX', y: 'count' }],  // ❌ age 有几十个唯一值
+  transform: [{ type: 'groupX', y: 'count' }],  // ❌ age has dozens of unique values
 });
 
-// ✅ 数值 x 应该用 binX（先分桶再统计）
+// ✅ Numerical x should use binX (bin first, then count)
 chart.options({
   encode: { x: 'age', y: '★' },
-  transform: [{ type: 'binX', y: 'count', thresholds: 10 }],  // ✅ 分 10 个桶
+  transform: [{ type: 'binX', y: 'count', thresholds: 10 }],  // ✅ Binned into 10 buckets
 });
 ```
 
-### 错误 3：在 density 图中错误使用 groupX 与 kde 结合
+### Error 3: Incorrect Use of groupX with kde in Density Charts
 ```javascript
-// ❌ 错误示例：在 density 图中混用 groupX 和 kde
+// ❌ Incorrect Example: Mixing groupX and kde in a density chart
 chart.options({
   type: 'density',
   data: {
@@ -200,29 +200,29 @@ chart.options({
     value: irisData,
     transform: [
       { type: 'kde', field: 'y', groupBy: ['x'] },
-      { type: 'groupX', y: 'mean' }  // ❌ kde 已经完成了分组和聚合，不需要再用 groupX
+      { type: 'groupX', y: 'mean' }  // ❌ kde already handles grouping and aggregation, groupX is unnecessary
     ]
   },
   encode: { x: 'x', y: 'y', color: 'x' }
 });
 
-// ✅ 正确做法：只使用 kde 并通过 groupBy 指定分组字段
+// ✅ Correct Approach: Use only kde and specify grouping via groupBy
 chart.options({
   type: 'density',
   data: {
     type: 'inline',
     value: irisData,
     transform: [
-      { type: 'kde', field: 'y', groupBy: ['x'] }  // ✅ 仅使用 kde 变换
+      { type: 'kde', field: 'y', groupBy: ['x'] }  // ✅ Use only kde transformation
     ]
   },
   encode: { x: 'x', y: 'y', color: 'x', size: 'size' }
 });
 ```
 
-### 错误 4：在 density 图中错误配置 encode 映射字段
+### Error 4: Incorrectly Configuring Encode Mapping Fields in Density Charts
 ```javascript
-// ❌ 错误示例：未正确使用 kde 输出的字段
+// ❌ Incorrect Example: Improper use of fields from KDE output
 chart.options({
   type: 'density',
   data: {
@@ -236,13 +236,13 @@ chart.options({
   },
   encode: {
     x: 'x',
-    y: 'y',        // ❌ 应该使用 kde 输出的 y 字段（默认为 'y'）
+    y: 'y',        // ❌ Should use the y field from KDE output (default is 'y')
     color: 'x',
-    size: 'size'   // ❌ 应该使用 kde 输出的 size 字段（默认为 'size'）
+    size: 'size'   // ❌ Should use the size field from KDE output (default is 'size')
   }
 });
 
-// ✅ 正确做法：确保 encode 中使用的字段与 kde 输出字段一致
+// ✅ Correct Approach: Ensure fields used in encode match KDE output fields
 chart.options({
   type: 'density',
   data: {
@@ -252,14 +252,14 @@ chart.options({
       type: 'kde',
       field: 'y',
       groupBy: ['x'],
-      as: ['kde_y', 'kde_size']  // ✅ 自定义输出字段名
+      as: ['kde_y', 'kde_size']  // ✅ Custom output field names
     }]
   },
   encode: {
     x: 'x',
-    y: 'kde_y',      // ✅ 使用自定义的 y 字段名
+    y: 'kde_y',      // ✅ Use custom y field name
     color: 'x',
-    size: 'kde_size' // ✅ 使用自定义的 size 字段名
+    size: 'kde_size' // ✅ Use custom size field name
   }
 });
 ```

@@ -1,18 +1,18 @@
 ---
 id: "g2-transform-sort-color"
-title: "G2 SortColor 按颜色分组排序变换"
+title: "G2 SortColor Transformation for Grouping and Sorting by Color"
 description: |
-  sortColor 是 G2 v5 中的排序 Transform，对颜色（color）通道的比例尺域（domain）进行排序。
-  与 sortX（对 x 轴排序）类似，但排序作用于 color 通道的类别顺序。
-  常用于图例排序、堆叠图层顺序调整等场景。
+  sortColor is a sorting Transform in G2 v5 that sorts the domain of the color channel scale.
+  Similar to sortX (sorting by the x-axis), but the sorting applies to the categorical order of the color channel.
+  Commonly used in scenarios such as legend sorting and adjusting the order of stacked layers.
 
 library: "g2"
 version: "5.x"
 category: "transforms"
 tags:
   - "sortColor"
-  - "颜色排序"
-  - "图例顺序"
+  - "color sorting"
+  - "legend order"
   - "transform"
   - "sort"
   - "color"
@@ -23,9 +23,9 @@ related:
   - "g2-mark-interval-stacked"
 
 use_cases:
-  - "按数值大小对图例顺序排序"
-  - "堆叠柱状图的颜色分层顺序调整"
-  - "折线图系列颜色分配顺序控制"
+  - "Sorting legend order by numerical value"
+  - "Adjusting color layering order in stacked bar charts"
+  - "Controlling color assignment order in line chart series"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -35,15 +35,14 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/sort-color"
 ---
 
-## 核心概念
+## Core Concepts
 
-`sortColor` 通过计算各 color 分组的聚合值（默认 y 通道的均值），
-对 color scale 的 domain 进行重新排序，影响：
-- 图例的显示顺序
-- 堆叠图中各层的叠放顺序
-- 颜色分配顺序
+`sortColor` reorders the domain of the color scale by calculating the aggregated value (default: mean of the y channel) for each color group, affecting:
+- The display order of the legend
+- The stacking order of layers in stacked charts
+- The color assignment order
 
-## 基本用法
+## Basic Usage
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -63,51 +62,51 @@ chart.options({
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [
     { type: 'stackY' },
-    { type: 'sortColor', channel: 'y', order: 'descending' },  // 按 y 均值降序排列颜色
+    { type: 'sortColor', channel: 'y', order: 'descending' },  // Sort colors by y-axis mean in descending order
   ],
 });
 
 chart.render();
 ```
 
-## 配置项
+## Configuration Options
 
 ```javascript
 chart.options({
   transform: [
     {
       type: 'sortColor',
-      channel: 'y',           // 用于计算排序依据的通道，默认 'y'
-      order: 'ascending',     // 'ascending'（升序）| 'descending'（降序），默认 'ascending'
-      reducer: 'mean',        // 聚合方式：'mean' | 'sum' | 'max' | 'min' | 函数，默认 'mean'
-      reverse: false,         // 是否反转排序结果
+      channel: 'y',           // Channel used for sorting calculation, default 'y'
+      order: 'ascending',     // 'ascending' (ascending order) | 'descending' (descending order), default 'ascending'
+      reducer: 'mean',        // Aggregation method: 'mean' | 'sum' | 'max' | 'min' | function, default 'mean'
+      reverse: false,         // Whether to reverse the sorting result
     },
   ],
 });
 ```
 
-## 与 sortX 对比
+## Comparison with sortX
 
 ```javascript
-// sortX：对 x 轴类别顺序排序（影响柱子/点的 x 轴位置顺序）
+// sortX: Sorts the order of categories on the x-axis (affects the x-axis position order of bars/points)
 transform: [{ type: 'sortX', channel: 'y', order: 'descending' }]
 
-// sortColor：对颜色分组（图例/堆叠层）排序（不影响 x 轴顺序）
+// sortColor: Sorts color groups (legend/stacking layers) (does not affect x-axis order)
 transform: [{ type: 'sortColor', channel: 'y', order: 'descending' }]
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误：期望改变柱子位置但用了 sortColor
+### Error: Expected to change column position but used sortColor
 ```javascript
-// ❌ 错误：sortColor 只改变颜色/图例顺序，不改变 x 轴柱子位置
+// ❌ Error: sortColor only changes the color/legend order, not the x-axis column position
 chart.options({
   encode: { x: 'type', y: 'value' },
   transform: [{ type: 'sortColor', channel: 'y', order: 'descending' }],
-  // x 轴柱子顺序没有变化！
+  // The x-axis column order remains unchanged!
 });
 
-// ✅ 要改变 x 轴柱子位置，使用 sortX
+// ✅ To change the x-axis column position, use sortX
 chart.options({
   encode: { x: 'type', y: 'value' },
   transform: [{ type: 'sortX', channel: 'y', order: 'descending' }],  // ✅
