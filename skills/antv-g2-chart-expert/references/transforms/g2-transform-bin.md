@@ -1,10 +1,10 @@
 ---
 id: "g2-transform-bin"
-title: "G2 Bin / BinX 数值分桶变换（直方图）"
+title: "G2 Bin / BinX Numerical Binning Transformation (Histogram)"
 description: |
-  binX 将连续的数值 x 通道分成若干区间（桶），统计每个区间内的数据量，
-  是直方图的核心变换。bin 同时对 x 和 y 两个方向分桶，生成二维频率矩阵。
-  通过 thresholds 控制桶的数量，y 通道指定聚合方式（count/sum 等）。
+  binX divides the continuous numerical x channel into several intervals (bins), counts the data volume in each interval,
+  and is the core transformation for histograms. bin simultaneously bins both the x and y directions, generating a two-dimensional frequency matrix.
+  The number of bins is controlled by thresholds, and the y channel specifies the aggregation method (count/sum, etc.).
 
 library: "g2"
 version: "5.x"
@@ -12,10 +12,9 @@ category: "transforms"
 tags:
   - "bin"
   - "binX"
-  - "分桶"
-  - "直方图"
+  - "binning"
   - "histogram"
-  - "频率分布"
+  - "frequency distribution"
   - "transform"
 
 related:
@@ -24,9 +23,9 @@ related:
   - "g2-mark-cell-heatmap"
 
 use_cases:
-  - "绘制直方图（数值分布频率）"
-  - "二维频率热力图（bin 同时对 x/y 分桶）"
-  - "将连续数值转化为离散分组统计"
+  - "Creating histograms (numerical distribution frequency)"
+  - "Two-dimensional frequency heatmaps (bin simultaneously bins x/y)"
+  - "Converting continuous numerical values into discrete grouped statistics"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -36,14 +35,14 @@ author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/transform/bin"
 ---
 
-## 最小可运行示例（直方图）
+## Minimum Viable Example (Histogram)
 
 ```javascript
 import { Chart } from '@antv/g2';
 
-// 连续数值数据，不需要预先统计频率
+// Continuous numerical data, no need to pre-calculate frequency
 const rawData = Array.from({ length: 1000 }, () => ({
-  age: Math.floor(Math.random() * 50 + 20),  // 20~70 岁之间的随机年龄
+  age: Math.floor(Math.random() * 50 + 20),  // Random age between 20~70
 }));
 
 const chart = new Chart({ container: 'container', width: 640, height: 400 });
@@ -52,40 +51,40 @@ chart.options({
   type: 'interval',
   data: rawData,
   encode: {
-    x: 'age',   // 连续数值 → 自动分桶
-    y: '★',     // 占位符，binX 会计算 count
+    x: 'age',   // Continuous value → automatic binning
+    y: '★',     // Placeholder, binX will calculate count
   },
   transform: [
     {
       type: 'binX',
-      y: 'count',        // 聚合方式：统计每桶数量
-      thresholds: 15,    // 桶的数量（近似值），默认自动计算
+      y: 'count',        // Aggregation method: count per bin
+      thresholds: 15,    // Number of bins (approximate), default is auto-calculated
     },
   ],
-  style: { inset: 1 },  // 柱子之间留 1px 间隙
-  axis: { y: { title: '人数' } },
+  style: { inset: 1 },  // 1px gap between bars
+  axis: { y: { title: 'Number of People' } },
 });
 
 chart.render();
 ```
 
-## BinX 配置项
+## BinX Configuration Options
 
 ```javascript
 transform: [
   {
     type: 'binX',
-    thresholds: 20,  // 桶数量（整数）或阈值数组（如 [0, 25, 50, 75, 100]）
-    y: 'count',      // 聚合：'count' | 'sum' | 'mean' | 'min' | 'max' | function
-    // groupBy: 'color',  // 按颜色分组分桶（用于分组直方图）
+    thresholds: 20,  // Number of bins (integer) or an array of thresholds (e.g., [0, 25, 50, 75, 100])
+    y: 'count',      // Aggregation: 'count' | 'sum' | 'mean' | 'min' | 'max' | function
+    // groupBy: 'color',  // Group bins by color (used for grouped histograms)
   },
 ]
 ```
 
-## 二维频率热力图（bin）
+## 2D Frequency Heatmap (bin)
 
 ```javascript
-// bin 同时对 x 和 y 方向分桶，生成二维频率矩阵
+// bin divides both x and y directions into buckets, generating a 2D frequency matrix
 chart.options({
   type: 'cell',
   data: scatterData,
@@ -97,8 +96,8 @@ chart.options({
   transform: [
     {
       type: 'bin',
-      color: 'count',    // 统计每个格子的点数（映射到颜色）
-      thresholds: [20, 20],  // [x 方向桶数, y 方向桶数]
+      color: 'count',    // Counts the number of points in each cell (mapped to color)
+      thresholds: [20, 20],  // [Number of buckets in x direction, Number of buckets in y direction]
     },
   ],
   scale: { color: { type: 'sequential', palette: 'ylOrRd' } },
@@ -106,7 +105,7 @@ chart.options({
 });
 ```
 
-## 分组直方图（按颜色分桶）
+## Grouped Histogram (Bucketed by Color)
 
 ```javascript
 chart.options({
@@ -115,39 +114,39 @@ chart.options({
   encode: { x: 'salary', y: '★', color: 'dept' },
   transform: [
     { type: 'binX', y: 'count', thresholds: 12 },
-    { type: 'stackY' },   // 堆叠
+    { type: 'stackY' },   // Stacked
   ],
 });
 ```
 
-## 常见错误与修正
+## Common Errors and Fixes
 
-### 错误 1：对分类字段 x 用 binX——分类应用 groupX
+### Error 1: Using binX for Categorical Field x——Categorical Application groupX
 ```javascript
-// ❌ 错误：x 是字符串类别，binX 无法对字符串分桶
+// ❌ Error: x is a string category, binX cannot bucket strings
 chart.options({
-  encode: { x: 'department', y: '★' },   // department 是字符串
+  encode: { x: 'department', y: '★' },   // department is a string
   transform: [{ type: 'binX', y: 'count' }],  // ❌
 });
 
-// ✅ 字符串类别用 groupX
+// ✅ Use groupX for string categories
 chart.options({
   encode: { x: 'department', y: '★' },
   transform: [{ type: 'groupX', y: 'count' }],  // ✅
 });
 
-// ✅ binX 用于连续数值
+// ✅ binX used for continuous numerical values
 chart.options({
-  encode: { x: 'age', y: '★' },   // age 是数字
+  encode: { x: 'age', y: '★' },   // age is a number
   transform: [{ type: 'binX', y: 'count' }],  // ✅
 });
 ```
 
-### 错误 2：thresholds 设置太大——出现极多细小的桶
+### Error 2: Excessive Thresholds—Too Many Tiny Bins
 ```javascript
-// ❌ 1000 条数据设置 500 个桶，每桶 2 条，直方图没有统计意义
+// ❌ 1000 data points with 500 bins, 2 points per bin, histogram lacks statistical significance
 transform: [{ type: 'binX', y: 'count', thresholds: 500 }]  // ❌
 
-// ✅ 直方图桶数通常在 10~50 之间
+// ✅ Histogram bin count typically ranges from 10 to 50
 transform: [{ type: 'binX', y: 'count', thresholds: 20 }]  // ✅
 ```
