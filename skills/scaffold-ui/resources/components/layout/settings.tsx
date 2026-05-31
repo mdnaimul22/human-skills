@@ -14,10 +14,10 @@ interface FontDef {
 }
 
 const FONTS: FontDef[] = [
-    { key: "system",  label: "System",  family: "system-ui, -apple-system, 'Segoe UI', sans-serif" },
-    { key: "inter",   label: "Inter",   family: "var(--font-sans), system-ui, sans-serif" },
+    { key: "system", label: "System", family: "system-ui, -apple-system, 'Segoe UI', sans-serif" },
+    { key: "inter", label: "Inter", family: "var(--font-sans), system-ui, sans-serif" },
     { key: "poppins", label: "Poppins", family: "var(--font-poppins), system-ui, sans-serif" },
-    { key: "roboto",  label: "Roboto",  family: "var(--font-roboto), system-ui, sans-serif" },
+    { key: "roboto", label: "Roboto", family: "var(--font-roboto), system-ui, sans-serif" },
 ];
 
 interface ScaleDef {
@@ -27,9 +27,9 @@ interface ScaleDef {
 }
 
 const SCALES: ScaleDef[] = [
-    { key: "s",  label: "S",  size: "14px" },
-    { key: "m",  label: "M",  size: "16px" },
-    { key: "l",  label: "L",  size: "18px" },
+    { key: "s", label: "S", size: "14px" },
+    { key: "m", label: "M", size: "16px" },
+    { key: "l", label: "L", size: "18px" },
     { key: "xl", label: "XL", size: "20px" },
 ];
 
@@ -42,15 +42,15 @@ interface ThemeMeta {
 }
 
 const THEMES: ThemeMeta[] = [
-    { id: "dark",        name: "Default",   accent: "#3b82f6" },
-    { id: "matrix",      name: "Matrix",    accent: "#10b981" },
-    { id: "cream",       name: "Monokai",   accent: "#a6e22e" },
-    { id: "matte-black", name: "VS Code",   accent: "#007acc" },
-    { id: "black-brown", name: "Dracula",   accent: "#bd93f9" },
-    { id: "jam-black",   name: "One Dark",  accent: "#61afef" },
-    { id: "jam-navy",    name: "Nord",      accent: "#88c0d0" },
-    { id: "light",       name: "Clear Ice", accent: "#1d4ed8" },
-    { id: "snow",        name: "Snow",      accent: "#3b82f6" },
+    { id: "dark", name: "Default", accent: "#3b82f6" },
+    { id: "matrix", name: "Matrix", accent: "#10b981" },
+    { id: "cream", name: "Monokai", accent: "#a6e22e" },
+    { id: "matte-black", name: "VS Code", accent: "#007acc" },
+    { id: "black-brown", name: "Dracula", accent: "#bd93f9" },
+    { id: "jam-black", name: "One Dark", accent: "#61afef" },
+    { id: "jam-navy", name: "Nord", accent: "#88c0d0" },
+    { id: "light", name: "Clear Ice", accent: "#1d4ed8" },
+    { id: "snow", name: "Snow", accent: "#3b82f6" },
 ];
 
 /* ── Zustand store (persisted to localStorage) ───────────── */
@@ -177,11 +177,10 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
                                     <button
                                         key={s.key}
                                         onClick={() => setScale(s.key)}
-                                        className={`text-[10px] uppercase px-2 py-1 rounded-sm transition-colors font-semibold ${
-                                            scaleKey === s.key
+                                        className={`text-[10px] uppercase px-2 py-1 rounded-sm transition-colors font-semibold ${scaleKey === s.key
                                                 ? "bg-[var(--color-card)] shadow-sm text-[var(--color-primary)]"
                                                 : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                                        }`}
+                                            }`}
                                     >
                                         {s.label}
                                     </button>
@@ -224,11 +223,10 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
                                             <button
                                                 key={f.key}
                                                 onClick={() => { setFont(f.key); setFontMenuOpen(false); }}
-                                                className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--color-primary-light)] transition-colors flex items-center justify-between ${
-                                                    fontKey === f.key
+                                                className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--color-primary-light)] transition-colors flex items-center justify-between ${fontKey === f.key
                                                         ? "text-[var(--color-primary)] font-bold"
                                                         : "text-[var(--color-text)]"
-                                                }`}
+                                                    }`}
                                                 style={{ fontFamily: f.family }}
                                             >
                                                 <span>{f.label}</span>
@@ -284,11 +282,10 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
                                             <button
                                                 key={t.id}
                                                 onClick={() => { setTheme(t.id); setThemeMenuOpen(false); }}
-                                                className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--color-primary-light)] transition-colors flex items-center gap-2.5 ${
-                                                    theme === t.id
+                                                className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--color-primary-light)] transition-colors flex items-center gap-2.5 ${theme === t.id
                                                         ? "text-[var(--color-primary)] font-bold"
                                                         : "text-[var(--color-text)]"
-                                                }`}
+                                                    }`}
                                             >
                                                 <span
                                                     className="w-2.5 h-2.5 rounded-full shrink-0"

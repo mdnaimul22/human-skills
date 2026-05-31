@@ -14,9 +14,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { label: "Dashboard", href: "/",         icon: "📊" },
-    { label: "Users",     href: "/users",    icon: "👥" },
-    { label: "Settings",  href: "/settings", icon: "⚙️" },
+    { label: "Dashboard", href: "/", icon: "📊" },
 ];
 
 const MIN_WIDTH = 180;

@@ -37,15 +37,15 @@ interface ThemeMeta {
 }
 
 const THEMES: ThemeMeta[] = [
-    { id: "dark",        name: "Default",   accent: "#3b82f6", type: "dark" },
-    { id: "matrix",      name: "Matrix",    accent: "#10b981", type: "dark" },
-    { id: "cream",       name: "Monokai",   accent: "#a6e22e", type: "dark" },
-    { id: "matte-black", name: "VS Code",   accent: "#007acc", type: "dark" },
-    { id: "black-brown", name: "Dracula",   accent: "#bd93f9", type: "dark" },
-    { id: "jam-black",   name: "One Dark",  accent: "#61afef", type: "dark" },
-    { id: "jam-navy",    name: "Nord",      accent: "#88c0d0", type: "dark" },
-    { id: "light",       name: "Clear Ice", accent: "#1d4ed8", type: "light" },
-    { id: "snow",        name: "Snow",      accent: "#3b82f6", type: "light" },
+    { id: "dark", name: "Default", accent: "#3b82f6", type: "dark" },
+    { id: "matrix", name: "Matrix", accent: "#10b981", type: "dark" },
+    { id: "cream", name: "Monokai", accent: "#a6e22e", type: "dark" },
+    { id: "matte-black", name: "VS Code", accent: "#007acc", type: "dark" },
+    { id: "black-brown", name: "Dracula", accent: "#bd93f9", type: "dark" },
+    { id: "jam-black", name: "One Dark", accent: "#61afef", type: "dark" },
+    { id: "jam-navy", name: "Nord", accent: "#88c0d0", type: "dark" },
+    { id: "light", name: "Clear Ice", accent: "#1d4ed8", type: "light" },
+    { id: "snow", name: "Snow", accent: "#3b82f6", type: "light" },
 ];
 
 export function ThemeSwitcher() {
@@ -104,22 +104,20 @@ export function ThemeSwitcher() {
                                 setTheme(t.id);
                                 setOpen(false);
                             }}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${
-                                theme === t.id
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${theme === t.id
                                     ? "bg-[var(--color-primary-light)]"
                                     : "hover:bg-[var(--color-primary-light)]"
-                            }`}
+                                }`}
                         >
                             <span
                                 className="w-2.5 h-2.5 rounded-full shrink-0"
                                 style={{ backgroundColor: t.accent }}
                             />
                             <span
-                                className={`text-xs font-medium flex-1 ${
-                                    theme === t.id
+                                className={`text-xs font-medium flex-1 ${theme === t.id
                                         ? "text-[var(--color-primary)]"
                                         : "text-[var(--color-text-secondary)]"
-                                }`}
+                                    }`}
                             >
                                 {t.name}
                             </span>
