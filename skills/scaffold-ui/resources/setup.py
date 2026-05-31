@@ -7,11 +7,15 @@ Expects to run inside the project root directory.
 Steps:
   1. Verify node/npm are installed
   2. Create Next.js app in web/
-  3. Initialize shadcn/ui
-  4. Install Phase 1 shadcn components
-  5. Install extra npm dependencies
-  6. Copy custom template files from resources/ui/
+  3. Install all dependencies (shadcn + extras) in one pass
+  4. Setup shadcn config (pre-made components.json, skip `shadcn init`)
+  5. Install Phase 1 shadcn components
+  6. Copy custom template files from resources/
   7. Print success summary
+
+Optimization: `shadcn init` is skipped entirely (~2.5 min saved).
+Instead, components.json is pre-shipped and deps are merged into
+a single `npm install` call after create-next-app.
 """
 
 import json
@@ -35,7 +39,15 @@ SHADCN_COMPONENTS = [
     "switch", "sidebar",
 ]
 
-EXTRA_NPM_DEPS = ["next-themes", "zustand"]
+# All deps in one list — shadcn runtime deps + project extras.
+# Eliminates the separate `shadcn init` npm install (~2.5 min saved).
+ALL_EXTRA_DEPS = [
+    # shadcn/ui runtime deps (normally installed by `shadcn init`)
+    "@base-ui/react", "class-variance-authority", "clsx",
+    "lucide-react", "shadcn", "tailwind-merge", "tw-animate-css",
+    # project extras
+    "next-themes", "zustand",
+]
 
 
 # ── Helpers ────────────────────────────────────────────────────
@@ -47,7 +59,7 @@ def run(cmd: list[str], cwd: Path | None = None, check: bool = True) -> subproce
     )
 
 
-SKIP_FILES = {"setup.py", "package.json", "package-lock.json", "tsconfig.json"}
+SKIP_FILES = {"setup.py", "package.json", "package-lock.json", "tsconfig.json", "components.json"}
 SKIP_DIRS  = {"node_modules", "__pycache__"}
 
 
@@ -107,20 +119,39 @@ def step_create_nextjs():
     print("   ✅ Next.js app created")
 
 
-def step_init_shadcn():
-    """Initialize shadcn/ui with default config."""
-    print("🎨 Initializing shadcn/ui...")
+def step_install_deps():
+    """Install all extra deps in a single npm install pass.
+
+    Merges shadcn runtime deps + project extras to avoid the
+    separate `shadcn init` step (~2.5 min saved).
+    """
+    print(f"📥 Installing {len(ALL_EXTRA_DEPS)} dependencies...")
     result = run(
-        ["npx", "-y", "shadcn@latest", "init", "-d", "-y"],
+        ["npm", "install", *ALL_EXTRA_DEPS],
         cwd=WEB_DIR, check=False
     )
-    if result.returncode != 0:
-        # Try alternate command format
-        result = run(
-            ["npx", "-y", "shadcn@latest", "init", "--defaults"],
-            cwd=WEB_DIR, check=False
-        )
-    print("   ✅ shadcn/ui initialized")
+    if result.returncode == 0:
+        print(f"   ✅ All dependencies installed")
+    else:
+        print(f"   ⚠️ npm install warning: {result.stderr[:200]}")
+
+
+def step_setup_shadcn_config():
+    """Copy pre-made components.json instead of running `shadcn init`.
+
+    This skips the ~2.5 min `shadcn init` process which mostly
+    just runs `npm install` (already done) and creates this file.
+    """
+    print("🎨 Setting up shadcn/ui config...")
+    src = RESOURCES_DIR / "components.json"
+    dst = WEB_DIR / "components.json"
+    if src.exists():
+        shutil.copy2(src, dst)
+        print("   ✅ components.json installed (shadcn init skipped)")
+    else:
+        print("   ⚠️ components.json not found in resources, running shadcn init...")
+        run(["npx", "-y", "shadcn@latest", "init", "-d", "-y"], cwd=WEB_DIR, check=False)
+        print("   ✅ shadcn/ui initialized (fallback)")
 
 
 def step_add_components():
@@ -135,19 +166,6 @@ def step_add_components():
         print(f"   stderr: {result.stderr[:200]}")
     else:
         print(f"   ✅ {len(SHADCN_COMPONENTS)} components installed")
-
-
-def step_install_deps():
-    """Install extra npm dependencies."""
-    print("📥 Installing extra dependencies...")
-    result = run(
-        ["npm", "install", *EXTRA_NPM_DEPS],
-        cwd=WEB_DIR, check=False
-    )
-    if result.returncode == 0:
-        print(f"   ✅ Installed: {', '.join(EXTRA_NPM_DEPS)}")
-    else:
-        print(f"   ⚠️ npm install warning: {result.stderr[:200]}")
 
 
 def step_copy_templates():
@@ -432,9 +450,9 @@ if __name__ == "__main__":
 
     step_check_node()
     step_create_nextjs()
-    step_init_shadcn()
+    step_install_deps()          # single npm install — all deps at once
+    step_setup_shadcn_config()   # pre-made components.json (skips shadcn init)
     step_add_components()
-    step_install_deps()
     step_copy_templates()
     step_inject_design_system()
     step_summary()
