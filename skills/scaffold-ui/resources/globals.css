@@ -403,7 +403,7 @@
 
     --color-text: var(--text-1);
     --color-text-secondary: var(--text-2);
-    --color-text-muted: var(--text-muted);
+    --color-text-muted: var(--text-3);
     --color-text-inverse: var(--btn-fg);
 
     --color-border: var(--border);
@@ -462,6 +462,7 @@
     html {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
 
     body {

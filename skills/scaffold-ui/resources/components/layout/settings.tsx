@@ -72,21 +72,43 @@ export const useAppSettings = create<AppSettingsState>()(
         }),
         {
             name: "app-settings",
+            version: 1,
+            migrate: () => ({ fontKey: "system", scaleKey: "m", setFont: () => {}, setScale: () => {} }),
         },
     ),
 );
 
 /* ── Side-effect: apply font + scale to <html> ───────────── */
 
+const DEFAULT_FONT_KEY = "system";
+const DEFAULT_SCALE_KEY = "m";
+
 function useApplySettings() {
     const { fontKey, scaleKey } = useAppSettings();
 
     useEffect(() => {
-        const font = FONTS.find((f) => f.key === fontKey) ?? FONTS[0];
-        const scale = SCALES.find((s) => s.key === scaleKey) ?? SCALES[1];
+        const html = document.documentElement;
 
-        document.documentElement.style.setProperty("--font-primary", font.family);
-        document.documentElement.style.fontSize = scale.size;
+        // Font: only set custom --font-primary when not using system default
+        if (fontKey !== DEFAULT_FONT_KEY) {
+            const font = FONTS.find((f) => f.key === fontKey) ?? FONTS[0];
+            html.style.setProperty("--font-primary", font.family);
+        } else {
+            html.style.removeProperty("--font-primary");
+        }
+
+        // Scale: only set fontSize when not using default (16px)
+        if (scaleKey !== DEFAULT_SCALE_KEY) {
+            const scale = SCALES.find((s) => s.key === scaleKey) ?? SCALES[1];
+            html.style.fontSize = scale.size;
+        } else {
+            html.style.removeProperty("font-size");
+        }
+
+        // Clean up empty style attribute to avoid DOM mutation noise
+        if (!html.getAttribute("style")?.trim()) {
+            html.removeAttribute("style");
+        }
     }, [fontKey, scaleKey]);
 }
 
@@ -135,8 +157,8 @@ export function SettingsPanel({ collapsed = false }: SettingsPanelProps) {
             <button
                 onClick={() => { setOpen(!open); setFontMenuOpen(false); setThemeMenuOpen(false); }}
                 className={`
-                    w-full flex items-center gap-3 rounded-lg transition-all
-                    text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-primary-light)]
+                    w-full flex items-center gap-3 rounded-lg transition-all overflow-hidden
+                    text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-primary-light)]
                     ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}
                 `}
                 title="Settings"

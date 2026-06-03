@@ -139,7 +139,7 @@ export function Sidebar() {
                     )}
                     <button
                         onClick={toggleCollapse}
-                        className="hidden lg:flex w-9 h-9 items-center justify-center rounded-md border border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-primary-light)] text-[var(--color-text-muted)] transition-all"
+                        className="hidden lg:flex w-9 h-9 items-center justify-center rounded-md border border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-primary-light)] text-[var(--color-text-secondary)] transition-all"
                         title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                     >
