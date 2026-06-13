@@ -148,3 +148,9 @@ archived/
 __pycache__/
 *.py[cod]
 *$py.class
+.venv/
+.venv
+venv/
+venv
+data/
+logs/
