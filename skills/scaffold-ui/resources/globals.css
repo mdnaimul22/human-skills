@@ -1,5 +1,5 @@
 @import "tailwindcss" source(none);
-@source "../..";
+@source "..";
 
 /* ═══════════════════════════════════════════════════════════════
    DESIGN TOKENS — Spacing, Typography, Radius
