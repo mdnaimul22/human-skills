@@ -148,16 +148,3 @@ archived/
 __pycache__/
 *.py[cod]
 *$py.class
-
-.superpowers
-.claude-skills
-.everything-claude-code
-.ui-ux-pro-max-skill
-.chart-visualization-skills
-.anthropics-skills
-command.mdweb/
-command.md
-python_basics.md
-muscle_memory_exercises.mdweb/
-muscle_memory_exercises.md
-temp_bootstrap/

@@ -589,10 +589,10 @@ class CodeAuditor(ast.NodeVisitor):
         # ── Helpers Enforcement ────────────────────────────────────────────────
         if not self.is_helpers_file and not self.is_config_file:
 
-            # 8. Raw datetime.now() / datetime.utcnow() — use get_now_iso()
+            # 8. Raw datetime.now() / datetime.utcnow() — use time_now_iso()
             if isinstance(node.func, ast.Attribute) and node.func.attr in ("now", "utcnow"):
                 if isinstance(node.func.value, ast.Name) and node.func.value.id == "datetime":
-                    self.add_violation(node, "⚠️ [Helpers Violation] Direct 'datetime.now()/utcnow()' used. Use 'get_now_iso()' from src.helpers instead.")
+                    self.add_violation(node, "⚠️ [Helpers Violation] Direct 'datetime.now()/utcnow()' used. Use 'time_now_iso()' from src.helpers instead.")
 
             # 9. create_async_engine() — use init_db() from helpers
             if isinstance(node.func, ast.Name) and node.func.id == "create_async_engine":

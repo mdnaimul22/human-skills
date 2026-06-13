@@ -97,3 +97,23 @@ async def shutdown_db() -> None:
         await _engine.dispose()
         _engine = None
         _session_factory = None
+
+
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def session_scope() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Provide a transactional scope around a series of operations on a session.
+    Automatically commits on success or rolls back on exception.
+    """
+    if _session_factory is None:
+        raise RuntimeError("Database not initialized. Call init_db() first.")
+    async with _session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+

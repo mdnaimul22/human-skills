@@ -15,6 +15,19 @@ class Settings(BaseSettings):
     RAW_LOG_DIR: str = Field(default="logs", validation_alias="LOG_DIR")
     RAW_DATA_DIR: str = Field(default="data", validation_alias="DATA_DIR")
 
+    # --- Server ---
+    API_HOST: str = Field(default="127.0.0.1", validation_alias="API_HOST")
+    API_PORT: int = Field(default=8000, validation_alias="API_PORT")
+    FRONTEND_URL: str = Field(default="http://localhost:3000", validation_alias="FRONTEND_URL")
+
+    # --- Database ---
+    DATABASE_URL: str = Field(default="sqlite+aiosqlite:///./data/app.db", validation_alias="DATABASE_URL")
+
+    # --- Auth ---
+    JWT_SECRET: str = Field(default="super-secret-key-change-me", validation_alias="JWT_SECRET")
+    JWT_EXPIRY_HOURS: int = Field(default=168, validation_alias="JWT_EXPIRY_HOURS")
+
+
     def _resolve(self, val: str) -> Path:
         
         val = val.strip()

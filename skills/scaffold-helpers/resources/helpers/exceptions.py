@@ -62,6 +62,14 @@ class PermissionDeniedError(AppError):
         super().__init__(message, status_code=403)
 
 
+class AuthenticationError(AppError):
+    """Authentication failure (401)."""
+
+    def __init__(self, message: str = "Authentication failed"):
+        super().__init__(message, status_code=401)
+
+
+
 class ConflictError(AppError):
     """Duplicate or conflicting resource state (409)."""
 

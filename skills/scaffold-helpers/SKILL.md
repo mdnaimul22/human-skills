@@ -67,9 +67,9 @@ raise RateLimitError(retry_after=60)                # → 429
 
 ### Date Utils (`always available`)
 ```python
-from src.helpers import get_now_iso, parse_iso, relative_time
+from src.helpers import time_now_iso, parse_iso, relative_time
 
-timestamp = get_now_iso()                  # "2025-05-15T14:30:00+00:00"
+timestamp = time_now_iso()                  # "2025-05-15T14:30:00+00:00"
 dt = parse_iso("2025-05-15T14:30:00")     # datetime object (UTC)
 ago = relative_time(some_datetime)          # "2 hours ago"
 ```

@@ -5,13 +5,18 @@ Standardized ISO 8601 timestamps (UTC) and human-readable relative time.
 Zero external dependencies — uses only Python stdlib.
 
 Usage:
-    from src.helpers.date_utils import get_now_iso, format_iso, relative_time
+    from src.helpers.date_utils import time_now_iso, format_iso, relative_time
 """
 
 from datetime import datetime, timezone
 
 
-def get_now_iso() -> str:
+def time_now() -> datetime:
+    """Get current UTC datetime object."""
+    return datetime.now(timezone.utc)
+
+
+def time_now_iso() -> str:
     """Get current UTC timestamp in ISO 8601 format."""
     return datetime.now(timezone.utc).isoformat()
 

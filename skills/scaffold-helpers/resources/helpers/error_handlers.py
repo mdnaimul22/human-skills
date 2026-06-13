@@ -51,7 +51,7 @@ def register_error_handlers(app, logger) -> None:
                 content={"error": exc.message, "status_code": exc.status_code},
             )
     except ImportError:
-        pass  # Intentional: AppError hierarchy is optional — works without src/helpers/exceptions
+        _has_app_error = False
 
     # ── 3. Catch-all — prevents stack trace leaks ───────────────────────────
     @app.exception_handler(Exception)

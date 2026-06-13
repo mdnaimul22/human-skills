@@ -1,0 +1,3 @@
+"""
+Global source package.
+"""

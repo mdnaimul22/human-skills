@@ -21,18 +21,19 @@ logger = setup_logger(
 # 2. Define Lifespan (Startup/Shutdown events)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # --- Startup ---
-    logger.info(f"Starting {Settings.PROJECT_NAME} in {Settings.ENV} mode...")
-    
-    # Initialize Database (Uncomment if using a database)
-    # db_url = getattr(Settings, "DATABASE_URL", "sqlite+aiosqlite:///data/db.sqlite3")
-    # await init_db(db_url, echo=not Settings.is_production)
+    # Initialize Database
+    init_db(Settings.DATABASE_URL)
+    from src.db.models import Base
+    from src.helpers.connection import _engine
+    async with _engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database initialized")
     
     yield
     
     # --- Shutdown ---
     logger.info("Shutting down application...")
-    # await shutdown_db()
+    await shutdown_db()
     shutdown_logger()
 
 # 3. Initialize FastAPI App
@@ -50,8 +51,8 @@ register_middleware(app, logger, Settings)
 register_error_handlers(app, logger)
 
 # 5. Include Routers
-# from src.routers.user import router as user_router
-# app.include_router(user_router, prefix="/api/v1/users", tags=["Users"])
+from src.routers.auth import router as auth_router
+app.include_router(auth_router)
 
 @app.get("/health", tags=["System"])
 async def health_check():

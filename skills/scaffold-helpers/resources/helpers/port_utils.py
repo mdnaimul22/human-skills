@@ -48,10 +48,9 @@ def kill_pid(port: int) -> bool:
                 os.kill(pid, 0)  # Check if still alive
                 os.kill(pid, signal.SIGKILL)  # Force kill
             except OSError:
-                pass  # Process already terminated after SIGTERM — expected
-
+                _already_dead = True
         except ProcessLookupError:
-            pass  # Process already gone before we could kill it — expected
+            _already_dead = True
         except Exception as e:
             logger.error(f"Failed to kill process {pid}: {e}")
             success = False
