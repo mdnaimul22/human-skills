@@ -64,54 +64,24 @@ def create_init_files():
     print("📄 Initializing Python packages with conventions...")
     
     create_init_file("src/__init__.py", "Global source package.")
-    requirements_content = """fastapi>=0.100.0
-uvicorn>=0.22.0
-pydantic>=2.0
-pydantic-settings>=2.0
-sqlalchemy[asyncio]>=2.0
-aiosqlite>=0.19.0
-bcrypt>=4.0.0
-pyjwt>=2.8.0
-"""
-    Path("src/requirements.txt").write_text(requirements_content, encoding="utf-8")
-    print("   [Created] src/requirements.txt")
 
 
 def create_base_files():
     """3. Create basic files"""
     print("📄 Creating base files...")
     
-
-    env_content = """# Server
-API_HOST=127.0.0.1
-API_PORT=8000
-APP_ENV=development
-
-# Frontend
-FRONTEND_URL=http://localhost:3000
-
-# Database
-DATABASE_URL=sqlite+aiosqlite:///./data/app.db
-
-# Auth
-JWT_SECRET=super-secret-key-change-me-in-production
-JWT_EXPIRY_HOURS=168
-"""
-    Path(".env.example").write_text(env_content, encoding="utf-8")
-    Path(".env").write_text(env_content, encoding="utf-8")
-    
     # Ensure data directory exists for the SQLite database
     Path("data").mkdir(parents=True, exist_ok=True)
-    
-    # Copy main.py template if it exists
-    main_template_path = Path(__file__).resolve().parent / "main.py"
-    if main_template_path.exists():
-        Path("main.py").write_text(main_template_path.read_text(encoding="utf-8"), encoding="utf-8")
 
     # Copy template source files for DB/auth layer
     src_templates = [
+        ".env",
+        ".env.example",
         ".gitignore",
         "LICENSE",
+        "main.py",
+        "README.md",
+        "requirements.txt",
         "src/core/__init__.py",
         "src/core/auth.py",
         "src/db/__init__.py",
@@ -133,10 +103,6 @@ JWT_EXPIRY_HOURS=168
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             dest_path.write_text(tpl_path.read_text(encoding="utf-8"), encoding="utf-8")
             print(f"   [Scaffolded] {path_str}")
-    
-    Path("README.md").write_text("# New Project\n", encoding="utf-8")
-    
-    print("   [Created] .env, .env.example, main.py, README.md")
 
 def sync_rules():
     """4. Sync Rules"""
