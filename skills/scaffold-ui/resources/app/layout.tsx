@@ -78,7 +78,7 @@ export default function RootLayout({
             suppressHydrationWarning
             className={`${inter.variable} ${jetbrainsMono.variable} ${poppins.variable} ${roboto.variable} ${outfit.variable} ${spaceGrotesk.variable}`}
         >
-            <body>
+            <body suppressHydrationWarning>
                 <ThemeProvider
                     attribute="data-theme"
                     defaultTheme="dark"
