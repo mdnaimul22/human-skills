@@ -51,11 +51,17 @@ ALL_EXTRA_DEPS = [
 
 
 # ── Helpers ────────────────────────────────────────────────────
-def run(cmd: list[str], cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess:
-    """Run a command with output displayed."""
+def run(
+    cmd: list[str],
+    cwd: Path | None = None,
+    check: bool = True,
+    timeout: int = 600,
+) -> subprocess.CompletedProcess:
+    """Run a command, merge stdout+stderr, enforce per-step timeout."""
     return subprocess.run(
         cmd, cwd=str(cwd or PROJECT_DIR),
-        capture_output=True, text=True, check=check
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, check=check, timeout=timeout,
     )
 
 
@@ -98,9 +104,9 @@ def step_check_node():
 
 def step_create_nextjs():
     """Create Next.js app with TypeScript + Tailwind + App Router."""
-    print("📦 Creating Next.js application...")
+    print("📦 Creating Next.js application...", flush=True)
     if WEB_DIR.exists():
-        print(f"   ⚠️ web/ already exists. Skipping create-next-app.")
+        print(f"   ⚠️ web/ already exists. Skipping create-next-app.", flush=True)
         return
 
     result = run([
@@ -112,11 +118,11 @@ def step_create_nextjs():
         "--src-dir",
         "--import-alias", "@/*",
         "--use-npm",
-    ])
+    ], timeout=720)  # 12 min — npm install during creation can be slow
     if result.returncode != 0:
-        print(f"❌ create-next-app failed:\n{result.stderr}")
+        print(f"❌ create-next-app failed:\n{result.stdout}")
         sys.exit(1)
-    print("   ✅ Next.js app created")
+    print("   ✅ Next.js app created", flush=True)
 
 
 def step_install_deps():
@@ -125,15 +131,15 @@ def step_install_deps():
     Merges shadcn runtime deps + project extras to avoid the
     separate `shadcn init` step (~2.5 min saved).
     """
-    print(f"📥 Installing {len(ALL_EXTRA_DEPS)} dependencies...")
+    print(f"📥 Installing {len(ALL_EXTRA_DEPS)} dependencies...", flush=True)
     result = run(
         ["npm", "install", *ALL_EXTRA_DEPS],
-        cwd=WEB_DIR, check=False
+        cwd=WEB_DIR, check=False, timeout=480,  # 8 min
     )
     if result.returncode == 0:
-        print(f"   ✅ All dependencies installed")
+        print(f"   ✅ All dependencies installed", flush=True)
     else:
-        print(f"   ⚠️ npm install warning: {result.stderr[:200]}")
+        print(f"   ⚠️ npm install warning: {result.stdout[-200:] if result.stdout else 'no output'}", flush=True)
 
 
 def step_setup_shadcn_config():
@@ -142,36 +148,42 @@ def step_setup_shadcn_config():
     This skips the ~2.5 min `shadcn init` process which mostly
     just runs `npm install` (already done) and creates this file.
     """
-    print("🎨 Setting up shadcn/ui config...")
+    print("🎨 Setting up shadcn/ui config...", flush=True)
     src = RESOURCES_DIR / "components.json"
     dst = WEB_DIR / "components.json"
     if src.exists():
         shutil.copy2(src, dst)
-        print("   ✅ components.json installed (shadcn init skipped)")
+        print("   ✅ components.json installed (shadcn init skipped)", flush=True)
     else:
-        print("   ⚠️ components.json not found in resources, running shadcn init...")
-        run(["npx", "-y", "shadcn@latest", "init", "-d", "-y"], cwd=WEB_DIR, check=False)
-        print("   ✅ shadcn/ui initialized (fallback)")
+        print("   ⚠️ components.json not found in resources, running shadcn init...", flush=True)
+        run(["npx", "-y", "shadcn@latest", "init", "-d", "-y"], cwd=WEB_DIR, check=False, timeout=300)
+        print("   ✅ shadcn/ui initialized (fallback)", flush=True)
 
 
 def step_add_components():
     """Install Phase 1 shadcn components."""
-    print(f"🧩 Installing {len(SHADCN_COMPONENTS)} shadcn components...")
+    print(f"🧩 Installing {len(SHADCN_COMPONENTS)} shadcn components...", flush=True)
     result = run(
         ["npx", "shadcn@latest", "add", *SHADCN_COMPONENTS, "-y", "--overwrite"],
-        cwd=WEB_DIR, check=False
+        cwd=WEB_DIR, check=False, timeout=480,  # 8 min
     )
     if result.returncode != 0:
-        print(f"   ⚠️ Some components may have failed. Continuing...")
-        print(f"   stderr: {result.stderr[:200]}")
+        print(f"   ⚠️ Some components may have failed. Continuing...", flush=True)
+        print(f"   output: {result.stdout[-200:] if result.stdout else 'no output'}", flush=True)
     else:
-        print(f"   ✅ {len(SHADCN_COMPONENTS)} components installed")
+        print(f"   ✅ {len(SHADCN_COMPONENTS)} components installed", flush=True)
 
 
 def step_copy_templates():
     """Copy custom template files from resources/ui/ into web/src/."""
     print("📄 Copying custom templates...")
     web_src = WEB_DIR / "src"
+
+    # Delete default page.tsx to avoid conflicts with (public)/page.tsx
+    default_page = web_src / "app" / "page.tsx"
+    if default_page.exists():
+        default_page.unlink()
+        print("   🗑️ Removed default page.tsx to prevent route conflicts")
 
     copied = []
 
@@ -446,13 +458,33 @@ def step_summary():
 
 # ── Main ───────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print("🚀 Starting SetUI...\n")
+    print("🚀 Starting SetUI...\n", flush=True)
 
-    step_check_node()
-    step_create_nextjs()
-    step_install_deps()          # single npm install — all deps at once
-    step_setup_shadcn_config()   # pre-made components.json (skips shadcn init)
-    step_add_components()
-    step_copy_templates()
-    step_inject_design_system()
-    step_summary()
+    STEPS = [
+        ("check-node",          step_check_node),
+        ("create-next-app",     step_create_nextjs),
+        ("npm-install-deps",    step_install_deps),
+        ("shadcn-config",       step_setup_shadcn_config),
+        ("shadcn-add",          step_add_components),
+        ("copy-templates",      step_copy_templates),
+        ("inject-design",       step_inject_design_system),
+        ("summary",             step_summary),
+    ]
+
+    for step_name, step_fn in STEPS:
+        try:
+            step_fn()
+        except subprocess.TimeoutExpired:
+            print(f"\n❌ TIMEOUT during step: {step_name}", flush=True)
+            print("   Hint: Slow network or npm registry. Retry or increase timeout.", flush=True)
+            sys.exit(1)
+        except subprocess.CalledProcessError as e:
+            print(f"\n❌ FAILED at step: {step_name} (exit code {e.returncode})", flush=True)
+            if e.stdout:
+                print(f"   Output: {e.stdout[-300:]}", flush=True)
+            sys.exit(1)
+        except SystemExit:
+            raise  # allow sys.exit() from steps
+        except Exception as e:
+            print(f"\n❌ ERROR at step: {step_name}: {e}", flush=True)
+            sys.exit(1)

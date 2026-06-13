@@ -1,24 +1,76 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/components/layout/toast";
+import { api, ApiError } from "@/lib/api";
+
+interface TokenResponse {
+    token: string;
+    user_id: string;
+    name: string;
+    email: string;
+}
 
 /**
- * Login Form — OAuth only.
- *
- * Wire up authentication by installing next-auth:
- *   1. npm install next-auth
- *   2. Replace handleOAuth() with signIn("google") / signIn("github")
- *   3. Add GOOGLE_CLIENT_ID, GITHUB_CLIENT_ID to .env
- *
- * OAuth flow: same button handles both sign-in AND sign-up.
- * First login = auto account creation. No separate register page needed.
+ * Login/Register Form — email + password with toggle.
+ * Stores JWT token in Zustand auth store → persisted in localStorage.
  */
 export function LoginForm() {
-    const { add: addToast } = useToast();
+    const [isRegister, setIsRegister] = useState(false);
+    const [email, setEmail] = useState("");
+    const [name, setName] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    // TODO: Replace with signIn("google") / signIn("github") from next-auth
-    function handleOAuth(provider: "google" | "github") {
-        addToast(`${provider} OAuth — connect next-auth to activate`, "info");
+    const { setAuth } = useAuth();
+    const { add: addToast } = useToast();
+    const router = useRouter();
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+            const body = isRegister
+                ? { email, name, password }
+                : { email, password };
+
+            const res = await api.post<TokenResponse>(endpoint, body);
+
+            // Fetch full profile
+            const profile = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
+                { headers: { Authorization: `Bearer ${res.token}` } },
+            ).then((r) => r.json());
+
+            setAuth(res.token, profile);
+            addToast(isRegister ? "Account created!" : "Welcome back!", "success");
+            router.push("/");
+        } catch (err) {
+            if (isRegister && err instanceof ApiError && err.status === 409) {
+                setError("Email already registered. Switching to Sign In...");
+                setTimeout(() => {
+                    setIsRegister(false);
+                    setError(null);
+                }, 2000);
+            } else if (!isRegister && err instanceof ApiError && (err.status === 401 || err.status === 400)) {
+                setError("Incorrect email or password.");
+                setPassword(""); // Clear password field for quick retry
+                document.getElementById("password-input")?.focus();
+            } else {
+                const msg =
+                    err instanceof ApiError ? err.getDetail() : "Network error";
+                setError(msg);
+            }
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -26,43 +78,116 @@ export function LoginForm() {
             {/* Header */}
             <div className="text-center">
                 <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
-                    Welcome
+                    {isRegister ? "Create Account" : "Welcome Back"}
                 </h1>
                 <p className="text-sm text-[var(--color-text-muted)] mt-2">
-                    Sign in to continue
+                    {isRegister
+                        ? "Create an account to get started"
+                        : "Sign in to your workspace"}
                 </p>
             </div>
 
-            {/* OAuth Buttons */}
-            <div className="space-y-3">
-                <button
-                    type="button"
-                    onClick={() => handleOAuth("google")}
-                    className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-[var(--color-border)] bg-white text-gray-800 text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer"
-                >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                    Continue with Google
-                </button>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+                {isRegister && (
+                    <div>
+                        <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                            Name
+                        </label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                            placeholder="Your name"
+                            className="w-full h-11 px-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] text-[var(--color-text)] text-sm placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--ring-color)] outline-none transition-colors"
+                        />
+                    </div>
+                )}
+
+                <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                        Email
+                    </label>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        placeholder="you@example.com"
+                        className="w-full h-11 px-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] text-[var(--color-text)] text-sm placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--ring-color)] outline-none transition-colors"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                        Password
+                    </label>
+                    <div className="relative">
+                        <input
+                            id="password-input"
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            minLength={6}
+                            placeholder="••••••••"
+                            className="w-full h-11 pl-3 pr-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] text-[var(--color-text)] text-sm placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--ring-color)] outline-none transition-colors"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                            {showPassword ? (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            ) : (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="p-3 rounded-lg bg-[var(--color-danger-light,rgba(239,68,68,0.15))] border border-[var(--color-danger)] text-[var(--color-danger)] text-xs font-medium text-center animate-in fade-in duration-200">
+                        {error}
+                    </div>
+                )}
 
                 <button
-                    type="button"
-                    onClick={() => handleOAuth("github")}
-                    className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-[var(--color-border)] bg-[#24292f] text-white text-sm font-medium hover:bg-[#1b1f23] transition-colors cursor-pointer"
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-11 rounded-lg bg-[var(--color-primary)] text-[var(--color-primary-foreground)] text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer"
                 >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                    </svg>
-                    Continue with GitHub
+                    {loading ? (
+                        <span className="inline-flex items-center gap-2">
+                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                                <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+                            </svg>
+                            Processing...
+                        </span>
+                    ) : isRegister ? "Create Account" : "Sign In"}
                 </button>
-            </div>
+            </form>
 
-            <p className="text-center text-xs text-[var(--color-text-muted)]">
-                By continuing, you agree to our Terms of Service.
+            {/* Toggle */}
+            <p className="text-center text-sm text-[var(--color-text-muted)]">
+                {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
+                <button
+                    type="button"
+                    onClick={() => setIsRegister(!isRegister)}
+                    className="text-[var(--color-primary)] hover:underline font-medium cursor-pointer"
+                >
+                    {isRegister ? "Sign in" : "Sign up"}
+                </button>
             </p>
         </div>
     );

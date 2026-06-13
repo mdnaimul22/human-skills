@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
-import { ThemeProvider } from "next-themes";
-import { ThemeLoadedScript } from "@/components/layout/theme";
+import { Inter, JetBrains_Mono, Poppins, Roboto, Outfit, Space_Grotesk } from "next/font/google";
+import { ThemeProvider, ThemeLoadedScript } from "@/components/layout/theme";
 import { ToastContainer } from "@/components/layout/toast";
 import "./globals.css";
 
@@ -21,8 +20,37 @@ const jetbrainsMono = JetBrains_Mono({
     display: "swap",
 });
 
+const poppins = Poppins({
+    weight: ["400", "500", "600", "700"],
+    subsets: ["latin"],
+    variable: "--font-poppins",
+    display: "swap",
+});
+
+const roboto = Roboto({
+    weight: ["400", "500", "700"],
+    subsets: ["latin"],
+    variable: "--font-roboto",
+    display: "swap",
+});
+
+const outfit = Outfit({
+    subsets: ["latin"],
+    variable: "--font-outfit",
+    display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+    subsets: ["latin"],
+    variable: "--font-space-grotesk",
+    display: "swap",
+});
+
 export const metadata: Metadata = {
-    title: "Dashboard",
+    title: {
+        default: "Dashboard",
+        template: "%s | App",
+    },
     description: "Application Dashboard",
 };
 
@@ -48,7 +76,7 @@ export default function RootLayout({
         <html
             lang="en"
             suppressHydrationWarning
-            className={`${inter.variable} ${jetbrainsMono.variable}`}
+            className={`${inter.variable} ${jetbrainsMono.variable} ${poppins.variable} ${roboto.variable} ${outfit.variable} ${spaceGrotesk.variable}`}
         >
             <body>
                 <ThemeProvider
@@ -66,6 +94,7 @@ export default function RootLayout({
                         "light",
                         "snow",
                         "custom",
+                        "claude",
                     ]}
                     disableTransitionOnChange={false}
                 >

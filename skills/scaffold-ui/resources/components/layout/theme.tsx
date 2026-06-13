@@ -1,7 +1,22 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
+
+// Suppress known false-positive React 19 warning caused by next-themes injecting a script tag
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+    const origError = console.error;
+    console.error = (...args: any[]) => {
+        if (typeof args[0] === "string" && args[0].includes("Encountered a script tag while rendering React component")) {
+            return;
+        }
+        origError.apply(console, args);
+    };
+}
+
+export function ThemeProvider({ children, ...props }: React.ComponentProps<typeof NextThemesProvider>) {
+    return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    ThemeLoadedScript
@@ -46,6 +61,8 @@ const THEMES: ThemeMeta[] = [
     { id: "jam-navy", name: "Nord", accent: "#88c0d0", type: "dark" },
     { id: "light", name: "Clear Ice", accent: "#1d4ed8", type: "light" },
     { id: "snow", name: "Snow", accent: "#3b82f6", type: "light" },
+    { id: "claude", name: "Warm Light", accent: "#d97706", type: "light" },
+    { id: "custom", name: "Cinematic", accent: "#dc2626", type: "light" },
 ];
 
 export function ThemeSwitcher() {

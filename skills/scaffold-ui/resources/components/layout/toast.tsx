@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 /* ── Toast types & store ─────────────────────────────────── */
 
-type ToastType = "success" | "error" | "info";
+type ToastType = "success" | "error" | "info" | "warning";
 
 interface Toast {
     id: string;
@@ -69,6 +69,11 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
             border: "var(--color-primary-dark, #2563eb)",
             icon: "M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z",
         },
+        warning: {
+            bg: "var(--color-warning, #f59e0b)",
+            border: "var(--color-warning-dark, #d97706)",
+            icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
+        },
     };
 
     const c = colors[toast.type];
@@ -81,7 +86,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
                 backgroundColor: c.bg,
                 borderLeft: `3px solid ${c.border}`,
                 opacity: visible ? 1 : 0,
-                transform: visible ? "translateY(0)" : "translateY(8px)",
+                transform: visible ? "translateY(0)" : "translateY(-16px)",
             }}
         >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
@@ -107,7 +112,7 @@ export function ToastContainer() {
 
     return (
         <div
-            className="fixed bottom-4 right-4 z-[2000] w-full max-w-sm space-y-2"
+            className="fixed top-4 right-4 z-[2000] w-full max-w-sm space-y-2"
             aria-live="polite"
         >
             {toasts.map((t) => (

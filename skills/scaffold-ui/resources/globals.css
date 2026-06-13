@@ -25,13 +25,13 @@
     --radius-full: 9999px;
 
     /* Sidebar dimensions */
-    --sidebar-width: 280px;
+    --sidebar-width: 200px;
     --sidebar-collapsed-width: 64px;
 
     /* Transitions */
-    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: 80ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 
@@ -77,10 +77,10 @@
 [data-theme="matrix"] {
     color-scheme: dark;
 
-    --accent: #10b981;
-    --accent-light: #34d399;
-    --accent-glow: rgba(16, 185, 129, 0.14);
-    --accent-dim: rgba(16, 185, 129, 0.45);
+    --theme-accent: #10b981;
+    --theme-accent-light: #34d399;
+    --theme-accent-glow: rgba(16, 185, 129, 0.14);
+    --theme-accent-dim: rgba(16, 185, 129, 0.45);
 
     --bg-root: #050d0a;
     --bg-sidebar: #071510;
@@ -116,10 +116,10 @@
 [data-theme="cream"] {
     color-scheme: dark;
 
-    --accent: #a6e22e;
-    --accent-light: #e6db74;
-    --accent-glow: rgba(166, 226, 46, 0.12);
-    --accent-dim: rgba(166, 226, 46, 0.4);
+    --theme-accent: #a6e22e;
+    --theme-accent-light: #e6db74;
+    --theme-accent-glow: rgba(166, 226, 46, 0.12);
+    --theme-accent-dim: rgba(166, 226, 46, 0.4);
 
     --bg-root: #272822;
     --bg-sidebar: #1e1f1c;
@@ -155,10 +155,10 @@
 [data-theme="matte-black"] {
     color-scheme: dark;
 
-    --accent: #007acc;
-    --accent-light: #1b9ed8;
-    --accent-glow: rgba(0, 122, 204, 0.14);
-    --accent-dim: rgba(0, 122, 204, 0.45);
+    --theme-accent: #007acc;
+    --theme-accent-light: #1b9ed8;
+    --theme-accent-glow: rgba(0, 122, 204, 0.14);
+    --theme-accent-dim: rgba(0, 122, 204, 0.45);
 
     --bg-root: #1e1e1e;
     --bg-sidebar: #252526;
@@ -194,10 +194,10 @@
 [data-theme="black-brown"] {
     color-scheme: dark;
 
-    --accent: #bd93f9;
-    --accent-light: #ff79c6;
-    --accent-glow: rgba(189, 147, 249, 0.13);
-    --accent-dim: rgba(189, 147, 249, 0.45);
+    --theme-accent: #bd93f9;
+    --theme-accent-light: #ff79c6;
+    --theme-accent-glow: rgba(189, 147, 249, 0.13);
+    --theme-accent-dim: rgba(189, 147, 249, 0.45);
 
     --bg-root: #282a36;
     --bg-sidebar: #21222c;
@@ -233,10 +233,10 @@
 [data-theme="jam-black"] {
     color-scheme: dark;
 
-    --accent: #61afef;
-    --accent-light: #56b6c2;
-    --accent-glow: rgba(97, 175, 239, 0.12);
-    --accent-dim: rgba(97, 175, 239, 0.4);
+    --theme-accent: #61afef;
+    --theme-accent-light: #56b6c2;
+    --theme-accent-glow: rgba(97, 175, 239, 0.12);
+    --theme-accent-dim: rgba(97, 175, 239, 0.4);
 
     --bg-root: #282c34;
     --bg-sidebar: #21252b;
@@ -269,13 +269,14 @@
 /* ═══════════════════════════════════════════════════════════════
    THEME 7: JAM NAVY (Nord)
    ═══════════════════════════════════════════════════════════════ */
+[data-theme="custom"],
 [data-theme="jam-navy"] {
     color-scheme: dark;
 
-    --accent: #88c0d0;
-    --accent-light: #81a1c1;
-    --accent-glow: rgba(136, 192, 208, 0.12);
-    --accent-dim: rgba(136, 192, 208, 0.4);
+    --theme-accent: #88c0d0;
+    --theme-accent-light: #81a1c1;
+    --theme-accent-glow: rgba(136, 192, 208, 0.12);
+    --theme-accent-dim: rgba(136, 192, 208, 0.4);
 
     --bg-root: #2e3440;
     --bg-sidebar: #242933;
@@ -377,6 +378,82 @@
 }
 
 
+
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME 10: CUSTOM — Cinematic (Red accent, warm light)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="custom"] {
+    color-scheme: light;
+
+    --color-primary: #DC2626;
+    --color-primary-dark: #bb2020;
+    --color-primary-light: rgba(220, 38, 38, 0.12);
+    --color-primary-foreground: #ffffff;
+
+    --color-success: #16a34a;
+    --color-warning: #ca8a04;
+    --color-danger: #DC2626;
+
+    --color-bg: #FEF2F2;
+    --color-surface: #ffffff;
+    --color-card: #ffffff;
+    --color-input: #F0EDF1;
+
+    --color-text: #450A0A;
+    --color-text-secondary: #7c4f4f;
+    --color-text-muted: #a17e7e;
+    --color-text-inverse: #FEF2F2;
+
+    --color-border: #FECACA;
+    --color-border-hover: #e4b5b5;
+    --color-border-subtle: #F0EDF1;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --ring-color: rgba(220, 38, 38, 0.35);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME 11: CLAUDE (Warm Cream Light)
+   Source: Anthropic style tokens
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="claude"] {
+    color-scheme: light;
+
+    --theme-accent: #d97706; /* Warm Anthropic amber */
+    --theme-accent-light: #b45309;
+    --theme-accent-glow: rgba(217, 119, 6, 0.12);
+    --theme-accent-dim: rgba(217, 119, 6, 0.4);
+
+    --bg-root: #f9f9f6; /* Warm off-white */
+    --bg-sidebar: #f2f2eb; /* Raised sidebar */
+    --bg-card: #ffffff; /* Card surface */
+    --bg-hover: #e5e5dc; /* Hover state */
+    --bg-active: rgba(217, 119, 6, 0.08);
+    --bg-input: #ffffff;
+
+    --text-1: #0b0b0b; /* color.text.primary */
+    --text-2: #373734; /* color.text.secondary */
+    --text-3: #7b7974; /* color.text.inverse */
+    --text-label: #7b7974;
+    --text-muted: #7b7974;
+    --text-value: #0b0b0b;
+
+    --border: rgba(11, 11, 11, 0.08); /* Subtle 8% black border */
+    --border-h: #1f1f1e; /* color.border.strong */
+
+    --success: #15803d;
+    --warning: #b45309;
+    --danger: #b91c1c;
+
+    --cat-header-bg: rgba(217, 119, 6, 0.04);
+    --cat-header-border: rgba(11, 11, 11, 0.06);
+    --btn-fg: #ffffff;
+    --toggle-thumb: #7b7974;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    BRIDGE MAPPING: Custom themes → Generic --color-* tokens
    Maps themed raw values to the unified --color-* system.
@@ -386,10 +463,11 @@
 [data-theme="matte-black"],
 [data-theme="black-brown"],
 [data-theme="jam-black"],
-[data-theme="jam-navy"] {
-    --color-primary: var(--accent);
-    --color-primary-dark: var(--accent-light);
-    --color-primary-light: var(--accent-glow);
+[data-theme="jam-navy"],
+[data-theme="claude"] {
+    --color-primary: var(--theme-accent);
+    --color-primary-dark: var(--theme-accent-light);
+    --color-primary-light: var(--theme-accent-glow);
     --color-primary-foreground: var(--btn-fg);
 
     --color-success: var(--success);
@@ -397,6 +475,7 @@
     --color-danger: var(--danger);
 
     --color-bg: var(--bg-root);
+    --color-sidebar: var(--bg-sidebar);
     --color-surface: var(--bg-card);
     --color-card: var(--bg-card);
     --color-input: var(--bg-input);
@@ -413,7 +492,7 @@
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
     --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-    --ring-color: var(--accent-glow);
+    --ring-color: var(--theme-accent-glow);
 }
 
 
@@ -458,6 +537,7 @@
    BASE LAYER — Anti-flicker + smooth transitions
    ═══════════════════════════════════════════════════════════════ */
 @layer base {
+
     /* Anti-flicker: hide body until theme is resolved */
     html {
         -webkit-font-smoothing: antialiased;

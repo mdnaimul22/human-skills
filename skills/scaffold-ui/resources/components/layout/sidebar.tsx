@@ -1,7 +1,7 @@
 "use client";
 
 import { useSidebar } from "@/hooks/use-sidebar";
-import { SettingsPanel } from "./settings";
+import { UserMenu } from "./user-menu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useCallback, useRef } from "react";
@@ -10,11 +10,22 @@ import { useEffect, useCallback, useRef } from "react";
 interface NavItem {
     label: string;
     href: string;
-    icon: string;
+    icon: React.ReactNode;
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { label: "Dashboard", href: "/", icon: "📊" },
+    {
+        label: "Dashboard",
+        href: "/",
+        icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="9" rx="1" />
+                <rect x="14" y="3" width="7" height="5" rx="1" />
+                <rect x="14" y="12" width="7" height="9" rx="1" />
+                <rect x="3" y="16" width="7" height="5" rx="1" />
+            </svg>
+        )
+    },
 ];
 
 const MIN_WIDTH = 180;
@@ -121,7 +132,7 @@ export function Sidebar() {
                 className={`
                     fixed lg:relative inset-y-0 left-0 z-50
                     flex flex-col
-                    bg-[var(--color-surface)]
+                    bg-[var(--color-sidebar,var(--color-surface))]
                     transition-all duration-300 ease-in-out
                     ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                     ${isCollapsed ? "lg:w-16" : "lg:w-[var(--sidebar-width)]"}
@@ -144,16 +155,18 @@ export function Sidebar() {
                         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                     >
                         {isCollapsed ? (
-                            /* >> expand icon */
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M13 5l7 7-7 7" />
-                                <path d="M4 5l7 7-7 7" />
+                            /* PanelLeftOpen icon (expand) */
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                <path d="M9 3v18" />
+                                <path d="m14 9 3 3-3 3" />
                             </svg>
                         ) : (
-                            /* << collapse icon */
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M11 19l-7-7 7-7" />
-                                <path d="M20 19l-7-7 7-7" />
+                            /* PanelLeftClose icon (collapse) */
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                <path d="M9 3v18" />
+                                <path d="m17 15-3-3 3-3" />
                             </svg>
                         )}
                     </button>
@@ -187,7 +200,7 @@ export function Sidebar() {
 
                 {/* Sidebar Footer — Settings */}
                 <div className="p-2 border-t border-[var(--color-border)]">
-                    <SettingsPanel collapsed={isCollapsed} />
+                    <UserMenu collapsed={isCollapsed} />
                 </div>
 
                 {/* ── Resize handle (right border) ────────────── */}

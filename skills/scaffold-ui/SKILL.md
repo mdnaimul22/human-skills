@@ -58,31 +58,40 @@ When `design_query` is provided:
 web/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx              ← Root layout + ThemeProvider
-│   │   ├── globals.css             ← 9 themes + custom AI theme + shadcn vars
+│   │   ├── layout.tsx              ← Root layout + ThemeProvider (6 fonts)
+│   │   ├── globals.css             ← 11 themes + custom AI theme + shadcn vars
+│   │   ├── not-found.tsx           ← Custom 404 page
 │   │   ├── (auth)/                 ← Auth pages (no sidebar/navbar)
 │   │   │   ├── layout.tsx          ← Centered card layout
-│   │   │   └── login/page.tsx      ← OAuth + email/password form
-│   │   └── (dashboard)/            ← Dashboard pages (with sidebar/navbar)
-│   │       ├── layout.tsx          ← Sidebar + Navbar wrapper
-│   │       └── page.tsx            ← Dashboard home
+│   │   │   └── login/page.tsx      ← Email/password + register form
+│   │   ├── (public)/               ← Public pages (with sidebar/navbar, no auth)
+│   │   │   ├── layout.tsx          ← Passthrough
+│   │   │   └── page.tsx            ← Root landing page
+│   │   └── (app)/                  ← Auth-gated pages (with sidebar/navbar)
+│   │       └── layout.tsx          ← Auth guard (redirects to /login)
 │   │
 │   ├── components/
 │   │   ├── ui/                     ← shadcn components (30+ auto-installed)
 │   │   ├── layout/
-│   │   │   ├── sidebar.tsx         ← Collapsible sidebar
-│   │   │   ├── navbar.tsx          ← Top bar
-│   │   │   ├── page-header.tsx     ← Page title + action buttons
-│   │   │   └── theme-switcher.tsx  ← Theme dropdown (9+1 themes)
+│   │   │   ├── sidebar.tsx         ← Collapsible sidebar + UserMenu
+│   │   │   ├── navbar.tsx          ← Top bar (title, actions, search)
+│   │   │   ├── user-menu.tsx       ← Unified settings: theme/font/scale + auth
+│   │   │   ├── login-modal.tsx     ← Portal-based auth modal (no redirect)
+│   │   │   ├── app-shell.tsx       ← Sidebar + Navbar wrapper
+│   │   │   ├── header.tsx          ← Page title + action buttons
+│   │   │   ├── theme.tsx           ← ThemeProvider + ThemeLoadedScript
+│   │   │   └── toast.tsx           ← Toast system (success/error/warning)
 │   │   └── auth/
-│   │       └── login-form.tsx      ← OAuth buttons
+│   │       └── login-form.tsx      ← Email/password + register toggle
 │   │
 │   ├── lib/
-│   │   ├── api.ts                  ← Secure FastAPI client
+│   │   ├── api.ts                  ← Secure FastAPI client (JWT, timeout)
+│   │   ├── sse.ts                  ← SSE streaming client
 │   │   └── utils.ts                ← cn() utility
 │   │
 │   ├── hooks/
-│   │   └── use-sidebar.ts          ← Sidebar state (Zustand)
+│   │   ├── use-sidebar.ts          ← Sidebar state (Zustand)
+│   │   └── use-auth.ts             ← Auth state (Zustand persist)
 │   │
 │   └── types/
 │       └── api.ts                  ← OpenAPI auto-gen placeholder
@@ -99,19 +108,20 @@ web/
 
 ## Theme System
 
-9 built-in themes + 1 optional AI-generated custom theme:
+11 built-in themes + 1 optional AI-generated custom theme:
 
 | Theme | Accent | Type |
 |:---|:---|:---|
 | Default Dark | Blue | 🌙 Dark |
 | Matrix | Green | 🌙 Dark |
-| Monokai | Lime | 🌙 Dark |
-| VS Code | Blue | 🌙 Dark |
-| Dracula | Purple | 🌙 Dark |
-| One Dark | Blue | 🌙 Dark |
-| Nord | Cyan | 🌙 Dark |
-| Clear Ice | Deep Blue | ☀️ Light |
+| Cream (Monokai) | Lime | 🌙 Dark |
+| Matte Black | Blue | 🌙 Dark |
+| Black Brown | Amber | 🌙 Dark |
+| Jam Black | Purple | 🌙 Dark |
+| Jam Navy | Blue | 🌙 Dark |
+| Light | Blue | ☀️ Light |
 | Snow | Blue | ☀️ Light |
+| Claude (Warm Light) | Coral | ☀️ Light |
 | **Custom** | **AI-generated** | **Auto-detected** |
 
 ### Three-Layer Token Architecture
@@ -162,7 +172,7 @@ shadcn/ui Mapping (auto)  →  --primary: var(--color-primary)
 
 > [!IMPORTANT]
 > **Gun-Point Principle: All new code sits ON TOP of the scaffold — never beside it.**
-> The scaffold provides a production-grade layout system (AppShell, Sidebar, Navbar, Settings, Toast, Theme). Your job is to **customize and extend** these existing components for your project — not to create parallel replacements. Every new component must integrate into the existing composition tree. If you find yourself creating a new sidebar, a new navbar, or a new route group layout, **you are doing it wrong**. Modify what exists. Don't spread the code.
+> The scaffold provides a production-grade layout system (AppShell, Sidebar, Navbar, UserMenu, Toast, Theme). Your job is to **customize and extend** these existing components for your project — not to create parallel replacements. Every new component must integrate into the existing composition tree. If you find yourself creating a new sidebar, a new navbar, or a new route group layout, **you are doing it wrong**. Modify what exists. Don't spread the code.
 
 ### Step 0 — Mandatory File Audit
 
@@ -170,10 +180,11 @@ Before any development work begins on a scaffolded project, execute this checkli
 
 ```
 READ EVERY FILE — no exceptions:
-  □ src/app/layout.tsx                    ← Root layout, ThemeProvider, fonts
-  □ src/app/globals.css                   ← All 9 themes, bridge mapping, shadcn vars
-  □ src/app/(dashboard)/layout.tsx        ← AppShell wrapper — THIS is your main layout
-  □ src/app/(dashboard)/page.tsx          ← Dashboard home — extend this
+  □ src/app/layout.tsx                    ← Root layout, ThemeProvider, 6 fonts
+  □ src/app/globals.css                   ← All 11 themes, bridge mapping, shadcn vars
+  □ src/app/(public)/layout.tsx           ← Passthrough — guest-accessible pages
+  □ src/app/(public)/page.tsx             ← Root landing page — customize this
+  □ src/app/(app)/layout.tsx              ← Auth guard — redirects to /login
   □ src/app/(auth)/layout.tsx             ← Auth layout (centered card)
   □ src/app/(auth)/login/page.tsx         ← Login page
   □ src/app/not-found.tsx                 ← 404 page
@@ -181,12 +192,15 @@ READ EVERY FILE — no exceptions:
   □ src/components/layout/sidebar.tsx     ← Collapsible sidebar with NAV_ITEMS
   □ src/components/layout/navbar.tsx      ← Top bar with title/actions slots
   □ src/components/layout/header.tsx      ← Page header (title + action buttons)
-  □ src/components/layout/settings.tsx    ← Font/Scale/Theme settings panel
-  □ src/components/layout/theme.tsx       ← ThemeLoadedScript + ThemeSwitcher
+  □ src/components/layout/user-menu.tsx   ← Theme/Font/Scale + auth controls
+  □ src/components/layout/login-modal.tsx ← Portal-based auth modal
+  □ src/components/layout/theme.tsx       ← ThemeProvider + ThemeLoadedScript
   □ src/components/layout/toast.tsx       ← Toast notification system (useToast)
+  □ src/components/auth/login-form.tsx    ← Email/password + register form
   □ src/hooks/use-sidebar.ts             ← Sidebar Zustand store
-  □ src/hooks/use-mobile.ts              ← Mobile breakpoint hook
-  □ src/lib/api.ts                       ← Secure FastAPI client (apiFetch)
+  □ src/hooks/use-auth.ts                ← Auth Zustand store (persist)
+  □ src/lib/api.ts                       ← Secure FastAPI client (JWT, timeout)
+  □ src/lib/sse.ts                       ← SSE streaming client
   □ src/lib/utils.ts                     ← cn() utility
   □ src/types/api.ts                     ← OpenAPI auto-gen placeholder
 ```
@@ -204,12 +218,15 @@ RootLayout (app/layout.tsx)
        ├── (auth)/layout.tsx → Centered card, NO sidebar/navbar
        │    └── login/page.tsx → LoginForm
        │
-       └── (dashboard)/layout.tsx → AppShell wrapper ← YOUR MAIN ENTRY POINT
+       ├── (public)/layout.tsx → Passthrough, guest-accessible
+       │    └── page.tsx → Root landing page
+       │
+       └── (app)/layout.tsx → Auth guard (redirects to /login)
             │
             └── AppShell (components/layout/app-shell.tsx)
                  ├── Sidebar (components/layout/sidebar.tsx)
                  │    ├── NAV_ITEMS[] → navigation links (edit this!)
-                 │    ├── SettingsPanel → font/scale/theme controls
+                 │    ├── UserMenu → theme/font/scale/auth controls
                  │    └── Resize handle → drag-to-resize
                  │
                  ├── Navbar (components/layout/navbar.tsx)
@@ -220,23 +237,31 @@ RootLayout (app/layout.tsx)
                  └── {children} → YOUR PAGE CONTENT GOES HERE
 ```
 
-### Rule 1 — Extend `(dashboard)`, Never Create Parallel Route Groups
+### Rule 1 — Route Group Architecture
 
 > [!WARNING]
-> **FORBIDDEN:** Creating new route groups like `(studio)/`, `(editor)/`, `(workspace)/` alongside `(dashboard)/`.
+> **FORBIDDEN:** Creating new route groups like `(studio)/`, `(editor)/`, `(workspace)/`.
 > This fragments the layout, duplicates chrome, and creates routing conflicts.
 
-The `(dashboard)` route group IS your application shell. It already provides sidebar, navbar, settings, and theme integration. All your application pages belong inside it.
+The scaffold provides three route groups with clear responsibilities:
 
-**Correct approach:**
+- **`(public)/`** — Guest-accessible pages with sidebar/navbar (no auth required)
+- **`(app)/`** — Auth-gated pages with sidebar/navbar (redirects to /login)
+- **`(auth)/`** — Auth pages without sidebar/navbar (centered card)
+
+Add new pages inside the appropriate existing group:
 
 ```
-app/(dashboard)/
-├── layout.tsx          ← Already has AppShell — DO NOT recreate
-├── page.tsx            ← Your landing/home page — customize this
-├── editor/page.tsx     ← Add new pages as subdirectories
-├── settings/page.tsx   ← More pages here
-└── mint/page.tsx       ← And here
+app/(public)/
+├── layout.tsx          ← Passthrough — DO NOT recreate
+├── page.tsx            ← Your landing page — customize this
+└── about/page.tsx      ← Public pages here
+
+app/(app)/
+├── layout.tsx          ← Auth guard — DO NOT recreate
+├── dashboard/page.tsx  ← Protected pages here
+├── settings/page.tsx   ← More protected pages
+└── editor/page.tsx     ← And here
 ```
 
 If a page needs a different layout (e.g., no sidebar, fullscreen canvas), control it via **props and conditional rendering** inside the existing AppShell, NOT by creating a separate route group.

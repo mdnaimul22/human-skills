@@ -67,14 +67,6 @@ export function Navbar({ title, description, actions }: NavbarProps) {
                     </svg>
                 </button>
 
-                {/* User avatar */}
-                <button
-                    className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-primary-foreground)] text-xs font-bold transition-opacity hover:opacity-80 ml-1"
-                    title="Account"
-                    aria-label="Account menu"
-                >
-                    U
-                </button>
             </div>
         </header>
     );

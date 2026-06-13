@@ -4,13 +4,13 @@
  * Security measures:
  * - All responses are validated (non-2xx throws)
  * - Content-Type is enforced
- * - Credentials are included for httpOnly cookie auth
+ * - JWT Bearer auth from Zustand store
  * - Request timeout prevents hanging connections
  * - No eval() or innerHTML — JSON.parse only
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const REQUEST_TIMEOUT_MS = 15_000;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
+const REQUEST_TIMEOUT_MS = 30_000;
 
 /** Custom API error with status code and response body */
 export class ApiError extends Error {
@@ -21,6 +21,38 @@ export class ApiError extends Error {
     ) {
         super(`API Error ${status}: ${statusText}`);
         this.name = "ApiError";
+    }
+
+    /** Extract a human-readable error string from FastAPI responses. */
+    getDetail(): string {
+        const b = this.body as Record<string, unknown> | null;
+        if (!b) return this.statusText;
+        const errorVal = b.error || b.detail;
+        if (typeof errorVal === "string") return errorVal;
+        // Pydantic 422: detail is [{type, loc, msg, input, ctx}, ...]
+        if (Array.isArray(errorVal) && errorVal.length > 0) {
+            const first = errorVal[0];
+            if (typeof first === "object" && first !== null && "msg" in first) {
+                return String((first as Record<string, unknown>).msg);
+            }
+            return String(first);
+        }
+        return this.statusText;
+    }
+}
+
+/**
+ * Get auth token from localStorage (Zustand persist store).
+ * Avoids circular dependency with hooks.
+ */
+function getToken(): string | null {
+    try {
+        const raw = localStorage.getItem("app-auth");
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed?.state?.token ?? null;
+    } catch {
+        return null;
     }
 }
 
@@ -38,13 +70,18 @@ export async function apiFetch<T>(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+    const token = getToken();
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(options?.headers as Record<string, string>),
+    };
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
-            headers: {
-                "Content-Type": "application/json",
-                ...options?.headers,
-            },
-            credentials: "include",   // httpOnly cookie auth — no localStorage tokens
+            headers,
             signal: controller.signal,
             ...options,
         });

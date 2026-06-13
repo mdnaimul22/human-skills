@@ -99,12 +99,13 @@ class SetUI(Tool):
 
         try:
             result = subprocess.run(
-                ["python3", str(resource_script)],
+                ["python3", "-u", str(resource_script)],
                 cwd=str(dest_path),
                 env=env,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 text=True,
-                timeout=600,
+                timeout=2400,
             )
 
             if result.returncode == 0:
@@ -119,15 +120,19 @@ class SetUI(Tool):
                 return Response(
                     message=(
                         f"❌ SetUI failed with exit code {result.returncode}\n\n"
-                        f"Error Output:\n{result.stderr}\n\n"
-                        f"Standard Output:\n{result.stdout}"
+                        f"Output:\n{result.stdout}"
                     ),
                     break_loop=False,
                 )
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            partial = e.stdout or "" if hasattr(e, "stdout") else ""
             return Response(
-                message="❌ SetUI timed out after 10 minutes. Check npm/network connectivity.",
+                message=(
+                    f"❌ SetUI timed out after 40 minutes.\n"
+                    f"Partial output:\n{partial[-500:]}\n\n"
+                    f"Hint: Check npm/network connectivity."
+                ),
                 break_loop=False,
             )
         except Exception as e:
