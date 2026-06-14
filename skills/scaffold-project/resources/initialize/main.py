@@ -9,8 +9,11 @@ from src.helpers import (
     register_error_handlers,
     init_db,
     shutdown_db,
-    kill_pid
+    kill_pid,
+    connection
 )
+from src.db.models import Base
+from src.routers.auth import router as auth_router
 
 # 1. Initialize Logger
 logger = setup_logger(
@@ -23,9 +26,7 @@ logger = setup_logger(
 async def lifespan(app: FastAPI):
     # Initialize Database
     init_db(Settings.DATABASE_URL)
-    from src.db.models import Base
-    from src.helpers.connection import _engine
-    async with _engine.begin() as conn:
+    async with connection._engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database initialized")
     
@@ -51,7 +52,6 @@ register_middleware(app, logger, Settings)
 register_error_handlers(app, logger)
 
 # 5. Include Routers
-from src.routers.auth import router as auth_router
 app.include_router(auth_router)
 
 @app.get("/health", tags=["System"])
