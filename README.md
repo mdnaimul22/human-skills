@@ -60,7 +60,7 @@ human-skills '{
 To scaffold a new Python project with the standard directory structure, config layer, and agent rules:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/skills/python-project-setup/resources/initialize/bootstrap.py | python3
+curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/skills/scaffold-project/resources/initialize/bootstrap.py | python3
 ```
 
 This creates:
