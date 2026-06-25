@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Chrome Extension Skeleton",
+  "version": "1.0.0",
+  "description": "Next-gen Chrome Extension with React + Tailwind + shadcn/ui",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "sidePanel",
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Toggle Extension Panel"
+  },
+  "side_panel": {
+    "default_path": "dist/sidepanel.html"
+  },
+  "options_page": "dist/options.html",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["dist/panel.html", "dist/assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
