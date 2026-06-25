@@ -1,12 +1,12 @@
 ---
 name: scaffold-ui
-description: Scaffolds a complete Next.js + shadcn/ui + Tailwind CSS frontend with 9 built-in themes, layout components, OAuth auth pages, and a secure FastAPI API client. Bridges with ui-ux-pro-max for AI-powered custom themes.
+description: Scaffolds a complete Next.js frontend (web/) or React Chrome Extension (extension/) with 11 built-in themes, layout components, and FastAPI API client integrations.
 ---
 
 # Scaffold UI
-> *"One command. Full frontend. Intelligent theming."*
+> *"One command. Full client layer. Intelligent theming."*
 
-Scaffolds a complete **Next.js + shadcn/ui + Tailwind CSS** frontend layer (`web/`) with 9 built-in themes, layout components, OAuth auth pages, and a secure FastAPI API client.
+Scaffolds a complete **Next.js + shadcn/ui + Tailwind CSS** frontend layer (`web/`) or a **React + Vite + Tailwind CSS** Chrome Extension skeleton (`extension/`) with 11 built-in themes, layout components, and FastAPI API client integrations.
 
 ## Why This Exists
 
@@ -26,33 +26,50 @@ This is not a full-stack framework. It is a disciplined frontend layer designed 
 
 ## How to Use
 
-### Basic (9 built-in themes)
+### 1. Scaffold Next.js Frontend (`web/` directory)
+By default, SetUI scaffolds a Next.js web application:
 
 ```bash
+# Basic
 human-skills '{"tool_name": "setui", "tool_args": {"destination": "/path/to/project"}}'
-```
 
-### With AI Design System (bridge to ui-ux-pro-max)
-
-```bash
+# With AI Design System
 human-skills '{"tool_name": "setui", "tool_args": {
     "destination": "/path/to/project",
+    "action": "frontend",
+    "design_query": "beauty spa wellness premium"
+}}'
+```
+
+### 2. Scaffold Chrome Extension (`extension/` directory)
+Scaffold a lightweight React + Vite + Tailwind CSS Chrome Extension with 11 themes:
+
+```bash
+# Basic
+human-skills '{"tool_name": "setui", "tool_args": {
+    "destination": "/path/to/project",
+    "action": "chrome-extension"
+}}'
+
+# With AI Design System
+human-skills '{"tool_name": "setui", "tool_args": {
+    "destination": "/path/to/project",
+    "action": "chrome-extension",
     "design_query": "beauty spa wellness premium"
 }}'
 ```
 
 When `design_query` is provided:
 1. **ui-ux-pro-max** generates a complete design system (colors, fonts, style)
-2. A custom `[data-theme="custom"]` CSS block is injected into `globals.css`
-3. Google Fonts `<link>` tags are added to `layout.tsx`
-4. `--font-sans` is patched with the recommended font pairing
-5. Default theme is set to `"custom"`
-
-> All 9 built-in themes remain available. The custom theme is additive.
+2. A custom `[data-theme="custom"]` CSS block is injected into `globals.css` (or `globals.css` inside styles)
+3. `--font-sans` is patched with the recommended font pairing
+4. Default theme is set to `"custom"`
 
 ---
 
 ## What SetUI Creates
+
+### Next.js Frontend Structure (when `action` is `"frontend"`)
 
 ```
 web/
@@ -101,6 +118,45 @@ web/
 ├── components.json
 ├── tailwind.config.ts
 ├── next.config.ts
+└── package.json
+```
+
+### Chrome Extension Structure (when `action` is `"chrome-extension"`)
+
+```
+extension/
+├── src/
+│   ├── background/
+│   │   └── index.ts                ← Secure background worker (JWT, API sync)
+│   ├── content/
+│   │   └── index.ts                ← Page content injection & scraping script
+│   ├── entry/
+│   │   ├── popup/
+│   │   │   ├── main.tsx            ← Popup mount point
+│   │   │   └── App.tsx             ← Popup UI with active tab inspector
+│   │   ├── sidepanel/
+│   │   │   ├── main.tsx            ← Sidepanel mount point
+│   │   │   └── App.tsx             ← Dockable workspace side panel
+│   │   └── options/
+│   │       ├── main.tsx            ← Options page mount point
+│   │       └── App.tsx             ← Secure settings and API url config page
+│   ├── components/
+│   │   ├── ui/                     ← shadcn components (11 auto-installed)
+│   │   └── layout/
+│   │       ├── theme-provider.tsx  ← Storage-backed ThemeProvider (11 themes)
+│   │       └── user-menu.tsx       ← Custom theme grid selector
+│   ├── styles/
+│   │   └── globals.css             ← 11 themes + custom AI theme + shadcn vars
+│   ├── hooks/
+│   │   └── use-chrome-storage.ts   ← Reactive chrome.storage hook
+│   └── lib/
+│       └── utils.ts                ← cn() utility
+├── popup.html
+├── sidepanel.html
+├── options.html
+├── manifest.json
+├── components.json
+├── vite.config.ts
 └── package.json
 ```
 

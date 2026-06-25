@@ -48,12 +48,14 @@ try:
     from .middleware import register_middleware
     from .error_handlers import register_error_handlers
     from .rate_limit import RateLimiter
+    from .nginx import generate_nginx_config
     
     __all__.extend([
         "register_cors",
         "register_middleware",
         "register_error_handlers",
         "RateLimiter",
+        "generate_nginx_config",
     ])
 except ImportError:
     _has_fastapi = False

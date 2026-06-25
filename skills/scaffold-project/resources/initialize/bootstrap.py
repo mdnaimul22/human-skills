@@ -36,6 +36,8 @@ def create_directories():
     dirs = [
         "docs",
         "logs",
+        "deploy/nginx",
+        "scripts",
         "src/config",
         "src/core",
         "src/db",
@@ -82,6 +84,8 @@ def create_base_files():
         "main.py",
         "README.md",
         "requirements.txt",
+        "deploy/nginx/nginx.conf.template",
+        "scripts/generate_nginx_conf.py",
         "src/core/__init__.py",
         "src/core/auth.py",
         "src/db/__init__.py",

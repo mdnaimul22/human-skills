@@ -8,8 +8,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
-from src.helpers import ValidationError
-
 
 class RegisterRequest(BaseModel):
     email: str
@@ -21,7 +19,7 @@ class RegisterRequest(BaseModel):
     def validate_email(cls, v: str) -> str:
         v = v.strip().lower()
         if "@" not in v or "." not in v.split("@")[-1]:
-            raise ValidationError("Invalid email address")
+            raise ValueError("Invalid email address")
         return v
 
 

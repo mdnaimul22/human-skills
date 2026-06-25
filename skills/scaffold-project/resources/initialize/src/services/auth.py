@@ -22,8 +22,10 @@ async def register(email: str, name: str, password: str, session: AsyncSession) 
     if existing:
         raise ConflictError(f"Email already registered: {email}")
 
-    hashed = hash_password(password)
+    hashed = await hash_password(password)
     user = await repo.create_user(email, name, hashed)
+    await session.commit()
+    await session.refresh(user)
 
     token = create_token(user.id)
     logger.info(f"User registered: {user.email} (id={user.id})")
@@ -40,7 +42,7 @@ async def login(email: str, password: str, session: AsyncSession) -> dict:
     repo = UserRepository(session)
     user = await repo.find_by_email(email)
 
-    if not user or not verify_password(password, user.password_hash):
+    if not user or not await verify_password(password, user.password_hash):
         raise AuthenticationError("Invalid email or password")
 
     token = create_token(user.id)

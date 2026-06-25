@@ -7,6 +7,7 @@ No business logic — pure utility functions + FastAPI dependency.
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -19,14 +20,18 @@ from src.helpers import ValidationError, PermissionDeniedError, time_now
 from src.db import get_session, UserRepository, User
 
 
-def hash_password(password: str) -> str:
-    """Hash a plaintext password with bcrypt."""
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+async def hash_password(password: str) -> str:
+    """Hash a plaintext password with bcrypt asynchronously."""
+    return await asyncio.to_thread(
+        lambda: bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    )
 
 
-def verify_password(password: str, hashed: str) -> bool:
-    """Compare plaintext against stored bcrypt hash."""
-    return bcrypt.checkpw(password.encode(), hashed.encode())
+async def verify_password(password: str, hashed: str) -> bool:
+    """Compare plaintext against stored bcrypt hash asynchronously."""
+    return await asyncio.to_thread(
+        lambda: bcrypt.checkpw(password.encode(), hashed.encode())
+    )
 
 
 def create_token(user_id: str) -> str:

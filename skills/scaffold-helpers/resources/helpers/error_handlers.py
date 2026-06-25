@@ -15,6 +15,7 @@ Response format (all errors):
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 
 
 def register_error_handlers(app, logger) -> None:
@@ -30,7 +31,7 @@ def register_error_handlers(app, logger) -> None:
     # ── 1. Pydantic / FastAPI validation errors ─────────────────────────────
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError):
-        errors = exc.errors()
+        errors = jsonable_encoder(exc.errors())
         logger.error(f"Validation Error on {request.url.path}: {errors}")
         return JSONResponse(
             status_code=422,

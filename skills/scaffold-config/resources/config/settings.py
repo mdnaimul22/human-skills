@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     JWT_SECRET: str = Field(default="super-secret-key-change-me", validation_alias="JWT_SECRET")
     JWT_EXPIRY_HOURS: int = Field(default=168, validation_alias="JWT_EXPIRY_HOURS")
 
+    # --- Nginx Rate Limiting ---
+    NGINX_RATE_LIMIT_ZONE_SIZE: str = Field(default="10m", validation_alias="NGINX_RATE_LIMIT_ZONE_SIZE")
+    NGINX_RATE_LIMIT_RATE: str = Field(default="10r/s", validation_alias="NGINX_RATE_LIMIT_RATE")
+    NGINX_RATE_LIMIT_BURST: int = Field(default=20, validation_alias="NGINX_RATE_LIMIT_BURST")
+
 
     def _resolve(self, val: str) -> Path:
         

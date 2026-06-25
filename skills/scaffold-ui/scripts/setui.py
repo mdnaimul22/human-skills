@@ -24,12 +24,13 @@ class SetUI(Tool):
     """
     name: str = "setui"
     description: str = (
-        "Scaffolds a complete Next.js + shadcn/ui frontend (web/) with 9 themes, "
-        "layout components, secure API client, and OAuth auth pages into the target project. "
+        "Scaffolds a complete Next.js frontend (web/) or React Chrome Extension (extension/) "
+        "with 11 themes, layout components, secure API client, and layout pages. "
         "Optionally accepts a 'design_query' to generate an AI-powered custom theme via ui-ux-pro-max."
     )
     arguments: dict = {
-        "destination": "Project root where 'web/' directory should be created (e.g. '/path/to/project').",
+        "destination": "Project root where the client directory should be created (e.g. '/path/to/project').",
+        "action": "(Optional) The client template to scaffold: 'frontend' (default, Next.js web client) or 'chrome-extension' (React extension).",
         "design_query": "(Optional) Product/industry description for AI design system generation. "
                         "Example: 'beauty spa wellness', 'fintech crypto dashboard', 'SaaS analytics'. "
                         "When provided, generates a custom theme with industry-matched colors and fonts.",
@@ -75,12 +76,18 @@ class SetUI(Tool):
         dest_path = Path(dest_str).resolve()
         dest_path.mkdir(parents=True, exist_ok=True)
 
+        action = self.args.get("action", "frontend")
+        if action == "chrome-extension":
+            script_rel_path = "templates/chrome-extension/setup.py"
+        else:
+            script_rel_path = "templates/frontend/setup.py"
+
         resource_script = (
-            Path(__file__).resolve().parent.parent / "resources" / "setup.py"
+            Path(__file__).resolve().parent.parent / script_rel_path
         )
         if not resource_script.exists():
             return Response(
-                message=f"❌ Error: setup script not found at {resource_script}",
+                message=f"❌ Error: setup script not found at {resource_script} (action: {action})",
                 break_loop=False,
             )
 

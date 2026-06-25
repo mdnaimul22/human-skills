@@ -10,7 +10,8 @@ from src.helpers import (
     init_db,
     shutdown_db,
     kill_pid,
-    connection
+    connection,
+    generate_nginx_config
 )
 from src.db.models import Base
 from src.routers.auth import router as auth_router
@@ -29,6 +30,12 @@ async def lifespan(app: FastAPI):
     async with connection._engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database initialized")
+    
+    # Auto-generate Nginx configuration dynamically on boot
+    if generate_nginx_config():
+        logger.info("Nginx configuration auto-generated successfully")
+    else:
+        logger.warning("Nginx configuration auto-generation skipped or failed")
     
     yield
     

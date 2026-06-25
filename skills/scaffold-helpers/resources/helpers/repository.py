@@ -29,7 +29,7 @@ Usage:
     deleted = await repo.delete(1)
 """
 
-from typing import TypeVar, Generic, Sequence
+from typing import TypeVar, Generic, Sequence, Any
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -65,7 +65,7 @@ class BaseRepository(Generic[T]):
         self.model = model
         self.session = session
 
-    async def get(self, id: int) -> T | None:
+    async def get(self, id: Any) -> T | None:
         """Fetch a single record by primary key."""
         return await self.session.get(self.model, id)
 
@@ -82,34 +82,29 @@ class BaseRepository(Generic[T]):
         return result.scalar_one()
 
     async def create(self, **kwargs) -> T:
-        """Insert a new record and return it with refreshed fields."""
+        """Insert a new record and return it."""
         obj = self.model(**kwargs)
         self.session.add(obj)
-        await self.session.commit()
-        await self.session.refresh(obj)
         return obj
 
-    async def update(self, id: int, **kwargs) -> T | None:
+    async def update(self, id: Any, **kwargs) -> T | None:
         """Partial update by primary key. Returns None if not found."""
         obj = await self.get(id)
         if obj is None:
             return None
         for key, value in kwargs.items():
             setattr(obj, key, value)
-        await self.session.commit()
-        await self.session.refresh(obj)
         return obj
 
-    async def delete(self, id: int) -> bool:
+    async def delete(self, id: Any) -> bool:
         """Hard delete by primary key. Returns False if not found."""
         obj = await self.get(id)
         if obj is None:
             return False
         await self.session.delete(obj)
-        await self.session.commit()
         return True
 
-    async def exists(self, id: int) -> bool:
+    async def exists(self, id: Any) -> bool:
         """Check if a record exists without loading the full object."""
         obj = await self.session.get(self.model, id)
         return obj is not None
