@@ -3,6 +3,7 @@
 import os
 import sys
 import urllib.request
+import shutil
 from pathlib import Path
 import subprocess
 
@@ -100,33 +101,79 @@ def create_base_files():
         "src/routers/auth.py",
         "tests/__init__.py"
     ]
+    
+    try:
+        current_dir = Path(__file__).resolve().parent
+    except NameError:
+        current_dir = None
+
     for path_str in src_templates:
-        tpl_path = Path(__file__).resolve().parent / path_str
-        if tpl_path.exists():
-            dest_path = Path(path_str)
-            dest_path.parent.mkdir(parents=True, exist_ok=True)
-            dest_path.write_text(tpl_path.read_text(encoding="utf-8"), encoding="utf-8")
-            print(f"   [Scaffolded] {path_str}")
+        dest_path = Path(path_str)
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        success = False
+        if current_dir:
+            tpl_path = current_dir / path_str
+            if tpl_path.exists():
+                try:
+                    dest_path.write_text(tpl_path.read_text(encoding="utf-8"), encoding="utf-8")
+                    print(f"   [Scaffolded local] {path_str}")
+                    success = True
+                except Exception as e:
+                    print(f"   [Failed local copy] {path_str} - {e}, falling back to download")
+
+        if not success:
+            remote_path_str = ".env.example" if path_str == ".env" else path_str
+            url = f"{REPO_RAW_URL}/skills/scaffold-project/resources/initialize/{remote_path_str}"
+            try:
+                with urllib.request.urlopen(url, timeout=10) as response:
+                    content = response.read().decode("utf-8")
+                    dest_path.write_text(content, encoding="utf-8")
+                print(f"   [Downloaded] {path_str}")
+            except Exception as e:
+                print(f"   [Failed] {path_str} - {e}")
 
 def sync_rules():
     """4. Sync Rules"""
     print("📥 Syncing Rules from human-skills...")
+    
+    try:
+        current_dir = Path(__file__).resolve().parent
+        local_rules_dir = current_dir.parent.parent.parent.parent / ".agents" / "rules"
+    except NameError:
+        local_rules_dir = None
+    
     for filename in FILES:
-        url = f"{REPO_RAW_URL}/.agents/rules/{filename}"
         dest = RULES_DIR / filename
-        try:
-            with urllib.request.urlopen(url) as response:
-                content = response.read().decode("utf-8")
-                dest.write_text(content, encoding="utf-8")
-            print(f"   [Synced] {filename}")
-        except Exception as e:
-            print(f"   [Failed] {filename} - {e}")
+        success = False
+        
+        if local_rules_dir and local_rules_dir.exists():
+            local_file = local_rules_dir / filename
+            if local_file.exists():
+                try:
+                    shutil.copy2(local_file, dest)
+                    print(f"   [Copied local] {filename}")
+                    success = True
+                except Exception as e:
+                    print(f"   [Failed to copy local] {filename} - {e}, falling back to download")
+        
+        if not success:
+            # Fallback to download
+            url = f"{REPO_RAW_URL}/.agents/rules/{filename}"
+            try:
+                with urllib.request.urlopen(url, timeout=10) as response:
+                    content = response.read().decode("utf-8")
+                    dest.write_text(content, encoding="utf-8")
+                print(f"   [Downloaded] {filename}")
+            except Exception as e:
+                print(f"   [Failed] {filename} - {e}")
 
 def scaffold_human_skills():
     """5. Scaffold config and helpers via human-skills"""
     print("🤖 Integrating human-skills scaffolding tools...")
     
     # Run setconfig
+    config_success = False
     try:
         print("   [Running] setconfig...")
         subprocess.run(
@@ -136,12 +183,45 @@ def scaffold_human_skills():
             stderr=subprocess.DEVNULL
         )
         print("   ✅ scaffolded src/config/")
-    except subprocess.CalledProcessError:
-        print("   ❌ Failed to scaffold config layer (is human-skills installed globally?)")
-    except FileNotFoundError:
-        print("   ❌ human-skills command not found. Skipping auto-scaffold.")
+        config_success = True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+
+    if not config_success:
+        try:
+            current_dir = Path(__file__).resolve().parent
+            local_config_dir = current_dir.parent.parent.parent / "scaffold-config" / "resources" / "config"
+        except NameError:
+            local_config_dir = None
+
+        config_files = ["__init__.py", "dotenv.py", "files.py", "logger.py", "paths.py", "settings.py"]
+        
+        if local_config_dir and local_config_dir.exists():
+            print("   [Fallback] Copying config layer locally...")
+            try:
+                for f in config_files:
+                    shutil.copy2(local_config_dir / f, Path("src/config") / f)
+                print("   ✅ scaffolded src/config/ (local)")
+                config_success = True
+            except Exception as e:
+                print(f"   ❌ Local config copy failed - {e}, falling back to download")
+
+        if not config_success:
+            print("   [Fallback] Downloading config layer from GitHub...")
+            for f in config_files:
+                url = f"{REPO_RAW_URL}/skills/scaffold-config/resources/config/{f}"
+                dest_path = Path("src/config") / f
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    with urllib.request.urlopen(url, timeout=10) as response:
+                        content = response.read().decode("utf-8")
+                        dest_path.write_text(content, encoding="utf-8")
+                    print(f"      [Downloaded] config/{f}")
+                except Exception as e:
+                    print(f"      [Failed] config/{f} - {e}")
 
     # Run sethelpers
+    helpers_success = False
     try:
         print("   [Running] sethelpers...")
         subprocess.run(
@@ -151,10 +231,46 @@ def scaffold_human_skills():
             stderr=subprocess.DEVNULL
         )
         print("   ✅ scaffolded src/helpers/")
-    except subprocess.CalledProcessError:
-        print("   ❌ Failed to scaffold helpers layer.")
-    except FileNotFoundError:
+        helpers_success = True
+    except (subprocess.CalledProcessError, FileNotFoundError):
         pass
+
+    if not helpers_success:
+        try:
+            current_dir = Path(__file__).resolve().parent
+            local_helpers_dir = current_dir.parent.parent.parent / "scaffold-helpers" / "resources" / "helpers"
+        except NameError:
+            local_helpers_dir = None
+
+        helper_files = [
+            "__init__.py", "connection.py", "cors.py", "date_utils.py",
+            "error_handlers.py", "exceptions.py", "middleware.py", "nginx.py",
+            "port_utils.py", "rate_limit.py", "repository.py", "retry.py"
+        ]
+        
+        if local_helpers_dir and local_helpers_dir.exists():
+            print("   [Fallback] Copying helpers layer locally...")
+            try:
+                for f in helper_files:
+                    shutil.copy2(local_helpers_dir / f, Path("src/helpers") / f)
+                print("   ✅ scaffolded src/helpers/ (local)")
+                helpers_success = True
+            except Exception as e:
+                print(f"   ❌ Local helpers copy failed - {e}, falling back to download")
+
+        if not helpers_success:
+            print("   [Fallback] Downloading helpers layer from GitHub...")
+            for f in helper_files:
+                url = f"{REPO_RAW_URL}/skills/scaffold-helpers/resources/helpers/{f}"
+                dest_path = Path("src/helpers") / f
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    with urllib.request.urlopen(url, timeout=10) as response:
+                        content = response.read().decode("utf-8")
+                        dest_path.write_text(content, encoding="utf-8")
+                    print(f"      [Downloaded] helpers/{f}")
+                except Exception as e:
+                    print(f"      [Failed] helpers/{f} - {e}")
 
 def main():
     check_empty_directory()
