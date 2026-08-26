@@ -41,11 +41,12 @@ class NotFoundError(AppError):
         super().__init__(detail, status_code=404)
 
 
-class ValidationError(AppError):
+class ValidationError(AppError, ValueError):
     """Client input validation failure (400)."""
 
     def __init__(self, message: str, details: dict | None = None):
-        super().__init__(message, status_code=400, details=details)
+        AppError.__init__(self, message, status_code=400, details=details)
+        ValueError.__init__(self, message)
 
 
 class ExternalServiceError(AppError):
@@ -69,7 +70,6 @@ class AuthenticationError(AppError):
         super().__init__(message, status_code=401)
 
 
-
 class ConflictError(AppError):
     """Duplicate or conflicting resource state (409)."""
 
@@ -83,3 +83,4 @@ class RateLimitError(AppError):
     def __init__(self, message: str = "Rate limit exceeded", retry_after: int | None = None):
         details = {"retry_after": retry_after} if retry_after else None
         super().__init__(message, status_code=429, details=details)
+

@@ -47,10 +47,10 @@ def kill_pid(port: int) -> bool:
             try:
                 os.kill(pid, 0)  # Check if still alive
                 os.kill(pid, signal.SIGKILL)  # Force kill
-            except OSError:
-                _already_dead = True
+            except ProcessLookupError:
+                logger.debug(f"Process {pid} exited cleanly after SIGTERM")
         except ProcessLookupError:
-            _already_dead = True
+            logger.debug(f"Process {pid} exited before signal dispatch")
         except Exception as e:
             logger.error(f"Failed to kill process {pid}: {e}")
             success = False
@@ -66,3 +66,4 @@ def kill_pid(port: int) -> bool:
         logger.error(f"Port {port} still appears to be in use after cleanup attempt.")
 
     return success
+

@@ -20,13 +20,13 @@ import io
 import contextlib
 
 from pathlib import Path
-from helpers.tool import Tool, Response
-
 
 _CURRENT_DIR = Path(__file__).resolve().parent
 _SKILLS_ROOT = _CURRENT_DIR.parent.parent
 if str(_SKILLS_ROOT) not in sys.path:
     sys.path.insert(0, str(_SKILLS_ROOT))
+
+from helpers.tool import Tool, Response
 
 
 # ──────────────────────────────────────────────
@@ -193,8 +193,7 @@ def nuclear_cleanup():
     time.sleep(3)
 
 def setup_zram(algorithm: str, priority: int, disk_size: str) -> str:
-    cores = os.cpu_count() or 4
-    result = sh_run(f"zramctl --find --size {disk_size} --streams {cores} --algorithm {algorithm}", check=True)
+    result = sh_run(f"zramctl --find --size {disk_size} --algorithm {algorithm}", check=True)
     dev = result.stdout.strip()
     sh_run(f"mkswap {dev}", check=True)
     sh_run(f"swapon {dev} -p {priority}", check=True)
@@ -232,10 +231,24 @@ def run_evaluator_subprocess(pressure_gb: float) -> dict:
             
     return metrics
 
+def ensure_zram_module():
+    """Ensure the zram kernel module is loaded."""
+    if not os.path.exists("/sys/class/zram-control") and not os.path.exists("/sys/block/zram0"):
+        print("[INFO] zram module is not loaded. Attempting to load it...")
+        result = subprocess.run("modprobe zram num_devices=8", shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print("ERROR: Failed to load zram module.", file=sys.stderr)
+            print(f"Details: {result.stderr.strip()}", file=sys.stderr)
+            print("Please ensure your kernel supports zram and run 'sudo modprobe zram' manually.", file=sys.stderr)
+            sys.exit(1)
+        print("[SUCCESS] zram module loaded successfully.")
+
 def cmd_bench(args):
     if os.geteuid() != 0:
         print("ERROR: This command must be run as root (sudo).", file=sys.stderr)
         sys.exit(1)
+
+    ensure_zram_module()
 
     disk_size = get_disk_size()
     pressure_gb = get_pressure_gb()
@@ -361,6 +374,8 @@ def cmd_deploy(args):
         print("ERROR: This command must be run as root (sudo).", file=sys.stderr)
         sys.exit(1)
 
+    ensure_zram_module()
+
     print("============================================")
     print("  zram Deployment")
     print("============================================")
@@ -395,11 +410,37 @@ def cmd_deploy(args):
     print(ztab_content.strip())
     print()
 
-    print("[3/4] Restarting zram-config service...")
-    sh_run("systemctl stop zram-config")
-    time.sleep(1)
-    sh_run("systemctl start zram-config")
-    print("  Service restarted.")
+    print("[3/4] Activating configuration...")
+    # Check if zram-config service exists
+    result = sh_run("systemctl list-unit-files zram-config.service")
+    has_service = result.returncode == 0 and "zram-config.service" in result.stdout
+
+    if has_service:
+        print("  zram-config service found. Restarting service...")
+        sh_run("systemctl stop zram-config")
+        time.sleep(1)
+        sh_run("systemctl start zram-config")
+        print("  Service restarted.")
+    else:
+        print("  [INFO] zram-config service not found. Falling back to direct configuration...")
+        try:
+            # 1. Set kernel parameters
+            sh_run(f"bash -c 'echo {args.swappiness} > /proc/sys/vm/swappiness'")
+            sh_run(f"bash -c 'echo {args.page_cluster} > /proc/sys/vm/page-cluster'")
+            
+            # 2. Setup zram device
+            result = sh_run(f"zramctl --find --size {args.disk_size} --algorithm {args.algorithm}")
+            if result.returncode != 0:
+                raise Exception(f"zramctl failed: {result.stderr.strip()}")
+            dev = result.stdout.strip()
+            
+            # 3. Format as swap and enable swapon
+            sh_run(f"mkswap {dev}", check=True)
+            sh_run(f"swapon {dev} -p {args.priority}", check=True)
+            print(f"  Successfully configured and activated {dev} manually.")
+        except Exception as e:
+            print(f"  [ERROR] Direct zram configuration failed: {str(e)}", file=sys.stderr)
+            sys.exit(1)
 
     print("\n[4/4] Verifying deployment...")
     cmd_status(args)

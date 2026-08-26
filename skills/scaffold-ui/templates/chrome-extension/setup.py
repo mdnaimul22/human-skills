@@ -229,13 +229,10 @@ def step_summary():
     print("✨ Chrome Extension Scaffold Completed Successfully!")
     print("═" * 55)
     print()
-    print("📋 Next steps to run:")
-    print("   1. cd extension")
-    print("   2. npm install")
-    print("   3. npm run build")
-    print("   4. Open Google Chrome, go to chrome://extensions/")
-    print("   5. Turn on 'Developer Mode' (top right)")
-    print("   6. Click 'Load unpacked' and select the 'extension/dist' folder")
+    print("📋 Next steps to load in Chrome:")
+    print("   1. Open Google Chrome, go to chrome://extensions/")
+    print("   2. Turn on 'Developer Mode' (top right)")
+    print("   3. Click 'Load unpacked' and select the 'extension/dist' folder")
     print()
     if has_custom:
         try:
@@ -248,6 +245,14 @@ def step_summary():
     print()
     print("Happy Coding! 🎯")
 
+def step_npm_install_build():
+    """Run npm install and npm run build automatically."""
+    print("\n📦 Installing dependencies (npm install)...")
+    subprocess.run(["npm", "install"], cwd=EXTENSION_DIR, check=True)
+    print("🏗️  Building production bundle (npm run build)...")
+    subprocess.run(["npm", "run", "build"], cwd=EXTENSION_DIR, check=True)
+    print("   ✅ Build complete! 'dist' folder is ready.")
+
 if __name__ == "__main__":
     print("🚀 Starting Chrome Extension Scaffold...\n", flush=True)
 
@@ -255,6 +260,7 @@ if __name__ == "__main__":
         ("check-node",          step_check_node),
         ("create-structure",    step_create_structure),
         ("inject-design",       step_inject_design_system),
+        ("npm-install-build",   step_npm_install_build),
         ("summary",             step_summary),
     ]
 
