@@ -163,3 +163,5 @@ muscle_memory_exercises.md
 temp_bootstrap/
 skills/zram-optimizer/results.csv
 results.csv
+.~lock.*#
+.~lock.*
