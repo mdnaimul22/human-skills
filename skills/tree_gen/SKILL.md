@@ -1,5 +1,5 @@
 ---
-name: "directory-structure"
+name: "tree_gen"
 description: "Generate a professional ASCII directory structure in Markdown. Use this before modifying a project to understand its layout, identify key files, visualize or document the file structure of a directory, project or codebase."
 version: "1.0.0"
 author: "Human Skill Team"
