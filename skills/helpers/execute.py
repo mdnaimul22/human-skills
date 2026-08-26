@@ -5,16 +5,18 @@ import inspect
 import importlib
 import importlib.util
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict, List
 
 
 _HELPERS_DIR = Path(__file__).resolve().parent
 _SKILLS_DIR = _HELPERS_DIR.parent
+_STORAGE_DIR = _SKILLS_DIR / "storage"
 
+# Ensure root skills dir is always in sys.path
 if str(_SKILLS_DIR) not in sys.path:
     sys.path.insert(0, str(_SKILLS_DIR))
 
-# exclude list
+# Exclude list
 _EXCLUDED = {"execute.py", "__init__.py", "__pycache__"}
 
 
@@ -23,12 +25,10 @@ def _extract_message(result) -> str:
     Accept either a plain string or a Response object.
     Returns the message string in both cases.
     """
-
     if isinstance(result, str):
         return result
     if hasattr(result, "message"):
         return str(result.message)
-
     return str(result)
 
 
@@ -41,8 +41,7 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[dict]:
     Searches for any class extending 'Tool' with an async execute().
     Returns a dict containing the runner and metadata.
     """
-    
-    # 1. Safely check if the file even contains a Tool class via AST before executing it
+    # 1. Safely check if the file contains a Tool class via AST before executing it
     try:
         content = path.read_text(encoding="utf-8")
         tree = ast.parse(content, filename=str(path))
@@ -54,17 +53,16 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[dict]:
         if not has_tool:
             return None
     except Exception:
-        pass # Fallback to dynamic loading if AST parsing fails for some reason
+        pass  # Fallback to dynamic loading if AST parsing fails
 
     spec = importlib.util.spec_from_file_location(module_name, path)
-
     if spec is None or spec.loader is None:
         return None
 
     module = importlib.util.module_from_spec(spec)
 
     try:
-        spec.loader.exec_module(module)          # type: ignore[union-attr]
+        spec.loader.exec_module(module)  # type: ignore[union-attr]
     except Exception as exc:
         _warn(f"Failed to load '{module_name}': {exc}")
         return None
@@ -80,7 +78,6 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[dict]:
         execute_method = getattr(target_cls, "execute", None)
         if callable(execute_method):
             def _run_async(args: dict, _cls=target_cls) -> str:
-                # Unified tools expect tool arguments inside self.args
                 instance = _cls(args=args)
                 result = asyncio.run(instance.execute())
                 return _extract_message(result)
@@ -96,22 +93,30 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[dict]:
     return None
 
 
-def _build_registry() -> dict[str, dict]:
+def _build_registry() -> Dict[str, dict]:
     """
-    Scan _SKILLS_DIR for .py files inside any 'scripts' folder
+    Recursively scan _STORAGE_DIR and _SKILLS_DIR for .py files inside any 'scripts' folder
     and return a {tool_name: tool_dict} mapping.
-    Files listed in _EXCLUDED are skipped.
     """
+    registry: Dict[str, dict] = {}
+    py_files: List[Path] = []
 
-    registry: dict[str, dict] = {}
+    # 1. Scan storage categories (e.g. storage/custom/*/scripts/*.py, storage/antv/*/scripts/*.py)
+    if _STORAGE_DIR.exists():
+        py_files.extend(_STORAGE_DIR.rglob("scripts/*.py"))
 
-    for py_file in sorted(_SKILLS_DIR.glob("*/scripts/*.py")):
+    # 2. Backward compatibility: Scan flat skills/*/scripts/*.py
+    py_files.extend(_SKILLS_DIR.glob("*/scripts/*.py"))
+
+    for py_file in sorted(set(py_files)):
         if py_file.name in _EXCLUDED:
             continue
 
-        # Add the script's directory to sys.path so it can import adjacent files
+        # Add the script's directory and skill directory to sys.path
         if str(py_file.parent) not in sys.path:
             sys.path.insert(0, str(py_file.parent))
+        if str(py_file.parent.parent) not in sys.path:
+            sys.path.insert(0, str(py_file.parent.parent))
 
         tool_name = py_file.stem
         runner = _resolve_runner(tool_name, py_file)
@@ -122,12 +127,38 @@ def _build_registry() -> dict[str, dict]:
     return registry
 
 
+def _find_skill_md(skill_name: str) -> Optional[Path]:
+    """
+    Find SKILL.md for a given skill name across all storage categories.
+    Supports both direct names ('tree_gen', 'antv-g2-chart-expert') and
+    category-scoped paths ('custom/tree_gen', 'antv/antv-g2-chart-expert').
+    """
+    clean_name = skill_name.strip()
+
+    # 1. Direct path check in storage
+    if _STORAGE_DIR.exists():
+        storage_direct = _STORAGE_DIR / clean_name / "SKILL.md"
+        if storage_direct.exists():
+            return storage_direct
+
+        # 2. Search recursively across storage namespaces
+        for md_path in _STORAGE_DIR.rglob("SKILL.md"):
+            if md_path.parent.name == clean_name:
+                return md_path
+
+    # 3. Direct path check in root skills dir
+    root_direct = _SKILLS_DIR / clean_name / "SKILL.md"
+    if root_direct.exists():
+        return root_direct
+
+    return None
+
+
 def _warn(msg: str) -> None:
     print(f"[execute] WARNING: {msg}", file=sys.stderr)
 
 
 def _load_payload(source: str) -> dict:
-
     stripped = source.strip()
     candidate = Path(stripped)
     
@@ -137,10 +168,8 @@ def _load_payload(source: str) -> dict:
     return json.loads(stripped)
 
 
-
 def dispatch(payload: dict) -> str:
     """Route a JSON payload to the correct tool and return the result string."""
-
     tool_name = payload.get("tool_name", "").strip()
     tool_args = payload.get("tool_args", {})
 
@@ -164,7 +193,6 @@ def dispatch(payload: dict) -> str:
     return registry[tool_name]["runner"](normalised)
 
 
-
 def main() -> None:
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
         print(__doc__)
@@ -176,9 +204,9 @@ def main() -> None:
             sys.exit(1)
             
         skill_name = sys.argv[2]
-        skill_md_path = _SKILLS_DIR / skill_name / "SKILL.md"
-        if not skill_md_path.exists():
-            print(f"Error: Skill documentation not found at {skill_md_path}", file=sys.stderr)
+        skill_md_path = _find_skill_md(skill_name)
+        if not skill_md_path or not skill_md_path.exists():
+            print(f"Error: Skill documentation for '{skill_name}' not found.", file=sys.stderr)
             sys.exit(1)
             
         print(skill_md_path.read_text(encoding="utf-8"))
@@ -212,30 +240,39 @@ def main() -> None:
         
         fields = sys.argv[2:]
         if not fields:
-            # Gather available skills by looking for SKILL.md
-            available_skills = []
-            for path in _SKILLS_DIR.iterdir():
-                if path.is_dir() and path.name != "helpers" and (path / "SKILL.md").exists():
-                    available_skills.append(path.name)
+            # Group skills by storage category
+            categories: Dict[str, List[str]] = {}
+            if _STORAGE_DIR.exists():
+                for md in sorted(_STORAGE_DIR.rglob("SKILL.md")):
+                    rel = md.parent.relative_to(_STORAGE_DIR)
+                    cat = rel.parts[0] if len(rel.parts) > 1 else "general"
+                    categories.setdefault(cat, []).append(md.parent.name)
+
+            for path in sorted(_SKILLS_DIR.iterdir()):
+                if path.is_dir() and path.name not in ("helpers", "storage") and (path / "SKILL.md").exists():
+                    categories.setdefault("other", []).append(path.name)
             
-            if available_skills:
-                print("Available Skills:")
-                for skill in sorted(available_skills):
-                    print(f"  • {skill}")
+            total_skills = sum(len(v) for v in categories.values())
+            if total_skills > 0:
+                print(f"Available Skills ({total_skills} total across {len(categories)} categories):")
+                for cat, skills in sorted(categories.items()):
+                    print(f"\n  📁 [{cat}] ({len(skills)} skills)")
+                    for skill in sorted(skills):
+                        print(f"     • {skill}")
                 print("")
                 
             if not registry:
                 print("No tools discovered.")
             else:
-                print("Discovered tools:")
+                print(f"Discovered Tools ({len(registry)} total):")
                 for name in sorted(registry.keys()):
                     print(f"  • {name}")
                     
             print("\nFor more details instruction execute: human-skills --tool_info {exact_tool_name}")
             print(
-                "For Proper Skill usages instruction use your view tool or read tool or run human-skills --skill_info {skill_name}",
-                "Example_1: human-skills --skill_info zram-optimizer,",
-                "Example_2: human-skills --skill_info pytorch-patterns"
+                "For Proper Skill usages instruction run: human-skills --skill_info {skill_name}\n"
+                "Example_1: human-skills --skill_info zram-optimizer\n"
+                "Example_2: human-skills --skill_info antv-g2-chart-expert"
             )
             sys.exit(0)
             

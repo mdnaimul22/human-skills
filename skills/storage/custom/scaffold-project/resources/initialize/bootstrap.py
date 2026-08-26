@@ -107,6 +107,52 @@ def create_base_files():
     except NameError:
         current_dir = None
 
+def _find_repo_root(start_dir: Optional[Path]) -> Optional[Path]:
+    if not start_dir:
+        return None
+    for p in [start_dir, *start_dir.parents]:
+        if (p / ".agents" / "rules").exists() or (p / "skills" / "storage").exists():
+            return p
+    return None
+
+def create_base_files():
+    """3. Create basic files"""
+    print("📄 Creating base files...")
+    
+    # Ensure data directory exists for the SQLite database
+    Path("data").mkdir(parents=True, exist_ok=True)
+
+    # Copy template source files for DB/auth layer
+    src_templates = [
+        ".env",
+        ".env.example",
+        ".gitignore",
+        "LICENSE",
+        "main.py",
+        "README.md",
+        "requirements.txt",
+        "deploy/nginx/nginx.conf.template",
+        "scripts/generate_nginx_conf.py",
+        "src/core/__init__.py",
+        "src/core/auth.py",
+        "src/db/__init__.py",
+        "src/db/models.py",
+        "src/db/repositories.py",
+        "src/providers/__init__.py",
+        "src/schema/__init__.py",
+        "src/schema/auth.py",
+        "src/services/__init__.py",
+        "src/services/auth.py",
+        "src/routers/__init__.py",
+        "src/routers/auth.py",
+        "tests/__init__.py"
+    ]
+    
+    try:
+        current_dir = Path(__file__).resolve().parent
+    except NameError:
+        current_dir = None
+
     for path_str in src_templates:
         dest_path = Path(path_str)
         dest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -124,7 +170,7 @@ def create_base_files():
 
         if not success:
             remote_path_str = ".env.example" if path_str == ".env" else path_str
-            url = f"{REPO_RAW_URL}/skills/scaffold-project/resources/initialize/{remote_path_str}"
+            url = f"{REPO_RAW_URL}/skills/storage/custom/scaffold-project/resources/initialize/{remote_path_str}"
             try:
                 with urllib.request.urlopen(url, timeout=10) as response:
                     content = response.read().decode("utf-8")
@@ -139,7 +185,8 @@ def sync_rules():
     
     try:
         current_dir = Path(__file__).resolve().parent
-        local_rules_dir = current_dir.parent.parent.parent.parent / ".agents" / "rules"
+        repo_root = _find_repo_root(current_dir)
+        local_rules_dir = (repo_root / ".agents" / "rules") if repo_root else None
     except NameError:
         local_rules_dir = None
     
@@ -190,7 +237,8 @@ def scaffold_human_skills():
     if not config_success:
         try:
             current_dir = Path(__file__).resolve().parent
-            local_config_dir = current_dir.parent.parent.parent / "scaffold-config" / "resources" / "config"
+            repo_root = _find_repo_root(current_dir)
+            local_config_dir = (repo_root / "skills" / "storage" / "custom" / "scaffold-config" / "resources" / "config") if repo_root else None
         except NameError:
             local_config_dir = None
 
@@ -209,7 +257,7 @@ def scaffold_human_skills():
         if not config_success:
             print("   [Fallback] Downloading config layer from GitHub...")
             for f in config_files:
-                url = f"{REPO_RAW_URL}/skills/scaffold-config/resources/config/{f}"
+                url = f"{REPO_RAW_URL}/skills/storage/custom/scaffold-config/resources/config/{f}"
                 dest_path = Path("src/config") / f
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 try:
@@ -238,7 +286,8 @@ def scaffold_human_skills():
     if not helpers_success:
         try:
             current_dir = Path(__file__).resolve().parent
-            local_helpers_dir = current_dir.parent.parent.parent / "scaffold-helpers" / "resources" / "helpers"
+            repo_root = _find_repo_root(current_dir)
+            local_helpers_dir = (repo_root / "skills" / "storage" / "custom" / "scaffold-helpers" / "resources" / "helpers") if repo_root else None
         except NameError:
             local_helpers_dir = None
 
@@ -261,7 +310,7 @@ def scaffold_human_skills():
         if not helpers_success:
             print("   [Fallback] Downloading helpers layer from GitHub...")
             for f in helper_files:
-                url = f"{REPO_RAW_URL}/skills/scaffold-helpers/resources/helpers/{f}"
+                url = f"{REPO_RAW_URL}/skills/storage/custom/scaffold-helpers/resources/helpers/{f}"
                 dest_path = Path("src/helpers") / f
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 try:

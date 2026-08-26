@@ -60,7 +60,7 @@ human-skills '{
 To scaffold a new Python project with the standard directory structure, config layer, and agent rules:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/skills/scaffold-project/resources/initialize/bootstrap.py | python3
+curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/skills/storage/custom/scaffold-project/resources/initialize/bootstrap.py | python3
 ```
 
 This creates:
@@ -113,15 +113,24 @@ Blind skills — instruction files that look good on paper but have never been t
 ```
 human-skills/
 ├── skills/                          # ✅ Human-verified skills & tools
-│   ├── architecture-auditing-linter/  # AST-based code auditor
-│   ├── python-project-setup/          # Bootstrap + config scaffolding
-│   ├── directory-structure/           # Tree generator tool
-│   ├── helpers/                       # Dispatcher runtime
-│   ├── coding-standareds/             # Always-on coding rules
-│   ├── project-tree-example/          # Canonical project structures
-│   ├── ui-ux-pro-max/                 # Design system (161 palettes, 57 fonts)
-│   ├── docx/ pdf/ pptx/ xlsx/         # Document generation skills
-│   └── ...
+│   ├── helpers/                     # Dispatcher runtime & Tool interface
+│   └── storage/                     # Categorized skill namespaces
+│       ├── custom/                  # Core & custom human skills
+│       │   ├── scaffold-project/    # Python project skeleton generator
+│       │   ├── scaffold-config/     # Settings, paths, dotenv & logger
+│       │   ├── scaffold-helpers/    # Universal helpers & error handlers
+│       │   ├── scaffold-ui/         # Next.js 15 & Chrome extension scaffolds
+│       │   ├── gen-requirements/    # AST dependency & pyproject generator
+│       │   ├── tree_gen/            # Tree generator tool
+│       │   ├── zram-optimizer/      # Linux Z-RAM optimization suite
+│       │   ├── architecture-auditing-linter/ # AST code auditor
+│       │   ├── ui-ux-pro-max/       # Design system (161 palettes, 57 fonts)
+│       │   └── ...
+│       ├── antv/                    # AntV data visualization suite
+│       │   ├── antv-g2-chart-expert/
+│       │   ├── antv-s2-pivot-table-expert/
+│       │   └── ...
+│       └── [google/openai/anthropic/...] # Extensible for future namespaces
 │
 ├── .agents/rules/                   # 📐 Coding standards & architecture rules
 │
