@@ -206,8 +206,8 @@ flowchart TD
 {
   "tool_name": "tree_gen",
   "tool_args": {
-    "input_path": "/a0/usr/projects/finance-api",
-    "file_name": "finance-api_structure",
+    "input_path": "/home/{user_name}/a0/usr/workdir/example-project-name",
+    "file_name": "structure",
     "ignored_path": "node_modules, dist, build, .git, __pycache__, .venv"
   }
 }
