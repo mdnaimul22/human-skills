@@ -303,7 +303,8 @@ def main() -> None:
 
     result = dispatch(payload)
     print(result)
-    sys.exit(0 if result.startswith("✅") else 1)
+    is_error = result.startswith("❌") or result.startswith("Error:") or result.startswith("Error ")
+    sys.exit(1 if is_error else 0)
 
 
 if __name__ == "__main__":
