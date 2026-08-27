@@ -202,11 +202,24 @@ flowchart TD
 #### Step 3: Generate & Inspect Directory Layout (`tree_gen`)
 > Use `tree_gen` to understand the codebase structure before writing instructions.
 
+**For Local Machine:**
 ```json
 {
   "tool_name": "tree_gen",
   "tool_args": {
     "input_path": "/home/{user_name}/a0/usr/workdir/example-project-name",
+    "file_name": "structure",
+    "ignored_path": "node_modules, dist, build, .git, __pycache__, .venv"
+  }
+}
+```
+
+**For Docker Container:**
+```json
+{
+  "tool_name": "tree_gen",
+  "tool_args": {
+    "input_path": "/a0/usr/workdir/example-project-name",
     "file_name": "structure",
     "ignored_path": "node_modules, dist, build, .git, __pycache__, .venv"
   }
