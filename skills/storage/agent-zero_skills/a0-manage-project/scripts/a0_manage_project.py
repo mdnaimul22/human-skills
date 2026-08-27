@@ -27,7 +27,7 @@ except ImportError:
     import projects, files, git  # type: ignore
 
 
-class ProjectManager(Tool):
+class A0ManageProject(Tool):
     """
     Tool to manage Agent Zero projects.
     
@@ -43,7 +43,7 @@ class ProjectManager(Tool):
     - clone: Clone git repo as project
     - git_status: Get git status
     """
-    name: str = "project_manager"
+    name: str = "a0_manage_project"
     description: str = (
         "Manage Agent Zero projects: create, configure, update, delete, clone git repos, "
         "add rules/instructions from templates, add knowledge files, and set project variables."

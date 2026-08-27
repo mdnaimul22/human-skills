@@ -1,5 +1,5 @@
 ---
-name: "project-manager"
+name: "a0-manage-project"
 description: "Manage Agent Zero projects: create, configure, update, delete, and add instructions/knowledge. Use this tool to perform project lifecycle operations."
 author: "Agent Zero Team"
 tags: ["project", "management", "configuration", "git", "setup"]
@@ -14,6 +14,7 @@ trigger_patterns:
   - "project manage"
   - "manage project"
   - "project manager"
+  - "a0 manage project"
   - "configure project"
   - "update project"
   - "delete project"
@@ -61,8 +62,8 @@ This skill provides complete guidance for setting up Agent Zero projects, includ
 - Non-sensitive variables in `a0/usr/projects/my-project/.a0proj/variables.env`
 - Automatic Git exclusion for secrets
 
-## project_manager tool
-The `project_manager` tool allows you to programmatically manage the entire lifecycle of Agent Zero projects.
+## a0_manage_project tool
+The `a0_manage_project` tool allows you to programmatically manage the entire lifecycle of Agent Zero projects.
 
 **Supported Actions:**
 - **Lifecycle:** `create`, `list`, `load`, `delete`
@@ -88,92 +89,27 @@ The `project_manager` tool allows you to programmatically manage the entire life
 
 ---
 
-## workflow examples-1
+## Workflow Examples
 
-**Action:** `clone`
+**Action:** `clone`  
 **Required:** `project_name` (lowercase, no spaces), `git_url`
 
-#### 1 cloning git url by project_manager tool
+#### 1. Cloning Git URL by a0_manage_project Tool
 ```json
 {
-    "tool_name": "project_manager",
+    "tool_name": "a0_manage_project",
     "tool_args": {
         "action": "clone",
         "project_name": "simple-dantd",
-        "git_url": "https://github.com/mdnaimul22/simple-dantd",
-    }
-}
-```
-#### 1.1 generatating dependancy graph structure fpr the project
-Use this tool to understand project structure before adding guidelines, instructions, coding standards, workflows.
-
-**Example:**
-```json
-{
-    "thoughts": [
-        "Generating structure for project my-project"
-    ],
-    "tool_name": "generate_structure",
-    "tool_args": {
-        "tree_structure_input_path": "/a0/usr/my-project/",
-        "tree_structure_out_path": "/a0/usr/my-project/",
-        "ignored_path": "node_modules, dist, build, tests, __tests__, coverage, .git, .vscode, public/images"
-    }
-}
-```
-this tool will generate a project /a0/usr/workdir/my-project/structure.md thats give you undrestand the full view of the project. and after reading structure.md you can decide which docs and readme you have to read for generating well project 01_instruction.md
-note: this 01_instruction.md is prompt instruction and you have to read README.md or under project docs to undrestand how well you can generate a prompt instruction. also remember this tool command work only when a git repo already avoilable. 
-
-#### 1.2 Code Viewing Tools
-
-**view_file** - Use this tool to view the entire content of a file.
-
-This tool is simple and powerful. Just provide the absolute path to the file you want to see.
-
-```json
-{
-    "thoughts": [
-        "I need to examine the structure.md to undrestand full graph and file location"
-    ],
-    "Headline": "Reviewing structure.md file for details analysis",
-    "tool_name": "view_file",
-    "tool_args": {
-        "absolute_path": "/a0/usr/my-project/structure.md"
-    }
-}
-```
-#### 1.3 Code Viewing Tools
-```json
-{
-    "thoughts": [
-        "I found README.md so i need to examine the file content"
-    ],
-    "Headline": "Reviewing README.md file for details analysis",
-    "tool_name": "view_file",
-    "tool_args": {
-        "absolute_path": "/a0/usr/my-project/README.md"
-    }
-}
-```
-#### 1.4 Code Viewing Tools
-```json
-{
-    "thoughts": [
-        "lets examine more docs to undrestand the repository context from /docs"
-    ],
-    "Headline": "Reviewing reach documenation file for details analysis",
-    "tool_name": "view_file",
-    "tool_args": {
-        "absolute_path": "/a0/usr/my-project/docs/docname*"
+        "git_url": "https://github.com/mdnaimul22/simple-dantd"
     }
 }
 ```
 
-#### 2.0 using project_manager tool again for better title, description, prompt instruction
-after analysis README and some of core documentation you know this project well. so update now title, description, instructions following below pattern
+#### 2. Update Project Metadata & Instructions
 ```json
 {
-    "tool_name": "project_manager",
+    "tool_name": "a0_manage_project",
     "tool_args": {
         "action": "update",
         "project_name": "finance-bot",
@@ -185,36 +121,10 @@ after analysis README and some of core documentation you know this project well.
 }
 ```
 
-### 3.0 Add Rules (Templates)
-all avoilable rules set already stored inside this skill a0/usr/skills/project-setup/templates
-use manage project tool to transfer project related rules. such as if a project built on python then its need python related rule Templates, or if a project built on typescript where if you send js related rule then it create confusion. so always transfer right rule templets.
-
-**Action:** `add_rules`
-**Purpose:** Copy pre-defined rule templates to project instructions.
-**Templates Location:** `a0/usr/skills/project-setup/templates`
-
-**common templates:**
-- `common-coding-style.md`
-- `common-git-workflow.md`
-- `common-patterns.md`
-- `common-security.md`
-- `common-testing.md`
-
-**context templates:**
-- `context-dev.md`
-- `context-research.md`
-- `context-review.md`
-
-**python templates:**
-- `python-coding-style.md`
-- `python-hooks.md`
-- `python-patterns.md`
-- `python-security.md`
-- `python-testing.md`
-
+#### 3. Add Rule Templates
 ```json
 {
-    "tool_name": "project_manager",
+    "tool_name": "a0_manage_project",
     "tool_args": {
         "action": "add_rules",
         "project_name": "simple-dantd",
@@ -223,15 +133,10 @@ use manage project tool to transfer project related rules. such as if a project 
 }
 ```
 
-### 4.0 Add Knowledge
-When our system support Automatic documentation indexing from `a0/usr/projects/my-project/docs/` here some times you see some of git repo has no docs, So building Custom knowledge base by analysis project code and structure are most essential.Support for PDF, text, CSV, HTML, JSON, and Markdown. When you add tool_args filename and content it will be Stored as Custom knowledge files in `a0/usr/projects/my-project/.a0proj/knowledge/main/`
-
-**Action:** `add_knowledge`
-**Purpose:** Add reference documents to `.a0proj/knowledge/main/`
-
+#### 4. Add Knowledge File
 ```json
 {
-    "tool_name": "project_manager",
+    "tool_name": "a0_manage_project",
     "tool_args": {
         "action": "add_knowledge",
         "project_name": "simple-dantd",
@@ -241,14 +146,10 @@ When our system support Automatic documentation indexing from `a0/usr/projects/m
 }
 ```
 
-### 5. Set Variables
-
-**Action:** `set_variables`
-**Purpose:** Set environment variables (non-sensitive)
-
+#### 5. Set Environment Variables
 ```json
 {
-    "tool_name": "project_manager",
+    "tool_name": "a0_manage_project",
     "tool_args": {
         "action": "set_variables",
         "project_name": "simple-dantd",
@@ -257,13 +158,10 @@ When our system support Automatic documentation indexing from `a0/usr/projects/m
 }
 ```
 
-### 6. Get Git Status
-
-**Action:** `git_status`
-
+#### 6. Check Git Status
 ```json
 {
-    "tool_name": "project_manager",
+    "tool_name": "a0_manage_project",
     "tool_args": {
         "action": "git_status",
         "project_name": "simple-dantd"
@@ -271,14 +169,13 @@ When our system support Automatic documentation indexing from `a0/usr/projects/m
 }
 ```
 
-### 7. List & Load
-
+#### 7. List & Load Projects
 ```json
-// List all
-{ "tool_name": "project_manager", "tool_args": { "action": "list" } }
+// List all projects
+{ "tool_name": "a0_manage_project", "tool_args": { "action": "list" } }
 
-// Load one
-{ "tool_name": "project_manager", "tool_args": { "action": "load", "project_name": "finance-bot" } }
+// Load specific project
+{ "tool_name": "a0_manage_project", "tool_args": { "action": "load", "project_name": "finance-bot" } }
 ```
 
 ---
