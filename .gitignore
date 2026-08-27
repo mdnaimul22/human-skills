@@ -149,12 +149,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Upstream Repositories Storage
+.data/
 .superpowers
 .claude-skills
 .everything-claude-code
 .ui-ux-pro-max-skill
 .chart-visualization-skills
 .anthropics-skills
+
 command.mdweb/
 command.md
 python_basics.md
