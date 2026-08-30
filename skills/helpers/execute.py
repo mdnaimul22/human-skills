@@ -4,6 +4,7 @@ import asyncio
 import inspect
 import importlib
 import importlib.util
+import ast
 from pathlib import Path
 from typing import Callable, Optional, Dict, List
 
@@ -32,9 +33,16 @@ def _extract_message(result) -> str:
     return str(result)
 
 
-# ─ Resolve a single .py file → sync callable or None ──────────
+def _get_category_for_path(path: Path) -> str:
+    """Derive the top-level storage category for a given path."""
+    try:
+        rel = path.relative_to(_STORAGE_DIR)
+        return rel.parts[0] if len(rel.parts) > 1 else "general"
+    except Exception:
+        return "other"
 
-import ast
+
+# ─ Resolve a single .py file → sync callable or None ──────────
 
 def _resolve_runner(module_name: str, path: Path) -> Optional[dict]:
     """
@@ -87,7 +95,9 @@ def _resolve_runner(module_name: str, path: Path) -> Optional[dict]:
                 "name": getattr(target_cls, "name", module_name) or module_name,
                 "description": getattr(target_cls, "description", ""),
                 "arguments": getattr(target_cls, "arguments", ""),
-                "instruction": getattr(target_cls, "instruction", "")
+                "instruction": getattr(target_cls, "instruction", ""),
+                "category": _get_category_for_path(path),
+                "file_path": str(path)
             }
 
     return None
@@ -123,8 +133,70 @@ def _build_registry() -> Dict[str, dict]:
 
         if runner is not None:
             registry[tool_name] = runner
+            
+            # Also register by target class name if different
+            cls_name = runner.get("name")
+            if cls_name and cls_name != tool_name and cls_name not in registry:
+                registry[cls_name] = runner
 
     return registry
+
+
+def _get_categories_map() -> Dict[str, List[str]]:
+    """
+    Returns a dict mapping category_directory_name -> list of skill_names.
+    """
+    categories: Dict[str, List[str]] = {}
+    if _STORAGE_DIR.exists():
+        for md in sorted(_STORAGE_DIR.rglob("SKILL.md")):
+            rel = md.parent.relative_to(_STORAGE_DIR)
+            cat = rel.parts[0] if len(rel.parts) > 1 else "general"
+            categories.setdefault(cat, []).append(md.parent.name)
+
+    for path in sorted(_SKILLS_DIR.iterdir()):
+        if path.is_dir() and path.name not in ("helpers", "storage") and (path / "SKILL.md").exists():
+            categories.setdefault("other", []).append(path.name)
+            
+    return categories
+
+
+def _match_category(target: str, available_categories: List[str]) -> Optional[str]:
+    """
+    Matches a user query against available storage category directory names.
+    Supports:
+    - Exact match
+    - Case-insensitive match
+    - Normalized match (removing spaces, hyphens, underscores)
+    - Substring/Prefix match if unique
+    """
+    target_clean = target.strip()
+    if not target_clean:
+        return None
+
+    # 1. Exact match
+    if target_clean in available_categories:
+        return target_clean
+
+    # 2. Case-insensitive match
+    for cat in available_categories:
+        if cat.lower() == target_clean.lower():
+            return cat
+
+    # 3. Normalized match (ignoring whitespace, hyphens, underscores)
+    def normalize(s: str) -> str:
+        return s.lower().replace(" ", "").replace("_", "").replace("-", "")
+
+    target_norm = normalize(target_clean)
+    for cat in available_categories:
+        if normalize(cat) == target_norm:
+            return cat
+
+    # 4. Substring match
+    matches = [cat for cat in available_categories if target_norm in normalize(cat)]
+    if len(matches) == 1:
+        return matches[0]
+
+    return None
 
 
 def _find_skill_md(skill_name: str) -> Optional[Path]:
@@ -144,6 +216,9 @@ def _find_skill_md(skill_name: str) -> Optional[Path]:
         # 2. Search recursively across storage namespaces
         for md_path in _STORAGE_DIR.rglob("SKILL.md"):
             if md_path.parent.name == clean_name:
+                return md_path
+            # Case-insensitive / normalized match
+            if md_path.parent.name.lower().replace("_", "-") == clean_name.lower().replace("_", "-"):
                 return md_path
 
     # 3. Direct path check in root skills dir
@@ -181,7 +256,17 @@ def dispatch(payload: dict) -> str:
 
     registry = _build_registry()
 
-    if tool_name not in registry:
+    # Direct match or normalized alias match
+    target_tool = tool_name
+    if target_tool not in registry:
+        alt_1 = tool_name.replace("-", "_")
+        alt_2 = tool_name.replace("_", "-")
+        if alt_1 in registry:
+            target_tool = alt_1
+        elif alt_2 in registry:
+            target_tool = alt_2
+
+    if target_tool not in registry:
         available = ", ".join(sorted(registry.keys())) or "(none)"
         return f"Error: Unknown tool '{tool_name}'. Available tools: {available}"
 
@@ -190,14 +275,120 @@ def dispatch(payload: dict) -> str:
         for k, v in tool_args.items()
     }
 
-    return registry[tool_name]["runner"](normalised)
+    return registry[target_tool]["runner"](normalised)
+
+
+def _handle_list(args: List[str]) -> None:
+    """
+    Handle 'human-skills --list [all | dir_name | field1,field2]' command center.
+    """
+    registry = _build_registry()
+    categories = _get_categories_map()
+    all_categories = sorted(categories.keys())
+
+    # ── 1. Default or 'all': List all skills grouped by category ──────────────
+    if not args or (len(args) == 1 and args[0].strip().lower() == "all"):
+        total_skills = sum(len(v) for v in categories.values())
+        print("=" * 70)
+        print(f"🎯 HUMAN SKILLS COMMAND CENTER — ALL SKILLS ({total_skills} total across {len(categories)} categories)")
+        print("=" * 70)
+
+        for cat in all_categories:
+            skills = sorted(categories[cat])
+            cat_tools = sorted([t_name for t_name, t_info in registry.items() if t_info.get("category") == cat])
+            tools_badge = f", {len(cat_tools)} tools" if cat_tools else ""
+            print(f"\n  📁 [{cat}] ({len(skills)} skills{tools_badge})")
+            for skill in skills:
+                print(f"     • {skill}")
+
+        print("\n" + "-" * 70)
+        if not registry:
+            print("🛠️ Discovered Tools: None")
+        else:
+            print(f"🛠️ Discovered Tools ({len(registry)} total):")
+            for name, info in sorted(registry.items()):
+                cat_label = f" ({info.get('category', 'custom')})" if info.get('category') else ""
+                print(f"  • {name}{cat_label}")
+
+        print("\n💡 Quick Navigation:")
+        print("  • List specific category: human-skills --list <dir_name>  (e.g. human-skills --list custom)")
+        print("  • Read skill instructions: human-skills --skill_info <skill_name>")
+        print("  • Inspect tool metadata:   human-skills --tool_info <tool_name>")
+        print("=" * 70)
+        sys.exit(0)
+
+    # ── 2. Directory-specific listing: human-skills --list <dir_name> ──────────
+    target_query = args[0].strip()
+
+    # Check for legacy JSON fields format (e.g. 'name,description')
+    if "," in target_query and all(f.strip().lower() in ("name", "description", "arguments", "instruction", "category") for f in target_query.split(",")):
+        fields = [f.strip().lower() for f in target_query.split(",")]
+        output = {}
+        for tool_id, tool_info in registry.items():
+            tool_data = {f: tool_info.get(f, "") for f in fields}
+            output[tool_id] = tool_data
+        print(json.dumps(output, indent=2))
+        sys.exit(0)
+
+    # Match category name
+    matched_cat = _match_category(target_query, all_categories)
+
+    if matched_cat is not None:
+        skills = sorted(categories.get(matched_cat, []))
+        cat_tools = sorted([t_name for t_name, t_info in registry.items() if t_info.get("category") == matched_cat])
+
+        print("=" * 70)
+        print(f"📁 STORAGE CATEGORY: [{matched_cat}] ({len(skills)} skills, {len(cat_tools)} tools)")
+        print("=" * 70)
+
+        print("\n📜 Skills:")
+        if skills:
+            for skill in skills:
+                print(f"  • {skill}")
+        else:
+            print("  (No skills found in this category)")
+
+        print(f"\n🛠️ Tools in [{matched_cat}]:")
+        if cat_tools:
+            for t in cat_tools:
+                t_desc = registry[t].get("description", "")
+                t_desc_short = f" — {t_desc[:60]}..." if len(t_desc) > 60 else (f" — {t_desc}" if t_desc else "")
+                print(f"  • {t}{t_desc_short}")
+        else:
+            print("  (No standalone tools discovered in this category)")
+
+        print("\n" + "-" * 70)
+        print("💡 Quick Navigation:")
+        print(f"  • Read skill documentation: human-skills --skill_info <skill_name>")
+        print(f"  • Inspect tool parameters:  human-skills --tool_info <tool_name>")
+        print(f"  • View all categories:      human-skills --list all")
+        print("=" * 70)
+        sys.exit(0)
+
+    # ── 3. Invalid directory name: Show available directories with error ───────
+    print(f"❌ Error: Category/Directory '{target_query}' not found in storage.\n", file=sys.stderr)
+    print("Please use a correct directory name. Available storage categories:", file=sys.stderr)
+    for cat in all_categories:
+        count = len(categories[cat])
+        print(f"  📁 {cat} ({count} skills)", file=sys.stderr)
+
+    print("\n💡 Usage:", file=sys.stderr)
+    print("  • List specific category: human-skills --list <dir_name>  (e.g. human-skills --list custom)", file=sys.stderr)
+    print("  • List all categories:      human-skills --list all", file=sys.stderr)
+    sys.exit(1)
 
 
 def main() -> None:
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
-        print(__doc__)
+        print(__doc__ or "human-skills Command Center")
+        print("\nUsage:")
+        print("  • human-skills --list [all | <dir_name>]")
+        print("  • human-skills --skill_info <skill_name>")
+        print("  • human-skills --tool_info <tool_name>")
+        print("  • human-skills '{\"tool_name\": \"<name>\", \"tool_args\": {...}}'")
         sys.exit(0)
 
+    # ── 1. Skill Info Command ──────────────────────────────────────────────────
     if sys.argv[1] == "--skill_info":
         if len(sys.argv) < 3:
             print("Error: --skill_info requires a skill name.", file=sys.stderr)
@@ -212,6 +403,7 @@ def main() -> None:
         print(skill_md_path.read_text(encoding="utf-8"))
         sys.exit(0)
 
+    # ── 2. Tool Info Command ───────────────────────────────────────────────────
     if sys.argv[1] == "--tool_info":
         if len(sys.argv) < 3:
             print("Error: --tool_info requires an exact tool name.", file=sys.stderr)
@@ -220,79 +412,35 @@ def main() -> None:
         target_tool = sys.argv[2]
         registry = _build_registry()
         
-        if target_tool not in registry:
+        # Check direct or alias match
+        actual_tool = target_tool
+        if actual_tool not in registry:
+            if target_tool.replace("-", "_") in registry:
+                actual_tool = target_tool.replace("-", "_")
+            elif target_tool.replace("_", "-") in registry:
+                actual_tool = target_tool.replace("_", "-")
+
+        if actual_tool not in registry:
             print(f"Error: Tool '{target_tool}' not found.", file=sys.stderr)
             sys.exit(1)
             
-        tool_info = registry[target_tool]
+        tool_info = registry[actual_tool]
         output = {
-            "name": tool_info.get("name", ""),
+            "name": tool_info.get("name", actual_tool),
             "description": tool_info.get("description", ""),
             "arguments": tool_info.get("arguments", ""),
-            "instruction": tool_info.get("instruction", "")
+            "instruction": tool_info.get("instruction", ""),
+            "category": tool_info.get("category", "")
         }
         
         print(json.dumps(output, indent=2))
         sys.exit(0)
 
+    # ── 3. List Command Center ─────────────────────────────────────────────────
     if sys.argv[1] == "--list":
-        registry = _build_registry()
-        
-        fields = sys.argv[2:]
-        if not fields:
-            # Group skills by storage category
-            categories: Dict[str, List[str]] = {}
-            if _STORAGE_DIR.exists():
-                for md in sorted(_STORAGE_DIR.rglob("SKILL.md")):
-                    rel = md.parent.relative_to(_STORAGE_DIR)
-                    cat = rel.parts[0] if len(rel.parts) > 1 else "general"
-                    categories.setdefault(cat, []).append(md.parent.name)
+        _handle_list(sys.argv[2:])
 
-            for path in sorted(_SKILLS_DIR.iterdir()):
-                if path.is_dir() and path.name not in ("helpers", "storage") and (path / "SKILL.md").exists():
-                    categories.setdefault("other", []).append(path.name)
-            
-            total_skills = sum(len(v) for v in categories.values())
-            if total_skills > 0:
-                print(f"Available Skills ({total_skills} total across {len(categories)} categories):")
-                for cat, skills in sorted(categories.items()):
-                    print(f"\n  📁 [{cat}] ({len(skills)} skills)")
-                    for skill in sorted(skills):
-                        print(f"     • {skill}")
-                print("")
-                
-            if not registry:
-                print("No tools discovered.")
-            else:
-                print(f"Discovered Tools ({len(registry)} total):")
-                for name in sorted(registry.keys()):
-                    print(f"  • {name}")
-                    
-            print("\nFor more details instruction execute: human-skills --tool_info {exact_tool_name}")
-            print(
-                "For Proper Skill usages instruction run: human-skills --skill_info {skill_name}\n"
-                "Example_1: human-skills --skill_info zram-optimizer\n"
-                "Example_2: human-skills --skill_info antv-g2-chart-expert"
-            )
-            sys.exit(0)
-            
-        if not registry:
-            print("No tools discovered.", file=sys.stderr)
-            sys.exit(0)
-            
-        output = {}
-        for tool_id, tool_info in registry.items():
-            tool_data = {}
-            for field in fields:
-                field_clean = field.strip(",").lower()
-                if field_clean in ("runner",):
-                    continue
-                tool_data[field_clean] = tool_info.get(field_clean, "")
-            output[tool_id] = tool_data
-            
-        print(json.dumps(output, indent=2))
-        sys.exit(0)
-
+    # ── 4. Tool Execution Dispatcher ───────────────────────────────────────────
     source = sys.argv[1]
 
     try:
