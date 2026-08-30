@@ -226,6 +226,10 @@ def _find_skill_md(skill_name: str) -> Optional[Path]:
     clean_name = skill_name.strip()
     clean_lower = clean_name.lower().replace("_", "-")
 
+    # 0. Master dispatcher skill definition
+    if clean_lower in ("human-skills", "human_skills", "dispatcher", "main", "root") and (_SKILLS_DIR / "SKILL.md").exists():
+        return _SKILLS_DIR / "SKILL.md"
+
     # 1. Direct path check in storage
     if _STORAGE_DIR.exists():
         storage_direct = _STORAGE_DIR / clean_name / "SKILL.md"
