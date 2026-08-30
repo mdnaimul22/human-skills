@@ -160,41 +160,60 @@ def _get_categories_map() -> Dict[str, List[str]]:
     return categories
 
 
-def _match_category(target: str, available_categories: List[str]) -> Optional[str]:
+def _build_category_index(categories_map: Dict[str, List[str]]) -> Dict[str, str]:
     """
-    Matches a user query against available storage category directory names.
-    Supports:
-    - Exact match
-    - Case-insensitive match
-    - Normalized match (removing spaces, hyphens, underscores)
-    - Substring/Prefix match if unique
+    Builds a lowercase / normalized lookup index mapping lowercase variations
+    to the exact real on-disk directory name.
+    
+    Example:
+      'custom' -> 'custom'
+      'fission-ai _openspec' -> 'Fission-AI _OpenSpec'
+      'fission-ai_openspec' -> 'Fission-AI _OpenSpec'
+      'obra_ superpowers' -> 'obra_ superpowers'
+      'obra_superpowers' -> 'obra_ superpowers'
     """
-    target_clean = target.strip()
-    if not target_clean:
+    index: Dict[str, str] = {}
+    for real_name in categories_map.keys():
+        lowered = real_name.lower()
+        index[lowered] = real_name
+        
+        # Normalization with spaces, underscores, and hyphens
+        index[lowered.replace(" ", "_")] = real_name
+        index[lowered.replace(" ", "-")] = real_name
+        index[lowered.replace("_", "-")] = real_name
+        index[lowered.replace("-", "_")] = real_name
+        
+        # Stripped alphanumeric form
+        stripped = lowered.replace(" ", "").replace("_", "").replace("-", "")
+        index[stripped] = real_name
+        
+    return index
+
+
+def _match_category(target: str, categories_map: Dict[str, List[str]]) -> Optional[str]:
+    """
+    Matches a user query (case-insensitively) against available storage category directory names
+    using the lowercase index.
+    """
+    query = target.strip().lower()
+    if not query:
         return None
 
-    # 1. Exact match
-    if target_clean in available_categories:
-        return target_clean
+    index = _build_category_index(categories_map)
 
-    # 2. Case-insensitive match
-    for cat in available_categories:
-        if cat.lower() == target_clean.lower():
-            return cat
+    # 1. Exact lowercase match
+    if query in index:
+        return index[query]
 
-    # 3. Normalized match (ignoring whitespace, hyphens, underscores)
-    def normalize(s: str) -> str:
-        return s.lower().replace(" ", "").replace("_", "").replace("-", "")
+    # 2. Stripped alphanumeric match
+    query_norm = query.replace(" ", "").replace("_", "").replace("-", "")
+    if query_norm in index:
+        return index[query_norm]
 
-    target_norm = normalize(target_clean)
-    for cat in available_categories:
-        if normalize(cat) == target_norm:
-            return cat
-
-    # 4. Substring match
-    matches = [cat for cat in available_categories if target_norm in normalize(cat)]
+    # 3. Substring / Prefix match
+    matches = {real_name for k, real_name in index.items() if query_norm in k}
     if len(matches) == 1:
-        return matches[0]
+        return next(iter(matches))
 
     return None
 
@@ -202,10 +221,10 @@ def _match_category(target: str, available_categories: List[str]) -> Optional[st
 def _find_skill_md(skill_name: str) -> Optional[Path]:
     """
     Find SKILL.md for a given skill name across all storage categories.
-    Supports both direct names ('tree_gen', 'antv-g2-chart-expert') and
-    category-scoped paths ('custom/tree_gen', 'antv/antv-g2-chart-expert').
+    Supports case-insensitive matching, direct names, and category-scoped paths.
     """
     clean_name = skill_name.strip()
+    clean_lower = clean_name.lower().replace("_", "-")
 
     # 1. Direct path check in storage
     if _STORAGE_DIR.exists():
@@ -213,18 +232,20 @@ def _find_skill_md(skill_name: str) -> Optional[Path]:
         if storage_direct.exists():
             return storage_direct
 
-        # 2. Search recursively across storage namespaces
+        # 2. Case-insensitive search recursively across storage namespaces
         for md_path in _STORAGE_DIR.rglob("SKILL.md"):
-            if md_path.parent.name == clean_name:
-                return md_path
-            # Case-insensitive / normalized match
-            if md_path.parent.name.lower().replace("_", "-") == clean_name.lower().replace("_", "-"):
+            skill_folder = md_path.parent.name
+            if skill_folder.lower().replace("_", "-") == clean_lower:
                 return md_path
 
     # 3. Direct path check in root skills dir
     root_direct = _SKILLS_DIR / clean_name / "SKILL.md"
     if root_direct.exists():
         return root_direct
+
+    for path in _SKILLS_DIR.iterdir():
+        if path.is_dir() and path.name.lower().replace("_", "-") == clean_lower and (path / "SKILL.md").exists():
+            return path / "SKILL.md"
 
     return None
 
@@ -256,17 +277,17 @@ def dispatch(payload: dict) -> str:
 
     registry = _build_registry()
 
-    # Direct match or normalized alias match
-    target_tool = tool_name
-    if target_tool not in registry:
-        alt_1 = tool_name.replace("-", "_")
-        alt_2 = tool_name.replace("_", "-")
-        if alt_1 in registry:
-            target_tool = alt_1
-        elif alt_2 in registry:
-            target_tool = alt_2
+    # Case-insensitive / normalized tool lookup index
+    tool_index = {name.lower(): name for name in registry.keys()}
+    for name in list(registry.keys()):
+        tool_index[name.lower().replace("-", "_")] = name
+        tool_index[name.lower().replace("_", "-")] = name
 
-    if target_tool not in registry:
+    target_tool = tool_index.get(tool_name.lower())
+    if not target_tool:
+        target_tool = tool_index.get(tool_name.lower().replace("-", "_"))
+
+    if not target_tool or target_tool not in registry:
         available = ", ".join(sorted(registry.keys())) or "(none)"
         return f"Error: Unknown tool '{tool_name}'. Available tools: {available}"
 
@@ -330,8 +351,8 @@ def _handle_list(args: List[str]) -> None:
         print(json.dumps(output, indent=2))
         sys.exit(0)
 
-    # Match category name
-    matched_cat = _match_category(target_query, all_categories)
+    # Match category using lowercase index
+    matched_cat = _match_category(target_query, categories)
 
     if matched_cat is not None:
         skills = sorted(categories.get(matched_cat, []))
@@ -412,15 +433,17 @@ def main() -> None:
         target_tool = sys.argv[2]
         registry = _build_registry()
         
-        # Check direct or alias match
-        actual_tool = target_tool
-        if actual_tool not in registry:
-            if target_tool.replace("-", "_") in registry:
-                actual_tool = target_tool.replace("-", "_")
-            elif target_tool.replace("_", "-") in registry:
-                actual_tool = target_tool.replace("_", "-")
+        # Lowercase index for tool lookup
+        tool_index = {name.lower(): name for name in registry.keys()}
+        for name in list(registry.keys()):
+            tool_index[name.lower().replace("-", "_")] = name
+            tool_index[name.lower().replace("_", "-")] = name
 
-        if actual_tool not in registry:
+        actual_tool = tool_index.get(target_tool.lower())
+        if not actual_tool:
+            actual_tool = tool_index.get(target_tool.lower().replace("-", "_"))
+
+        if not actual_tool or actual_tool not in registry:
             print(f"Error: Tool '{target_tool}' not found.", file=sys.stderr)
             sys.exit(1)
             
