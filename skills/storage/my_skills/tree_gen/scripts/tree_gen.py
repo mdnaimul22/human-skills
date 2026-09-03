@@ -28,10 +28,10 @@ class TreeGen(Tool):
     description = "Generate a directory structure in Markdown format using professional ASCII branch connectors."
     arguments = {
         "input_path": "Directory to scan. (REQUIRED)",
-        "output_path": "Directory to write the structure file. Defaults to input_path.",
+        "output_path": "Directory to write the structure file. Optional, defaults to None.",
         "file_name": "Custom output filename. Defaults to {dir_name}_structure.md.",
-        "layout": "'vertical' (default) or 'horizontal'.",
-        "max_depth": "Maximum depth to recurse. Default: 4. Set to 0 for unlimited.",
+        "layout": "'vertical' or 'horizontal' Default is: vertical.",
+        "max_depth": "Maximum depth to recurse. Default is: 4. Set to 0 for unlimited.",
         "use_gitignore": "Parse .gitignore in input_path and apply rules. Default: true.",
         "ignored_path": "Comma-separated absolute paths to exclude.",
         "ignored_extensions": "Comma-separated extensions to exclude (e.g. '.log,.tmp')."
@@ -370,7 +370,7 @@ class TreeGen(Tool):
         self._effective_patterns = self.IGNORED_PATTERNS
 
         input_path_str  = self.args.get("input_path", "").strip()
-        output_path_str = self.args.get("output_path", input_path_str).strip()
+        output_path_str = self.args.get("output_path", "").strip()
         file_name_str   = self.args.get("file_name", "").strip()
         layout          = self.args.get("layout", "vertical").strip().lower()
         use_gitignore   = str(self.args.get("use_gitignore", "true")).lower() not in ("false", "0", "no")
@@ -381,8 +381,7 @@ class TreeGen(Tool):
         if not input_path_str:
             return Response(message="Error: `input_path` is required.", break_loop=False)
 
-        input_path  = Path(input_path_str).resolve()
-        output_path = Path(output_path_str).resolve()
+        input_path = Path(input_path_str).resolve()
 
         if not input_path.exists() or not input_path.is_dir():
             return Response(
@@ -418,7 +417,10 @@ class TreeGen(Tool):
         else:
             output_filename = f"{input_path.name}_structure.md"
 
-        output_file_path = output_path / output_filename
+        output_file_path = None
+        if output_path_str:
+            output_path = Path(output_path_str).resolve()
+            output_file_path = output_path / output_filename
 
         try:
             if layout == "horizontal":
@@ -436,13 +438,14 @@ class TreeGen(Tool):
                     use_gitignore, output_filename, input_path, max_depth,
                 )
 
-            output_path.mkdir(parents=True, exist_ok=True)
-            with open(output_file_path, "w", encoding="utf-8") as f:
-                f.write(f"# Directory Structure: {input_path.name}/\n")
-                f.write(f"## Path: {input_path}\n\n")
-                f.write(f"{input_path.name}/\n│\n")
-                for line in tree_lines:
-                    f.write(line + "\n")
+            if output_file_path:
+                output_file_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_file_path, "w", encoding="utf-8") as f:
+                    f.write(f"# Directory Structure: {input_path.name}/\n")
+                    f.write(f"## Path: {input_path}\n\n")
+                    f.write(f"{input_path.name}/\n│\n")
+                    for line in tree_lines:
+                        f.write(line + "\n")
 
         except Exception as e:
             return Response(message=f"Error: {e}", break_loop=False)
@@ -453,27 +456,51 @@ class TreeGen(Tool):
             use_gitignore, output_filename, input_path,
         )
 
-        line_count = len(tree_lines) + 4
-        size_bytes = output_file_path.stat().st_size if output_file_path.exists() else 0
+        tree_content = "\n".join(tree_lines)
         depth_note = "unlimited" if max_depth == 0 else f"{max_depth} levels"
 
-        response_lines = [
-            "✅ Directory Structure Generated.",
-            f"   Path    : {output_file_path}",
-            f"   Layout  : {layout}",
-            f"   Depth   : {depth_note}",
-            f"   Lines   : {line_count}",
-            f"   Size    : {self._format_bytes(size_bytes)}",
-            f"   Dirs    : {stats.dirs}",
-            f"   Files   : {stats.files}",
-            f"   Scanned : {self._format_bytes(stats.total_bytes)}",
-        ]
-
-        if line_count > 500:
-            response_lines.append(
-                f"\n   ⚠️  Tip: Output is {line_count} lines. "
-                "Consider reducing `max_depth` or adding `ignored_path` "
-                "entries for a cleaner overview."
-            )
-
-        return Response(message="\n".join(response_lines), break_loop=False)
+        if output_file_path:
+            line_count = len(tree_lines) + 4
+            size_bytes = output_file_path.stat().st_size if output_file_path.exists() else 0
+            response_output_path_lines = [
+                "✅ Directory Structure Generated.",
+                f"   Path    : {output_file_path}",
+                f"   Layout  : {layout}",
+                f"   Depth   : {depth_note}",
+                f"   Lines   : {line_count}",
+                f"   Size    : {self._format_bytes(size_bytes)}",
+                f"   Dirs    : {stats.dirs}",
+                f"   Files   : {stats.files}",
+                f"   Scanned : {self._format_bytes(stats.total_bytes)}",
+            ]
+            if line_count > 500:
+                response_output_path_lines.append(
+                    f"\n   ⚠️  Tip: Output is {line_count} lines. "
+                    "Consider reducing `max_depth` or adding `ignored_path` "
+                    "entries for a cleaner overview."
+                )
+            return Response(message="\n".join(response_output_path_lines), break_loop=False)
+        else:
+            line_count = len(tree_lines) + 2
+            size_bytes = len(f"{input_path.name}/\n│\n{tree_content}\n".encode("utf-8"))
+            response_lines = [
+                "✅ Directory Structure Generated.",
+                f"   Layout  : {layout}",
+                f"   Depth   : {depth_note}",
+                f"   Lines   : {line_count}",
+                f"   Size    : {self._format_bytes(size_bytes)}",
+                f"   Dirs    : {stats.dirs}",
+                f"   Files   : {stats.files}",
+                f"   Scanned : {self._format_bytes(stats.total_bytes)}",
+                "",
+                f"{input_path.name}/",
+                "│",
+                tree_content,
+            ]
+            if line_count > 500:
+                response_lines.append(
+                    f"\n   ⚠️  Tip: Output is {line_count} lines. "
+                    "Consider reducing `max_depth` or adding `ignored_path` "
+                    "entries for a cleaner overview."
+                )
+            return Response(message="\n".join(response_lines), break_loop=False)
