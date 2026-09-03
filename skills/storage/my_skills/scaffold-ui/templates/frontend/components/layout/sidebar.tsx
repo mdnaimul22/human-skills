@@ -173,7 +173,7 @@ export function Sidebar() {
                 </div>
 
                 {/* Navigation links */}
-                <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+                <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
                     {NAV_ITEMS.map((item) => {
                         const isActive = pathname === item.href;
                         return (
@@ -182,17 +182,26 @@ export function Sidebar() {
                                 href={item.href}
                                 className={`
                                     flex items-center gap-3 px-3 py-2.5 rounded-lg
-                                    transition-colors text-sm font-medium
+                                    transition-all text-sm font-medium
                                     ${isActive
-                                        ? "bg-[var(--color-primary-light)] text-[var(--color-primary)]"
-                                        : "text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-primary-light)]"
+                                        ? "bg-[var(--color-primary-light)] text-[var(--color-text)] border border-[var(--color-primary)]/30 font-semibold shadow-xs"
+                                        : "text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-primary-light)] border border-transparent"
                                     }
                                     ${isCollapsed ? "justify-center px-0" : ""}
                                 `}
                                 title={isCollapsed ? item.label : undefined}
                             >
-                                <span className="text-base shrink-0">{item.icon}</span>
-                                {!isCollapsed && <span className="truncate">{item.label}</span>}
+                                <span className={`text-base shrink-0 ${isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}`}>
+                                    {item.icon}
+                                </span>
+                                {!isCollapsed && (
+                                    <span className="truncate flex-1">
+                                        {item.label}
+                                    </span>
+                                )}
+                                {!isCollapsed && isActive && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] shrink-0 shadow-sm" />
+                                )}
                             </Link>
                         );
                     })}

@@ -1,6 +1,14 @@
 @import "tailwindcss" source(none);
 @source "..";
 
+@theme {
+    --color-popover: var(--color-card);
+    --color-popover-foreground: var(--color-text);
+    --color-card: var(--color-card);
+    --color-card-foreground: var(--color-text);
+    --color-border: var(--color-border);
+}
+
 /* ═══════════════════════════════════════════════════════════════
    DESIGN TOKENS — Spacing, Typography, Radius
    ═══════════════════════════════════════════════════════════════ */

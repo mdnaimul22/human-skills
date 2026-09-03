@@ -169,12 +169,11 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
                     focus:outline-none cursor-pointer
                     ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}
                 `}>
-                    <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] shrink-0 flex items-center justify-center text-[var(--color-primary-foreground)] text-sm font-bold">
+                    <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] shrink-0 flex items-center justify-center text-[var(--color-primary-foreground)] text-sm font-bold shadow-sm">
                         {isAuthenticated ? userInitial : (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
+                            <span className="text-xs font-black uppercase tracking-wider">
+                                {currentTheme.name[0]}
+                            </span>
                         )}
                     </div>
                     {!collapsed && (
@@ -188,7 +187,12 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
                         </div>
                     )}
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={8} className="w-64 z-[100]">
+                <DropdownMenuContent
+                    align={collapsed ? "end" : "start"}
+                    side={collapsed ? "right" : "top"}
+                    sideOffset={collapsed ? 14 : 8}
+                    className="w-68 z-[100] bg-[var(--color-card)] border border-[var(--color-border)] shadow-2xl backdrop-blur-xl"
+                >
                     {isAuthenticated ? (
                         <div className="px-2 py-1.5 flex flex-col">
                             <span className="text-sm font-medium text-[var(--color-text)] truncate">{userName}</span>
@@ -233,13 +237,15 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
                                         const idx = THEMES.findIndex((t) => t.id === theme);
                                         setTheme(THEMES[(idx + 1) % THEMES.length].id);
                                     }}
-                                    className="flex items-center gap-1.5 bg-[var(--color-bg)] hover:bg-[var(--color-primary-light)] border border-r-0 border-[var(--color-border)] rounded-l-md rounded-r-none px-2.5 h-7 transition-colors text-xs text-[var(--color-text-secondary)] font-semibold select-none cursor-pointer outline-none"
+                                    className="flex items-center gap-1.5 bg-[var(--color-bg)] hover:bg-[var(--color-primary-light)] border border-r-0 border-[var(--color-border)] rounded-l-md rounded-r-none px-2 h-7 transition-colors text-xs text-[var(--color-text-secondary)] font-semibold select-none cursor-pointer outline-none"
                                 >
                                     <span
-                                        className="w-2.5 h-2.5 rounded-full ring-1 ring-[var(--color-border)]"
+                                        className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-sm"
                                         style={{ backgroundColor: currentTheme.accent }}
-                                    />
-                                    <span>{currentTheme.name}</span>
+                                    >
+                                        {currentTheme.name[0]}
+                                    </span>
+                                    <span className="text-[var(--color-text)] font-semibold">{currentTheme.name}</span>
                                 </button>
                                 
                                 <DropdownMenuSub>
@@ -250,7 +256,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
                                         onPointerDown={(e) => e.stopPropagation()}
                                         onClick={(e) => e.stopPropagation()}
                                     />
-                                    <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
+                                    <DropdownMenuSubContent className="max-h-72 overflow-y-auto bg-[var(--color-card)] border border-[var(--color-border)] shadow-2xl backdrop-blur-xl">
                                         {THEMES.map((t) => (
                                             <DropdownMenuItem 
                                                 key={t.id} 
@@ -258,10 +264,12 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
                                                 className="flex items-center gap-2"
                                             >
                                                 <span
-                                                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                                                    className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-sm"
                                                     style={{ backgroundColor: t.accent }}
-                                                />
-                                                <span className="flex-1">{t.name}</span>
+                                                >
+                                                    {t.name[0]}
+                                                </span>
+                                                <span className="flex-1 font-medium">{t.name}</span>
                                                 {mounted && theme === t.id && (
                                                     <svg className="w-4 h-4 ml-auto text-[var(--color-primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                                         <path d="M20 6L9 17l-5-5" />
@@ -315,7 +323,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
                                         onPointerDown={(e) => e.stopPropagation()}
                                         onClick={(e) => e.stopPropagation()}
                                     />
-                                    <DropdownMenuSubContent>
+                                    <DropdownMenuSubContent className="bg-[var(--color-card)] border border-[var(--color-border)] shadow-2xl backdrop-blur-xl">
                                         {FONTS.map((f) => (
                                             <DropdownMenuItem 
                                                 key={f.key} 
@@ -355,9 +363,9 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
                                             e.stopPropagation();
                                             setScale(s.key);
                                         }}
-                                        className={`text-[10px] uppercase px-2 py-1 rounded-md transition-all font-bold cursor-pointer ${
+                                        className={`text-[10px] uppercase px-2.5 py-1 rounded-md transition-all font-bold cursor-pointer ${
                                             scaleKey === s.key
-                                                ? "bg-[var(--color-card)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]"
+                                                ? "bg-[var(--color-primary)] shadow-sm text-[var(--color-primary-foreground)] font-extrabold"
                                                 : "text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
                                         }`}
                                     >
