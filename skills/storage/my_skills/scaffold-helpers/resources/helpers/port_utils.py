@@ -1,17 +1,16 @@
 """
 Port Utilities
 =================
-Handles port management and process termination.
-Auto-kills orphaned server processes before startup to prevent
-"Address already in use" errors.
+Handles port management, socket discovery, and process tree termination.
+Guarantees clean socket release to eliminate "EADDRINUSE" and "Address already in use" errors.
 """
 
 import os
+import re
 import signal
 import subprocess
-import shlex
 import time
-from typing import List
+from typing import List, Set
 
 from src.config import setup_logger, Settings
 
@@ -19,51 +18,123 @@ logger = setup_logger(Settings.LOG_DIR / "helper.log", name="app.helpers.port_ut
 
 
 def get_pid(port: int) -> List[int]:
-    """Get all PIDs listening on a specific port"""
+    """
+    Discovers all process IDs listening on or bound to a specific TCP port.
+    Uses multi-strategy detection across:
+    1. fuser (Kernel socket table — catches IPv4 and IPv6)
+    2. ss (Linux socket statistics — listening sockets)
+    3. lsof (Only listen sockets to avoid killing browser clients)
+    """
+    pids: Set[int] = set()
+
+    # Strategy 1: fuser (Most accurate for Linux TCP sockets)
     try:
-        cmd = f"lsof -t -i:{port}"
-        output = subprocess.check_output(shlex.split(cmd), text=True)
-        return [int(pid) for pid in output.strip().split('\n') if pid.strip()]
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return []
-    except Exception as e:
-        logger.error(f"Error finding PIDs on port {port}: {e}")
-        return []
+        res = subprocess.run(
+            ["fuser", f"{port}/tcp"],
+            capture_output=True,
+            text=True,
+            timeout=2.0
+        )
+        for part in res.stdout.strip().split():
+            clean = re.sub(r"\D", "", part)
+            if clean.isdigit():
+                pids.add(int(clean))
+    except Exception:
+        pass
+
+    # Strategy 2: ss (Socket statistics filter for listening sockets)
+    try:
+        res = subprocess.run(
+            ["ss", "-tulpn", f"sport = :{port}"],
+            capture_output=True,
+            text=True,
+            timeout=2.0
+        )
+        for match in re.finditer(r"pid=(\d+)", res.stdout):
+            pids.add(int(match.group(1)))
+    except Exception:
+        pass
+
+    # Strategy 3: lsof (Only listen sockets to avoid killing browser clients)
+    try:
+        res = subprocess.run(
+            ["lsof", "-iTCP:" + str(port), "-sTCP:LISTEN", "-t"],
+            capture_output=True,
+            text=True,
+            timeout=2.0
+        )
+        for line in res.stdout.strip().splitlines():
+            clean = line.strip()
+            if clean.isdigit():
+                pids.add(int(clean))
+    except Exception:
+        pass
+
+    return sorted(list(pids))
+
+
+def is_port_free(port: int) -> bool:
+    """Checks whether a port has no listening processes."""
+    return len(get_pid(port)) == 0
 
 
 def kill_pid(port: int) -> bool:
-    """Find and kill processes running on a specific port"""
+    """
+    Forcefully frees a TCP port by terminating the process and all child workers.
+    Ensures zero zombie sockets remain.
+    """
     pids = get_pid(port)
-    if not pids:
-        return False
 
-    logger.warning(f"Found {len(pids)} process(es) holding port {port} (PIDs: {pids}). Attempting cleanup...")
+    # If no listening PID was detected, verify port is free
+    if not pids and is_port_free(port):
+        return True
 
-    success = True
+    logger.warning(f"Found process(es) holding port {port} (PIDs: {pids}). Freeing port...")
+
+    # Phase 1: Terminate discovered PIDs and their child process trees
     for pid in pids:
         try:
+            # Terminate child processes first (e.g. next-server spawned by npm/node)
+            subprocess.run(["pkill", "-TERM", "-P", str(pid)], capture_output=True, timeout=2.0)
             os.kill(pid, signal.SIGTERM)
-            time.sleep(0.1)
-            try:
-                os.kill(pid, 0)  # Check if still alive
-                os.kill(pid, signal.SIGKILL)  # Force kill
-            except ProcessLookupError:
-                logger.debug(f"Process {pid} exited cleanly after SIGTERM")
-        except ProcessLookupError:
-            logger.debug(f"Process {pid} exited before signal dispatch")
+        except (ProcessLookupError, PermissionError):
+            pass
         except Exception as e:
-            logger.error(f"Failed to kill process {pid}: {e}")
-            success = False
+            logger.debug(f"SIGTERM error on PID {pid}: {e}")
 
-    # Wait for OS to release the port
-    if pids:
-        for _ in range(5):  # Max 1 second
-            time.sleep(0.2)
-            if not get_pid(port):
-                logger.info(f"Port {port} successfully freed.")
-                return True
+    time.sleep(0.2)
 
-        logger.error(f"Port {port} still appears to be in use after cleanup attempt.")
+    # Phase 2: Force SIGKILL if any process remains
+    for pid in pids:
+        try:
+            os.kill(pid, 0)  # Check if alive
+            subprocess.run(["pkill", "-9", "-P", str(pid)], capture_output=True, timeout=2.0)
+            os.kill(pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+        except Exception:
+            pass
 
-    return success
+    # Phase 3: Direct fuser -k hammer as failsafe
+    try:
+        subprocess.run(["fuser", "-k", "-9", f"{port}/tcp"], capture_output=True, timeout=2.0)
+    except Exception:
+        pass
+
+    # Phase 4: Name-based fallback cleanup for common servers on standard ports
+    if port == 3000:
+        try:
+            subprocess.run(["pkill", "-9", "-f", "next-server"], capture_output=True, timeout=2.0)
+        except Exception:
+            pass
+
+    # Phase 5: Wait and verify port release
+    for _ in range(10):  # Up to 2 seconds
+        if is_port_free(port):
+            logger.info(f"Port {port} successfully freed.")
+            return True
+        time.sleep(0.2)
+
+    logger.error(f"Port {port} could not be freed after aggressive cleanup.")
+    return False
 

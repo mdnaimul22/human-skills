@@ -74,3 +74,14 @@ try:
     ])
 except ImportError:
     _has_sqlalchemy = False
+
+# ── Optional: Frontend Orchestration ─────────────────────────────────────────
+try:
+    from .frontend_runner import start_frontend, stop_frontend, get_frontend_port
+    __all__.extend([
+        "start_frontend",
+        "stop_frontend",
+        "get_frontend_port",
+    ])
+except ImportError:
+    pass

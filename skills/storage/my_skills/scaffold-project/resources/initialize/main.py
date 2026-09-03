@@ -1,5 +1,9 @@
 from contextlib import asynccontextmanager
+import atexit
+import signal
+import sys
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 import uvicorn
 
 from src.config import Settings, setup_logger, shutdown_logger, PROJECT_ROOT
@@ -15,6 +19,13 @@ from src.helpers import (
 )
 from src.db.models import Base
 from src.routers.auth import router as auth_router
+
+# Optional Frontend Orchestration (graceful fallback if web/ is not present)
+try:
+    from src.helpers import start_frontend, stop_frontend
+    _has_frontend = True
+except ImportError:
+    _has_frontend = False
 
 # 1. Initialize Logger
 logger = setup_logger(
@@ -61,6 +72,19 @@ register_error_handlers(app, logger)
 # 5. Include Routers
 app.include_router(auth_router)
 
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect root requests to frontend if configured."""
+    frontend_url = getattr(Settings, "FRONTEND_URL", None)
+    if frontend_url:
+        return RedirectResponse(url=frontend_url)
+    return {
+        "status": "ok",
+        "project": Settings.PROJECT_NAME,
+        "environment": Settings.ENV,
+        "version": Settings.VERSION
+    }
+
 @app.get("/health", tags=["System"])
 async def health_check():
     return {
@@ -74,14 +98,43 @@ if __name__ == "__main__":
     # Fallback host and port if not defined in Settings
     host = getattr(Settings, "API_HOST", "127.0.0.1")
     port = getattr(Settings, "API_PORT", 8000)
-    
-    # ⚠️ DO NOT REMOVE — Auto-kills any orphaned server process holding this port.
-    # Without this, you'll get "Address already in use" errors on restart.
+
+    # 1. Kill any orphaned server process holding this port.
     kill_pid(port)
-    
-    uvicorn.run(
-        "main:app", 
-        host=host, 
-        port=port, 
-        reload=not Settings.is_production
-    )
+
+    # 2. Concurrently start frontend if available
+    if _has_frontend:
+        start_frontend()
+        atexit.register(stop_frontend)
+
+        def handle_exit(signum, frame):
+            stop_frontend()
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, handle_exit)
+        signal.signal(signal.SIGTERM, handle_exit)
+
+    # 3. Launch Uvicorn with appropriate reload config
+    try:
+        is_prod = Settings.is_production
+        if is_prod:
+            logger.info(f"Starting API in PRODUCTION mode on http://{host}:{port}")
+            uvicorn.run(
+                "main:app", 
+                host=host, 
+                port=port, 
+                reload=False
+            )
+        else:
+            logger.info(f"Starting API in DEVELOPMENT mode with hot-reload on http://{host}:{port}")
+            uvicorn.run(
+                "main:app", 
+                host=host, 
+                port=port, 
+                reload=True,
+                reload_dirs=[str(PROJECT_ROOT / "src")],
+                reload_includes=["main.py"]
+            )
+    finally:
+        if _has_frontend:
+            stop_frontend()

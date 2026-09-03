@@ -37,16 +37,17 @@ human-skills '{
 
 ```
 helpers/
-├── __init__.py       ← Single export point with graceful degradation
-├── exceptions.py     ← AppError → NotFoundError, ValidationError, etc.
-├── date_utils.py     ← ISO 8601, timezone-aware parsing, relative time
-├── retry.py          ← Tenacity-based exponential backoff (sync + async)
-├── port_utils.py     ← Auto-kill orphaned server processes
-├── cors.py           ← [Optional] CORS configuration (requires FastAPI)
-├── middleware.py     ← [Optional] Request logging middleware (requires FastAPI)
-├── error_handlers.py ← [Optional] Global exception handlers (requires FastAPI)
-├── connection.py     ← [Optional] Async database engine (requires SQLAlchemy)
-└── repository.py     ← [Optional] Base CRUD repository (requires SQLAlchemy)
+├── __init__.py          ← Single export point with graceful degradation
+├── exceptions.py        ← AppError → NotFoundError, ValidationError, etc.
+├── date_utils.py        ← ISO 8601, timezone-aware parsing, relative time
+├── retry.py             ← Tenacity-based exponential backoff (sync + async)
+├── port_utils.py        ← 5-layer bulletproof port cleaner (fuser, ss, lsof, pkill tree)
+├── frontend_runner.py   ← [Optional] Concurrently manages Next.js frontend (dev / prod)
+├── cors.py              ← [Optional] CORS configuration (requires FastAPI)
+├── middleware.py        ← [Optional] Request logging middleware (requires FastAPI)
+├── error_handlers.py    ← [Optional] Global exception handlers (requires FastAPI)
+├── connection.py        ← [Optional] Async database engine (requires SQLAlchemy)
+└── repository.py        ← [Optional] Base CRUD repository (requires SQLAlchemy)
 ```
 
 ---
@@ -92,10 +93,18 @@ async def fetch_data():
 
 ### Port Utils (`always available`)
 ```python
-from src.helpers import kill_pid, get_pid
+from src.helpers import kill_pid, get_pid, is_port_free
 
-kill_pid(8000)     # Gracefully frees port 8000
-get_pid(8000)      # Returns list of PIDs on port 8000
+kill_pid(8000)     # Forcefully frees port 8000 (kills process tree + sockets)
+get_pid(8000)      # Multi-strategy discovery via fuser, ss, and lsof
+```
+
+### Frontend Runner (`when web/ is present`)
+```python
+from src.helpers import start_frontend, stop_frontend, get_frontend_port
+
+start_frontend()   # Concurrently starts Next.js (dev/prod based on APP_ENV)
+stop_frontend()    # Cleanly shuts down process group and frees port 3000
 ```
 
 ### FastAPI Components (`requires fastapi`)
