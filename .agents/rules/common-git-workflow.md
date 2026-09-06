@@ -8,7 +8,7 @@ description: "Git commit message format, branch conventions, PR workflow, and sa
 
 ## 1. Safety & Permissions (CRITICAL)
 
-- **Secrets Protection:** NEVER stage or commit `.env`, `.a0proj/secrets.env`, credentials, private tokens, or temporary cache files. Always verify `.gitignore`.
+- **Secrets Protection:** NEVER stage or commit `.env`, `secrets.env`, credentials, private tokens, or temporary cache files. Always verify `.gitignore`.
 - **User Confirmation:** Always confirm with the user before creating commits or pushing branches.
 - **Pre-commit Check:** Run `git status` and `git diff` to ensure only intended files are staged.
 

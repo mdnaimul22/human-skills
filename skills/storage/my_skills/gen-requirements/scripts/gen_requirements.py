@@ -214,7 +214,8 @@ class GenerateRequirements(Tool):
     def _discover_local_modules(project_root: Path, custom_ignores: Set[str]) -> Set[str]:
         """
         Comprehensive discovery of all local package names and module roots.
-        Supports standard root layout, src/ layout, app/ layout, and nested packages.
+        Supports standard root layout, src/ layout, app/ layout, nested subpackages,
+        and all local Python module stems across the repository.
         """
         local_names: Set[str] = set()
 
@@ -240,6 +241,20 @@ class GenerateRequirements(Tool):
                         local_names.add(item.stem)
             except Exception:
                 pass
+
+        # Recursively discover all local .py file stems across the repository
+        # so nested subpackage scripts (e.g. evolution/curiosity_optimizer/evaluator.py) are recognized
+        for root_dir, dirs, files in os.walk(project_root):
+            curr_p = Path(root_dir)
+            dirs[:] = [
+                d for d in dirs
+                if d not in UNIVERSAL_IGNORED_DIRS and not d.startswith(".") and d not in custom_ignores
+            ]
+            for file in files:
+                if file.endswith(".py"):
+                    local_names.add(file[:-3])
+            for d in dirs:
+                local_names.add(d)
 
         return local_names
 
@@ -325,7 +340,16 @@ class GenerateRequirements(Tool):
                     file_imports, err = self._extract_imports_from_file(f_path)
                     if err:
                         failed_files.append(err)
-                    all_imports.update(file_imports)
+                    
+                    # Filter out local sibling imports (files or packages in the same directory)
+                    filtered_imports = set()
+                    for imp in file_imports:
+                        top = imp.split(".")[0]
+                        if (curr_path / f"{top}.py").exists() or (curr_path / top).is_dir():
+                            local_mods.add(top)
+                            continue
+                        filtered_imports.add(imp)
+                    all_imports.update(filtered_imports)
 
         # Filter out standard library, local project modules, and private names
         third_party: Set[str] = set()
@@ -416,10 +440,12 @@ class GenerateRequirements(Tool):
         packages: Set[str],
         project_root: Path,
         exact: bool = False,
+        only_installed: bool = True,
     ) -> Tuple[List[Tuple[str, str, bool]], Optional[str], List[str]]:
         """
         Resolve versions for discovered packages.
         Prioritizes target project venv, then falls back to host environment.
+        When only_installed is True, excludes packages with no discoverable version.
         Returns (pkg_list, venv_status_msg, unversioned_packages).
         """
         venv_path = self._find_project_venv(project_root)
@@ -452,7 +478,10 @@ class GenerateRequirements(Tool):
                     try:
                         installed_ver = importlib.metadata.version(normalized_name)
                     except Exception:
-                        pass
+                        try:
+                            installed_ver = importlib.metadata.version(pkg.replace("-", "_"))
+                        except Exception:
+                            pass
 
             if installed_ver:
                 if exact:
@@ -464,11 +493,11 @@ class GenerateRequirements(Tool):
                     else:
                         min_ver = f"{parts[0]}.0"
                     spec = f">={min_ver}"
+                results.append((pkg, spec, is_dev))
             else:
-                spec = ""
                 unversioned_packages.append(pkg)
-
-            results.append((pkg, spec, is_dev))
+                if not only_installed:
+                    results.append((pkg, "", is_dev))
 
         return results, venv_status_msg, unversioned_packages
 
@@ -589,6 +618,9 @@ class GenerateRequirements(Tool):
         exact_str = str(self.args.get("exact", "false")).lower()
         exact = exact_str in ("true", "1", "yes", "y")
 
+        only_installed_str = str(self.args.get("only_installed", "true")).lower()
+        only_installed = only_installed_str not in ("false", "0", "no", "n")
+
         project_name = self.args.get("name") or project_root.name
         out_dir_str = self.args.get("output_dir")
         out_dir = Path(out_dir_str).resolve() if out_dir_str else project_root
@@ -620,7 +652,7 @@ class GenerateRequirements(Tool):
 
         # 3. Resolve installed versions (Prioritizing target project venv)
         pkg_list, venv_status, unversioned = self._get_package_versions(
-            unique_packages, project_root, exact=exact
+            unique_packages, project_root, exact=exact, only_installed=only_installed
         )
         categorized = self._categorize_packages(pkg_list)
 
@@ -641,7 +673,7 @@ class GenerateRequirements(Tool):
             "✅ Dependency Generation Completed Successfully!",
             f"   Project   : {project_name}",
             f"   Scanned   : {scanned_files} Python source files",
-            f"   Packages  : {len(unique_packages)} third-party dependencies detected",
+            f"   Packages  : {len(pkg_list)} third-party dependencies verified",
             f"   Mode      : {'Exact pinned (==)' if exact else 'Minimum constraint (>=)'}",
             f"   Venv      : {venv_status}",
             f"   Outputs   : {', '.join(Path(f).name for f in created_files)} in {out_dir}",
@@ -656,8 +688,12 @@ class GenerateRequirements(Tool):
 
         if unversioned:
             msg_lines.append("")
-            msg_lines.append(f"ℹ️ {len(unversioned)} packages not currently installed in venv/host (generated without version constraint):")
-            msg_lines.append(f"   {', '.join(sorted(unversioned))}")
+            if only_installed:
+                msg_lines.append(f"ℹ️ {len(unversioned)} unverified / custom module(s) excluded (no installed version in venv/host):")
+                msg_lines.append(f"   {', '.join(sorted(unversioned))}")
+            else:
+                msg_lines.append(f"ℹ️ {len(unversioned)} packages not currently installed in venv/host (included without version constraint):")
+                msg_lines.append(f"   {', '.join(sorted(unversioned))}")
 
         if failed_files:
             msg_lines.append("")

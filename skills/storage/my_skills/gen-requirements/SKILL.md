@@ -101,18 +101,20 @@ human-skills '{
 | `output_dir` | string | No | `path` | Output directory where files will be created. |
 | `format` | string | No | `"both"` | Output format: `"both"`, `"requirements"`, or `"pyproject"`. |
 | `ignored_dirs` | string | No | `""` | Additional comma-separated directories to ignore during scan (e.g. `'tests,docs,demo'`). |
+| `only_installed` | string | No | `"true"` | When `"true"`, filters out unverified/custom modules with no installed package version. When `"false"`, includes unversioned packages. |
 
 ---
 
 ## Key Features
 
 1. **Target Virtualenv Resolution:** Automatically locates project-specific virtual environments (`.venv/`, `venv/`, `env/`) and queries installed package versions directly via subprocess `pip list`, eliminating host environment pollution.
-2. **AST-Powered Inspection:** Parses abstract syntax trees without executing untrusted code.
-3. **Full `src/` & Local Module Discovery:** Recursively detects root packages, `src/`, `app/`, and `lib/` modules so local code is never misidentified as a third-party dependency.
-4. **Namespace Package Support:** Accurately extracts and maps namespace packages like `google.generativeai` (`google-generativeai`), `azure.storage` (`azure-storage-blob`), etc.
-5. **Universal & Clean Ignores:** Only ignores true build/VCS artifacts by default (`.git`, `.venv`, `__pycache__`, `node_modules`, etc.), while honoring `.gitignore` and allowing custom ignore overrides.
-6. **Standard Library Filtering:** Automatically ignores all Python standard library modules (`os`, `sys`, `json`, `asyncio`, `pathlib`, etc.).
-7. **Extended PyPI Distribution Mapping:** Maps non-trivial import names (`cv2` → `opencv-python`, `PIL` → `pillow`, `pydantic_settings` → `pydantic-settings`, `attr` → `attrs`, `markdown_it` → `markdown-it-py`).
-8. **Functional Categorization:** Groups packages in `requirements.txt` by role (Core Math, Web/Networking, AI/Deep Learning, Configuration, Testing, etc.).
-9. **PEP 621 Standard:** Outputs standard `pyproject.toml` with separate `dependencies` and `[project.optional-dependencies] dev`.
-10. **Clear Failure Reporting:** Reports unparseable files, virtual environment status, and uninstalled packages without silent suppression.
+2. **Double-Verification & Custom Module Defense:** Resolves exact installed versions from environment metadata (`importlib.metadata` and project venv). Any imported module that lacks installed distribution metadata is identified as a local/custom script or phantom import and excluded by default (`only_installed="true"`).
+3. **AST-Powered Inspection:** Parses abstract syntax trees without executing untrusted code.
+4. **Full `src/` & Local Module Discovery:** Recursively detects root packages, `src/`, `app/`, and `lib/` modules so local code is never misidentified as a third-party dependency.
+5. **Namespace Package Support:** Accurately extracts and maps namespace packages like `google.generativeai` (`google-generativeai`), `azure.storage` (`azure-storage-blob`), etc.
+6. **Universal & Clean Ignores:** Only ignores true build/VCS artifacts by default (`.git`, `.venv`, `__pycache__`, `node_modules`, etc.), while honoring `.gitignore` and allowing custom ignore overrides.
+7. **Standard Library Filtering:** Automatically ignores all Python standard library modules (`os`, `sys`, `json`, `asyncio`, `pathlib`, etc.).
+8. **Extended PyPI Distribution Mapping:** Maps non-trivial import names (`cv2` → `opencv-python`, `PIL` → `pillow`, `pydantic_settings` → `pydantic-settings`, `attr` → `attrs`, `markdown_it` → `markdown-it-py`).
+9. **Functional Categorization:** Groups packages in `requirements.txt` by role (Core Math, Web/Networking, AI/Deep Learning, Configuration, Testing, etc.).
+10. **PEP 621 Standard:** Outputs standard `pyproject.toml` with separate `dependencies` and `[project.optional-dependencies] dev`.
+11. **Clear Failure Reporting:** Reports unparseable files, virtual environment status, and uninstalled packages without silent suppression.
