@@ -194,7 +194,36 @@ value: ResponsePayload = get_value()
 
 > If using raw `dict` or `Any` is unavoidable, there must be a clear and explicit justification.
 
-### 4.2 Performance & Determinism
+### 4.2 Boundary Defense & Null Elimination (The Tony Hoare Rule)
+
+> *"I call it my billion-dollar mistake. It was the invention of the null reference in 1965." — Sir Tony Hoare*  
+> **"Don't check for None repeatedly — eliminate None at the boundary."**
+
+Never allow defensive, repetitive `None` checks to pollute core business logic.
+
+- **Sanitize at the Perimeter (Null Object Pattern):** When receiving optional or external data at module boundaries, resolve them immediately to a safe, typed default (e.g., `canvas = template.canvas if (template and template.canvas) else CanvasConfig()`).
+- **Guaranteed Invariants Inside the Core:** Once past the entry boundary, assume entities are valid, non-null objects. Core logic should never fear `None`.
+- **Prohibited:** Never scatter `obj.field if obj else default` across downstream calculations or rendering passes.
+
+```python
+# ❌ Avoid (Noisy defensive checks polluting business logic)
+def process(context):
+    mode = context.canvas.mode if context.canvas else "blur"
+    intensity = context.canvas.blur_intensity if context.canvas else 30
+    darken = context.canvas.darken_alpha if context.canvas else 0.25
+
+# ✅ Prefer (Tony Hoare Boundary Defense / Null Object Pattern)
+def process(context):
+    # Eliminate None once at the entry boundary:
+    canvas = context.template.canvas if (context.template and context.template.canvas) else CanvasConfig()
+
+    # Pure business logic — zero null-checking noise:
+    mode = canvas.mode
+    intensity = canvas.blur_intensity
+    darken = canvas.darken_alpha
+```
+
+### 4.3 Performance & Determinism
 > *"Fast by design, not by accident."*
 
 The system design will be **ultra-fast** and must follow an **extensible pattern** in all scenarios.
@@ -204,7 +233,7 @@ The system design will be **ultra-fast** and must follow an **extensible pattern
 - [ ] Async-first — always use `async/await` for I/O bound operations.
 - [ ] Implement lazy loading wherever applicable.
 
-### 4.3 Robustness
+### 4.4 Robustness
 > *"New features must land on solid ground."*
 
 Adding a new feature = **existing code remains untouched**, only new modules/layers are extended.
@@ -216,7 +245,7 @@ Adding a new feature = **existing code remains untouched**, only new modules/lay
 - [ ] Meaningful logging — `print()` is prohibited. Consolidate logs by layer (e.g., `service.log`, `router.log`) instead of per-script.
 - [ ] Graceful degradation — a single failure will not bring down the entire system.
 
-### 4.4 Security-Safety Practices
+### 4.5 Security-Safety Practices
 > *"Security is a first-class citizen, not an afterthought."*  
 > **With Comprehensive test coverage that is maintained continuously**
 
