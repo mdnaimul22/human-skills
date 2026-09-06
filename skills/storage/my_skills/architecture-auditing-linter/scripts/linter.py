@@ -77,7 +77,7 @@ class Linter(Tool):
         bypass_dirs.update(ignored_list)
 
         # ── Phase 1: Per-file AST violations ──────────────────────────────────
-        audit_results = self.audit_project(scan_path, bypass_dirs)
+        audit_results, advisories = self.audit_project(scan_path, bypass_dirs)
         total_violations = sum(len(v) for v in audit_results.values())
 
         status = "✨ CLEAN ARCHITECTURE! No violations detected." if total_violations == 0 else f"🚨 Audit finished. Found {total_violations} compliance violations."
@@ -90,12 +90,18 @@ class Linter(Tool):
             for v in violations:
                 console_msg += f"  {v}\n"
 
+        if advisories:
+            console_msg += "\n" + "-" * 65 + "\n"
+            console_msg += "💡 Architecture Advisories & Warnings:\n"
+            for adv in advisories:
+                console_msg += f"  {adv}\n"
+
         console_msg += "=" * 65 + "\n"
         console_msg += f"{status}\n"
 
         if total_violations > 0 and scan_path.is_dir():
             report_path = scan_path / "REFACTORING_TASKS.md"
-            self.generate_markdown_report(report_path, scan_path, audit_results)
+            self.generate_markdown_report(report_path, scan_path, audit_results, advisories)
             console_msg += f"📝 Task list generated: {report_path.name}\n"
             console_msg += "💡 Tip: Open the markdown file to track your refactoring progress.\n"
 
@@ -393,7 +399,7 @@ class Linter(Tool):
         msg += "=" * 65 + "\n"
         return msg
 
-    def audit_project(self, target_path: Path, bypass_dirs: set[str]) -> dict:
+    def audit_project(self, target_path: Path, bypass_dirs: set[str]) -> tuple[dict, list[str]]:
         if target_path.is_file():
             py_files = [target_path]
             root_dir = target_path.parent
@@ -402,6 +408,7 @@ class Linter(Tool):
             root_dir = target_path
 
         results = {}
+        advisories = []
 
         for py_file in sorted(py_files):
             rel_path = py_file.relative_to(root_dir)
@@ -436,14 +443,20 @@ class Linter(Tool):
                         f"Add 'kill_pid(port)' before uvicorn.run() to prevent 'Address already in use' errors."
                     )
 
+                if auditor.is_settings_file and auditor.has_settings_defaults:
+                    advisories.append(
+                        "⚠️ [Settings Advisory] Critical and environment-specific parameters must be controlled via .env. "
+                        "Only safe, non-breaking fallback values should be defined as defaults in Settings."
+                    )
+
                 if auditor.violations:
                     results[str(rel_path)] = auditor.violations
             except Exception as e:
                 results[str(rel_path)] = [f"⚠️ Error parsing file: {e}"]
 
-        return results
+        return results, list(dict.fromkeys(advisories))
 
-    def generate_markdown_report(self, report_path: Path, root_dir: Path, results: dict):
+    def generate_markdown_report(self, report_path: Path, root_dir: Path, results: dict, advisories: list[str] = None):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         content = [
             f"# 🏗️ Refactoring Tasks: {root_dir.name}",
@@ -452,8 +465,12 @@ class Linter(Tool):
             f"- **Project Directory:** `{root_dir}`",
             f"- **Total Violations:** {sum(len(v) for v in results.values())}",
             f"- **Files to Refactor:** {len(results)}",
-            "\n---\n"
         ]
+        if advisories:
+            content.append("\n### 💡 Architecture Guidance & Advisories")
+            for adv in advisories:
+                content.append(f"> {adv}")
+        content.append("\n---\n")
 
         # Group by directory
         grouped = {}
@@ -489,8 +506,9 @@ class CodeAuditor(ast.NodeVisitor):
         _PATHLIB_EXEMPT = {"paths.py", "files.py", "logger.py", "dotenv.py", "__init__.py", "settings.py"}
         in_config_dir = "config" in filename.parts
         self.is_config_file = filename.name in _PATHLIB_EXEMPT and in_config_dir
-        # settings.py is scanned for Field(default=...) silent defaults
+        # settings.py is scanned for Field(default=...) defaults
         self.is_settings_file = filename.name == "settings.py" and in_config_dir
+        self.has_settings_defaults = False
         # Helpers files are exempt from helpers enforcement checks
         in_helpers_dir = "helpers" in filename.parts
         self.is_helpers_file = in_helpers_dir
@@ -570,15 +588,14 @@ class CodeAuditor(ast.NodeVisitor):
                 if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
                      self.add_violation(node, f"❌ [Logger Compliance] Hardcoded log filename '{arg.value}' found. Use 'Settings.LOG_DIR / \"layer.log\"'.")
 
-        # 6. Field(default=...) silent default in settings.py
+        # 6. Field(default=...) in settings.py — captured as advisory, not violation
         if self.is_settings_file:
             if isinstance(node.func, ast.Name) and node.func.id == "Field":
                 for kw in node.keywords:
                     if kw.arg == "default" and isinstance(kw.value, ast.Constant):
                         val = kw.value.value
-                        # Only flag non-trivial defaults (not None, not empty string)
-                        if val not in (None, "", "development", "production"):
-                            self.add_violation(node, f"⚠️ [Silent Default] Field(default='{val}') found. Consider Field(...) to force env var requirement.")
+                        if val not in (None, ""):
+                            self.has_settings_defaults = True
 
         # 7. os.getenv with a fallback default (silent failure anywhere)
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
@@ -620,7 +637,8 @@ class CodeAuditor(ast.NodeVisitor):
     def visit_Attribute(self, node):
         # 1. os.environ
         if isinstance(node.value, ast.Name) and node.value.id == "os" and node.attr == "environ":
-            self.add_violation(node, "❌ [Env Access] Direct 'os.environ' used. Use 'Settings' class.")
+            if not self.is_config_file and not self.is_helpers_file:
+                self.add_violation(node, "❌ [Env Access] Direct 'os.environ' used. Use 'Settings' class.")
         
         # 2. Forbidden Path methods
         forbidden_path_methods = {
