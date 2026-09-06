@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 import uvicorn
 
-from src.config import Settings, setup_logger, shutdown_logger, PROJECT_ROOT
+from src.config import Settings, setup_logger, shutdown_logger
 from src.helpers import (
     register_cors,
     register_middleware,
@@ -29,7 +29,7 @@ except ImportError:
 
 # 1. Initialize Logger
 logger = setup_logger(
-    PROJECT_ROOT / "logs" / "app.log", 
+    Settings.LOG_DIR / "app.log", 
     name="app.main"
 )
 
@@ -132,7 +132,7 @@ if __name__ == "__main__":
                 host=host, 
                 port=port, 
                 reload=True,
-                reload_dirs=[str(PROJECT_ROOT / "src")],
+                reload_dirs=["src"],
                 reload_includes=["main.py"]
             )
     finally:

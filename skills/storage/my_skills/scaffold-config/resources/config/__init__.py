@@ -3,7 +3,6 @@ Config module entry point.
 Auto-loads environment variables and exports all configuration utilities.
 """
 
-from .paths import PROJECT_ROOT, find_project_root, resolve_sandboxed
 from .files import (
     read_text, write_text, read_json, write_json, read_pickle, write_pickle,
     exists, is_file, is_dir, ensure_dir, delete, list_files, get_abs_path,
@@ -17,9 +16,6 @@ from .logger import setup_logger, shutdown_logger
 load_dotenv()
 
 __all__ = [
-    "PROJECT_ROOT",
-    "find_project_root",
-    "resolve_sandboxed",
     "read_text",
     "write_text",
     "read_json",
