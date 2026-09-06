@@ -31,7 +31,6 @@ def ensure_production_build() -> bool:
 
     if not exists("web/.next"):
         logger.info("Next.js production build not found in web/.next. Running 'npm run build'...")
-        print("📦 [Build] Generating optimized Next.js production bundle...")
         result = subprocess.run(
             ["npm", "run", "build"],
             cwd=web_abs_path,
@@ -39,10 +38,8 @@ def ensure_production_build() -> bool:
         )
         if result.returncode != 0:
             logger.error("Failed to build Next.js production bundle")
-            print("❌ [Build] Next.js build failed!")
             return False
         logger.info("Next.js production build completed successfully")
-        print("✅ [Build] Production bundle ready.")
     return True
 
 
@@ -62,7 +59,6 @@ def start_frontend() -> Optional[subprocess.Popen]:
     mode = "production" if is_prod else "development"
 
     logger.info(f"Starting Next.js frontend in {mode} mode on port {port}...")
-    print(f"🚀 [Frontend] Starting Next.js ({mode} mode) on http://localhost:{port}...")
 
     if is_prod:
         ensure_production_build()
@@ -71,17 +67,18 @@ def start_frontend() -> Optional[subprocess.Popen]:
         cmd = ["npm", "run", "dev", "--", "-p", str(port)]
 
     try:
+        env_vars = dict(os.environ)
+        env_vars["PORT"] = str(port)
         _frontend_proc = subprocess.Popen(
             cmd,
             cwd=web_abs_path,
-            env=dict(os.environ, PORT=str(port)),
+            env=env_vars,
             # Use process group so terminating kills all child node workers
             preexec_fn=os.setsid if hasattr(os, "setsid") else None
         )
         return _frontend_proc
     except Exception as e:
         logger.error(f"Failed to start frontend process: {e}")
-        print(f"❌ [Frontend] Failed to start: {e}")
         return None
 
 
@@ -90,7 +87,6 @@ def stop_frontend():
     global _frontend_proc
     if _frontend_proc and _frontend_proc.poll() is None:
         logger.info("Shutting down frontend process group...")
-        print("\n🛑 [Frontend] Stopping Next.js server...")
         try:
             if hasattr(os, "killpg") and hasattr(os, "getpgid"):
                 os.killpg(os.getpgid(_frontend_proc.pid), signal.SIGTERM)
@@ -98,14 +94,15 @@ def stop_frontend():
                 _frontend_proc.terminate()
 
             _frontend_proc.wait(timeout=3)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"SIGTERM exception during frontend shutdown: {e}")
             try:
                 if hasattr(os, "killpg") and hasattr(os, "getpgid"):
                     os.killpg(os.getpgid(_frontend_proc.pid), signal.SIGKILL)
                 else:
                     _frontend_proc.kill()
-            except Exception:
-                pass
+            except Exception as e2:
+                logger.debug(f"SIGKILL exception during frontend shutdown: {e2}")
         finally:
             _frontend_proc = None
             port = get_frontend_port()

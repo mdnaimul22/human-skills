@@ -22,7 +22,7 @@ human-skills '{
 
 ### Via `curl` (no dependencies)
 ```bash
-curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/skills/scaffold-project/resources/initialize/bootstrap.py | python3
+curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/skills/storage/my_skills/scaffold-project/resources/initialize/bootstrap.py | python3
 ```
 
 ---
@@ -49,7 +49,8 @@ project_root/
 │   ├── config-usage-rules.md
 │   ├── helpers-usage-rules.md
 │   ├── project-config-example.md
-│   └── project-tree-example.md
+│   ├── project-tree-example.md
+│   └── common-git-workflow.md
 └── src/
     ├── __init__.py
     ├── requirements.txt

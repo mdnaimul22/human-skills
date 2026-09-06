@@ -39,8 +39,8 @@ def get_pid(port: int) -> List[int]:
             clean = re.sub(r"\D", "", part)
             if clean.isdigit():
                 pids.add(int(clean))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"fuser check error for port {port}: {e}")
 
     # Strategy 2: ss (Socket statistics filter for listening sockets)
     try:
@@ -52,8 +52,8 @@ def get_pid(port: int) -> List[int]:
         )
         for match in re.finditer(r"pid=(\d+)", res.stdout):
             pids.add(int(match.group(1)))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"ss check error for port {port}: {e}")
 
     # Strategy 3: lsof (Only listen sockets to avoid killing browser clients)
     try:
@@ -67,8 +67,8 @@ def get_pid(port: int) -> List[int]:
             clean = line.strip()
             if clean.isdigit():
                 pids.add(int(clean))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"lsof check error for port {port}: {e}")
 
     return sorted(list(pids))
 
@@ -97,8 +97,8 @@ def kill_pid(port: int) -> bool:
             # Terminate child processes first (e.g. next-server spawned by npm/node)
             subprocess.run(["pkill", "-TERM", "-P", str(pid)], capture_output=True, timeout=2.0)
             os.kill(pid, signal.SIGTERM)
-        except (ProcessLookupError, PermissionError):
-            pass
+        except (ProcessLookupError, PermissionError) as e:
+            logger.debug(f"Process {pid} already gone or permission denied during SIGTERM: {e}")
         except Exception as e:
             logger.debug(f"SIGTERM error on PID {pid}: {e}")
 
@@ -110,23 +110,23 @@ def kill_pid(port: int) -> bool:
             os.kill(pid, 0)  # Check if alive
             subprocess.run(["pkill", "-9", "-P", str(pid)], capture_output=True, timeout=2.0)
             os.kill(pid, signal.SIGKILL)
-        except (ProcessLookupError, PermissionError):
-            pass
-        except Exception:
-            pass
+        except (ProcessLookupError, PermissionError) as e:
+            logger.debug(f"Process {pid} already dead or permission denied during SIGKILL: {e}")
+        except Exception as e:
+            logger.debug(f"SIGKILL error on PID {pid}: {e}")
 
     # Phase 3: Direct fuser -k hammer as failsafe
     try:
         subprocess.run(["fuser", "-k", "-9", f"{port}/tcp"], capture_output=True, timeout=2.0)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"fuser kill error on port {port}: {e}")
 
     # Phase 4: Name-based fallback cleanup for common servers on standard ports
     if port == 3000:
         try:
             subprocess.run(["pkill", "-9", "-f", "next-server"], capture_output=True, timeout=2.0)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"pkill next-server error: {e}")
 
     # Phase 5: Wait and verify port release
     for _ in range(10):  # Up to 2 seconds

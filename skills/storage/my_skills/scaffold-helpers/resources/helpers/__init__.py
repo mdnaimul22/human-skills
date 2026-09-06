@@ -15,8 +15,7 @@ from .exceptions import (
     AuthenticationError
 )
 from .date_utils import time_now, time_now_iso, parse_iso, format_iso, relative_time
-from .retry import retry_on_failure, retry_async_on_failure
-from .port_utils import get_pid, kill_pid
+from .port_utils import get_pid, kill_pid, is_port_free
 
 __all__ = [
     # Exceptions
@@ -34,13 +33,22 @@ __all__ = [
     "parse_iso",
     "format_iso",
     "relative_time",
-    # Retry
-    "retry_on_failure",
-    "retry_async_on_failure",
-    # Network
+    # Network / Port Utils
     "get_pid",
     "kill_pid",
+    "is_port_free",
 ]
+
+# ── Optional: Retry Logic (requires tenacity) ─────────────────────────────────
+try:
+    from .retry import retry_on_failure, retry_async_on_failure, run_with_retry
+    __all__.extend([
+        "retry_on_failure",
+        "retry_async_on_failure",
+        "run_with_retry",
+    ])
+except ImportError:
+    _has_retry = False
 
 # ── Optional: FastAPI Components ──────────────────────────────────────────────
 try:
@@ -84,4 +92,4 @@ try:
         "get_frontend_port",
     ])
 except ImportError:
-    pass
+    _has_frontend = False
