@@ -154,30 +154,43 @@ def sync_rules():
     except NameError:
         local_rules_dir = None
     
-    for filename in FILES:
-        dest = RULES_DIR / filename
-        success = False
-        
-        if local_rules_dir and local_rules_dir.exists():
-            local_file = local_rules_dir / filename
-            if local_file.exists():
-                try:
-                    shutil.copy2(local_file, dest)
-                    print(f"   [Copied local] {filename}")
-                    success = True
-                except Exception as e:
-                    print(f"   [Failed to copy local] {filename} - {e}, falling back to download")
-        
-        if not success:
-            # Fallback to download
-            url = f"{REPO_RAW_URL}/.agents/rules/{filename}"
+    # If local repo is found, dynamically sync all .md files
+    if local_rules_dir and local_rules_dir.exists():
+        for local_file in sorted(local_rules_dir.glob("*.md")):
+            dest = RULES_DIR / local_file.name
             try:
-                with urllib.request.urlopen(url, timeout=10) as response:
-                    content = response.read().decode("utf-8")
-                    dest.write_text(content, encoding="utf-8")
-                print(f"   [Downloaded] {filename}")
+                shutil.copy2(local_file, dest)
+                print(f"   [Copied local] {local_file.name}")
             except Exception as e:
-                print(f"   [Failed] {filename} - {e}")
+                print(f"   [Failed to copy local] {local_file.name} - {e}")
+        return
+
+    # Fallback to dynamic GitHub API discovery / predefined list
+    rule_files = list(FILES)
+    try:
+        req = urllib.request.Request(
+            "https://api.github.com/repos/mdnaimul22/human-skills/contents/.agents/rules",
+            headers={"User-Agent": "human-skills-bootstrap"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            import json
+            items = json.loads(response.read().decode("utf-8"))
+            dynamic_list = [x["name"] for x in items if isinstance(x, dict) and x.get("type") == "file" and x.get("name", "").endswith(".md")]
+            if dynamic_list:
+                rule_files = dynamic_list
+    except Exception:
+        pass
+
+    for filename in rule_files:
+        dest = RULES_DIR / filename
+        url = f"{REPO_RAW_URL}/.agents/rules/{filename}"
+        try:
+            with urllib.request.urlopen(url, timeout=10) as response:
+                content = response.read().decode("utf-8")
+                dest.write_text(content, encoding="utf-8")
+            print(f"   [Downloaded] {filename}")
+        except Exception as e:
+            print(f"   [Failed] {filename} - {e}")
 
 def scaffold_human_skills():
     """5. Scaffold config and helpers via human-skills"""
