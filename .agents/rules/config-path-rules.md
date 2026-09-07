@@ -150,20 +150,29 @@ parent = rel.rsplit("/", 1)[0]
 
 ---
 
-## Complete `config` API Reference
+## Complete `config` File & Path API Reference
 
 | Need | Function | Import |
 |:---|:---|:---|
 | Check existence | `exists(rel)` | `from src.config import exists` |
+| Check if file | `is_file(rel)` | `from src.config import is_file` |
+| Check if directory | `is_dir(rel)` | `from src.config import is_dir` |
 | Read file as str | `read_text(rel)` | `from src.config import read_text` |
 | Read file as dict | `read_json(rel)` | `from src.config import read_json` |
+| Read pickle data | `read_pickle(rel)` | `from src.config import read_pickle` |
+| Read log/stream pos | `read_from_pos(rel, pos=0)` | `from src.config import read_from_pos` |
 | Write str to file | `write_text(rel, content)` | `from src.config import write_text` |
 | Write dict to file | `write_json(rel, data)` | `from src.config import write_json` |
+| Write pickle data | `write_pickle(rel, data)` | `from src.config import write_pickle` |
 | Create directories | `ensure_dir(rel)` | `from src.config import ensure_dir` |
 | Delete file or dir | `delete(rel)` | `from src.config import delete` |
 | List / glob files | `list_files(rel, pattern)` | `from src.config import list_files` |
+| File size in bytes | `get_size(rel)` | `from src.config import get_size` |
+| File modified time | `get_mtime(rel)` | `from src.config import get_mtime` |
 | Absolute path str | `get_abs_path(rel)` | `from src.config import get_abs_path` |
-| Project root | `PROJECT_ROOT` | `from src.config import PROJECT_ROOT` |
+
+> [!NOTE]
+> `PROJECT_ROOT`, `find_project_root()`, and `resolve_sandboxed()` are **strictly internal** to `src/config/`. Downstream modules must never import or compute root paths directly.
 
 ---
 
@@ -173,8 +182,10 @@ Before every commit, verify in any file you touch:
 
 - [ ] `from pathlib import Path` **does NOT appear** outside `config/`
 - [ ] `import pathlib` **does NOT appear** outside `config/`
+- [ ] `PROJECT_ROOT` is **NOT imported** outside `config/`
 - [ ] `Path(...)` is **not constructed** anywhere outside `config/`
 - [ ] `get_abs_path(...)` is **not wrapped** in `Path(get_abs_path(...))`
 - [ ] Parent dirs are derived with `rel.rsplit("/", 1)[0]`, not `Path(rel).parent`
 - [ ] File deletion uses `delete(rel)`, not `.unlink()` or `shutil.rmtree`
 - [ ] Directory listing uses `list_files(rel, pattern)`, not `.iterdir()` or `.glob()` directly
+

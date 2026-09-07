@@ -38,12 +38,12 @@ api_url = f"http://{Settings.API_HOST}:{Settings.API_PORT}"
 ```python
 # FORBIDDEN — breaks the single export point contract
 from src.config.settings import Settings
-from src.config.paths import PROJECT_ROOT
+from src.config.files import read_json
 from src.config.dotenv import load_dotenv
 ```
 ```python
 # ✅ CORRECT — always import from the package root
-from src.config import Settings, PROJECT_ROOT, load_dotenv
+from src.config import Settings, read_json, setup_logger
 ```
 
 ---
