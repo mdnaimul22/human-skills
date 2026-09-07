@@ -42,10 +42,4 @@ def resolve_sandboxed(path: str | Path) -> Path:
     if resolved == PROJECT_ROOT or PROJECT_ROOT in resolved.parents:
         return resolved
 
-    # Allow /tmp environments during testing (pytest tmp_path)
-    if "pytest" in sys.modules:
-        tmp_dir = Path("/tmp").resolve()
-        if resolved != tmp_dir and tmp_dir in resolved.parents:
-            return resolved
-
     raise ValueError(f"Access denied: path '{path}' escapes PROJECT_ROOT sandbox ({PROJECT_ROOT})")
