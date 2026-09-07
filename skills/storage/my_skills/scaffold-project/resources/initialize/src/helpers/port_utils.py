@@ -121,14 +121,7 @@ def kill_pid(port: int) -> bool:
     except Exception as e:
         logger.debug(f"fuser kill error on port {port}: {e}")
 
-    # Phase 4: Name-based fallback cleanup for common servers on standard ports
-    if port == 3000:
-        try:
-            subprocess.run(["pkill", "-9", "-f", "next-server"], capture_output=True, timeout=2.0)
-        except Exception as e:
-            logger.debug(f"pkill next-server error: {e}")
-
-    # Phase 5: Wait and verify port release
+    # Phase 4: Wait and verify port release
     for _ in range(10):  # Up to 2 seconds
         if is_port_free(port):
             logger.info(f"Port {port} successfully freed.")

@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     API_HOST: str = Field(default="127.0.0.1", validation_alias="API_HOST")
     API_PORT: int = Field(default=8000, validation_alias="API_PORT")
     FRONTEND_URL: str = Field(default="http://localhost:3000", validation_alias="FRONTEND_URL")
+    FRONTEND_PORT: int = Field(default=3000, validation_alias="FRONTEND_PORT")
 
     # --- Database ---
     DATABASE_URL: str = Field(default="sqlite+aiosqlite:///./data/app.db", validation_alias="DATABASE_URL")

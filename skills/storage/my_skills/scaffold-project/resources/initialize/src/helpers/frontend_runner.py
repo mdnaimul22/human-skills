@@ -6,7 +6,6 @@ import os
 import signal
 import subprocess
 from typing import Optional
-from urllib.parse import urlparse
 
 from src.config import Settings, setup_logger, exists, get_abs_path
 from src.helpers.port_utils import kill_pid
@@ -17,12 +16,8 @@ _frontend_proc: Optional[subprocess.Popen] = None
 
 
 def get_frontend_port() -> int:
-    """Extracts frontend port from Settings.FRONTEND_URL or defaults to 3000."""
-    try:
-        parsed = urlparse(Settings.FRONTEND_URL)
-        return parsed.port or 3000
-    except Exception:
-        return 3000
+    """Returns frontend port from Settings."""
+    return Settings.FRONTEND_PORT
 
 
 def ensure_production_build() -> bool:

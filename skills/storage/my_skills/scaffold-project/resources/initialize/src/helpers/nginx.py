@@ -18,10 +18,10 @@ def generate_nginx_config() -> bool:
         content = read_text(template_rel)
 
         replacements = {
-            "${API_PORT}": str(getattr(Settings, "API_PORT", 8000)),
-            "${NGINX_RATE_LIMIT_ZONE_SIZE}": str(getattr(Settings, "NGINX_RATE_LIMIT_ZONE_SIZE", "10m")),
-            "${NGINX_RATE_LIMIT_RATE}": str(getattr(Settings, "NGINX_RATE_LIMIT_RATE", "10r/s")),
-            "${NGINX_RATE_LIMIT_BURST}": str(getattr(Settings, "NGINX_RATE_LIMIT_BURST", 20)),
+            "${API_PORT}": str(Settings.API_PORT),
+            "${NGINX_RATE_LIMIT_ZONE_SIZE}": str(Settings.NGINX_RATE_LIMIT_ZONE_SIZE),
+            "${NGINX_RATE_LIMIT_RATE}": str(Settings.NGINX_RATE_LIMIT_RATE),
+            "${NGINX_RATE_LIMIT_BURST}": str(Settings.NGINX_RATE_LIMIT_BURST),
         }
 
         for placeholder, value in replacements.items():

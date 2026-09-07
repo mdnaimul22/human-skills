@@ -91,12 +91,14 @@ async def health_check():
     }
 
 if __name__ == "__main__":
-    # Fallback host and port if not defined in Settings
-    host = getattr(Settings, "API_HOST", "127.0.0.1")
-    port = getattr(Settings, "API_PORT", 8000)
+    host = Settings.API_HOST
+    api_port = Settings.API_PORT
+    frontend_port = Settings.FRONTEND_PORT
 
-    # 1. Kill any orphaned server process holding this port.
-    kill_pid(port)
+    # 1. Kill any orphaned server processes holding this project's specific ports
+    kill_pid(api_port)
+    if _has_frontend:
+        kill_pid(frontend_port)
 
     # 2. Concurrently start frontend if available
     if _has_frontend:
@@ -114,19 +116,19 @@ if __name__ == "__main__":
     try:
         is_prod = Settings.is_production
         if is_prod:
-            logger.info(f"Starting API in PRODUCTION mode on http://{host}:{port}")
+            logger.info(f"Starting API in PRODUCTION mode on http://{host}:{api_port}")
             uvicorn.run(
                 "main:app", 
                 host=host, 
-                port=port, 
+                port=api_port, 
                 reload=False
             )
         else:
-            logger.info(f"Starting API in DEVELOPMENT mode with hot-reload on http://{host}:{port}")
+            logger.info(f"Starting API in DEVELOPMENT mode with hot-reload on http://{host}:{api_port}")
             uvicorn.run(
                 "main:app", 
                 host=host, 
-                port=port, 
+                port=api_port, 
                 reload=True,
                 reload_dirs=["src"],
                 reload_includes=["main.py"]
