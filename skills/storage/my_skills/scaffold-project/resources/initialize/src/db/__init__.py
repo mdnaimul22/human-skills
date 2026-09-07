@@ -1,17 +1,16 @@
 """
-Database package — re-exports connection lifecycle + models + repositories.
+Database package — connection lifecycle, models, and repositories.
 
 Usage in main.py:
-    from src.db import init_db, shutdown_db, Base
+    from src.db import init_db, shutdown_db, create_tables
 
     async def lifespan(app):
         init_db(Settings.DATABASE_URL)
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        await create_tables()
         yield
         await shutdown_db()
 
-Usage in routers:
+Usage in routers / services:
     from src.db import get_session, UserRepository
 
     @router.get("/me")
@@ -20,11 +19,25 @@ Usage in routers:
         ...
 """
 
-from src.helpers import init_db, get_session, shutdown_db, session_scope
+from .connection import (
+    init_db,
+    shutdown_db,
+    get_session,
+    session_scope,
+    create_tables,
+)
 from .models import Base, User
+from .repository import BaseRepository
 from .repositories import UserRepository
 
 __all__ = [
-    "init_db", "get_session", "shutdown_db", "session_scope",
-    "Base", "User", "UserRepository",
+    "init_db",
+    "shutdown_db",
+    "get_session",
+    "session_scope",
+    "create_tables",
+    "Base",
+    "User",
+    "BaseRepository",
+    "UserRepository",
 ]

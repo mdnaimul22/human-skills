@@ -51,7 +51,7 @@ Skills are categorized under `skills/storage/` in dedicated provide namespaces, 
 
 | Category Directory | Domain / Focus | Key Skills & Tools Included |
 |:---|:---|:---|
-| **`my_skills`** | User-crafted skills, architecture linting, scaffolding, tree generation | `tree_gen`, `linter`, `gen-requirements`, `bootstrap`, `zram-optimizer`, `scaffold-ui`, `scaffold-config`, `scaffold-helpers` |
+| **`my_skills`** | User-crafted skills, architecture linting, scaffolding, tree generation | `tree_gen`, `linter`, `gen-requirements`, `bootstrap`, `zram-optimizer`, `scaffold-ui`, `scaffold-config` |
 | **`antvis_chart-visualization-skills`** | AntV visualization, infographics, pivot tables, G2 charts | `antv-g2-chart-expert`, `antv-infographic-generator`, `antv-s2-pivot-table-expert`, `antv-t8-narrative-generator` |
 | **`anthropics_skills`** | Official Anthropic productivity, design, testing, documents | `pdf`, `pptx`, `docx`, `xlsx`, `skill-creator`, `mcp-builder`, `webapp-testing`, `claude-api`, `theme-factory` |
 | **`agent-zero_skills`** | Agent Zero plugins, multi-agent development, task scheduling | `a0-development`, `a0-create-agent`, `a0-create-plugin`, `a0-manage-plugin`, `scheduled-tasks` |

@@ -7,7 +7,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.helpers import BaseRepository
+from .repository import BaseRepository
 from src.db.models import User
 
 

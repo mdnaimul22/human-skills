@@ -118,7 +118,6 @@ human-skills/
 │       ├── my_skills/               # Core & custom human skills
 │       │   ├── scaffold-project/    # Python project skeleton generator
 │       │   ├── scaffold-config/     # Settings, paths, dotenv & logger
-│       │   ├── scaffold-helpers/    # Universal helpers & error handlers
 │       │   ├── scaffold-ui/         # Next.js 15 & Chrome extension scaffolds
 │       │   ├── gen-requirements/    # AST dependency & pyproject generator
 │       │   ├── tree_gen/            # Tree generator tool

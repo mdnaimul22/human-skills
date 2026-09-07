@@ -100,15 +100,31 @@ def create_base_files():
         "src/core/__init__.py",
         "src/core/auth.py",
         "src/db/__init__.py",
+        "src/db/connection.py",
         "src/db/models.py",
+        "src/db/repository.py",
         "src/db/repositories.py",
+        "src/helpers/__init__.py",
+        "src/helpers/cors.py",
+        "src/helpers/date_utils.py",
+        "src/helpers/error_handlers.py",
+        "src/helpers/exceptions.py",
+        "src/helpers/frontend_runner.py",
+        "src/helpers/middleware.py",
+        "src/helpers/nginx.py",
+        "src/helpers/port_utils.py",
+        "src/helpers/rate_limit.py",
+        "src/helpers/retry.py",
         "src/providers/__init__.py",
+        "src/providers/email.py",
+        "src/providers/tailscale.py",
         "src/schema/__init__.py",
         "src/schema/auth.py",
         "src/services/__init__.py",
         "src/services/auth.py",
         "src/routers/__init__.py",
         "src/routers/auth.py",
+        "src/routers/dependencies.py",
         "tests/__init__.py"
     ]
     
@@ -244,60 +260,6 @@ def scaffold_human_skills():
                     print(f"      [Downloaded] config/{f}")
                 except Exception as e:
                     print(f"      [Failed] config/{f} - {e}")
-
-    # Run sethelpers
-    helpers_success = False
-    try:
-        print("   [Running] sethelpers...")
-        subprocess.run(
-            ["human-skills", '{"tool_name": "sethelpers", "tool_args": {"destination": "src/helpers"}}'], 
-            check=True, 
-            stdout=subprocess.DEVNULL, 
-            stderr=subprocess.DEVNULL
-        )
-        print("   ✅ scaffolded src/helpers/")
-        helpers_success = True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
-
-    if not helpers_success:
-        try:
-            current_dir = Path(__file__).resolve().parent
-            repo_root = _find_repo_root(current_dir)
-            local_helpers_dir = (repo_root / "skills" / "storage" / "my_skills" / "scaffold-helpers" / "resources" / "helpers") if repo_root else None
-        except NameError:
-            local_helpers_dir = None
-
-        helper_files = [
-            "__init__.py", "connection.py", "cors.py", "date_utils.py",
-            "error_handlers.py", "exceptions.py", "frontend_runner.py",
-            "middleware.py", "nginx.py", "port_utils.py", "rate_limit.py",
-            "repository.py", "retry.py"
-        ]
-        
-        if local_helpers_dir and local_helpers_dir.exists():
-            print("   [Fallback] Copying helpers layer locally...")
-            try:
-                for f in helper_files:
-                    shutil.copy2(local_helpers_dir / f, Path("src/helpers") / f)
-                print("   ✅ scaffolded src/helpers/ (local)")
-                helpers_success = True
-            except Exception as e:
-                print(f"   ❌ Local helpers copy failed - {e}, falling back to download")
-
-        if not helpers_success:
-            print("   [Fallback] Downloading helpers layer from GitHub...")
-            for f in helper_files:
-                url = f"{REPO_RAW_URL}/skills/storage/my_skills/scaffold-helpers/resources/helpers/{f}"
-                dest_path = Path("src/helpers") / f
-                dest_path.parent.mkdir(parents=True, exist_ok=True)
-                try:
-                    with urllib.request.urlopen(url, timeout=10) as response:
-                        content = response.read().decode("utf-8")
-                        dest_path.write_text(content, encoding="utf-8")
-                    print(f"      [Downloaded] helpers/{f}")
-                except Exception as e:
-                    print(f"      [Failed] helpers/{f} - {e}")
 
 def main():
     check_empty_directory()

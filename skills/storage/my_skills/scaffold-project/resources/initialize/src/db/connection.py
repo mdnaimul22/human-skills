@@ -1,18 +1,19 @@
 """
 Async Database Connection — SQLAlchemy
 ========================================
-Manages async engine lifecycle and session factory.
+Manages async engine lifecycle, session factory, and table initialization.
 
 Requirements:
     pip install sqlalchemy[asyncio] aiosqlite   # SQLite (dev)
     pip install sqlalchemy[asyncio] asyncpg      # PostgreSQL (prod)
 
 Usage in main.py (FastAPI lifespan):
-    from src.db import init_db, shutdown_db, get_session
+    from src.db import init_db, shutdown_db, create_tables
 
     @asynccontextmanager
     async def lifespan(app):
         init_db(Settings.DATABASE_URL)
+        await create_tables()
         yield
         await shutdown_db()
 
@@ -23,15 +24,10 @@ Usage in routers (dependency injection):
     async def list_users(session: AsyncSession = Depends(get_session)):
         repo = UserRepository(session)
         return await repo.list()
-
-Settings.py should have:
-    DATABASE_URL: str = Field(
-        default="sqlite+aiosqlite:///./data/app.db",
-        validation_alias="DATABASE_URL"
-    )
 """
 
 from typing import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -49,12 +45,6 @@ def init_db(database_url: str, echo: bool = False) -> None:
     """
     Initialize the async engine and session factory.
     Call once at application startup (e.g. in FastAPI lifespan).
-
-    Args:
-        database_url: Async-compatible connection string.
-                      SQLite:     "sqlite+aiosqlite:///./data/app.db"
-                      PostgreSQL: "postgresql+asyncpg://user:pass@host/db"
-        echo:         If True, log all SQL statements (dev only).
     """
     global _engine, _session_factory
 
@@ -68,6 +58,17 @@ def init_db(database_url: str, echo: bool = False) -> None:
         class_=AsyncSession,
         expire_on_commit=False,
     )
+
+
+async def create_tables(base_metadata=None) -> None:
+    """Create all tables defined on Base metadata."""
+    if _engine is None:
+        raise RuntimeError("Database not initialized. Call init_db() first.")
+    if base_metadata is None:
+        from src.db.models import Base
+        base_metadata = Base.metadata
+    async with _engine.begin() as conn:
+        await conn.run_sync(base_metadata.create_all)
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
@@ -99,8 +100,6 @@ async def shutdown_db() -> None:
         _session_factory = None
 
 
-from contextlib import asynccontextmanager
-
 @asynccontextmanager
 async def session_scope() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -116,4 +115,3 @@ async def session_scope() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
-

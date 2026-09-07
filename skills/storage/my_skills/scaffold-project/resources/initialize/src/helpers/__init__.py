@@ -1,7 +1,7 @@
 """
 Global utilities and stateless helpers used across the entire project.
 Single point of export for exceptions, date utilities, retry logic, 
-FastAPI middleware, and Database connection layer.
+FastAPI middleware, and network port utilities.
 """
 
 from .exceptions import (
@@ -12,7 +12,7 @@ from .exceptions import (
     PermissionDeniedError,
     ConflictError,
     RateLimitError,
-    AuthenticationError
+    AuthenticationError,
 )
 from .date_utils import time_now, time_now_iso, parse_iso, format_iso, relative_time
 from .port_utils import get_pid, kill_pid, is_port_free
@@ -67,21 +67,6 @@ try:
     ])
 except ImportError:
     _has_fastapi = False
-
-# ── Optional: Database Components ─────────────────────────────────────────────
-try:
-    from .connection import init_db, get_session, shutdown_db, session_scope
-    from .repository import BaseRepository
-    
-    __all__.extend([
-        "init_db",
-        "get_session",
-        "shutdown_db",
-        "session_scope",
-        "BaseRepository",
-    ])
-except ImportError:
-    _has_sqlalchemy = False
 
 # ── Optional: Frontend Orchestration ─────────────────────────────────────────
 try:

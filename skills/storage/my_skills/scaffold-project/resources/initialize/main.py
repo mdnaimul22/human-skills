@@ -11,14 +11,11 @@ from src.helpers import (
     register_cors,
     register_middleware,
     register_error_handlers,
-    init_db,
-    shutdown_db,
     kill_pid,
-    connection,
-    generate_nginx_config
+    generate_nginx_config,
 )
-from src.db.models import Base
-from src.routers.auth import router as auth_router
+from src.db import init_db, shutdown_db, create_tables
+from src.routers import auth_router
 
 # Optional Frontend Orchestration (graceful fallback if web/ is not present)
 try:
@@ -38,8 +35,7 @@ logger = setup_logger(
 async def lifespan(app: FastAPI):
     # Initialize Database
     init_db(Settings.DATABASE_URL)
-    async with connection._engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await create_tables()
     logger.info("Database initialized")
     
     # Auto-generate Nginx configuration dynamically on boot

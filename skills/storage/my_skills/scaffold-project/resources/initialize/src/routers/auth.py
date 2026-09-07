@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.schema.auth import (
     RegisterRequest, LoginRequest, TokenResponse, UserProfileResponse,
 )
-from src.core.auth import get_current_user
+from src.routers.dependencies import get_current_user
 from src.db import get_session, User
 from src.services import auth as auth_service
 from src.helpers.rate_limit import RateLimiter

@@ -2,31 +2,6 @@
 Base Repository — Generic Async CRUD
 =======================================
 Extend this class per model to get instant create/read/update/delete.
-
-Usage:
-    from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-    from src.db import BaseRepository
-
-    class Base(DeclarativeBase):
-        pass
-
-    class User(Base):
-        __tablename__ = "users"
-        id: Mapped[int] = mapped_column(primary_key=True)
-        name: Mapped[str]
-        email: Mapped[str]
-
-    class UserRepository(BaseRepository[User]):
-        def __init__(self, session):
-            super().__init__(User, session)
-
-    # In a router:
-    repo = UserRepository(session)
-    user = await repo.create(name="Naimul", email="naimul@example.com")
-    users = await repo.list(limit=20)
-    user = await repo.get(1)
-    user = await repo.update(1, name="Updated Name")
-    deleted = await repo.delete(1)
 """
 
 from typing import TypeVar, Generic, Sequence, Any
@@ -49,16 +24,6 @@ class BaseRepository(Generic[T]):
         update(id, **kwargs)        → partial update and return
         delete(id)                  → hard delete, returns bool
         exists(id)                  → check existence without loading
-
-    Extend per model:
-        class UserRepository(BaseRepository[User]):
-            def __init__(self, session):
-                super().__init__(User, session)
-
-            async def find_by_email(self, email: str) -> User | None:
-                stmt = select(self.model).where(self.model.email == email)
-                result = await self.session.execute(stmt)
-                return result.scalar_one_or_none()
     """
 
     def __init__(self, model: type[T], session: AsyncSession):

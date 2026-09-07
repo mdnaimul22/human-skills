@@ -10,6 +10,7 @@ from src.config import Settings, setup_logger
 from src.core.auth import hash_password, verify_password, create_token
 from src.helpers import ConflictError, AuthenticationError
 from src.db import UserRepository
+from src.providers import send_welcome_email
 
 logger = setup_logger(Settings.LOG_DIR / "service.log", name="app.services.auth")
 
@@ -29,6 +30,10 @@ async def register(email: str, name: str, password: str, session: AsyncSession) 
 
     token = create_token(user.id)
     logger.info(f"User registered: {user.email} (id={user.id})")
+
+    # Orchestrate external provider: dispatch welcome notification
+    await send_welcome_email(user.email, user.name)
+
     return {
         "token": token,
         "user_id": user.id,

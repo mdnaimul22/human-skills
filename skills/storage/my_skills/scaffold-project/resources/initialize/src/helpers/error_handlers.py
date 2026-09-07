@@ -2,10 +2,10 @@
 Global Error Handlers — FastAPI
 ================================
 Maps exceptions to consistent JSON error responses.
-Automatically integrates with AppError hierarchy from sethelpers (if installed).
+Automatically integrates with AppError hierarchy from src.helpers.
 
 Usage in main.py:
-    from src.api.error_handlers import register_error_handlers
+    from src.helpers import register_error_handlers
     register_error_handlers(app, logger)
 
 Response format (all errors):
@@ -24,7 +24,7 @@ def register_error_handlers(app, logger) -> None:
 
     Handlers (in priority order):
         1. RequestValidationError → 422 (Pydantic / query-param failures)
-        2. AppError subclasses    → dynamic status_code (if sethelpers installed)
+        2. AppError subclasses    → dynamic status_code
         3. Exception              → 500 catch-all (never leaks internals)
     """
 
@@ -38,7 +38,7 @@ def register_error_handlers(app, logger) -> None:
             content={"error": "Validation failed", "detail": errors, "status_code": 422},
         )
 
-    # ── 2. AppError hierarchy (from sethelpers/exceptions.py) ───────────────
+    # ── 2. AppError hierarchy (from src.helpers.exceptions) ─────────────────
     # If src/helpers/exceptions.py exists, auto-map AppError → status_code.
     # If not installed, this block is silently skipped.
     try:

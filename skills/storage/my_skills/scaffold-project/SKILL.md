@@ -55,12 +55,13 @@ project_root/
     ├── __init__.py
     ├── requirements.txt
     ├── config/              ← [scaffold-config] Settings, env, file I/O, logger
-    ├── helpers/             ← [scaffold-helpers] Exceptions, retry, middleware, DB
-    ├── core/
-    ├── providers/
-    ├── schema/
-    ├── services/
-    └── routers/
+    ├── db/                  ← [Built-in] Connection, base repository, models, repositories
+    ├── helpers/             ← [Built-in] Exceptions, retry, middleware, port utils
+    ├── core/                ← [Built-in] Pure business logic (auth, tokens, crypto)
+    ├── providers/           ← [Built-in] External service integrations (Tailscale, Email)
+    ├── schema/              ← [Built-in] Pydantic data contracts
+    ├── services/            ← [Built-in] Use-case orchestration (Core + Providers + DB)
+    └── routers/             ← [Built-in] HTTP API endpoints & dependencies
 ```
 
 ## main.py Features
@@ -95,5 +96,4 @@ The generated `main.py` includes:
 | Skill | Purpose |
 |:---|:---|
 | `scaffold-config` | Scaffold `src/config/` layer standalone |
-| `scaffold-helpers` | Scaffold `src/helpers/` layer standalone |
 | `scaffold-ui` | Scaffold `web/` frontend layer |
