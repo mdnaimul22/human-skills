@@ -60,7 +60,7 @@ human-skills '{
 To scaffold a new Python project with the standard directory structure, config layer, and agent rules:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/skills/storage/custom/scaffold-project/resources/initialize/bootstrap.py | python3
+curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/skills/storage/my_skills/scaffold-project/resources/initialize/bootstrap.py | python3
 ```
 
 This creates:
@@ -115,7 +115,7 @@ human-skills/
 ├── skills/                          # ✅ Human-verified skills & tools
 │   ├── helpers/                     # Dispatcher runtime & Tool interface
 │   └── storage/                     # Categorized skill namespaces
-│       ├── custom/                  # Core & custom human skills
+│       ├── my_skills/               # Core & custom human skills
 │       │   ├── scaffold-project/    # Python project skeleton generator
 │       │   ├── scaffold-config/     # Settings, paths, dotenv & logger
 │       │   ├── scaffold-helpers/    # Universal helpers & error handlers
