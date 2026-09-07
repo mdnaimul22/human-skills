@@ -5,6 +5,7 @@ from .auth import (
     verify_password,
     create_token,
     decode_token,
+    decode_token_payload,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "verify_password",
     "create_token",
     "decode_token",
+    "decode_token_payload",
 ]

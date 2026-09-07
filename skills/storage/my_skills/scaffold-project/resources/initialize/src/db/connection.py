@@ -29,6 +29,7 @@ Usage in routers (dependency injection):
 from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -36,23 +37,45 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from src.helpers import ExternalServiceError
+
 # ── Module-level singletons ───────────────────────────────────────────────────
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
 
 
-def init_db(database_url: str, echo: bool = False) -> None:
+def init_db(
+    database_url: str,
+    echo: bool = False,
+    pool_size: int | None = None,
+    max_overflow: int | None = None,
+) -> None:
     """
     Initialize the async engine and session factory.
     Call once at application startup (e.g. in FastAPI lifespan).
     """
     global _engine, _session_factory
 
-    _engine = create_async_engine(
-        database_url,
-        echo=echo,
-        pool_pre_ping=True,
-    )
+    engine_kwargs: dict = {
+        "echo": echo,
+        "pool_pre_ping": True,
+    }
+    # Pool sizing applies to client/server DBs like Postgres/MySQL, not SQLite
+    if "sqlite" not in database_url and pool_size is not None:
+        engine_kwargs["pool_size"] = pool_size
+        if max_overflow is not None:
+            engine_kwargs["max_overflow"] = max_overflow
+
+    _engine = create_async_engine(database_url, **engine_kwargs)
+
+    # Enforce foreign key constraints for SQLite connections
+    if "sqlite" in database_url:
+        @event.listens_for(_engine.sync_engine, "connect")
+        def _set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+
     _session_factory = async_sessionmaker(
         _engine,
         class_=AsyncSession,
@@ -63,7 +86,7 @@ def init_db(database_url: str, echo: bool = False) -> None:
 async def create_tables(base_metadata=None) -> None:
     """Create all tables defined on Base metadata."""
     if _engine is None:
-        raise RuntimeError("Database not initialized. Call init_db() first.")
+        raise ExternalServiceError("Database", "Database not initialized. Call init_db() first.")
     if base_metadata is None:
         from src.db.models import Base
         base_metadata = Base.metadata
@@ -81,7 +104,7 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
             ...
     """
     if _session_factory is None:
-        raise RuntimeError("Database not initialized. Call init_db() first.")
+        raise ExternalServiceError("Database", "Database not initialized. Call init_db() first.")
 
     async with _session_factory() as session:
         try:
@@ -107,7 +130,7 @@ async def session_scope() -> AsyncGenerator[AsyncSession, None]:
     Automatically commits on success or rolls back on exception.
     """
     if _session_factory is None:
-        raise RuntimeError("Database not initialized. Call init_db() first.")
+        raise ExternalServiceError("Database", "Database not initialized. Call init_db() first.")
     async with _session_factory() as session:
         try:
             yield session

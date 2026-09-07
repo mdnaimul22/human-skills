@@ -31,9 +31,12 @@ def register_cors(app, settings) -> None:
     if hasattr(settings, "API_HOST") and hasattr(settings, "API_PORT"):
         origins.append(f"http://{settings.API_HOST}:{settings.API_PORT}")
 
-    # Frontend origin (SPA on a different port or domain)
+    # Frontend origin(s) (SPA on different ports or domains)
     if hasattr(settings, "FRONTEND_URL") and settings.FRONTEND_URL:
-        origins.append(settings.FRONTEND_URL)
+        for u in settings.FRONTEND_URL.split(","):
+            clean = u.strip()
+            if clean and clean not in origins:
+                origins.append(clean)
 
     app.add_middleware(
         CORSMiddleware,

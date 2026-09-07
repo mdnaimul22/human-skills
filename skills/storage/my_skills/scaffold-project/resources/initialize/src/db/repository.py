@@ -47,9 +47,10 @@ class BaseRepository(Generic[T]):
         return result.scalar_one()
 
     async def create(self, **kwargs) -> T:
-        """Insert a new record and return it."""
+        """Insert a new record, flush to populate server defaults, and return it."""
         obj = self.model(**kwargs)
         self.session.add(obj)
+        await self.session.flush()
         return obj
 
     async def update(self, id: Any, **kwargs) -> T | None:
@@ -58,7 +59,9 @@ class BaseRepository(Generic[T]):
         if obj is None:
             return None
         for key, value in kwargs.items():
-            setattr(obj, key, value)
+            if hasattr(obj, key):
+                setattr(obj, key, value)
+        await self.session.flush()
         return obj
 
     async def delete(self, id: Any) -> bool:
@@ -67,6 +70,7 @@ class BaseRepository(Generic[T]):
         if obj is None:
             return False
         await self.session.delete(obj)
+        await self.session.flush()
         return True
 
     async def exists(self, id: Any) -> bool:

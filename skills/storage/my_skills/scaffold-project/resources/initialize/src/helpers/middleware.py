@@ -35,6 +35,7 @@ def register_middleware(app, logger, settings) -> None:
     async def request_lifecycle(request: Request, call_next):
         # ── 1. Generate unique Request ID ───────────────────────────────────
         request_id = uuid.uuid4().hex[:8]
+        request.state.request_id = request_id
 
         # ── 2. Measure latency ──────────────────────────────────────────────
         start = time.perf_counter()

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.auth import decode_token
 from src.db import get_session, UserRepository, User
-from src.helpers import PermissionDeniedError
+from src.helpers import AuthenticationError, PermissionDeniedError
 
 
 async def get_current_user(
@@ -19,7 +19,7 @@ async def get_current_user(
 ) -> User:
     """
     FastAPI dependency — extracts authenticated user from Authorization header.
-    Raises PermissionDeniedError (403) if missing, invalid, or expired.
+    Raises AuthenticationError (401) if missing, invalid, or expired.
 
     Usage:
         @router.get("/me")
@@ -27,7 +27,7 @@ async def get_current_user(
             ...
     """
     if not authorization or not authorization.startswith("Bearer "):
-        raise PermissionDeniedError("Missing or invalid Authorization header")
+        raise AuthenticationError("Missing or invalid Authorization header")
 
     token = authorization[7:]  # strip "Bearer "
     user_id = decode_token(token)
@@ -35,7 +35,9 @@ async def get_current_user(
     repo = UserRepository(session)
     user = await repo.get(user_id)
     if not user:
-        raise PermissionDeniedError("User not found")
+        raise AuthenticationError("User not found")
+    if hasattr(user, "is_active") and not user.is_active:
+        raise PermissionDeniedError("Account is inactive")
     return user
 
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import String, DateTime, func
+from sqlalchemy import String, DateTime, Boolean, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -29,7 +29,15 @@ class Base(DeclarativeBase):
     pass
 
 
-class User(Base):
+class TimestampMixin:
+    """Reusable mixin providing UTC created_at and updated_at timestamps."""
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=_now,
+    )
+
+
+class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
@@ -37,7 +45,4 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     tier: Mapped[str] = mapped_column(String(20), default="registered")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=_now,
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)

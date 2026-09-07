@@ -26,7 +26,7 @@ from .connection import (
     session_scope,
     create_tables,
 )
-from .models import Base, User
+from .models import Base, User, TimestampMixin
 from .repository import BaseRepository
 from .repositories import UserRepository
 
@@ -38,6 +38,7 @@ __all__ = [
     "create_tables",
     "Base",
     "User",
+    "TimestampMixin",
     "BaseRepository",
     "UserRepository",
 ]

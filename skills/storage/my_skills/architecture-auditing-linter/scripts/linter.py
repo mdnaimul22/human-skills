@@ -509,9 +509,10 @@ class CodeAuditor(ast.NodeVisitor):
         # settings.py is scanned for Field(default=...) defaults
         self.is_settings_file = filename.name == "settings.py" and in_config_dir
         self.has_settings_defaults = False
-        # Helpers files are exempt from helpers enforcement checks
+        # Helpers and DB files are exempt from specific enforcement checks
         in_helpers_dir = "helpers" in filename.parts
         self.is_helpers_file = in_helpers_dir
+        self.is_db_file = "db" in filename.parts or filename.name == "connection.py"
         # Track if file has time.sleep inside a loop (manual retry pattern)
         self._inside_loop = False
         # Kill switch tracking — main.py must call kill_pid() before uvicorn.run()
@@ -611,9 +612,9 @@ class CodeAuditor(ast.NodeVisitor):
                 if isinstance(node.func.value, ast.Name) and node.func.value.id == "datetime":
                     self.add_violation(node, "⚠️ [Helpers Violation] Direct 'datetime.now()/utcnow()' used. Use 'time_now_iso()' from src.helpers instead.")
 
-            # 9. create_async_engine() — use init_db() from helpers
-            if isinstance(node.func, ast.Name) and node.func.id == "create_async_engine":
-                self.add_violation(node, "❌ [Helpers Violation] Direct 'create_async_engine()' used. Use 'init_db()' from src.helpers instead.")
+            # 9. create_async_engine() — use init_db() from src.db instead
+            if isinstance(node.func, ast.Name) and node.func.id == "create_async_engine" and not self.is_db_file:
+                self.add_violation(node, "❌ [Helpers Violation] Direct 'create_async_engine()' used. Use 'init_db()' from src.db instead.")
 
             # 10. time.sleep() inside a loop — manual retry pattern
             if self._inside_loop:
