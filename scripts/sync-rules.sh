@@ -11,8 +11,10 @@ FILES=(
     "maintenance-testing.md"
     "config-path-rules.md"
     "config-usage-rules.md"
+    "helpers-usage-rules.md"
     "project-config-example.md"
     "project-tree-example.md"
+    "common-git-workflow.md"
 )
 
 echo "--- Rules Sync Started ---"
