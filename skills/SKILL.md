@@ -104,7 +104,19 @@ human-skills '{
   }
 }'
 ```
-
+Example 3: Render PNG, SVG Flowchart, Vector, Architecture Diagram via (`mermaid_view`)
+```bash
+human-skills '{
+  "tool_name": "mermaid_view",
+  "tool_args": {
+    "path": "/home/username/my-project", # e.g. `/home/user/my-project/arch.png`, default is `path`
+    "preview": "png", # e.g. `svg`, default is `png`
+    "file_name": "diagram.png", # e.g. `architecture.png`, default is `diagram.<preview>`
+    "theme": "neutral", # e.g. `dark`, `neutral`, `forest`, `base`, default is `dark`
+    "diagram_code": "flowchart TD\n    A[Client] --> B[API Gateway]\n    B --> C[Auth Service]\n    B --> D[Data Service]\n    D --> E[(PostgreSQL)]"
+  }
+}'
+```
 #### Pro-Tips & Best Practices
 
 1. **Case-Insensitive Resolution**: Category, skill, and tool queries are automatically normalized (e.g. `human-skills --list Custom` or `human-skills --tool_info TREE_GEN` resolve seamlessly).
