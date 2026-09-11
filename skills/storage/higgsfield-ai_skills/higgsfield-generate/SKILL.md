@@ -3,7 +3,7 @@ version: 0.12.0
 name: higgsfield-generate
 description: |
   Generate images/videos/3D assets/audio via Higgsfield AI. Defaults:
-  GPT Image 2 for image/design/text, Seedance 2.0 for
+  GPT Image 2.5 for image/design/text, Seedance 2.5 for
   video, Nano Banana 2/Lite/Pro for character/reference
   images, Marketing Studio for ads, Seed Audio 1.0 for audio.
   Use when: "generate an image", "make a video", "animate
@@ -68,8 +68,8 @@ If the user says "analyze this video", "score this ad", "evaluate the hook", or 
 
 1. **Pick a model.** Start with the core defaults unless the brief clearly needs a specialist:
 
-   - **GPT Image 2** → default image model for high-fidelity general generation, graphic design, UI, banners, typography, and on-image text.
-   - **Seedance 2.0** → default video model for serious motion, cinematic clips, multi-shot work, image-to-video, and 4–15s production-quality output up to 4K. 12s is valid.
+   - **GPT Image 2.5** → default image model for high-fidelity general generation, graphic design, UI, banners, typography, and on-image text.
+   - **Seedance 2.5** (`seedance_2_5`) → SOTA default video model for serious motion, cinematic clips, multi-shot work, and image-to-video. Supports 4–30s output up to 1080p; use Seedance 2.0 when native 4K is required.
    - **Nano Banana 2/Lite/Pro** → default for character, cartoon, stylized, and reference-driven image work; use Lite for speed/cost, Pro for harder briefs.
    - **Marketing Studio** → default for ads, UGC, product demos, unboxing, TV spots, presenter videos, and brand/product workflows.
    - **Seed Audio 1.0** → default audio model for text-to-audio, voice, sound effects, ambience, foley, and music-like audio unless the user names Sonilo/Mirelo.
@@ -78,7 +78,7 @@ If the user says "analyze this video", "score this ad", "evaluate the hook", or 
    - Complete brand identity, logo system, palette, typography, brandbook, packaging system, signage, or coordinated branded asset suite → use `higgsfield-brandkit` instead.
    - YouTube thumbnail, Shorts cover, or Instagram video cover → use `higgsfield-youtube-thumbnail` instead.
    - Brand product visual (Pinterest pin, lifestyle, hero banner, ad pack, virtual try-on) → use `higgsfield-product-photoshoot` instead. NOT this skill.
-   - Generated product concept / packaging / can / bottle with brand name or label text → GPT Image 2.
+   - Generated product concept / packaging / can / bottle with brand name or label text → GPT Image 2.5.
    - Branded ad image with avatar + product (Marketing Studio shape) → Marketing Studio Image (see Marketing Studio below)
    - Aesthetic UGC / fashion editorial / lifestyle character → Soul 2.0
    - Cinematic still frame → Soul Cinema
@@ -89,21 +89,21 @@ If the user says "analyze this video", "score this ad", "evaluate the hook", or 
    - Soul Character (reference id from `higgsfield-soul-id`) → Soul 2.0 for stills, Soul Cinema for cinematic
    - Character or cartoon-style work → Nano Banana 2; use Nano Banana 2 Lite (`nano_banana_2_lite`) for fast/simple reference edits, step up to Nano Banana Pro on hard cases
    - Fast and cheap iteration → Z Image
-   - **Default for everything else → GPT Image 2.** Graphic design, UI, banners, typography, and high-fidelity general generation.
+   - **Default for everything else → GPT Image 2.5.** Graphic design, UI, banners, typography, and high-fidelity general generation.
 
    **Video:**
    - Complete narrated explainer from a topic, story, or document → use `higgsfield-video-explainer`, not generic video generation.
    - All advertising / commercial / branded ad video → Marketing Studio (see Marketing Studio below)
    - Edit existing video from sketch/timestamp, or reframe to another aspect ratio → workflow (`draw_to_video` or `reframe`), not a model. See `references/workflows.md`.
-   - **Default all-purpose serious video (multi-shot, consistent identity, motion-heavy, image-to-video, 4–15s requests) → Seedance 2.0.** SOTA. Do not downgrade to Seedance 1.5 just because its duration enum is easier to read; validate Seedance 2.0 first.
-   - Single-plane scene without strong dynamics, cheaper than Seedance 2.0 → Kling 3.0; if the user explicitly asks for Turbo, faster, or lower-cost Kling output → Kling 3.0 Turbo (`kling3_0_turbo`)
+   - **Default all-purpose serious video (multi-shot, consistent identity, motion-heavy, image-to-video, 4–30s requests) → Seedance 2.5.** SOTA. Do not downgrade to Seedance 1.5 just because its duration enum is easier to read; validate Seedance 2.5 first.
+   - Single-plane scene without strong dynamics, lower-cost option → Kling 3.0; if the user explicitly asks for Turbo, faster, or lower-cost Kling output → Kling 3.0 Turbo (`kling3_0_turbo`)
    - Cheap clean shot without cuts, only when the user asks for cheaper/budget output → Seedance 1.5 Pro
    - Cinema-grade highest fidelity → Cinema Studio Video 3.0
    - Cheap with strong physics, no audio needed → Minimax Hailuo
    - Fast batch / volume → Veo 3.1 Lite
    - Bold/stylized image-to-video from a required start image → Grok Video 1.5 (`grok_video_v15`). Requires one `--start-image` or `--image`, duration 2–15s, resolution `480p` or `720p`.
-   - Multimodal reference-to-video with up to 7 images or one video reference → Gemini Omni Flash (`gemini_omni`); keep Seedance 2.0 as the default serious-video pick.
-   - Reference-driven generation, editing an existing video, or extending one → **Seedance 2.5** (`seedance_2_5`), whose modes are `t2v` / `omni_reference` / `video_edit` / `video_extension` and which takes image/video/audio reference arrays. It is NOT a newer Seedance 2.0: it caps at **720p**, so anything needing 1080p or 4K stays on Seedance 2.0.
+   - Multimodal reference-to-video with up to 7 images or one video reference → Gemini Omni Flash (`gemini_omni`); keep Seedance 2.5 as the default serious-video pick.
+   - Reference-driven generation, editing an existing video, or extending one → **Seedance 2.5** (`seedance_2_5`), whose modes are `t2v` / `omni_reference` / `video_edit` / `video_extension` and which takes image/video/audio reference arrays. Use `omni_reference` for reference inputs, including start/end frames; `t2v` accepts no media. Supports up to **1080p**; use Seedance 2.0 when native 4K is required.
 
    **Video analysis:**
    - Rate a finished video's hook, virality potential, attention, retention, or distraction risk → Virality Predictor (`brain_activity`). This is a video analysis model that returns a text score/report, not a generated media asset.
@@ -133,10 +133,10 @@ For workflow jobs, use `higgsfield generate workflow <workflow_name> ... --wait`
 | Flag | Purpose | Models that accept it |
 |---|---|---|
 | `--image <path-or-id>` | reference image | most image models, `grok_video_v15`, `multi_image_to_3d`, `seedance_2_0`, `seedance_2_5`, `veo3`, `marketing_studio_video` |
-| `--start-image <path-or-id>` | first frame for image-to-video transitions | `grok_video_v15`, `kling3_0`, `kling3_0_turbo`, `kling2_6`, `veo3_1`, `seedance_2_0`, `marketing_studio_video` |
-| `--end-image <path-or-id>` | last frame for transitions | `kling3_0`, `seedance_2_0`, `marketing_studio_video` |
+| `--start-image <path-or-id>` | first frame for image-to-video transitions | `grok_video_v15`, `kling3_0`, `kling3_0_turbo`, `kling2_6`, `veo3_1`, `seedance_2_0`, `seedance_2_5`, `marketing_studio_video` |
+| `--end-image <path-or-id>` | last frame for transitions | `kling3_0`, `seedance_2_0`, `seedance_2_5`, `marketing_studio_video` |
 | `--video <path-or-id>` | reference or analyzed video | `seedance_2_0`, `seedance_2_5`, `brain_activity` |
-| `--audio <path-or-id>` | reference audio (lipsync, soundtrack match) | `seedance_2_0`, `seedance_2_5` (use this, NOT `--generate-audio`) |
+| `--audio <path-or-id>` | reference audio (lipsync, soundtrack match) | `seedance_2_0`, `seedance_2_5` (reference input; distinct from generating output audio) |
 
 For reference-array models, the explicit flags are `--image-references`, `--video-references`, and `--audio-references`; `--image`, `--video`, and `--audio` are short aliases when the schema exposes those params.
 
@@ -147,9 +147,9 @@ Each flag accepts either a local file path (auto-uploaded) or a UUID (upload id 
 Flags pass through to model schema. Use `higgsfield model get <jst>` to discover.
 
 ```bash
-higgsfield generate create gpt_image_2 --prompt "neon city at dusk" --aspect_ratio 16:9 --resolution 2k --wait
+higgsfield generate create gpt_image_2_5 --prompt "neon city at dusk" --aspect_ratio 16:9 --resolution 2k --wait
 higgsfield generate create nano_banana_2 --prompt "anime character concept, expressive pose" --image ./ref.png --wait
-higgsfield generate create seedance_2_0 --prompt "camera dollies in" --start-image ./first.png --duration 12 --resolution 4k --wait
+higgsfield generate create seedance_2_5 --prompt "camera dollies in" --mode omni_reference --start-image ./first.png --duration 12 --resolution 1080p --wait
 higgsfield generate create grok_video_v15 --prompt "cinematic handheld shot, neon rainy street" --start-image ./image.png --duration 5 --resolution 720p --wait
 higgsfield generate create text2image_soul_v2 --prompt "..." --soul-id <soul_ref_id> --quality 2k --wait
 higgsfield generate create multi_image_to_3d --image ./front.png --image ./side.png --should_texture true --wait
