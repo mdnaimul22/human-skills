@@ -66,6 +66,9 @@ human-skills '{
 
 
 ### What it detects in `default` mode?
+- ❌ **Type Safety Violation (`getattr/setattr/hasattr`)**: Dynamic reflection or defensive attribute probing via `getattr()`, `setattr()`, or `hasattr()`. (Must use direct dot-notation, Pydantic schemas with defaults, or Strategy registries).
+- ❌ **Type Safety Violation (`isinstance`)**: Type branching / anti-polymorphic design via `isinstance()`. (Must use Polymorphism, Protocol, Discriminated Unions, or Pattern Matching).
+- ❌ **Type Safety Violation (`Any`)**: Untyped boundaries via `Any`, `from typing import Any`, or `dict[str, Any]`. (Must use Pydantic models, concrete types, or TypedDict).
 - ❌ **Logging Violation**: Use of direct `import logging` (Must use `setup_logger`).
 - ❌ **Pathlib Violation**: Use of `pathlib` outside `src/config/`.
 - ❌ **Manual Dir Creation**: Use of `exist_ok=True` (Must use `ensure_dir`).

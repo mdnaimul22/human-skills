@@ -10,14 +10,14 @@ class Linter(Tool):
     Enforces project-specific coding standards and generates refactoring task lists.
     """
     name: str = "linter"
-    description: str = "Scans Python projects for architecture violations. Supports multiple linter types: 'default' (AST-based architecture audit) and 'rest_api' (REST API quality scoring)."
+    description: str = "Scans Python projects for architecture violations and strict type safety (Any/getattr). Supports multiple linter types: 'default' (AST-based audit) and 'rest_api' (REST API quality scoring)."
     arguments: dict = {
         "scan_path": "Path to the project directory or a specific .py file to audit (REQUIRED).",
-        "linter_type": "Linter mode: 'default' (architecture violations) or 'rest_api' (API quality score). Defaults to 'default'.",
+        "linter_type": "Linter mode: 'default' (architecture violations & strict type safety) or 'rest_api' (API quality score). Defaults to 'default'.",
         "ignored_path": "Comma-separated list of directory names to skip during scanning.",
         "ignored_rules": "Comma-separated list of analyzer names to skip (e.g. 'auth_implementation,rate_limiting'). Used only in rest_api mode."
     }
-    instruction: str = "Audit your codebase. Use linter_type='default' for architecture violations, 'rest_api' for REST API quality scoring."
+    instruction: str = "Audit your codebase. Use linter_type='default' for architecture violations & type safety, 'rest_api' for REST API quality scoring."
 
     # Infrastructure config files — these USE pathlib/logging by design, always skip them
     CONFIG_INFRA_FILES: set = {"paths.py", "files.py", "logger.py", "dotenv.py", "__init__.py"}
@@ -89,6 +89,16 @@ class Linter(Tool):
             console_msg += f"\n📄 {file_path}\n"
             for v in violations:
                 console_msg += f"  {v}\n"
+
+        has_type_safety = any(
+            any("[Type Safety Violation]" in v for v in file_violations)
+            for file_violations in audit_results.values()
+        )
+        if has_type_safety:
+            advisories.append(
+                "⚠️ [Type Safety Advisory] Defensive probing ('hasattr', 'getattr', 'setattr'), type branching ('isinstance'), or untyped 'Any' detected. "
+                "Define explicit Pydantic schemas, TypedDict, or Protocols, and use direct attribute access (.attr)."
+            )
 
         if advisories:
             console_msg += "\n" + "-" * 65 + "\n"
@@ -489,7 +499,10 @@ class Linter(Tool):
                 for v in violations:
                     # Transform L123: Message to - [ ] L123: Message
                     task = v.replace("❌ ", "").replace("⚠️ ", "")
-                    content.append(f"- [ ] {task}")
+                    lines = task.split("\n")
+                    content.append(f"- [ ] {lines[0]}")
+                    for sub in lines[1:]:
+                        content.append(f"  {sub.strip()}")
             content.append("")
 
         report_path.write_text("\n".join(content), encoding="utf-8")
@@ -521,8 +534,24 @@ class CodeAuditor(ast.NodeVisitor):
         self._has_uvicorn_run = False
         self._uvicorn_run_line = 0
 
-    def add_violation(self, node, message):
-        self.violations.append(f"L{node.lineno}: {message}")
+    @staticmethod
+    def _contains_any_type(node: ast.AST) -> bool:
+        """Check if an AST node contains Any or typing.Any in its annotation tree."""
+        if not node:
+            return False
+        for child in ast.walk(node):
+            if isinstance(child, ast.Name) and child.id == "Any":
+                return True
+            if isinstance(child, ast.Attribute) and child.attr == "Any":
+                if isinstance(child.value, ast.Name) and child.value.id == "typing":
+                    return True
+        return False
+
+    def add_violation(self, node, message: str, suggestion: str = None):
+        formatted = f"L{node.lineno}: {message}"
+        if suggestion:
+            formatted += f"\n       💡 Fix: {suggestion}"
+        self.violations.append(formatted)
 
     def visit_Import(self, node):
         for alias in node.names:
@@ -530,6 +559,12 @@ class CodeAuditor(ast.NodeVisitor):
                 self.add_violation(node, "❌ [Logging Violation] Direct 'import logging' used. Use 'setup_logger' instead.")
             if alias.name == "pathlib" and not self.is_config_file:
                 self.add_violation(node, "❌ [Pathlib Violation] Direct 'import pathlib' used outside config. Use 'src.config' utilities.")
+            if alias.name == "typing.Any":
+                self.add_violation(
+                    node,
+                    "❌ [Type Safety Violation] 'typing.Any' imported.",
+                    suggestion="Using 'Any' disables Mypy/Pyright type checking. Replace with concrete types, Pydantic models, or TypeVar."
+                )
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
@@ -537,6 +572,14 @@ class CodeAuditor(ast.NodeVisitor):
             self.add_violation(node, "❌ [Logging Violation] Direct 'logging' import used. Use 'setup_logger' instead.")
         if node.module == "pathlib" and not self.is_config_file:
             self.add_violation(node, "❌ [Pathlib Violation] Direct 'pathlib' import used outside config. Use 'src.config' utilities.")
+        if node.module == "typing":
+            for alias in node.names:
+                if alias.name == "Any":
+                    self.add_violation(
+                        node,
+                        "❌ [Type Safety Violation] Direct 'from typing import Any' import detected.",
+                        suggestion="Using 'Any' completely disables static type checking. Replace with concrete types, Pydantic models, TypedDict, or Generic TypeVar[T]."
+                    )
             
         if node.module == "os.path" and not self.is_config_file:
             os_path_blacklist = {
@@ -552,7 +595,136 @@ class CodeAuditor(ast.NodeVisitor):
                     
         self.generic_visit(node)
 
+    def _check_func_annotations(self, node):
+        """Checks parameter and return annotations for 'Any'."""
+        if node.returns and self._contains_any_type(node.returns):
+            ret_str = ast.unparse(node.returns)
+            self.add_violation(
+                node,
+                f"❌ [Type Safety Violation] Function '{node.name}' has return type containing 'Any' ('{ret_str}').",
+                suggestion=f"Specify a concrete return type (e.g. 'ResponsePayload', 'dict[str, str]', 'None') instead of '{ret_str}'."
+            )
+        for arg in node.args.args + node.args.kwonlyargs:
+            if arg.annotation and self._contains_any_type(arg.annotation):
+                arg_ann_str = ast.unparse(arg.annotation)
+                self.add_violation(
+                    arg,
+                    f"❌ [Type Safety Violation] Parameter '{arg.arg}' in function '{node.name}' annotated with 'Any' ('{arg_ann_str}').",
+                    suggestion=f"Define a concrete Pydantic schema or TypedDict for parameter '{arg.arg}' instead of '{arg_ann_str}'."
+                )
+
+    def visit_FunctionDef(self, node):
+        self._check_func_annotations(node)
+        self.generic_visit(node)
+
+    def visit_AsyncFunctionDef(self, node):
+        self._check_func_annotations(node)
+        self.generic_visit(node)
+
+    def visit_AnnAssign(self, node):
+        if self._contains_any_type(node.annotation):
+            var_name = ast.unparse(node.target) if hasattr(node, "target") else "variable"
+            ann_str = ast.unparse(node.annotation)
+            suggestion = (
+                f"Replace 'Any' in '{ann_str}' with an explicit domain model (e.g. Pydantic BaseModel), "
+                f"a specific TypedDict, or bounded TypeVar. Never allow untyped boundaries."
+            )
+            self.add_violation(
+                node,
+                f"❌ [Type Safety Violation] Variable '{var_name}' annotated with 'Any' ('{ann_str}').",
+                suggestion=suggestion
+            )
+        self.generic_visit(node)
+
     def visit_Call(self, node):
+        # Strict Type Safety: getattr()
+        if isinstance(node.func, ast.Name) and node.func.id == "getattr":
+            obj_repr = ast.unparse(node.args[0]) if len(node.args) >= 1 else "obj"
+            attr_repr = ast.unparse(node.args[1]) if len(node.args) >= 2 else "'attr'"
+            default_repr = f", {ast.unparse(node.args[2])}" if len(node.args) >= 3 else ""
+            call_snippet = f"getattr({obj_repr}, {attr_repr}{default_repr})"
+
+            clean_attr = attr_repr.strip("'\"")
+            if attr_repr.startswith(("'", '"')):
+                if default_repr:
+                    def_val = ast.unparse(node.args[2])
+                    suggestion = (
+                        f"Avoid dynamic reflection. Define '{clean_attr}' in the schema or model: "
+                        f"'{clean_attr}: <Type> | None = {def_val}'. Then access directly via '{obj_repr}.{clean_attr}'."
+                    )
+                else:
+                    suggestion = f"Access attribute directly: '{obj_repr}.{clean_attr}'. Ensure '{clean_attr}' is defined on the class or Pydantic model."
+            else:
+                suggestion = (
+                    f"Dynamic attribute/method dispatch detected ({attr_repr}). "
+                    f"Replace with an explicit Strategy registry: 'REGISTRY: dict[KeyType, Callable] = {{...}}' "
+                    f"and retrieve via 'REGISTRY.get({attr_repr})'."
+                )
+
+            self.add_violation(
+                node,
+                f"❌ [Type Safety Violation] Dynamic '{call_snippet}' used.",
+                suggestion=suggestion
+            )
+
+        # Strict Type Safety: setattr()
+        if isinstance(node.func, ast.Name) and node.func.id == "setattr":
+            obj_repr = ast.unparse(node.args[0]) if len(node.args) >= 1 else "obj"
+            attr_repr = ast.unparse(node.args[1]) if len(node.args) >= 2 else "'attr'"
+            val_repr = ast.unparse(node.args[2]) if len(node.args) >= 3 else "val"
+            clean_attr = attr_repr.strip("'\"")
+
+            if attr_repr.startswith(("'", '"')):
+                suggestion = f"Assign directly: '{obj_repr}.{clean_attr} = {val_repr}' or use Pydantic '{obj_repr}.model_copy(update={{{attr_repr}: {val_repr}}})'."
+            else:
+                suggestion = f"Avoid dynamic attribute mutation on '{obj_repr}'. Use a structured dictionary or Pydantic model."
+
+            self.add_violation(
+                node,
+                f"❌ [Type Safety Violation] Dynamic 'setattr({obj_repr}, {attr_repr}, ...)' used.",
+                suggestion=suggestion
+            )
+
+        # Strict Type Safety: hasattr()
+        if isinstance(node.func, ast.Name) and node.func.id == "hasattr":
+            obj_repr = ast.unparse(node.args[0]) if len(node.args) >= 1 else "obj"
+            attr_repr = ast.unparse(node.args[1]) if len(node.args) >= 2 else "'attr'"
+            clean_attr = attr_repr.strip("'\"")
+            suggestion = (
+                f"Defensive attribute probing detected. Avoid 'hasattr()'. Enforce strict data contracts "
+                f"using Pydantic models, TypedDict, or Protocols where '{clean_attr}' is guaranteed to exist."
+            )
+            self.add_violation(
+                node,
+                f"❌ [Type Safety Violation] Defensive 'hasattr({obj_repr}, {attr_repr})' used.",
+                suggestion=suggestion
+            )
+
+        # Strict Type Safety: isinstance()
+        if isinstance(node.func, ast.Name) and node.func.id == "isinstance":
+            is_ast_check = False
+            if len(node.args) >= 2:
+                for sub in ast.walk(node.args[1]):
+                    if isinstance(sub, ast.Attribute) and isinstance(sub.value, ast.Name) and sub.value.id == "ast":
+                        is_ast_check = True
+                        break
+                    if isinstance(sub, ast.Name) and sub.id == "AST":
+                        is_ast_check = True
+                        break
+
+            if not is_ast_check:
+                obj_repr = ast.unparse(node.args[0]) if len(node.args) >= 1 else "obj"
+                type_repr = ast.unparse(node.args[1]) if len(node.args) >= 2 else "Type"
+                suggestion = (
+                    f"Type branching smell detected ('isinstance({obj_repr}, {type_repr})'). "
+                    f"Replace type-checks with Polymorphism (Strategy Pattern / Protocol with unified methods), "
+                    f"Pydantic Discriminated Unions, or Pattern Matching (match/case with assert_never)."
+                )
+                self.add_violation(
+                    node,
+                    f"❌ [Type Safety Violation] Type branching 'isinstance({obj_repr}, {type_repr})' used.",
+                    suggestion=suggestion
+                )
         # 0. Kill switch tracking (main.py only)
         if self.is_main_file:
             if isinstance(node.func, ast.Name) and node.func.id == "kill_pid":
