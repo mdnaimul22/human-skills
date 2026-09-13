@@ -12,7 +12,7 @@ It scans your code for violations of the architecture rules for logging, pathlib
 The `human-skills` linter accepts numerous tool arguments for different purposes. Below, all available arguments are explained:
 
 allowed_args = {
-    "default": ["scan_path", "path", "ignored_path", "ignored_apth", "linter_type"],
+    "default": ["scan_path", "path", "ignored_path", "ignored_apth", "linter_type", "ignored_rules"],
     "rest_api": ["scan_path", "path", "ignored_path", "ignored_apth", "linter_type", "ignored_rules"]
 }
 
@@ -23,7 +23,7 @@ allowed_args = {
         "scan_path": "Path to the project directory or a specific .py file to audit (REQUIRED).",
         "linter_type": "Linter mode: 'default' (architecture violations) or 'rest_api' (API quality score). Defaults to 'default'.",
         "ignored_path": "Comma-separated list of directory names to skip during scanning (e.g., 'venv, .git, tests').",
-        "ignored_rules": "Comma-separated list of rules to skip. Works only in rest_api mode. Example: 'auth, rate_limiting, caching'."
+        "ignored_rules": "Comma-separated list of analyzer or rule names to skip (e.g., 'type_safety, kill_switch' in default mode, or 'auth, rate_limiting' in rest_api mode)."
     }
 }
 ```
@@ -66,16 +66,24 @@ human-skills '{
 
 
 ### What it detects in `default` mode?
-- ❌ **Type Safety Violation (`getattr/setattr/hasattr`)**: Dynamic reflection or defensive attribute probing via `getattr()`, `setattr()`, or `hasattr()`. (Must use direct dot-notation, Pydantic schemas with defaults, or Strategy registries).
-- ❌ **Type Safety Violation (`isinstance`)**: Type branching / anti-polymorphic design via `isinstance()`. (Must use Polymorphism, Protocol, Discriminated Unions, or Pattern Matching).
-- ❌ **Type Safety Violation (`Any`)**: Untyped boundaries via `Any`, `from typing import Any`, or `dict[str, Any]`. (Must use Pydantic models, concrete types, or TypedDict).
-- ❌ **Logging Violation**: Use of direct `import logging` (Must use `setup_logger`).
-- ❌ **Pathlib Violation**: Use of `pathlib` outside `src/config/`.
-- ❌ **Manual Dir Creation**: Use of `exist_ok=True` (Must use `ensure_dir`).
-- ❌ **Silent Exception**: Use of `except: pass` (Swallowing errors).
-- ⚠️ **Print Statements**: Use of `print()` in production-ready code.
-- ❌ **Env Access**: Use of `os.environ` or `os.getenv` (Must use `Settings`).
-- ❌ **Logger Compliance**: Hardcoded log filenames in `setup_logger`.
+All rules in `default` mode are modularly located in `scripts/default/` and can be individually bypassed via `ignored_rules`:
+
+| Rule File (`scripts/default/`) | Detected Violations & Advisories |
+| :--- | :--- |
+| `type_safety` | ❌ Dynamic reflection (`getattr`, `setattr`, `hasattr`), type branching/tautology (`isinstance`, `(..., object)`), and untyped boundaries (`Any`, `object` in variable/function annotations, explicit `cast(object)`). |
+| `path_safety` | ❌ Direct `import pathlib` outside `config/`, `os.path` usages, forbidden `Path` methods, and manual dir creation (`exist_ok=True`). |
+| `logging_rule` | ❌ Direct `import logging`, hardcoded log filenames in `setup_logger`, and `print()` in production code. |
+| `env_config` | ❌ Direct `os.environ` / `os.getenv`, ⚠️ silent fallback defaults in `os.getenv`, and ⚠️ `Field(default=...)` in `settings.py`. |
+| `manual_io` | ❌ Direct `open()`, `with open()`, `os.open()`, `os.read()`, `os.write()`. (Must use `read_text`/`write_text` from config). |
+| `silent_exceptions` | ❌ Silent `except: pass` and ⚠️ raw built-in exceptions (`raise Exception/ValueError/...`). |
+| `helpers_usage` | ⚠️ Direct `datetime.now()`, ❌ `create_async_engine()`, and ⚠️ manual retry loops (`time.sleep`/`asyncio.sleep` in loops). |
+| `kill_switch` | ❌ `main.py` calling `uvicorn.run()` without `kill_pid()`. |
+| `security_rule` | 🚨 OWASP/Bandit security suite: SQL/Command injection, weak crypto (`md5`/`sha1`), unsafe deserialization (`pickle`/`yaml`), hardcoded secrets/passwords, and SSL bypass. |
+| `import_hygiene` | ❌ Wildcard imports (`from x import *`), ⚠️ deprecated stdlib modules, and ⚠️ unused imports. |
+| `code_complexity` | ⚠️ Deep nesting depth (> 4 levels), high cyclomatic complexity (> 15), and oversized functions. |
+| `code_duplication` | ❌ DRY violation: structural AST duplication between function bodies. |
+| `memory_efficiency` | ⚠️ In-place string concatenation inside loops (`+=`) and unneeded list comprehensions in generator functions. |
+| `pythonic_standards` | ❌ PEP 8 naming (classes PascalCase, functions snake_case), shadowing Python built-ins, and `global` statement usage. |
 
 ### What it detects in `rest_api` mode?
 When `linter_type="rest_api"` is used, it evaluates router files based on Enterprise API Best Practices.

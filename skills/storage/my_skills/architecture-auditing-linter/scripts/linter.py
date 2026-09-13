@@ -1,33 +1,33 @@
 import ast
 import asyncio
+import importlib.util
+import re
 import sys
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from helpers.tool import Tool, Response
 
+
 class Linter(Tool):
-    """
-    Enforces project-specific coding standards and generates refactoring task lists.
-    """
     name: str = "linter"
     description: str = "Scans Python projects for architecture violations and strict type safety (Any/getattr). Supports multiple linter types: 'default' (AST-based audit) and 'rest_api' (REST API quality scoring)."
     arguments: dict = {
         "scan_path": "Path to the project directory or a specific .py file to audit (REQUIRED).",
         "linter_type": "Linter mode: 'default' (architecture violations & strict type safety) or 'rest_api' (API quality score). Defaults to 'default'.",
         "ignored_path": "Comma-separated list of directory names to skip during scanning.",
-        "ignored_rules": "Comma-separated list of analyzer names to skip (e.g. 'auth_implementation,rate_limiting'). Used only in rest_api mode."
+        "ignored_rules": "Comma-separated list of analyzer or rule names to skip (e.g. 'type_safety,kill_switch' in default mode, or 'auth,rate_limiting' in rest_api mode)."
     }
     instruction: str = "Audit your codebase. Use linter_type='default' for architecture violations & type safety, 'rest_api' for REST API quality scoring."
 
-    # Infrastructure config files — these USE pathlib/logging by design, always skip them
     CONFIG_INFRA_FILES: set = {"paths.py", "files.py", "logger.py", "dotenv.py", "__init__.py"}
 
     async def execute(self, **kwargs) -> Response:
         scan_path_str = self.args.get("scan_path") or self.args.get("path")
-        
+
         if not scan_path_str:
             return Response(
-                message="❌ Error: 'scan_path' argument is required.\n💡 Usage: human-skills '{\"tool_name\": \"linter\", \"tool_args\": {\"scan_path\": \".\"}}'", 
+                message="❌ Error: 'scan_path' argument is required.\n💡 Usage: human-skills '{\"tool_name\": \"linter\", \"tool_args\": {\"scan_path\": \".\"}}'",
                 break_loop=False
             )
 
@@ -39,15 +39,14 @@ class Linter(Tool):
                 break_loop=False
             )
 
-        # --- ARGUMENT VALIDATION ---
         allowed_args = {
-            "default": ["scan_path", "path", "ignored_path", "ignored_apth", "linter_type"],
+            "default": ["scan_path", "path", "ignored_path", "ignored_apth", "linter_type", "ignored_rules"],
             "rest_api": ["scan_path", "path", "ignored_path", "ignored_apth", "linter_type", "ignored_rules"]
         }
 
         valid_keys = allowed_args[linter_type]
         invalid_keys = [k for k in self.args.keys() if k not in valid_keys]
-        
+
         if invalid_keys:
             msg = f"❌ Error: Invalid argument(s) provided: {', '.join(invalid_keys)}\n"
             msg += f"💡 Available arguments for '{linter_type}' mode: {', '.join([k for k in valid_keys if k not in ['path', 'ignored_apth']])}"
@@ -63,21 +62,103 @@ class Linter(Tool):
         ignored_rules_raw = self.args.get("ignored_rules", "")
         ignored_rules = {r.strip() for r in ignored_rules_raw.split(",") if r.strip()}
 
-        # ── Route to correct linter ───────────────────────────────────────────
         if linter_type == "rest_api":
             return await self.run_rest_api_audit(scan_path, ignored_list, ignored_rules)
-        return await self.run_default_audit(scan_path, ignored_list)
+        return await self.run_default_audit(scan_path, ignored_list, ignored_rules)
 
-    async def run_default_audit(self, scan_path: Path, ignored_list: set) -> Response:
-        """AST-based architecture violation checker."""
+    def _load_default_rules(self, ignored_rules: set[str]) -> list[tuple[str, type]]:
+        default_dir = Path(__file__).resolve().parent / "default"
+        if not default_dir.exists():
+            return []
+        sys_path_dir = str(Path(__file__).resolve().parent)
+        if sys_path_dir not in sys.path:
+            sys.path.insert(0, sys_path_dir)
+        from default.base import BaseRule
+        rule_files = sorted(default_dir.glob("*.py"))
+        rules = []
+        for rf in rule_files:
+            if rf.name == "base.py" or rf.name.startswith("_") or rf.stem in ignored_rules:
+                continue
+            spec = importlib.util.spec_from_file_location(f"default.{rf.stem}", rf)
+            if not spec or not spec.loader:
+                continue
+            mod = importlib.util.module_from_spec(spec)
+            sys.modules[f"default.{rf.stem}"] = mod
+            spec.loader.exec_module(mod)
+            for attr in vars(mod).values():
+                if isinstance(attr, type) and issubclass(attr, BaseRule) and attr is not BaseRule:
+                    rules.append((rf.stem, attr))
+                    break
+        return rules
+
+    def audit_project(self, target_path: Path, bypass_dirs: set[str], ignored_rules: set[str]) -> tuple[dict, list[str]]:
+        if target_path.is_file():
+            py_files = [target_path]
+            root_dir = target_path.parent
+        else:
+            py_files = list(target_path.rglob("*.py"))
+            root_dir = target_path
+
+        rule_classes = self._load_default_rules(ignored_rules)
+        sys_path_dir = str(Path(__file__).resolve().parent)
+        if sys_path_dir not in sys.path:
+            sys.path.insert(0, sys_path_dir)
+        from default.base import FileContext
+
+        results = {}
+        advisories = []
+
+        for py_file in sorted(py_files):
+            rel_path = py_file.relative_to(root_dir)
+            in_config_dir = "config" in py_file.parts
+            is_infra_file = py_file.name in self.CONFIG_INFRA_FILES and in_config_dir
+            is_bypassed = is_infra_file or \
+                          any(str(rel_path).startswith(d) for d in bypass_dirs) or \
+                          any(part.startswith(".") for part in py_file.parts) or \
+                          any(part in ("venv", ".venv", "__pycache__", ".git") for part in py_file.parts)
+
+            if is_bypassed and not (target_path.is_file() and py_file == target_path):
+                continue
+
+            if py_file.suffix != ".py":
+                continue
+
+            try:
+                with open(py_file, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    if not content.strip():
+                        continue
+                    tree = ast.parse(content)
+
+                ctx = FileContext(py_file, root_dir, bypass_dirs, content)
+                file_violations = []
+
+                for _, rule_cls in rule_classes:
+                    rule = rule_cls(ctx)
+                    v, a = rule.run(tree)
+                    file_violations.extend(v)
+                    advisories.extend(a)
+
+                if file_violations:
+                    file_violations.sort(
+                        key=lambda v: int(v.split(":")[0][1:])
+                        if v.startswith("L") and ":" in v and v.split(":")[0][1:].isdigit()
+                        else 999999
+                    )
+                    results[str(rel_path)] = file_violations
+            except Exception as e:
+                results[str(rel_path)] = [f"⚠️ Error parsing file: {e}"]
+
+        return results, list(dict.fromkeys(advisories))
+
+    async def run_default_audit(self, scan_path: Path, ignored_list: set, ignored_rules: set) -> Response:
         bypass_dirs = {
             "tests", ".agents", ".a0proj", ".claude", ".gemini",
             "venv", ".venv", "__pycache__", ".git", "scripts", "docs"
         }
         bypass_dirs.update(ignored_list)
 
-        # ── Phase 1: Per-file AST violations ──────────────────────────────────
-        audit_results, advisories = self.audit_project(scan_path, bypass_dirs)
+        audit_results, advisories = self.audit_project(scan_path, bypass_dirs, ignored_rules)
         total_violations = sum(len(v) for v in audit_results.values())
 
         status = "✨ CLEAN ARCHITECTURE! No violations detected." if total_violations == 0 else f"🚨 Audit finished. Found {total_violations} compliance violations."
@@ -96,7 +177,7 @@ class Linter(Tool):
         )
         if has_type_safety:
             advisories.append(
-                "⚠️ [Type Safety Advisory] Defensive probing ('hasattr', 'getattr', 'setattr'), type branching ('isinstance'), or untyped 'Any' detected. "
+                "⚠️ [Type Safety Advisory] Defensive probing ('hasattr', 'getattr', 'setattr'), type branching/tautology ('isinstance'), or untyped 'Any'/'object' detected. "
                 "Define explicit Pydantic schemas, TypedDict, or Protocols, and use direct attribute access (.attr)."
             )
 
@@ -115,7 +196,6 @@ class Linter(Tool):
             console_msg += f"📝 Task list generated: {report_path.name}\n"
             console_msg += "💡 Tip: Open the markdown file to track your refactoring progress.\n"
 
-        # ── Phase 2: Project-wide import graph analysis ───────────────────────
         if scan_path.is_dir():
             graph_msg = self._analyze_import_graph(scan_path, bypass_dirs)
             if graph_msg:
@@ -123,12 +203,46 @@ class Linter(Tool):
 
         return Response(message=console_msg, break_loop=False)
 
-    async def run_rest_api_audit(self, scan_path: Path, ignored_list: set, ignored_rules: set) -> Response:
-        """Concurrent REST API quality scorer using all analyzers in rest_api/."""
-        import importlib.util
-        import asyncio
+    def generate_markdown_report(self, report_path: Path, root_dir: Path, results: dict, advisories: list[str] = None):
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        content = [
+            f"# 🏗️ Refactoring Tasks: {root_dir.name}",
+            f"> Generated by **human-skills** on {now}",
+            "\n## Summary",
+            f"- **Project Directory:** `{root_dir}`",
+            f"- **Total Violations:** {sum(len(v) for v in results.values())}",
+            f"- **Files to Refactor:** {len(results)}",
+        ]
+        if advisories:
+            content.append("\n### 💡 Architecture Guidance & Advisories")
+            for adv in advisories:
+                content.append(f"> {adv}")
+        content.append("\n---\n")
 
-        # ── Discover all analyzer modules in rest_api/ ────────────────────────
+        grouped = {}
+        for file_path, violations in results.items():
+            dir_name = str(Path(file_path).parent)
+            if dir_name not in grouped:
+                grouped[dir_name] = []
+            grouped[dir_name].append((file_path, violations))
+
+        for dir_name, files in sorted(grouped.items()):
+            dir_label = "📁 Root" if dir_name == "." else f"📁 {dir_name}"
+            content.append(f"### {dir_label}")
+            for file_path, violations in files:
+                file_name = Path(file_path).name
+                content.append(f"#### 📄 {file_name}")
+                for v in violations:
+                    task = v.replace("❌ ", "").replace("⚠️ ", "")
+                    lines = task.split("\n")
+                    content.append(f"- [ ] {lines[0]}")
+                    for sub in lines[1:]:
+                        content.append(f"  {sub.strip()}")
+            content.append("")
+
+        report_path.write_text("\n".join(content), encoding="utf-8")
+
+    async def run_rest_api_audit(self, scan_path: Path, ignored_list: set, ignored_rules: set) -> Response:
         rest_api_dir = Path(__file__).resolve().parent / "rest_api"
         if not rest_api_dir.exists():
             return Response(message="❌ Error: 'rest_api/' directory not found next to linter.py.", break_loop=False)
@@ -137,22 +251,19 @@ class Linter(Tool):
         if not analyzer_files:
             return Response(message="❌ Error: No analyzer files found in rest_api/.", break_loop=False)
 
-        # ── Load analyzer instances dynamically ───────────────────────────────
         analyzers = []
         for af in analyzer_files:
             if af.stem in ignored_rules:
                 continue
-            
+
             spec = importlib.util.spec_from_file_location(af.stem, af)
-            mod  = importlib.util.module_from_spec(spec)
+            mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
-            # Find the Tool subclass in the module
             for attr in vars(mod).values():
                 if isinstance(attr, type) and attr.__name__ != "Tool" and hasattr(attr, "evaluate"):
                     analyzers.append((af.stem, attr()))
                     break
 
-        # ── Collect .py files to scan ─────────────────────────────────────────
         bypass_parts = {"venv", ".venv", "__pycache__", ".git", "tests"} | ignored_list
         if scan_path.is_file():
             py_files = [scan_path]
@@ -166,36 +277,29 @@ class Linter(Tool):
         if not py_files:
             return Response(message="ℹ️  No Python files found to score.", break_loop=False)
 
-        # ── Two-layer router file filter ──────────────────────────────────────
-        # Layer 1: directory name heuristic (fast pre-filter)
-        _ROUTER_DIRS = {"routers", "routes", "api", "endpoints", "views", "handlers"}
-
-        # Layer 2: HTTP decorator / framework content fingerprint (precise)
-        import re as _re
-        _HTTP_FINGERPRINT = _re.compile(
-            r'(@(router|app|bp|blueprint|api)\.(get|post|put|patch|delete|head|options)\b'    # FastAPI / Flask
-            r'|@(app|bp)\.route\b'                                                             # Flask @app.route
-            r'|APIRouter\(\)'                                                                  # FastAPI router instance
-            r'|urlpatterns\s*='                                                                # Django urls.py
-            r'|path\s*\([\'\"]\s*[\w/<>]'                                                     # Django path()
-            r'|Blueprint\s*\()'                                                               # Flask Blueprint
+        router_dirs = {"routers", "routes", "api", "endpoints", "views", "handlers"}
+        http_fingerprint = re.compile(
+            r'(@(router|app|bp|blueprint|api)\.(get|post|put|patch|delete|head|options)\b'
+            r'|@(app|bp)\.route\b'
+            r'|APIRouter\(\)'
+            r'|urlpatterns\s*='
+            r'|path\s*\([\'\"]\s*[\w/<>]'
+            r'|Blueprint\s*\()'
         )
 
-        def _is_router_file(py_file: Path) -> bool:
+        def is_router_file(py_file: Path) -> bool:
             if py_file.name == "__init__.py":
                 return False
-            # Layer 1: is it in a router-ish directory?
-            in_router_dir = any(p.lower() in _ROUTER_DIRS for p in py_file.parts)
-            # Layer 2: does it contain HTTP handler patterns?
+            in_router_dir = any(p.lower() in router_dirs for p in py_file.parts)
             try:
                 snippet = py_file.read_text(encoding="utf-8", errors="ignore")[:4000]
-                has_http_patterns = bool(_HTTP_FINGERPRINT.search(snippet))
+                has_http_patterns = bool(http_fingerprint.search(snippet))
             except OSError:
                 return False
             return in_router_dir or has_http_patterns
 
         if not scan_path.is_file():
-            router_files = [f for f in py_files if _is_router_file(f)]
+            router_files = [f for f in py_files if is_router_file(f)]
         else:
             router_files = py_files
 
@@ -210,30 +314,26 @@ class Linter(Tool):
                 break_loop=False
             )
 
-        # ── Score each router file concurrently across all analyzers ──────────
         async def score_file(py_file: Path) -> tuple[str, dict[str, tuple[float, list[str]]]]:
             source = py_file.read_text(encoding="utf-8", errors="ignore")
             if not source.strip():
                 return "", {}
             try:
-                import ast as _ast
-                module = _ast.parse(source)
+                module = ast.parse(source)
             except SyntaxError:
                 module = None
             results = await asyncio.gather(
                 *[asyncio.to_thread(a.evaluate, module, source) for _, a in analyzers]
             )
             return str(py_file.relative_to(scan_path if scan_path.is_dir() else scan_path.parent)), {
-                name: (res[0], res[1]) if isinstance(res, tuple) else (res, []) 
+                name: (res[0], res[1]) if isinstance(res, tuple) else (res, [])
                 for (name, _), res in zip(analyzers, results)
             }
 
         file_scores = await asyncio.gather(*[score_file(f) for f in router_files])
-        file_scores = [(p, s) for p, s in file_scores if p]  # drop empty
+        file_scores = [(p, s) for p, s in file_scores if p]
 
-        # ── Build scorecard report ────────────────────────────────────────────
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        msg  = f"🚀 Starting human-lint [rest_api] on: {scan_path}\n"
+        msg = f"🚀 Starting human-lint [rest_api] on: {scan_path}\n"
         msg += "=" * 65 + "\n"
         msg += f"🔍 Detected {len(router_files)} router file(s)\n"
 
@@ -246,24 +346,21 @@ class Linter(Tool):
                 for sug in suggestions:
                     overall_suggestions[name].add(sug)
 
-        # ── Project-wide averages / max ───────────────────────────────────────
-        # For certain features (auth, rate limiting, caching), if they exist in ANY
-        # router, the project has them. For others (naming, methods), we average.
-        _USE_MAX_METRICS = {"auth_implementation", "caching_strategy", "rate_limiting", "retry_logic"}
-        
+        use_max_metrics = {"auth_implementation", "caching_strategy", "rate_limiting", "retry_logic"}
+
         msg += "\n" + "=" * 65 + "\n"
-        msg += f"📊 PROJECT API QUALITY SCORECARD\n"
+        msg += "📊 PROJECT API QUALITY SCORECARD\n"
         msg += "=" * 65 + "\n"
-        
+
         project_scores = {}
         for name, vals in overall_totals.items():
             if not vals:
                 final_score = 0.0
-            elif name in _USE_MAX_METRICS:
+            elif name in use_max_metrics:
                 final_score = max(vals)
             else:
                 final_score = sum(vals) / len(vals)
-                
+
             project_scores[name] = final_score
             icon = "✅" if final_score >= 0.7 else ("⚠️" if final_score >= 0.4 else "❌")
             msg += f"  {icon} {name:<35} {final_score:.2f}\n"
@@ -272,7 +369,6 @@ class Linter(Tool):
         msg += "=" * 65 + "\n"
         msg += f"🏆 OVERALL API SCORE: {grand_avg:.2f} / 1.00  {self._score_bar(grand_avg)}\n"
 
-        # ── Generating Suggestions for Low Scores ─────────────────────────────
         low_scores = [name for name, score in project_scores.items() if score < 0.70]
         if low_scores:
             msg += "\n💡 SUGGESTIONS FOR IMPROVEMENT:\n"
@@ -293,11 +389,6 @@ class Linter(Tool):
         return "[" + "█" * filled + "░" * (10 - filled) + "]"
 
     def _analyze_import_graph(self, scan_path: Path, bypass_dirs: set[str]) -> str:
-        """Phase 2: Build project-wide import graph, detect circular deps, calculate coupling."""
-        import re
-        from collections import defaultdict
-
-        # Collect all Python files
         py_files = [
             f for f in sorted(scan_path.rglob("*.py"))
             if not any(part in bypass_dirs for part in f.relative_to(scan_path).parts)
@@ -308,7 +399,6 @@ class Linter(Tool):
         if not py_files:
             return ""
 
-        # ── Build module → imports graph ──────────────────────────────────────
         internal_modules: dict[str, set[str]] = defaultdict(set)
 
         for py_file in py_files:
@@ -317,7 +407,6 @@ class Linter(Tool):
 
             try:
                 content = py_file.read_text(encoding="utf-8", errors="ignore")
-                # Extract Python imports — first component only
                 for match in re.finditer(r"^(?:from|import)\s+([\w.]+)", content, re.MULTILINE):
                     imported = match.group(1).split(".")[0]
                     if imported != module:
@@ -328,7 +417,6 @@ class Linter(Tool):
         if not internal_modules:
             return ""
 
-        # Filter to only internal modules (both sides must exist as directories)
         all_modules = set(internal_modules.keys())
         graph: dict[str, set[str]] = defaultdict(set)
 
@@ -337,7 +425,6 @@ class Linter(Tool):
                 if imp in all_modules:
                     graph[module].add(imp)
 
-        # ── Detect circular dependencies (DFS) ────────────────────────────────
         visited: set[str] = set()
         rec_stack: set[str] = set()
         cycles: list[list[str]] = []
@@ -363,21 +450,18 @@ class Linter(Tool):
             if module not in visited:
                 find_cycles(module, [])
 
-        # ── Calculate coupling score (0-100) ──────────────────────────────────
         total_modules = len(all_modules)
         total_connections = sum(len(deps) for deps in graph.values())
         max_connections = total_modules * (total_modules - 1) if total_modules > 1 else 1
         coupling_score = min(100, int((total_connections / max_connections) * 100))
         coupling_score = min(100, coupling_score + len(cycles) * 10)
 
-        # ── Format output ─────────────────────────────────────────────────────
         msg = "=" * 65 + "\n"
         msg += "Import Graph Analysis\n"
         msg += "=" * 65 + "\n"
         msg += f"  Modules scanned: {total_modules}\n"
         msg += f"  Internal connections: {total_connections}\n"
 
-        # Coupling score with visual indicator
         if coupling_score < 30:
             coupling_icon = "🟢"
             coupling_label = "Low (good)"
@@ -398,7 +482,6 @@ class Linter(Tool):
         else:
             msg += f"\n  ✅ No circular dependencies found.\n"
 
-        # Show module dependency map
         if graph:
             msg += f"\n  📊 Module dependency map:\n"
             for module in sorted(graph.keys()):
@@ -408,479 +491,3 @@ class Linter(Tool):
 
         msg += "=" * 65 + "\n"
         return msg
-
-    def audit_project(self, target_path: Path, bypass_dirs: set[str]) -> tuple[dict, list[str]]:
-        if target_path.is_file():
-            py_files = [target_path]
-            root_dir = target_path.parent
-        else:
-            py_files = list(target_path.rglob("*.py"))
-            root_dir = target_path
-
-        results = {}
-        advisories = []
-
-        for py_file in sorted(py_files):
-            rel_path = py_file.relative_to(root_dir)
-            # Only skip infra files when they are inside a 'config' directory
-            in_config_dir = "config" in py_file.parts
-            is_infra_file = py_file.name in self.CONFIG_INFRA_FILES and in_config_dir
-            is_bypassed = is_infra_file or \
-                          any(str(rel_path).startswith(d) for d in bypass_dirs) or \
-                          any(part.startswith(".") for part in py_file.parts) or \
-                          any(part in ("venv", ".venv", "__pycache__", ".git") for part in py_file.parts)
-
-            if is_bypassed and not (target_path.is_file() and py_file == target_path):
-                continue
-
-            if py_file.suffix != ".py":
-                continue
-
-            try:
-                with open(py_file, "r", encoding="utf-8") as f:
-                    content = f.read()
-                    if not content.strip():
-                        continue
-                    tree = ast.parse(content)
-                
-                auditor = CodeAuditor(py_file, root_dir, bypass_dirs)
-                auditor.visit(tree)
-
-                # Post-visit: kill switch check for main.py
-                if auditor.is_main_file and auditor._has_uvicorn_run and not auditor._has_kill_pid:
-                    auditor.violations.append(
-                        f"L{auditor._uvicorn_run_line}: ❌ [Kill Switch Missing] 'uvicorn.run()' found without 'kill_pid(port)'. "
-                        f"Add 'kill_pid(port)' before uvicorn.run() to prevent 'Address already in use' errors."
-                    )
-
-                if auditor.is_settings_file and auditor.has_settings_defaults:
-                    advisories.append(
-                        "⚠️ [Settings Advisory] Critical and environment-specific parameters must be controlled via .env. "
-                        "Only safe, non-breaking fallback values should be defined as defaults in Settings."
-                    )
-
-                if auditor.violations:
-                    results[str(rel_path)] = auditor.violations
-            except Exception as e:
-                results[str(rel_path)] = [f"⚠️ Error parsing file: {e}"]
-
-        return results, list(dict.fromkeys(advisories))
-
-    def generate_markdown_report(self, report_path: Path, root_dir: Path, results: dict, advisories: list[str] = None):
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        content = [
-            f"# 🏗️ Refactoring Tasks: {root_dir.name}",
-            f"> Generated by **human-skills** on {now}",
-            "\n## Summary",
-            f"- **Project Directory:** `{root_dir}`",
-            f"- **Total Violations:** {sum(len(v) for v in results.values())}",
-            f"- **Files to Refactor:** {len(results)}",
-        ]
-        if advisories:
-            content.append("\n### 💡 Architecture Guidance & Advisories")
-            for adv in advisories:
-                content.append(f"> {adv}")
-        content.append("\n---\n")
-
-        # Group by directory
-        grouped = {}
-        for file_path, violations in results.items():
-            dir_name = str(Path(file_path).parent)
-            if dir_name not in grouped:
-                grouped[dir_name] = []
-            grouped[dir_name].append((file_path, violations))
-
-        for dir_name, files in sorted(grouped.items()):
-            dir_label = "📁 Root" if dir_name == "." else f"📁 {dir_name}"
-            content.append(f"### {dir_label}")
-            for file_path, violations in files:
-                file_name = Path(file_path).name
-                content.append(f"#### 📄 {file_name}")
-                for v in violations:
-                    # Transform L123: Message to - [ ] L123: Message
-                    task = v.replace("❌ ", "").replace("⚠️ ", "")
-                    lines = task.split("\n")
-                    content.append(f"- [ ] {lines[0]}")
-                    for sub in lines[1:]:
-                        content.append(f"  {sub.strip()}")
-            content.append("")
-
-        report_path.write_text("\n".join(content), encoding="utf-8")
-
-class CodeAuditor(ast.NodeVisitor):
-    # Exceptions that are project-specific business errors — raising raw built-in
-    # exceptions for business logic is forbidden when helpers/exceptions.py exists.
-    _RAW_EXCEPTION_TYPES = {"Exception", "ValueError", "RuntimeError", "TypeError", "KeyError"}
-
-    def __init__(self, filename: Path, root_dir: Path, bypass_dirs: set[str]):
-        self.filename = filename
-        self.violations = []
-        # Only exempt from pathlib rules if the file is INSIDE a 'config' directory
-        _PATHLIB_EXEMPT = {"paths.py", "files.py", "logger.py", "dotenv.py", "__init__.py", "settings.py"}
-        in_config_dir = "config" in filename.parts
-        self.is_config_file = filename.name in _PATHLIB_EXEMPT and in_config_dir
-        # settings.py is scanned for Field(default=...) defaults
-        self.is_settings_file = filename.name == "settings.py" and in_config_dir
-        self.has_settings_defaults = False
-        # Helpers and DB files are exempt from specific enforcement checks
-        in_helpers_dir = "helpers" in filename.parts
-        self.is_helpers_file = in_helpers_dir
-        self.is_db_file = "db" in filename.parts or filename.name == "connection.py"
-        # Track if file has time.sleep inside a loop (manual retry pattern)
-        self._inside_loop = False
-        # Kill switch tracking — main.py must call kill_pid() before uvicorn.run()
-        self.is_main_file = filename.name == "main.py"
-        self._has_kill_pid = False
-        self._has_uvicorn_run = False
-        self._uvicorn_run_line = 0
-
-    @staticmethod
-    def _contains_any_type(node: ast.AST) -> bool:
-        """Check if an AST node contains Any or typing.Any in its annotation tree."""
-        if not node:
-            return False
-        for child in ast.walk(node):
-            if isinstance(child, ast.Name) and child.id == "Any":
-                return True
-            if isinstance(child, ast.Attribute) and child.attr == "Any":
-                if isinstance(child.value, ast.Name) and child.value.id == "typing":
-                    return True
-        return False
-
-    def add_violation(self, node, message: str, suggestion: str = None):
-        formatted = f"L{node.lineno}: {message}"
-        if suggestion:
-            formatted += f"\n       💡 Fix: {suggestion}"
-        self.violations.append(formatted)
-
-    def visit_Import(self, node):
-        for alias in node.names:
-            if alias.name == "logging" or alias.name.startswith("logging."):
-                self.add_violation(node, "❌ [Logging Violation] Direct 'import logging' used. Use 'setup_logger' instead.")
-            if alias.name == "pathlib" and not self.is_config_file:
-                self.add_violation(node, "❌ [Pathlib Violation] Direct 'import pathlib' used outside config. Use 'src.config' utilities.")
-            if alias.name == "typing.Any":
-                self.add_violation(
-                    node,
-                    "❌ [Type Safety Violation] 'typing.Any' imported.",
-                    suggestion="Using 'Any' disables Mypy/Pyright type checking. Replace with concrete types, Pydantic models, or TypeVar."
-                )
-        self.generic_visit(node)
-
-    def visit_ImportFrom(self, node):
-        if node.module == "logging" or (node.module and node.module.startswith("logging.")):
-            self.add_violation(node, "❌ [Logging Violation] Direct 'logging' import used. Use 'setup_logger' instead.")
-        if node.module == "pathlib" and not self.is_config_file:
-            self.add_violation(node, "❌ [Pathlib Violation] Direct 'pathlib' import used outside config. Use 'src.config' utilities.")
-        if node.module == "typing":
-            for alias in node.names:
-                if alias.name == "Any":
-                    self.add_violation(
-                        node,
-                        "❌ [Type Safety Violation] Direct 'from typing import Any' import detected.",
-                        suggestion="Using 'Any' completely disables static type checking. Replace with concrete types, Pydantic models, TypedDict, or Generic TypeVar[T]."
-                    )
-            
-        if node.module == "os.path" and not self.is_config_file:
-            os_path_blacklist = {
-                "realpath": "get_abs_path",
-                "exists": "exists",
-                "isdir": "is_dir",
-                "join": "get_abs_path or relative string concatenation"
-            }
-            for alias in node.names:
-                if alias.name in os_path_blacklist:
-                    suggestion = os_path_blacklist[alias.name]
-                    self.add_violation(node, f"❌ [Config Path Violation] 'from os.path import {alias.name}' used. Use '{suggestion}' from files.py instead.")
-                    
-        self.generic_visit(node)
-
-    def _check_func_annotations(self, node):
-        """Checks parameter and return annotations for 'Any'."""
-        if node.returns and self._contains_any_type(node.returns):
-            ret_str = ast.unparse(node.returns)
-            self.add_violation(
-                node,
-                f"❌ [Type Safety Violation] Function '{node.name}' has return type containing 'Any' ('{ret_str}').",
-                suggestion=f"Specify a concrete return type (e.g. 'ResponsePayload', 'dict[str, str]', 'None') instead of '{ret_str}'."
-            )
-        for arg in node.args.args + node.args.kwonlyargs:
-            if arg.annotation and self._contains_any_type(arg.annotation):
-                arg_ann_str = ast.unparse(arg.annotation)
-                self.add_violation(
-                    arg,
-                    f"❌ [Type Safety Violation] Parameter '{arg.arg}' in function '{node.name}' annotated with 'Any' ('{arg_ann_str}').",
-                    suggestion=f"Define a concrete Pydantic schema or TypedDict for parameter '{arg.arg}' instead of '{arg_ann_str}'."
-                )
-
-    def visit_FunctionDef(self, node):
-        self._check_func_annotations(node)
-        self.generic_visit(node)
-
-    def visit_AsyncFunctionDef(self, node):
-        self._check_func_annotations(node)
-        self.generic_visit(node)
-
-    def visit_AnnAssign(self, node):
-        if self._contains_any_type(node.annotation):
-            var_name = ast.unparse(node.target) if hasattr(node, "target") else "variable"
-            ann_str = ast.unparse(node.annotation)
-            suggestion = (
-                f"Replace 'Any' in '{ann_str}' with an explicit domain model (e.g. Pydantic BaseModel), "
-                f"a specific TypedDict, or bounded TypeVar. Never allow untyped boundaries."
-            )
-            self.add_violation(
-                node,
-                f"❌ [Type Safety Violation] Variable '{var_name}' annotated with 'Any' ('{ann_str}').",
-                suggestion=suggestion
-            )
-        self.generic_visit(node)
-
-    def visit_Call(self, node):
-        # Strict Type Safety: getattr()
-        if isinstance(node.func, ast.Name) and node.func.id == "getattr":
-            obj_repr = ast.unparse(node.args[0]) if len(node.args) >= 1 else "obj"
-            attr_repr = ast.unparse(node.args[1]) if len(node.args) >= 2 else "'attr'"
-            default_repr = f", {ast.unparse(node.args[2])}" if len(node.args) >= 3 else ""
-            call_snippet = f"getattr({obj_repr}, {attr_repr}{default_repr})"
-
-            clean_attr = attr_repr.strip("'\"")
-            if attr_repr.startswith(("'", '"')):
-                if default_repr:
-                    def_val = ast.unparse(node.args[2])
-                    suggestion = (
-                        f"Avoid dynamic reflection. Define '{clean_attr}' in the schema or model: "
-                        f"'{clean_attr}: <Type> | None = {def_val}'. Then access directly via '{obj_repr}.{clean_attr}'."
-                    )
-                else:
-                    suggestion = f"Access attribute directly: '{obj_repr}.{clean_attr}'. Ensure '{clean_attr}' is defined on the class or Pydantic model."
-            else:
-                suggestion = (
-                    f"Dynamic attribute/method dispatch detected ({attr_repr}). "
-                    f"Replace with an explicit Strategy registry: 'REGISTRY: dict[KeyType, Callable] = {{...}}' "
-                    f"and retrieve via 'REGISTRY.get({attr_repr})'."
-                )
-
-            self.add_violation(
-                node,
-                f"❌ [Type Safety Violation] Dynamic '{call_snippet}' used.",
-                suggestion=suggestion
-            )
-
-        # Strict Type Safety: setattr()
-        if isinstance(node.func, ast.Name) and node.func.id == "setattr":
-            obj_repr = ast.unparse(node.args[0]) if len(node.args) >= 1 else "obj"
-            attr_repr = ast.unparse(node.args[1]) if len(node.args) >= 2 else "'attr'"
-            val_repr = ast.unparse(node.args[2]) if len(node.args) >= 3 else "val"
-            clean_attr = attr_repr.strip("'\"")
-
-            if attr_repr.startswith(("'", '"')):
-                suggestion = f"Assign directly: '{obj_repr}.{clean_attr} = {val_repr}' or use Pydantic '{obj_repr}.model_copy(update={{{attr_repr}: {val_repr}}})'."
-            else:
-                suggestion = f"Avoid dynamic attribute mutation on '{obj_repr}'. Use a structured dictionary or Pydantic model."
-
-            self.add_violation(
-                node,
-                f"❌ [Type Safety Violation] Dynamic 'setattr({obj_repr}, {attr_repr}, ...)' used.",
-                suggestion=suggestion
-            )
-
-        # Strict Type Safety: hasattr()
-        if isinstance(node.func, ast.Name) and node.func.id == "hasattr":
-            obj_repr = ast.unparse(node.args[0]) if len(node.args) >= 1 else "obj"
-            attr_repr = ast.unparse(node.args[1]) if len(node.args) >= 2 else "'attr'"
-            clean_attr = attr_repr.strip("'\"")
-            suggestion = (
-                f"Defensive attribute probing detected. Avoid 'hasattr()'. Enforce strict data contracts "
-                f"using Pydantic models, TypedDict, or Protocols where '{clean_attr}' is guaranteed to exist."
-            )
-            self.add_violation(
-                node,
-                f"❌ [Type Safety Violation] Defensive 'hasattr({obj_repr}, {attr_repr})' used.",
-                suggestion=suggestion
-            )
-
-        # Strict Type Safety: isinstance()
-        if isinstance(node.func, ast.Name) and node.func.id == "isinstance":
-            is_ast_check = False
-            if len(node.args) >= 2:
-                for sub in ast.walk(node.args[1]):
-                    if isinstance(sub, ast.Attribute) and isinstance(sub.value, ast.Name) and sub.value.id == "ast":
-                        is_ast_check = True
-                        break
-                    if isinstance(sub, ast.Name) and sub.id == "AST":
-                        is_ast_check = True
-                        break
-
-            if not is_ast_check:
-                obj_repr = ast.unparse(node.args[0]) if len(node.args) >= 1 else "obj"
-                type_repr = ast.unparse(node.args[1]) if len(node.args) >= 2 else "Type"
-                suggestion = (
-                    f"Type branching smell detected ('isinstance({obj_repr}, {type_repr})'). "
-                    f"Replace type-checks with Polymorphism (Strategy Pattern / Protocol with unified methods), "
-                    f"Pydantic Discriminated Unions, or Pattern Matching (match/case with assert_never)."
-                )
-                self.add_violation(
-                    node,
-                    f"❌ [Type Safety Violation] Type branching 'isinstance({obj_repr}, {type_repr})' used.",
-                    suggestion=suggestion
-                )
-        # 0. Kill switch tracking (main.py only)
-        if self.is_main_file:
-            if isinstance(node.func, ast.Name) and node.func.id == "kill_pid":
-                self._has_kill_pid = True
-            if isinstance(node.func, ast.Attribute) and node.func.attr == "run":
-                if isinstance(node.func.value, ast.Name) and node.func.value.id == "uvicorn":
-                    self._has_uvicorn_run = True
-                    self._uvicorn_run_line = node.lineno
-
-        # 1. Print statement
-        if isinstance(node.func, ast.Name) and node.func.id == "print":
-            self.add_violation(node, "⚠️ [Print Statement] Manual 'print()' found. Use a logger for production code.")
-        
-        # 2. Manual open()
-        if isinstance(node.func, ast.Name) and node.func.id == "open":
-            self.add_violation(node, "❌ [Manual File I/O] Direct 'open()' call found. Use 'read_text/write_text' from config instead.")
-        
-        # 3. Manual os.getenv
-        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-            if node.func.value.id == "os" and node.func.attr in ("getenv", "getenvb"):
-                self.add_violation(node, "❌ [Env Access] Direct 'os.getenv()' used. Use 'Settings' class.")
-            if node.func.value.id == "os" and node.func.attr in ("open", "read", "write"):
-                self.add_violation(node, f"❌ [Manual File I/O] Direct 'os.{node.func.attr}()' used. Use config utilities.")
-
-        # 4. Keyword arguments (exist_ok=True)
-        for keyword in node.keywords:
-            if keyword.arg == "exist_ok" and isinstance(keyword.value, ast.Constant) and keyword.value.value is True:
-                self.add_violation(node, "❌ [Manual Dir Creation] 'exist_ok=True' found. Use 'ensure_dir' from config instead.")
-        
-        # 5. Logger Compliance
-        if isinstance(node.func, ast.Name) and node.func.id == "setup_logger":
-            if node.args:
-                arg = node.args[0]
-                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
-                     self.add_violation(node, f"❌ [Logger Compliance] Hardcoded log filename '{arg.value}' found. Use 'Settings.LOG_DIR / \"layer.log\"'.")
-
-        # 6. Field(default=...) in settings.py — captured as advisory, not violation
-        if self.is_settings_file:
-            if isinstance(node.func, ast.Name) and node.func.id == "Field":
-                for kw in node.keywords:
-                    if kw.arg == "default" and isinstance(kw.value, ast.Constant):
-                        val = kw.value.value
-                        if val not in (None, ""):
-                            self.has_settings_defaults = True
-
-        # 7. os.getenv with a fallback default (silent failure anywhere)
-        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-            if node.func.value.id == "os" and node.func.attr == "getenv":
-                if len(node.args) >= 2 or any(kw.arg == "default" for kw in node.keywords):
-                    self.add_violation(node, "⚠️ [Silent Default] os.getenv() with fallback default found. Use Settings class — missing env vars should fail loudly.")
-
-        # ── Helpers Enforcement ────────────────────────────────────────────────
-        if not self.is_helpers_file and not self.is_config_file:
-
-            # 8. Raw datetime.now() / datetime.utcnow() — use time_now_iso()
-            if isinstance(node.func, ast.Attribute) and node.func.attr in ("now", "utcnow"):
-                if isinstance(node.func.value, ast.Name) and node.func.value.id == "datetime":
-                    self.add_violation(node, "⚠️ [Helpers Violation] Direct 'datetime.now()/utcnow()' used. Use 'time_now_iso()' from src.helpers instead.")
-
-            # 9. create_async_engine() — use init_db() from src.db instead
-            if isinstance(node.func, ast.Name) and node.func.id == "create_async_engine" and not self.is_db_file:
-                self.add_violation(node, "❌ [Helpers Violation] Direct 'create_async_engine()' used. Use 'init_db()' from src.db instead.")
-
-            # 10. time.sleep() inside a loop — manual retry pattern
-            if self._inside_loop:
-                if isinstance(node.func, ast.Attribute) and node.func.attr == "sleep":
-                    if isinstance(node.func.value, ast.Name) and node.func.value.id == "time":
-                        self.add_violation(node, "⚠️ [Helpers Violation] Manual retry pattern detected (time.sleep in loop). Use '@retry_on_failure' from src.helpers instead.")
-                if isinstance(node.func, ast.Attribute) and node.func.attr == "sleep":
-                    if isinstance(node.func.value, ast.Name) and node.func.value.id == "asyncio":
-                        self.add_violation(node, "⚠️ [Helpers Violation] Manual async retry pattern detected (asyncio.sleep in loop). Use '@retry_async_on_failure' from src.helpers instead.")
-
-        self.generic_visit(node)
-
-    def visit_With(self, node):
-        for item in node.items:
-            if isinstance(item.context_expr, ast.Call):
-                call = item.context_expr
-                if isinstance(call.func, ast.Name) and call.func.id == "open":
-                    self.add_violation(node, "❌ [Manual File I/O] 'with open()' block found. Use 'read_text/write_text' from config instead.")
-        self.generic_visit(node)
-
-    def visit_Attribute(self, node):
-        # 1. os.environ
-        if isinstance(node.value, ast.Name) and node.value.id == "os" and node.attr == "environ":
-            if not self.is_config_file and not self.is_helpers_file:
-                self.add_violation(node, "❌ [Env Access] Direct 'os.environ' used. Use 'Settings' class.")
-        
-        # 2. Forbidden Path methods
-        forbidden_path_methods = {
-            "exists": "exists",
-            "is_file": "is_file",
-            "is_dir": "is_dir",
-            "read_text": "read_text",
-            "read_bytes": "read_text",
-            "write_text": "write_text",
-            "write_bytes": "write_text",
-            "mkdir": "ensure_dir",
-            "iterdir": "list_files",
-            "glob": "list_files",
-            "rglob": "list_files",
-            "unlink": "delete",
-            "resolve": "get_abs_path",
-            "absolute": "get_abs_path"
-        }
-        if node.attr in forbidden_path_methods and not self.is_config_file:
-            suggestion = forbidden_path_methods[node.attr]
-            self.add_violation(node, f"❌ [Config Path Violation] Direct '.{node.attr}()' used. Use '{suggestion}' from src.config.files instead.")
-            
-        # 3. os.path methods
-        os_path_blacklist = {
-            "realpath": "get_abs_path",
-            "exists": "exists",
-            "isdir": "is_dir",
-            "join": "get_abs_path or relative string concatenation"
-        }
-        if node.attr in os_path_blacklist and not self.is_config_file:
-            is_os_path = False
-            if isinstance(node.value, ast.Name) and node.value.id in ("os", "path"):
-                is_os_path = True
-            elif isinstance(node.value, ast.Attribute) and node.value.attr == "path":
-                is_os_path = True
-
-            if is_os_path:
-                suggestion = os_path_blacklist[node.attr]
-                self.add_violation(node, f"❌ [Config Path Violation] 'os.path.{node.attr}' used. Use '{suggestion}' from files.py instead.")
-        
-        self.generic_visit(node)
-
-    def visit_Try(self, node):
-        for handler in node.handlers:
-            if len(handler.body) == 1 and isinstance(handler.body[0], ast.Pass):
-                self.add_violation(handler, "❌ [Silent Exception] 'except: pass' found. Do not swallow exceptions silently.")
-        self.generic_visit(node)
-
-    def visit_Raise(self, node):
-        """Detect raw raise Exception/ValueError/RuntimeError — suggest AppError hierarchy."""
-        if not self.is_helpers_file and not self.is_config_file and node.exc:
-            # raise ExceptionType(...) or raise ExceptionType
-            exc_node = node.exc
-            exc_name = None
-            if isinstance(exc_node, ast.Call) and isinstance(exc_node.func, ast.Name):
-                exc_name = exc_node.func.id
-            elif isinstance(exc_node, ast.Name):
-                exc_name = exc_node.id
-            if exc_name and exc_name in self._RAW_EXCEPTION_TYPES:
-                self.add_violation(node, f"⚠️ [Helpers Violation] Raw 'raise {exc_name}(...)' used. Use AppError subclasses (NotFoundError, ValidationError, etc.) from src.helpers instead.")
-        self.generic_visit(node)
-
-    # ── Loop tracking for manual retry detection ──────────────────────────────
-    def visit_For(self, node):
-        self._inside_loop = True
-        self.generic_visit(node)
-        self._inside_loop = False
-
-    def visit_While(self, node):
-        self._inside_loop = True
-        self.generic_visit(node)
-        self._inside_loop = False
