@@ -54,7 +54,7 @@ async def login(email: str, password: str, session: AsyncSession) -> TokenRespon
     if not user or not await verify_password(password, user.password_hash):
         raise AuthenticationError("Invalid email or password")
 
-    if hasattr(user, "is_active") and not user.is_active:
+    if not user.is_active:
         raise PermissionDeniedError("Account is inactive")
 
     token = create_token(user.id)

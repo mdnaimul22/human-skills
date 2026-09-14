@@ -18,7 +18,7 @@ async def send_email(to_email: str, subject: str, body: str) -> bool:
     Sends an outbound email asynchronously.
     In development mode or if SMTP is not configured, logs the email payload safely.
     """
-    smtp_host = getattr(Settings, "SMTP_HOST", None)
+    smtp_host = Settings.SMTP_HOST
 
     if not smtp_host or Settings.is_development:
         logger.info(

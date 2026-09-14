@@ -5,6 +5,7 @@ Manages the Next.js frontend lifecycle concurrently with the FastAPI backend.
 import os
 import signal
 import subprocess
+import sys
 from typing import Optional
 
 from src.config import Settings, setup_logger, exists, get_abs_path
@@ -12,16 +13,12 @@ from src.helpers.port_utils import kill_pid
 
 logger = setup_logger(Settings.LOG_DIR / "helper.log", name="app.helpers.frontend")
 
-_frontend_proc: Optional[subprocess.Popen] = None
-
 
 def get_frontend_port() -> int:
-    """Returns frontend port from Settings."""
     return Settings.FRONTEND_PORT
 
 
 def ensure_production_build() -> bool:
-    """Ensures Next.js production build (.next) exists; triggers build if missing."""
     web_abs_path = get_abs_path("web")
 
     if not exists("web/.next"):
@@ -38,67 +35,67 @@ def ensure_production_build() -> bool:
     return True
 
 
-def start_frontend() -> Optional[subprocess.Popen]:
-    """
-    Launches Next.js frontend process in development or production mode
-    based on Settings.ENV.
-    """
-    global _frontend_proc
-    web_abs_path = get_abs_path("web")
-    port = get_frontend_port()
+class FrontendManager:
+    def __init__(self):
+        self.proc: Optional[subprocess.Popen] = None
 
-    # Free the frontend port from any orphaned processes
-    kill_pid(port)
+    def start(self) -> Optional[subprocess.Popen]:
+        web_abs_path = get_abs_path("web")
+        port = get_frontend_port()
 
-    is_prod = Settings.is_production
-    mode = "production" if is_prod else "development"
+        kill_pid(port)
 
-    logger.info(f"Starting Next.js frontend in {mode} mode on port {port}...")
+        is_prod = Settings.is_production
+        mode = "production" if is_prod else "development"
 
-    if is_prod:
-        ensure_production_build()
-        cmd = ["npm", "run", "start", "--", "-p", str(port)]
-    else:
-        cmd = ["npm", "run", "dev", "--", "-p", str(port)]
+        logger.info(f"Starting Next.js frontend in {mode} mode on port {port}...")
 
-    try:
-        env_vars = dict(os.environ)
-        env_vars["PORT"] = str(port)
-        _frontend_proc = subprocess.Popen(
-            cmd,
-            cwd=web_abs_path,
-            env=env_vars,
-            # Use process group so terminating kills all child node workers
-            preexec_fn=os.setsid if hasattr(os, "setsid") else None
-        )
-        return _frontend_proc
-    except Exception as e:
-        logger.error(f"Failed to start frontend process: {e}")
-        return None
+        if is_prod:
+            ensure_production_build()
+            cmd = ["npm", "run", "start", "--", "-p", str(port)]
+        else:
+            cmd = ["npm", "run", "dev", "--", "-p", str(port)]
 
-
-def stop_frontend():
-    """Cleanly terminates the frontend process group and frees the port."""
-    global _frontend_proc
-    if _frontend_proc and _frontend_proc.poll() is None:
-        logger.info("Shutting down frontend process group...")
         try:
-            if hasattr(os, "killpg") and hasattr(os, "getpgid"):
-                os.killpg(os.getpgid(_frontend_proc.pid), signal.SIGTERM)
-            else:
-                _frontend_proc.terminate()
-
-            _frontend_proc.wait(timeout=3)
+            env_vars = dict(os.environ)
+            env_vars["PORT"] = str(port)
+            preexec_fn = os.setsid if sys.platform != "win32" else None
+            self.proc = subprocess.Popen(
+                cmd,
+                cwd=web_abs_path,
+                env=env_vars,
+                preexec_fn=preexec_fn
+            )
+            return self.proc
         except Exception as e:
-            logger.debug(f"SIGTERM exception during frontend shutdown: {e}")
+            logger.error(f"Failed to start frontend process: {e}")
+            return None
+
+    def stop(self) -> None:
+        if self.proc and self.proc.poll() is None:
+            logger.info("Shutting down frontend process group...")
             try:
-                if hasattr(os, "killpg") and hasattr(os, "getpgid"):
-                    os.killpg(os.getpgid(_frontend_proc.pid), signal.SIGKILL)
+                if sys.platform != "win32":
+                    os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
                 else:
-                    _frontend_proc.kill()
-            except Exception as e2:
-                logger.debug(f"SIGKILL exception during frontend shutdown: {e2}")
-        finally:
-            _frontend_proc = None
-            port = get_frontend_port()
-            kill_pid(port)
+                    self.proc.terminate()
+
+                self.proc.wait(timeout=3)
+            except Exception as e:
+                logger.debug(f"SIGTERM exception during frontend shutdown: {e}")
+                try:
+                    if sys.platform != "win32":
+                        os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
+                    else:
+                        self.proc.kill()
+                except Exception as e2:
+                    logger.debug(f"SIGKILL exception during frontend shutdown: {e2}")
+            finally:
+                self.proc = None
+                port = get_frontend_port()
+                kill_pid(port)
+
+
+frontend_manager = FrontendManager()
+start_frontend = frontend_manager.start
+stop_frontend = frontend_manager.stop

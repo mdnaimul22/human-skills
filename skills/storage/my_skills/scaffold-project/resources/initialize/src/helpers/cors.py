@@ -10,29 +10,15 @@ Usage in main.py:
 All origins are derived from Settings (API_HOST, API_PORT, FRONTEND_URL).
 """
 
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from src.config import Settings
 
 
-def register_cors(app, settings) -> None:
-    """
-    Register CORS middleware driven entirely by Settings.
+def register_cors(app: FastAPI, settings: Settings) -> None:
+    origins: list[str] = [f"http://{settings.API_HOST}:{settings.API_PORT}"]
 
-    Automatically includes:
-        - http://{API_HOST}:{API_PORT}  (self-origin for dev)
-        - Settings.FRONTEND_URL         (if configured)
-
-    Args:
-        app:      FastAPI application instance.
-        settings: Settings instance (needs API_HOST, API_PORT, FRONTEND_URL).
-    """
-    origins: list[str] = []
-
-    # Self-origin (always allowed for local dev / same-server deploy)
-    if hasattr(settings, "API_HOST") and hasattr(settings, "API_PORT"):
-        origins.append(f"http://{settings.API_HOST}:{settings.API_PORT}")
-
-    # Frontend origin(s) (SPA on different ports or domains)
-    if hasattr(settings, "FRONTEND_URL") and settings.FRONTEND_URL:
+    if settings.FRONTEND_URL:
         for u in settings.FRONTEND_URL.split(","):
             clean = u.strip()
             if clean and clean not in origins:

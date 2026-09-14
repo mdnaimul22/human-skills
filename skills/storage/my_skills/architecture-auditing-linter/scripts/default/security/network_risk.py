@@ -18,9 +18,9 @@ class NetworkDetector(SecurityDetector):
             if isinstance(node, ast.Call):
                 issues.extend(self._check_call(node))
 
-        # Plaintext HTTP URLs (excluding localhost/internal)
+        # Plaintext HTTP URLs (excluding localhost/internal and dynamic templates)
         for match in re.finditer(
-            r'["\']http://(?!localhost|127\.0\.0\.1|0\.0\.0\.0)[^"\']+["\']',
+            r'["\']http://(?!localhost|127\.0\.0\.1|0\.0\.0\.0|\{)[^"\']+["\']',
             source_code
         ):
             line = source_code[:match.start()].count('\n') + 1

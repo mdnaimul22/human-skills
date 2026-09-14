@@ -36,7 +36,7 @@ async def get_current_user(
     user = await repo.get(user_id)
     if not user:
         raise AuthenticationError("User not found")
-    if hasattr(user, "is_active") and not user.is_active:
+    if not user.is_active:
         raise PermissionDeniedError("Account is inactive")
     return user
 

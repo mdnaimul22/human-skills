@@ -4,68 +4,47 @@ Base Repository — Generic Async CRUD
 Extend this class per model to get instant create/read/update/delete.
 """
 
-from typing import TypeVar, Generic, Sequence, Any
+from typing import TypeVar, Generic, Sequence
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 T = TypeVar("T")
 
 
 class BaseRepository(Generic[T]):
-    """
-    Generic async CRUD repository.
-
-    Provides:
-        get(id)                     → single record or None
-        list(limit, offset)         → paginated list
-        count()                     → total record count
-        create(**kwargs)            → insert and return new record
-        update(id, **kwargs)        → partial update and return
-        delete(id)                  → hard delete, returns bool
-        exists(id)                  → check existence without loading
-    """
-
     def __init__(self, model: type[T], session: AsyncSession):
         self.model = model
         self.session = session
 
-    async def get(self, id: Any) -> T | None:
-        """Fetch a single record by primary key."""
+    async def get(self, id: int | str) -> T | None:
         return await self.session.get(self.model, id)
 
-    async def list(self, limit: int = 100, offset: int = 0) -> Sequence[T]:
-        """Fetch a paginated list of records."""
+    async def list_all(self, limit: int = 100, offset: int = 0) -> Sequence[T]:
         stmt = select(self.model).limit(limit).offset(offset)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
     async def count(self) -> int:
-        """Return total number of records."""
         stmt = select(func.count()).select_from(self.model)
         result = await self.session.execute(stmt)
         return result.scalar_one()
 
     async def create(self, **kwargs) -> T:
-        """Insert a new record, flush to populate server defaults, and return it."""
         obj = self.model(**kwargs)
         self.session.add(obj)
         await self.session.flush()
         return obj
 
-    async def update(self, id: Any, **kwargs) -> T | None:
-        """Partial update by primary key. Returns None if not found."""
-        obj = await self.get(id)
-        if obj is None:
-            return None
-        for key, value in kwargs.items():
-            if hasattr(obj, key):
-                setattr(obj, key, value)
+    async def update(self, id: int | str, **kwargs) -> T | None:
+        if not kwargs:
+            return await self.get(id)
+        stmt = update(self.model).filter_by(id=id).values(**kwargs)
+        await self.session.execute(stmt)
         await self.session.flush()
-        return obj
+        return await self.get(id)
 
-    async def delete(self, id: Any) -> bool:
-        """Hard delete by primary key. Returns False if not found."""
+    async def delete(self, id: int | str) -> bool:
         obj = await self.get(id)
         if obj is None:
             return False
@@ -73,7 +52,6 @@ class BaseRepository(Generic[T]):
         await self.session.flush()
         return True
 
-    async def exists(self, id: Any) -> bool:
-        """Check if a record exists without loading the full object."""
+    async def exists(self, id: int | str) -> bool:
         obj = await self.session.get(self.model, id)
         return obj is not None

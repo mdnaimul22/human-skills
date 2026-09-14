@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     NGINX_RATE_LIMIT_RATE: str = Field(default="10r/s", validation_alias="NGINX_RATE_LIMIT_RATE")
     NGINX_RATE_LIMIT_BURST: int = Field(default=20, validation_alias="NGINX_RATE_LIMIT_BURST")
 
+    SMTP_HOST: Optional[str] = Field(default=None, validation_alias="SMTP_HOST")
+    LLM_API_KEY: Optional[str] = Field(default=None, validation_alias="LLM_API_KEY")
+    OPENAI_API_KEY: Optional[str] = Field(default=None, validation_alias="OPENAI_API_KEY")
+    LLM_MODEL: str = Field(default="gpt-4o-mini", validation_alias="LLM_MODEL")
 
     def _resolve(self, val: str) -> Path:
         

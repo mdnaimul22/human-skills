@@ -7,19 +7,24 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-from typing import Any, Optional
+from typing import Optional, TypedDict
 
 from src.config import Settings, setup_logger
 
 logger = setup_logger(Settings.LOG_DIR / "provider.log", name="app.providers.tailscale")
 
 
+class TailscalePayload(TypedDict, total=False):
+    BackendState: str
+    AuthURL: str
+    TailscaleIPs: list[str]
+
+
 def is_tailscale_installed() -> bool:
-    """Check if the tailscale CLI executable is available in PATH."""
     return shutil.which("tailscale") is not None
 
 
-def run_tailscale_json(args: list[str], timeout: int = 5) -> tuple[bool, Optional[dict[str, Any]], str]:
+def run_tailscale_json(args: list[str], timeout: int = 5) -> tuple[bool, Optional[TailscalePayload], str]:
     """Execute a tailscale JSON command and return (success, parsed_json, error_message)."""
     if not is_tailscale_installed():
         return False, None, "tailscale CLI is not installed"

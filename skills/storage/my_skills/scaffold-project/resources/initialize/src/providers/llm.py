@@ -15,8 +15,7 @@ logger = setup_logger(Settings.LOG_DIR / "provider.log", name="app.providers.llm
 
 
 def is_llm_configured() -> bool:
-    """Check whether an LLM API key or endpoint is configured in Settings."""
-    api_key = getattr(Settings, "LLM_API_KEY", None) or getattr(Settings, "OPENAI_API_KEY", None)
+    api_key = Settings.LLM_API_KEY or Settings.OPENAI_API_KEY
     return bool(api_key)
 
 
@@ -26,11 +25,7 @@ async def generate_text(
     model: Optional[str] = None,
     temperature: float = 0.7,
 ) -> str:
-    """
-    Generates text completion asynchronously.
-    In development mode or when no API key is set, returns a safe simulated response.
-    """
-    resolved_model = model or getattr(Settings, "LLM_MODEL", "gpt-4o-mini")
+    resolved_model = model or Settings.LLM_MODEL
 
     if not is_llm_configured() or Settings.is_development:
         logger.info(

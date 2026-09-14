@@ -70,8 +70,7 @@ app.include_router(auth_router)
 
 @app.get("/", include_in_schema=False)
 async def root():
-    """Redirect root requests to frontend if configured."""
-    frontend_url = getattr(Settings, "FRONTEND_URL", None)
+    frontend_url = Settings.FRONTEND_URL
     if frontend_url:
         return RedirectResponse(url=frontend_url)
     return {

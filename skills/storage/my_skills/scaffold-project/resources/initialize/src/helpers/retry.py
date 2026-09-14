@@ -30,7 +30,7 @@ Usage:
     result = await run_with_retry(some_async_fn, arg1, arg2, max_attempts=3)
 """
 
-from typing import TypeVar, Callable, Any
+from typing import TypeVar, Callable, Protocol, ParamSpec
 
 from tenacity import (
     retry,
@@ -41,9 +41,12 @@ from tenacity import (
 )
 
 T = TypeVar("T")
+P = ParamSpec("P")
 
-# ── Default retryable exceptions ──────────────────────────────────────────────
-# These cover the most common transient failures across HTTP, DB, and network.
+class LoggerProtocol(Protocol):
+    def warning(self, msg: str) -> None:
+        ...
+
 _DEFAULT_RETRYABLE: tuple[type[Exception], ...] = (
     ConnectionError,
     TimeoutError,
@@ -51,35 +54,32 @@ _DEFAULT_RETRYABLE: tuple[type[Exception], ...] = (
 )
 
 
-def retry_on_failure(
+def _build_retry(
     max_attempts: int = 3,
     initial_wait: float = 1.0,
     max_wait: float = 30.0,
     retryable: tuple[type[Exception], ...] = _DEFAULT_RETRYABLE,
-    logger: Any = None,
+    logger: LoggerProtocol | None = None,
 ):
-    """
-    Decorator for synchronous functions.
-
-    Retries on specified transient exceptions with exponential backoff + jitter.
-
-    Args:
-        max_attempts:  Maximum number of attempts before giving up.
-        initial_wait:  Base delay in seconds for the first retry.
-        max_wait:      Cap on the delay between retries.
-        retryable:     Tuple of exception types that trigger a retry.
-        logger:        Optional logger for before-sleep logging.
-    """
     kwargs = {
         "stop": stop_after_attempt(max_attempts),
         "wait": wait_exponential_jitter(initial=initial_wait, max=max_wait),
         "retry": retry_if_exception_type(retryable),
         "reraise": True,
     }
-    if logger:
+    if logger is not None:
         kwargs["before_sleep"] = before_sleep_log(logger, 30)
-
     return retry(**kwargs)
+
+
+def retry_on_failure(
+    max_attempts: int = 3,
+    initial_wait: float = 1.0,
+    max_wait: float = 30.0,
+    retryable: tuple[type[Exception], ...] = _DEFAULT_RETRYABLE,
+    logger: LoggerProtocol | None = None,
+):
+    return _build_retry(max_attempts, initial_wait, max_wait, retryable, logger)
 
 
 def retry_async_on_failure(
@@ -87,54 +87,23 @@ def retry_async_on_failure(
     initial_wait: float = 1.0,
     max_wait: float = 30.0,
     retryable: tuple[type[Exception], ...] = _DEFAULT_RETRYABLE,
-    logger: Any = None,
+    logger: LoggerProtocol | None = None,
 ):
-    """
-    Decorator for async functions.
-
-    Retries on specified transient exceptions with exponential backoff + jitter.
-
-    Args:
-        max_attempts:  Maximum number of attempts before giving up.
-        initial_wait:  Base delay in seconds for the first retry.
-        max_wait:      Cap on the delay between retries.
-        retryable:     Tuple of exception types that trigger a retry.
-        logger:        Optional logger for before-sleep logging.
-    """
-    kwargs = {
-        "stop": stop_after_attempt(max_attempts),
-        "wait": wait_exponential_jitter(initial=initial_wait, max=max_wait),
-        "retry": retry_if_exception_type(retryable),
-        "reraise": True,
-    }
-    if logger:
-        kwargs["before_sleep"] = before_sleep_log(logger, 30)
-
-    return retry(**kwargs)
+    return _build_retry(max_attempts, initial_wait, max_wait, retryable, logger)
 
 
 async def run_with_retry(
-    fn: Callable[..., T],
-    *args: Any,
+    fn: Callable[P, T],
+    *args: P.args,
     max_attempts: int = 3,
     initial_wait: float = 1.0,
     max_wait: float = 30.0,
     retryable: tuple[type[Exception], ...] = _DEFAULT_RETRYABLE,
-    **kwargs: Any,
+    **kwargs: P.kwargs,
 ) -> T:
-    """
-    Run an async callable with retry logic (non-decorator usage).
+    decorator = _build_retry(max_attempts, initial_wait, max_wait, retryable)
 
-    Usage:
-        result = await run_with_retry(fetch_user, user_id, max_attempts=5)
-    """
-
-    @retry(
-        stop=stop_after_attempt(max_attempts),
-        wait=wait_exponential_jitter(initial=initial_wait, max=max_wait),
-        retry=retry_if_exception_type(retryable),
-        reraise=True,
-    )
+    @decorator
     async def _inner():
         return await fn(*args, **kwargs)
 
