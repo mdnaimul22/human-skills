@@ -1,0 +1,20 @@
+max_iterations: 30
+checkpoint_interval: 5
+log_level: "INFO"
+log_dir: null
+random_seed: 42
+
+diff_based_evolution: true
+max_code_length: 5000
+
+early_stopping_patience: 15
+convergence_threshold: 0.001
+early_stopping_metric: "combined_score"
+
+llm:
+  models:
+    - name: "qwen/qwen3.5-397b-a17b"
+      weight: 1.0
+  evaluator_models:
+    - name: "qwen/qwen3.5-122b-a10b"
+      weight: 1.0
