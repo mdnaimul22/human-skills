@@ -8,23 +8,6 @@ import ast
 from typing import Optional, Dict, List
 
 try:
-    from skills.helpers.paths import (
-        PROJECT_ROOT,
-        SKILLS_DIR,
-        STORAGE_DIR,
-        HELPERS_DIR,
-        STORAGE_BASE_DIR,
-        EXCLUDED_NAMES,
-    )
-    from skills.helpers.files import (
-        exists,
-        is_dir,
-        list_files,
-        read_text,
-        read_json,
-        get_rel_path,
-    )
-except ImportError:
     from paths import (
         PROJECT_ROOT,
         SKILLS_DIR,
@@ -33,14 +16,24 @@ except ImportError:
         STORAGE_BASE_DIR,
         EXCLUDED_NAMES,
     )
-    from files import (
-        exists,
-        is_dir,
-        list_files,
-        read_text,
-        read_json,
-        get_rel_path,
+except ImportError:
+    from skills.helpers.paths import (
+        PROJECT_ROOT,
+        SKILLS_DIR,
+        STORAGE_DIR,
+        HELPERS_DIR,
+        STORAGE_BASE_DIR,
+        EXCLUDED_NAMES,
     )
+
+from skills.helpers.files import (
+    exists,
+    is_dir,
+    list_files,
+    read_text,
+    read_json,
+    get_rel_path,
+)
 
 
 def _extract_message(result) -> str:
