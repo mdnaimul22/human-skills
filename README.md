@@ -32,7 +32,10 @@ chmod +x scripts/install.sh
 This binds the `human-skills` command to `~/.local/bin`, making all tools accessible from any directory.
 
 ### Usage
+Human Skills can be connected to an agentic coding system through a single agent-instruction profile.
+.gemini/GEMINI.md⁠
 
+Use the contents of this file as the system/developer-level prompt or agent instruction for an agentic system.
 ```bash
 # List all available skills & tools
 human-skills --list
