@@ -141,3 +141,24 @@ helpers/
 providers/
 └── gemini.py            ← Migrated to the correct location
 ```
+
+---
+
+### 2.3 Layer-by-Layer Concurrency Matrix (Sync vs Async)
+
+> *"Async for I/O boundary; Sync for pure computation."*
+
+| Layer | Execution Mode | Rule & Rationale |
+|:---|:---|:---|
+| `config/` | **Strictly Sync** (`def`) | Boot-time environment loading, constant resolution, local files. |
+| `schema/` | **Strictly Sync** (`def`) | In-memory Pydantic validation & data modeling (microsecond CPU). |
+| `helpers/` | **Strictly Sync** (`def`) | Pure computational transforms (formatting, hashing, sanitization). |
+| `core/validators/` | **Strictly Sync** (`def`) | In-memory invariant checks. Never make async unless querying DB. |
+| `core/` (engine) | **Async-First + Sync Bridge** | I/O & AI workflows (`run_async`), with sync bridge (`run`) for CLI/tasks. |
+| `providers/` | **Strictly Async** (`async def`) | Network I/O, LLM inference, remote database drivers, external APIs. |
+| `services/` | **Async** (`async def`) | Non-blocking fan-in orchestration across providers and repositories. |
+| `routers/` | **Async** (`async def`) | High-throughput non-blocking HTTP endpoints awaiting service results. |
+
+> [!WARNING]  
+> **Event Loop Freezing**: Never invoke blocking I/O (e.g. `time.sleep()`, synchronous `requests.get()`) inside an `async def` handler. Keep pure logic strictly synchronous to prevent async contamination across call stacks.
+

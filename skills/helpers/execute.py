@@ -407,7 +407,7 @@ def main() -> None:
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
         print(__doc__ or "human-skills Command Center")
         print("\nUsage:")
-        print("  • human-skills --list [all | <dir_name>]")
+        print("  • human-skills --list [all | <dir_name>] (or --list-all)")
         print("  • human-skills --skill_info <skill_name>")
         print("  • human-skills --tool_info <tool_name>")
         print("  • human-skills '{\"tool_name\": \"<name>\", \"tool_args\": {...}}'")
@@ -464,8 +464,9 @@ def main() -> None:
         sys.exit(0)
 
     # ── 3. List Command Center ─────────────────────────────────────────────────
-    if sys.argv[1] == "--list":
-        _handle_list(sys.argv[2:])
+    if sys.argv[1] in ("--list", "--list-all", "--list_all", "--list all"):
+        list_args = ["all"] if sys.argv[1] in ("--list-all", "--list_all", "--list all") else sys.argv[2:]
+        _handle_list(list_args)
 
     # ── 4. Tool Execution Dispatcher ───────────────────────────────────────────
     source = sys.argv[1]

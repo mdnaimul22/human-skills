@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "human-skills"
+version = "1.0.0"
+description = "Master dispatcher and unified gateway for human-verified AI coding skills and tools"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = []
+
+[project.scripts]
+human-skills = "skills.helpers.execute:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["skills*"]
+
+[tool.setuptools.package-data]
+skills = ["*"]

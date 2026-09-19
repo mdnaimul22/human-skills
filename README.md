@@ -19,17 +19,38 @@ This repo also ships **executable tools** — registered CLI utilities (linter, 
 
 ## Quick Start
 
+### 1. Installation
+
+Clone the repository:
 ```bash
-# Clone the repo
 git clone https://github.com/mdnaimul22/human-skills.git
 cd human-skills
+```
 
-# Install the global CLI dispatcher
+Choose the installation method for your operating system:
+
+#### Linux / AWS / macOS
+```bash
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ```
+Auto-detects Python 3, installs to `/usr/local/bin` (root/sudo) or `~/.local/bin`, and auto-configures shell profiles (`.bashrc`, `.zshrc`, `.profile`). Verified on Amazon Linux 2023, Ubuntu, Debian, Alpine, Fedora, and macOS.
 
-This binds the `human-skills` command to `~/.local/bin`, making all tools accessible from any directory.
+#### Windows (PowerShell)
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+```
+Creates native wrappers in `%USERPROFILE%\.local\bin` and configures Windows User PATH.
+
+#### Windows (Command Prompt / CMD)
+```cmd
+scripts\install.bat
+```
+
+#### Universal (pip)
+```bash
+pip install -e .
+```
 
 ### Usage
 Human Skills can be connected to an agentic coding system through a single agent-instruction profile.
@@ -38,7 +59,7 @@ Human Skills can be connected to an agentic coding system through a single agent
 Use the contents of this file as the system/developer-level prompt or agent instruction for an agentic system.
 ```bash
 # List all available skills & tools
-human-skills --list
+human-skills --list-all
 
 # Read a skill's documentation
 human-skills --skill_info architecture-auditing-linter
@@ -137,9 +158,15 @@ human-skills/
 ├── .agents/rules/                   # 📐 Coding standards & architecture rules
 │
 ├── scripts/
-│   ├── install.sh                   # Global CLI installer
-│   └── sync-rules.sh               # Agent rules syncer
+│   ├── install.sh                   # Global CLI installer (Linux / AWS / macOS)
+│   ├── install.ps1                  # PowerShell installer (Windows)
+│   ├── install.bat                  # Command Prompt installer (Windows)
+│   └── sync-rules.sh                # Agent rules syncer
 │
+├── test/
+│   └── test_multi_os_install.sh     # Multi-OS automated Docker verification suite
+│
+├── pyproject.toml                   # Standard packaging & pip install configuration
 └── assets/
 ```
 

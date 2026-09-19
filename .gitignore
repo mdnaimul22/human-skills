@@ -148,6 +148,7 @@ archived/
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
 
 # Upstream Repositories Storage
 .data/
