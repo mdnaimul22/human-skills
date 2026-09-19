@@ -97,20 +97,19 @@ def step_inject_design_system():
     is_light = luminance > 0.5
     scheme = "light" if is_light else "dark"
 
-    # Compile CSS tokens
-    primary = colors.get("primary", "#3b82f6")
-    secondary = colors.get("secondary", "#6366f1")
-    accent = colors.get("accent", colors.get("cta", "#f97316"))
-    bg = colors.get("background", "#f8fafc")
-    fg = colors.get("foreground", colors.get("text", "#1e293b"))
-    muted = colors.get("muted", "#f1f5f9" if is_light else "#334155")
-    border = colors.get("border", "#e2e8f0" if is_light else "#334155")
-    destructive = colors.get("destructive", "#ef4444")
-    ring = colors.get("ring", primary)
+    primary = colors.get("primary") or "#3b82f6"
+    secondary = colors.get("secondary") or "#6366f1"
+    accent = colors.get("accent") or colors.get("cta") or "#f97316"
+    bg = colors.get("background") or "#f8fafc"
+    fg = colors.get("foreground") or colors.get("text") or "#1e293b"
+    muted = colors.get("muted") or ("#f1f5f9" if is_light else "#334155")
+    border = colors.get("border") or ("#e2e8f0" if is_light else "#334155")
+    destructive = colors.get("destructive") or "#ef4444"
+    ring = colors.get("ring") or primary
 
-    surface = "#ffffff" if is_light else _lighten_hex(bg, 0.08)
-    primary_fg = "#ffffff"
-    text_secondary = _blend_hex(fg, bg, 0.3)
+    surface = colors.get("card") or ("#ffffff" if is_light else _lighten_hex(bg, 0.08))
+    primary_fg = colors.get("on_primary") or "#ffffff"
+    text_secondary = colors.get("muted_foreground") or _blend_hex(fg, bg, 0.3)
     text_muted = _blend_hex(fg, bg, 0.5)
 
     css_block = f"""

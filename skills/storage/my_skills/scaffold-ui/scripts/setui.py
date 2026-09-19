@@ -27,7 +27,12 @@ class SetUI(Tool):
         "Pass 'design_query' to auto-generate a custom theme matched to your industry/product."
     )
 
-    def _generate_design_system(self, query: str) -> dict | None:
+    def _generate_design_system(
+        self,
+        query: str,
+        project_name: str | None = None,
+        output_dir: str | None = None,
+    ) -> dict | None:
         storage_root = Path(__file__).resolve().parents[3]
         target_scripts = (
             storage_root
@@ -45,9 +50,15 @@ class SetUI(Tool):
             sys.path.insert(0, scripts_str)
 
         try:
-            from design_system import DesignSystemGenerator
+            from design_system import DesignSystemGenerator, persist_design_system
             generator = DesignSystemGenerator()
-            return generator.generate(query)
+            ds = generator.generate(query, project_name=project_name)
+            if output_dir:
+                try:
+                    persist_design_system(ds, output_dir=output_dir)
+                except Exception:
+                    pass
+            return ds
         except Exception:
             return None
         finally:
@@ -85,7 +96,11 @@ class SetUI(Tool):
         ds_info = ""
 
         if design_query:
-            design_system = self._generate_design_system(design_query)
+            design_system = self._generate_design_system(
+                design_query,
+                project_name=dest_path.name,
+                output_dir=str(dest_path),
+            )
             if design_system:
                 env["DESIGN_SYSTEM_JSON"] = json.dumps(design_system, ensure_ascii=False)
                 ds_info = f"\n🧠 Design system generated for: \"{design_query}\""
