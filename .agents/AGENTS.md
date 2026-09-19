@@ -35,12 +35,4 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## Always-On Rule Set
 
 > [!NOTE]  
-> The following system rules act as the permanent foundation for any architectural decisions you execute. You must abide by them constantly:
-
-.agents/rules/architecture-patterns.md
-.agents/rules/coding-standards.md
-.agents/rules/config-path-rules.md
-.agents/rules/config-usage-rules.md
-.agents/rules/maintenance-testing.md
-.agents/rules/project-config-example.md
-.agents/rules/project-tree-example.md
+> The following system .agents/rules/** act as the permanent foundation for any architectural decisions you execute. You must abide by them constantly.

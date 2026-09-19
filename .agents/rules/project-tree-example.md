@@ -1,10 +1,9 @@
 ---
 trigger: always_on
-name: project-tree-example
 description: follow similar kind of Project Structure or more schema base Architectural Pattern that track code structure without viewing the full context of code.
 ---
 
-### Canonical Project Structure Example-1
+## Canonical Project Structure Example-1
 
 ```
 project_root/
@@ -84,7 +83,7 @@ project_root/
 └── pyproject.toml
 ```
 
-### Canonical Project Structure Example-2
+## Canonical Project Structure Example-2
 
 ```
 project_root/
@@ -111,7 +110,7 @@ project_root/
 └── profiles_data/           # Saved backup JSON files
 ```
 
-### Canonical Project Structure Example-2.1 with local import relations
+## Canonical Project Structure Example-2.1 with local import relations
 
 ```
 epic-adb/
@@ -163,7 +162,7 @@ epic-adb/
 ├── /README.md
 └── /tree.py
 ```
-### Canonical Project Structure Example-3
+## Canonical Project Structure Example-3
 
 ```
 ClassLens/
