@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from typing import Union
 
 _MARKER_FILES = (".env", "main.py", "pyproject.toml", ".git", "cli.py", "app.py")
 
@@ -25,10 +26,10 @@ SKILLS_DIR: str = "skills"
 STORAGE_DIR: str = "skills/storage"
 HELPERS_DIR: str = "skills/helpers"
 STORAGE_BASE_DIR: str = str((PROJECT_ROOT / "skills" / "storage").resolve())
-EXCLUDED_NAMES: frozenset[str] = frozenset({"execute.py", "__init__.py", "__pycache__"})
+EXCLUDED_NAMES: frozenset = frozenset({"execute.py", "__init__.py", "__pycache__"})
 
 
-def resolve_sandboxed(path: str | Path) -> Path:
+def resolve_sandboxed(path: Union[str, Path]) -> Path:
     raw_str = str(path).strip()
     if not raw_str:
         raise ValueError("Path cannot be empty or whitespace")
