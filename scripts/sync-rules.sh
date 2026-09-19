@@ -1,49 +1,58 @@
-#!/bin/bash
+#!/usr/bin/env sh
+set -e
 
-# Target directory
-TARGET_DIR=".agents/rules"
-API_URL="https://api.github.com/repos/mdnaimul22/human-skills/contents/.agents/rules"
-REPO_RAW_URL="https://raw.githubusercontent.com/mdnaimul22/human-skills/main/.agents/rules"
+REPO_URL="https://github.com/mdnaimul22/human-skills.git"
+TAR_URL="https://github.com/mdnaimul22/human-skills/archive/refs/heads/main.tar.gz"
+TARGET_DIR="${1:-.agents}"
 
-echo "--- Rules Sync Started ---"
+echo "🚀 Syncing .agents directory into $TARGET_DIR..."
 
-# Create directory if it doesn't exist
-if [ ! -d "$TARGET_DIR" ]; then
-    echo "Creating directory $TARGET_DIR..."
-    mkdir -p "$TARGET_DIR"
-fi
+TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'agents_sync')"
+cleanup() {
+    rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT INT TERM
 
-# Fetch list of files dynamically from GitHub API
-echo "Fetching latest rules list from repository..."
-DYNAMIC_FILES=$(curl -sSL "$API_URL" | python3 -c "import json, sys; [print(x['name']) for x in json.load(sys.stdin) if isinstance(x, dict) and x.get('type') == 'file' and x.get('name', '').endswith('.md')]" 2>/dev/null)
+SYNC_SUCCESS=0
 
-if [ -n "$DYNAMIC_FILES" ]; then
-    readarray -t FILES <<< "$DYNAMIC_FILES"
-else
-    # Fallback list if GitHub API is unreachable or rate limited
-    FILES=(
-        "coding-standards.md"
-        "architecture-patterns.md"
-        "maintenance-testing.md"
-        "config-path-rules.md"
-        "config-usage-rules.md"
-        "helpers-usage-rules.md"
-        "project-config-example.md"
-        "project-tree-example.md"
-        "common-git-workflow.md"
-    )
-fi
-
-# Download/Update files
-for FILE in "${FILES[@]}"; do
-    [ -z "$FILE" ] && continue
-    echo "Syncing $FILE..."
-    curl -sSL "$REPO_RAW_URL/$FILE" -o "$TARGET_DIR/$FILE"
-    if [ $? -eq 0 ]; then
-        echo "Successfully synced $FILE"
-    else
-        echo "Failed to sync $FILE"
+if command -v git >/dev/null 2>&1; then
+    if git clone --depth 1 --filter=blob:none --sparse "$REPO_URL" "$TMP_DIR/repo" >/dev/null 2>&1; then
+        (cd "$TMP_DIR/repo" && git sparse-checkout set .agents >/dev/null 2>&1)
+        if [ -d "$TMP_DIR/repo/.agents" ]; then
+            mkdir -p "$TARGET_DIR"
+            cp -R "$TMP_DIR/repo/.agents/." "$TARGET_DIR/"
+            SYNC_SUCCESS=1
+        fi
     fi
-done
+fi
 
-echo "--- Rules Sync Completed ---"
+if [ "$SYNC_SUCCESS" -ne 1 ]; then
+    if command -v curl >/dev/null 2>&1 && command -v tar >/dev/null 2>&1; then
+        if curl -sSL "$TAR_URL" | tar -xz -C "$TMP_DIR" >/dev/null 2>&1; then
+            SOURCE_AGENTS="$(find "$TMP_DIR" -type d -name ".agents" | head -n 1)"
+            if [ -n "$SOURCE_AGENTS" ] && [ -d "$SOURCE_AGENTS" ]; then
+                mkdir -p "$TARGET_DIR"
+                cp -R "$SOURCE_AGENTS/." "$TARGET_DIR/"
+                SYNC_SUCCESS=1
+            fi
+        fi
+    fi
+fi
+
+if [ "$SYNC_SUCCESS" -ne 1 ]; then
+    echo "❌ Error: Failed to sync .agents directory from $REPO_URL" >&2
+    exit 1
+fi
+
+echo "================================================================="
+echo "✅ Rules synchronization completed successfully!"
+echo "📁 Target directory: $TARGET_DIR"
+if [ -d "$TARGET_DIR/rules" ]; then
+    echo "📋 Synced rule files:"
+    for rule_file in "$TARGET_DIR/rules/"*.md; do
+        if [ -f "$rule_file" ]; then
+            echo "   • $(basename "$rule_file")"
+        fi
+    done
+fi
+echo "================================================================="

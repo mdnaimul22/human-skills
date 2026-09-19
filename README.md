@@ -34,13 +34,11 @@ Choose the installation method for your operating system:
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ```
-Auto-detects Python 3, installs to `/usr/local/bin` (root/sudo) or `~/.local/bin`, and auto-configures shell profiles (`.bashrc`, `.zshrc`, `.profile`). Verified on Amazon Linux 2023, Ubuntu, Debian, Alpine, Fedora, and macOS.
 
 #### Windows (PowerShell)
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
-Creates native wrappers in `%USERPROFILE%\.local\bin` and configures Windows User PATH.
 
 #### Windows (Command Prompt / CMD)
 ```cmd
