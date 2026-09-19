@@ -20,6 +20,7 @@ a single `npm install` call after create-next-app.
 
 import json
 import os
+import re
 import subprocess
 import shutil
 import sys
@@ -380,6 +381,45 @@ def step_inject_design_system():
             theme_content = theme_content.replace('defaultTheme="dark"', 'defaultTheme="custom"')
             theme_path.write_text(theme_content, encoding="utf-8")
             print("   [Patched] default theme → custom")
+
+    words = [w for w in re.split(r"[\s_-]+", project_name) if w]
+    initials = "".join(w[0] for w in words[:2]).upper() if words else "UI"
+
+    icon_svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="{primary}"/>
+  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="{primary_fg}" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700">{initials}</text>
+</svg>
+"""
+    icon_path = WEB_DIR / "src" / "app" / "icon.svg"
+    icon_path.parent.mkdir(parents=True, exist_ok=True)
+    icon_path.write_text(icon_svg, encoding="utf-8")
+    print(f"   [Generated] icon.svg ({initials})")
+
+    brand_dir = WEB_DIR / "src" / "components" / "brand"
+    brand_dir.mkdir(parents=True, exist_ok=True)
+    logo_path = brand_dir / "logo.tsx"
+    logo_tsx = f"""export function Logo({{ className = "w-8 h-8" }}: {{ className?: string }}) {{
+    return (
+        <svg className={{className}} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="var(--color-primary, #3b82f6)" />
+            <text
+                x="50%"
+                y="54%"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="var(--color-primary-foreground, #ffffff)"
+                fontFamily="var(--font-sans, system-ui, sans-serif)"
+                fontSize="16"
+                fontWeight="700"
+            >
+                {initials}
+            </text>
+        </svg>
+    );
+}}
+"""
+    logo_path.write_text(logo_tsx, encoding="utf-8")
+    print("   [Generated] components/brand/logo.tsx")
 
     print(f"   ✅ Design system injected ({project_name})")
 

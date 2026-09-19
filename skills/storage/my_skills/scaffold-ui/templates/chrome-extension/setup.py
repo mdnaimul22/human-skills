@@ -13,6 +13,7 @@ Steps:
 
 import json
 import os
+import re
 import subprocess
 import shutil
 import sys
@@ -185,6 +186,20 @@ def step_inject_design_system():
             theme_content = theme_content.replace("defaultTheme = 'dark'", "defaultTheme = 'custom'")
             theme_path.write_text(theme_content, encoding="utf-8")
             print("   [Patched] default theme → custom")
+
+    words = [w for w in re.split(r"[\s_-]+", project_name) if w]
+    initials = "".join(w[0] for w in words[:2]).upper() if words else "UI"
+
+    icon_svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="{primary}"/>
+  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="{primary_fg}" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700">{initials}</text>
+</svg>
+"""
+    icon_dir = EXTENSION_DIR / "src" / "assets"
+    icon_dir.mkdir(parents=True, exist_ok=True)
+    icon_path = icon_dir / "icon.svg"
+    icon_path.write_text(icon_svg, encoding="utf-8")
+    print(f"   [Generated] icon.svg ({initials})")
 
     print(f"   ✅ Design system injected ({project_name})")
 
