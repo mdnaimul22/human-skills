@@ -51,8 +51,13 @@ pip install -e .
 ```
 
 ### Usage
-Human Skills can be connected to an agentic coding system through a single agent-instruction profile.
-.gemini/GEMINI.md⁠
+Human Skills can be connected to any agentic coding system through a single /.agents/** profile
+
+To sync only the `.agents/` folder into an existing project:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/scripts/sync-rules.sh | bash
+```
 
 Use the contents of this file as the system/developer-level prompt or agent instruction for an agentic system.
 ```bash
@@ -105,17 +110,6 @@ new-project/
 └── .gitignore
 ```
 
----
-
-## Sync Agent Rules
-
-To sync only the `.agents/rules/` folder into an existing project:
-
-```bash
-curl -sSL https://raw.githubusercontent.com/mdnaimul22/human-skills/main/scripts/sync-rules.sh | bash
-```
-
----
 
 ## What Makes a Skill "Human-Verified"?
 
