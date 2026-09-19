@@ -8,22 +8,6 @@ from pathlib import Path
 from helpers.tool import Tool, Response
 
 class SetUI(Tool):
-    """
-    Scaffolds a complete Next.js + shadcn/ui + Tailwind CSS frontend
-    with 9 themes, layout components, and OAuth auth pages.
-
-    Creates a 'web/' directory in the target project with:
-    - Next.js 15 (App Router) + TypeScript
-    - shadcn/ui components (30+ pre-installed)
-    - 9 unified themes (7 dark + 2 light)
-    - Layout shell (Sidebar, Navbar, PageHeader)
-    - Auth pages (Login with OAuth buttons)
-    - Secure FastAPI API client
-    - OpenAPI → TypeScript auto-gen script
-
-    When 'design_query' is provided, bridges with ui-ux-pro-max to generate
-    an AI-powered custom theme (colors, fonts) injected into the scaffold.
-    """
     name: str = "setui"
     description: str = (
         "Scaffolds a complete Next.js frontend (web/) or React Chrome Extension (extension/) "
@@ -44,16 +28,19 @@ class SetUI(Tool):
     )
 
     def _generate_design_system(self, query: str) -> dict | None:
-        """Call ui-ux-pro-max's DesignSystemGenerator to get a design system dict."""
-        # Locate ui-ux-pro-max scripts directory (sibling skill)
-        skills_root = Path(__file__).resolve().parent.parent.parent
-        uiux_scripts = skills_root / "ui-ux-pro-max" / "scripts"
-
-        if not uiux_scripts.exists():
+        storage_root = Path(__file__).resolve().parents[3]
+        target_scripts = (
+            storage_root
+            / "nextlevelbuilder_ui-ux-pro-max"
+            / "ui-ux-pro-max"
+            / "scripts"
+        )
+        if not target_scripts.exists():
+            target_scripts = storage_root / "my_skills" / "ui-ux-pro-max" / "scripts"
+        if not target_scripts.exists():
             return None
 
-        # Add to sys.path so we can import
-        scripts_str = str(uiux_scripts)
+        scripts_str = str(target_scripts)
         if scripts_str not in sys.path:
             sys.path.insert(0, scripts_str)
 
@@ -93,7 +80,6 @@ class SetUI(Tool):
                 break_loop=False,
             )
 
-        # Build environment — pass design system as JSON if query provided
         env = os.environ.copy()
         design_query = self.args.get("design_query", "")
         ds_info = ""
