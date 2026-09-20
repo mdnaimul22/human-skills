@@ -82,7 +82,7 @@ All rules in `default` mode are modularly located in `scripts/default/` and can 
 | `import_hygiene` | ❌ Wildcard imports (`from x import *`), ⚠️ deprecated stdlib modules, and ⚠️ unused imports. |
 | `code_complexity` | ⚠️ Deep nesting depth (> 4 levels), high cyclomatic complexity (> 15), and oversized functions. |
 | `code_duplication` | ❌ DRY violation: structural AST duplication between function bodies. |
-| `memory_efficiency` | ⚠️ In-place string concatenation inside loops (`+=`) and unneeded list comprehensions in generator functions. |
+| `memory_efficiency` | ⚠️ In-place string concatenation inside loops (`+=`), unneeded list comprehensions in generator functions, ❌ dictionary-like `get()`/`__getitem__()` on Pydantic models, and ⚠️ serialized `model_dump().get()` calls. |
 | `pythonic_standards` | ❌ PEP 8 naming (classes PascalCase, functions snake_case), shadowing Python built-ins, and `global` statement usage. |
 
 ### What it detects in `rest_api` mode?
