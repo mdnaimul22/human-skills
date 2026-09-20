@@ -71,7 +71,7 @@ All rules in `default` mode are modularly located in `scripts/default/` and can 
 | Rule File (`scripts/default/`) | Detected Violations & Advisories |
 | :--- | :--- |
 | `type_safety` | ❌ Dynamic reflection (`getattr`, `setattr`, `hasattr`), type branching/tautology (`isinstance`, `(..., object)`), and untyped boundaries (`Any`, `object` in variable/function annotations, explicit `cast(object)`). |
-| `path_safety` | ❌ Direct `import pathlib` outside `config/`, `os.path` usages, forbidden `Path` methods, and manual dir creation (`exist_ok=True`). |
+| `path_safety` | ❌ Direct `import pathlib` outside `config/`, `os.path` usages, forbidden `Path` methods, direct system `/tmp` directory usage (must use `data/tmp`), and manual dir creation (`exist_ok=True`). |
 | `logging_rule` | ❌ Direct `import logging`, hardcoded log filenames in `setup_logger`, and `print()` in production code. |
 | `env_config` | ❌ Direct `os.environ` / `os.getenv`, ⚠️ silent fallback defaults in `os.getenv`, and ⚠️ `Field(default=...)` in `settings.py`. |
 | `manual_io` | ❌ Direct `open()`, `with open()`, `os.open()`, `os.read()`, `os.write()`. (Must use `read_text`/`write_text` from config). |
@@ -83,6 +83,7 @@ All rules in `default` mode are modularly located in `scripts/default/` and can 
 | `code_complexity` | ⚠️ Deep nesting depth (> 4 levels), high cyclomatic complexity (> 15), and oversized functions. |
 | `code_duplication` | ❌ DRY violation: structural AST duplication between function bodies. |
 | `memory_efficiency` | ⚠️ In-place string concatenation inside loops (`+=`), unneeded list comprehensions in generator functions, ❌ dictionary-like `get()`/`__getitem__()` on Pydantic models, and ⚠️ serialized `model_dump().get()` calls. |
+| `clean_code` | ❌ Rule 10 compliance: docstrings (`"""..."""`) and standalone/top-level comment lines (`#`). Only essential trailing inline comments after code (`code # info`) are allowed. |
 | `pythonic_standards` | ❌ PEP 8 naming (classes PascalCase, functions snake_case), shadowing Python built-ins, and `global` statement usage. |
 
 ### What it detects in `rest_api` mode?
