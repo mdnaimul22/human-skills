@@ -9,7 +9,7 @@ from .files import (
     get_size, get_mtime, read_from_pos,
 )
 from .dotenv import load_dotenv, set_value, get_value, remove_value
-from .settings import Settings
+from .settings import Settings, ClientConfig
 from .logger import setup_logger, shutdown_logger
 
 # Auto-load environment variables on import
@@ -38,6 +38,7 @@ __all__ = [
     "get_value",
     "remove_value",
     "Settings",
+    "ClientConfig",
     "setup_logger",
     "shutdown_logger",
 ]
