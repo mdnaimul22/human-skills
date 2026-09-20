@@ -72,7 +72,7 @@ All rules in `default` mode are modularly located in `scripts/default/` and can 
 | :--- | :--- |
 | `type_safety` | ❌ Dynamic reflection (`getattr`, `setattr`, `hasattr`), type branching/tautology (`isinstance`, `(..., object)`), and untyped boundaries (`Any`, `object` in variable/function annotations, explicit `cast(object)`). |
 | `path_safety` | ❌ Direct `import pathlib` outside `config/`, `os.path` usages, forbidden `Path` methods, direct system `/tmp` directory usage (must use `data/tmp`), and manual dir creation (`exist_ok=True`). |
-| `logging_rule` | ❌ Direct `import logging`, hardcoded log filenames in `setup_logger`, and `print()` in production code. |
+| `logging_rule` | ❌ Direct `import logging`, hardcoded log filenames in `setup_logger`, and `print()` in production code (exempted inside `test/` or `tests/` directories). |
 | `env_config` | ❌ Direct `os.environ` / `os.getenv`, ⚠️ silent fallback defaults in `os.getenv`, and ⚠️ `Field(default=...)` in `settings.py`. |
 | `manual_io` | ❌ Direct `open()`, `with open()`, `os.open()`, `os.read()`, `os.write()`. (Must use `read_text`/`write_text` from config). |
 | `silent_exceptions` | ❌ Silent `except: pass` and ⚠️ raw built-in exceptions (`raise Exception/ValueError/...`). |

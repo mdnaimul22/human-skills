@@ -16,6 +16,7 @@ class FileContext:
         self.is_helpers_file = "helpers" in filename.parts
         self.is_db_file = "db" in filename.parts or filename.name == "connection.py"
         self.is_main_file = filename.name == "main.py"
+        self.is_test_file = "test" in filename.parts or "tests" in filename.parts
 
 
 class BaseRule(ast.NodeVisitor):
