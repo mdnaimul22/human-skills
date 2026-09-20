@@ -32,17 +32,40 @@ class PathSafetyRule(BaseRule):
             for alias in node.names:
                 if alias.name == "pathlib":
                     self.add_violation(node, "❌ [Pathlib Violation] Direct 'import pathlib' used outside config. Use 'src.config' utilities.")
+                if alias.name == "tempfile":
+                    self.add_violation(
+                        node,
+                        "❌ [Path Safety Violation] Direct 'import tempfile' used outside config.",
+                        suggestion="Use project-scoped sandboxed directory 'data/tmp' (via src.config) instead of system temporary files.",
+                    )
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         if not self.ctx.is_config_file:
             if node.module == "pathlib":
                 self.add_violation(node, "❌ [Pathlib Violation] Direct 'pathlib' import used outside config. Use 'src.config' utilities.")
+            if node.module == "tempfile":
+                self.add_violation(
+                    node,
+                    "❌ [Path Safety Violation] 'from tempfile import ...' used outside config.",
+                    suggestion="Use project-scoped sandboxed directory 'data/tmp' (via src.config) instead of system temporary files.",
+                )
             if node.module == "os.path":
                 for alias in node.names:
                     if alias.name in self.OS_PATH_BLACKLIST:
                         suggestion = self.OS_PATH_BLACKLIST[alias.name]
                         self.add_violation(node, f"❌ [Config Path Violation] 'from os.path import {alias.name}' used. Use '{suggestion}' from files.py instead.")
+        self.generic_visit(node)
+
+    def visit_Constant(self, node: ast.Constant) -> None:
+        if not self.ctx.is_config_file and isinstance(node.value, str):
+            val = node.value.strip()
+            if val == "/tmp" or val.startswith("/tmp/") or "/tmp/" in val:
+                self.add_violation(
+                    node,
+                    f"❌ [Path Safety Violation] Direct usage of system '/tmp' detected ('{val}').",
+                    suggestion="Use project-scoped sandboxed directory 'data/tmp' (via src.config) instead of system '/tmp' to prevent file collisions, security leaks, and sandbox escapes.",
+                )
         self.generic_visit(node)
 
     def visit_Attribute(self, node: ast.Attribute) -> None:
@@ -64,6 +87,13 @@ class PathSafetyRule(BaseRule):
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call) -> None:
+        if not self.ctx.is_config_file:
+            if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id == "tempfile":
+                self.add_violation(
+                    node,
+                    f"❌ [Path Safety Violation] 'tempfile.{node.func.attr}()' used.",
+                    suggestion="Use project-scoped sandboxed directory 'data/tmp' (via src.config.ensure_dir) instead of system temporary directories.",
+                )
         for keyword in node.keywords:
             if keyword.arg == "exist_ok" and isinstance(keyword.value, ast.Constant) and keyword.value.value is True:
                 self.add_violation(node, "❌ [Manual Dir Creation] 'exist_ok=True' found. Use 'ensure_dir' from config instead.")
