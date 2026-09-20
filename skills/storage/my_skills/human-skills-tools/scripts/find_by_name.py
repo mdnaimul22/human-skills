@@ -1,142 +1,126 @@
 import os
+import sys
 import subprocess
-from typing import List, Dict, Any, Optional
+from pathlib import Path
 
-from .helpers.tool import Tool, Response
-from .helpers.print_style import PrintStyle
-from .helpers.errors import handle_error
+_CURRENT_DIR = Path(__file__).resolve().parent
+_SKILLS_ROOT = _CURRENT_DIR
+for p in [_CURRENT_DIR, *_CURRENT_DIR.parents]:
+    if (p / "helpers" / "tool.py").exists():
+        _SKILLS_ROOT = p
+        break
+    if (p / "skills" / "helpers" / "tool.py").exists():
+        _SKILLS_ROOT = p / "skills"
+        break
+if str(_SKILLS_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SKILLS_ROOT))
+
+from helpers.tool import Tool, Response
 
 
 class FindByName(Tool):
-    """Tool for finding files by name or pattern."""
+    name = "find_by_name"
+    description = "Find files or directories by name or glob pattern using the system find command."
+    arguments = {
+        "search_directory": "Root directory to search in. (REQUIRED)",
+        "pattern": "Filename glob pattern (e.g. '*.py'). Default: '*'.",
+        "type": "'file', 'directory', or 'any'. Default: 'any'.",
+        "max_depth": "Maximum directory depth to search. Default: unlimited.",
+        "excludes": "Comma-separated sub-path segments to exclude (e.g. 'node_modules,__pycache__').",
+        "full_path": "If 'true', match pattern against full path instead of filename only. Default: false.",
+    }
+    instruction = "For skill instructions run: human-skills --skill_info human-skills-tools"
+
+    @staticmethod
+    def _format_size(size: int) -> str:
+        if size < 1024:
+            return f"{size} B"
+        if size < 1024 * 1024:
+            return f"{size / 1024:.1f} KB"
+        if size < 1024 * 1024 * 1024:
+            return f"{size / (1024 * 1024):.1f} MB"
+        return f"{size / (1024 * 1024 * 1024):.1f} GB"
+
+    @staticmethod
+    def _format_results(results: list[dict], search_directory: str, pattern: str) -> str:
+        if not results:
+            return f"No files found matching '{pattern}' in {search_directory}"
+
+        lines = [f"Found {len(results)} result(s) matching '{pattern}' in {search_directory}:"]
+        for info in results[:50]:
+            rel = os.path.relpath(info["path"], search_directory)
+            if info["is_dir"]:
+                lines.append(f"  {rel}/ (directory)")
+            else:
+                lines.append(f"  {rel} ({FindByName._format_size(info['size'])})")
+        if len(results) > 50:
+            lines.append(f"  … [{len(results) - 50} more results not shown]")
+        return "\n".join(lines)
 
     async def execute(self, **kwargs) -> Response:
-        search_directory = kwargs.get("search_directory")
-        pattern = kwargs.get("pattern", "*")
-        file_type = kwargs.get("type", "any").lower()
-        max_depth = kwargs.get("max_depth", None)
-        extensions = kwargs.get("extensions", [])
-        excludes = kwargs.get("excludes", [])
-        full_path = kwargs.get("full_path", False)
-        
-        # Validate inputs
+        search_directory = self.args.get("search_directory", "").strip()
+        pattern          = self.args.get("pattern", "*").strip() or "*"
+        file_type        = self.args.get("type", "any").strip().lower()
+        max_depth        = self.args.get("max_depth", "").strip()
+        excludes_raw     = self.args.get("excludes", "").strip()
+        full_path        = str(self.args.get("full_path", "false")).lower() in ("true", "1", "yes")
+
         if not search_directory:
-            return Response(message="Error: search_directory parameter is required", break_loop=False)
-        
-        if not os.path.isdir(search_directory):
-            return Response(message=f"Error: Directory '{search_directory}' does not exist", break_loop=False)
-        
-        # Build the find command
-        try:
-            cmd = ["find", search_directory]
-            
-            # Add depth limit if specified
-            if max_depth is not None:
-                cmd.extend(["-maxdepth", str(max_depth)])
-            
-            # Add type filter
-            if file_type == "file":
-                cmd.extend(["-type", "f"])
-            elif file_type == "directory":
-                cmd.extend(["-type", "d"])
-            
-            # Add name pattern
-            if pattern != "*":
-                if full_path:
-                    cmd.extend(["-path", pattern])
-                else:
-                    cmd.extend(["-name", pattern])
-            
-            # Add extension filters
-            if extensions:
-                extension_conditions = []
-                for ext in extensions:
-                    if not ext.startswith("."):
-                        ext = f".{ext}"
-                    extension_conditions.append(f"-name \"*{ext}\"")
-                
-                if extension_conditions:
-                    cmd.append("(")
-                    cmd.append(extension_conditions[0])
-                    for condition in extension_conditions[1:]:
-                        cmd.extend(["-o", condition])
-                    cmd.append(")")
-            
-            # Add exclude patterns
-            for exclude in excludes:
-                cmd.extend(["-not", "-path", f"*/{exclude}/*"])
-            
-            # Execute the command
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
+            return Response(
+                message="❌ Error: 'search_directory' is required.\n"
+                        "Example: human-skills '{\"tool_name\": \"find_by_name\", \"tool_args\": {\"search_directory\": \"/path/to/dir\", \"pattern\": \"*.py\"}}'",
+                break_loop=False,
             )
-            stdout, stderr = process.communicate()
-            
-            if process.returncode != 0:
-                if stderr:
-                    raise Exception(f"Find error: {stderr}")
-            
-            # Parse and format results
-            results = [line.strip() for line in stdout.splitlines() if line.strip()]
-            
-            # Get file information
-            file_info = []
-            for path in results:
+
+        if not os.path.isdir(search_directory):
+            return Response(
+                message=f"❌ Error: Directory '{search_directory}' does not exist.",
+                break_loop=False,
+            )
+
+        cmd = ["find", search_directory]
+
+        if max_depth:
+            try:
+                cmd.extend(["-maxdepth", str(int(max_depth))])
+            except ValueError:
+                pass
+
+        if file_type == "file":
+            cmd.extend(["-type", "f"])
+        elif file_type == "directory":
+            cmd.extend(["-type", "d"])
+
+        if pattern != "*":
+            cmd.extend(["-path" if full_path else "-name", pattern])
+
+        excludes = [e.strip() for e in excludes_raw.split(",") if e.strip()]
+        for exc in excludes:
+            cmd.extend(["-not", "-path", f"*/{exc}/*"])
+
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            raw_paths = [l.strip() for l in proc.stdout.splitlines() if l.strip()]
+
+            results: list[dict] = []
+            for p in raw_paths:
                 try:
-                    stat = os.stat(path)
-                    is_dir = os.path.isdir(path)
-                    
-                    info = {
-                        "path": path,
-                        "is_directory": is_dir,
-                        "size": stat.st_size if not is_dir else None,
-                        "modified": stat.st_mtime,
-                    }
-                    
-                    file_info.append(info)
-                except Exception as e:
-                    # Skip files that can't be accessed
+                    st = os.stat(p)
+                    results.append({
+                        "path": p,
+                        "is_dir": os.path.isdir(p),
+                        "size": st.st_size if os.path.isfile(p) else 0,
+                    })
+                except OSError:
                     continue
-            
-            # Format the response
-            response = self._format_find_results(file_info, search_directory, pattern)
-            
-            # Log the action
-            self.log.update(content=f"Found {len(file_info)} items matching '{pattern}' in {search_directory}")
-            
-            return Response(message=response, break_loop=False)
-            
+
+            return Response(
+                message=self._format_results(results, search_directory, pattern),
+                break_loop=False,
+                additional={"count": len(results)},
+            )
+
+        except subprocess.TimeoutExpired:
+            return Response(message="❌ Error: find command timed out after 30 seconds.", break_loop=False)
         except Exception as e:
-            handle_error(e)
-            return Response(message=f"Error executing find: {str(e)}", break_loop=False)
-    
-    def _format_find_results(self, file_info, search_directory, pattern):
-        """Format find results for display."""
-        if not file_info:
-            return f"No files found matching '{pattern}' in {search_directory}"
-        
-        response = f"Found {len(file_info)} results\n"
-        
-        # Sort by path
-        file_info.sort(key=lambda x: x["path"])
-        
-        # Display results
-        for info in file_info:
-            path = info["path"]
-            rel_path = os.path.relpath(path, search_directory)
-            
-            if info["is_directory"]:
-                response += f"{rel_path} (directory)\n"
-            else:
-                size = info["size"]
-                size_str = f"{size} bytes" if size < 1024 else f"{size/1024:.1f} KB"
-                response += f"{rel_path} ({size_str})\n"
-        
-        # Truncate if there are too many results
-        if len(file_info) > 50:
-            response += f"\n[{len(file_info) - 50} more results not shown]\n"
-        
-        return response
+            return Response(message=f"❌ Error executing find: {e}", break_loop=False)
