@@ -9,20 +9,8 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 from typing import Optional, Dict, Any, Tuple
-
-_CURRENT_DIR = Path(__file__).resolve().parent
-_SKILLS_ROOT = _CURRENT_DIR
-for p in [_CURRENT_DIR, *_CURRENT_DIR.parents]:
-    if (p / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p
-        break
-    if (p / "skills" / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p / "skills"
-        break
-if str(_SKILLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(_SKILLS_ROOT))
-
 from helpers.tool import Tool, Response
+
 
 
 class MermaidView(Tool):

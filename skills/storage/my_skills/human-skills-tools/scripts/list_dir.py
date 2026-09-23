@@ -4,19 +4,8 @@ import stat
 import datetime
 from pathlib import Path
 
-_CURRENT_DIR = Path(__file__).resolve().parent
-_SKILLS_ROOT = _CURRENT_DIR
-for p in [_CURRENT_DIR, *_CURRENT_DIR.parents]:
-    if (p / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p
-        break
-    if (p / "skills" / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p / "skills"
-        break
-if str(_SKILLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(_SKILLS_ROOT))
-
 from helpers.tool import Tool, Response
+from helpers.files import is_dir
 
 
 class ListDir(Tool):
@@ -69,12 +58,12 @@ class ListDir(Tool):
             full = os.path.join(directory_path, entry)
             try:
                 st       = os.stat(full)
-                is_dir   = os.path.isdir(full)
-                etype    = "Dir" if is_dir else "File"
-                size_str = f"{self._count_files(full)} files" if is_dir else self._format_size(st.st_size)
+                is_directory = is_dir(full)
+                etype    = "Dir" if is_directory else "File"
+                size_str = f"{self._count_files(full)} files" if is_directory else self._format_size(st.st_size)
                 mtime    = datetime.datetime.fromtimestamp(st.st_mtime).strftime("%Y-%m-%d %H:%M")
                 perms    = self._format_permissions(st.st_mode)
-                label    = f"{entry}/" if is_dir else entry
+                label    = f"{entry}/" if is_directory else entry
                 lines.append(f"| {label} | {etype} | {size_str} | {mtime} | {perms} |")
             except OSError as e:
                 lines.append(f"| {entry} | — | — | — | {e} |")
@@ -90,7 +79,7 @@ class ListDir(Tool):
                 break_loop=False,
             )
 
-        if not os.path.isdir(directory_path):
+        if not is_dir(directory_path):
             return Response(
                 message=f"❌ Error: '{directory_path}' is not a valid directory.",
                 break_loop=False,
@@ -99,7 +88,7 @@ class ListDir(Tool):
         try:
             entries = sorted(
                 os.listdir(directory_path),
-                key=lambda x: (0 if os.path.isdir(os.path.join(directory_path, x)) else 1, x.lower()),
+                key=lambda x: (0 if is_dir(os.path.join(directory_path, x)) else 1, x.lower()),
             )
             return Response(
                 message=self._build_table(directory_path, entries),

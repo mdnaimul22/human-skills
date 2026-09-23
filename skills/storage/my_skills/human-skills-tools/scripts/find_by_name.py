@@ -3,19 +3,8 @@ import sys
 import subprocess
 from pathlib import Path
 
-_CURRENT_DIR = Path(__file__).resolve().parent
-_SKILLS_ROOT = _CURRENT_DIR
-for p in [_CURRENT_DIR, *_CURRENT_DIR.parents]:
-    if (p / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p
-        break
-    if (p / "skills" / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p / "skills"
-        break
-if str(_SKILLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(_SKILLS_ROOT))
-
 from helpers.tool import Tool, Response
+from helpers.files import is_dir, is_file
 
 
 class FindByName(Tool):
@@ -72,7 +61,7 @@ class FindByName(Tool):
                 break_loop=False,
             )
 
-        if not os.path.isdir(search_directory):
+        if not is_dir(search_directory):
             return Response(
                 message=f"❌ Error: Directory '{search_directory}' does not exist.",
                 break_loop=False,
@@ -108,8 +97,8 @@ class FindByName(Tool):
                     st = os.stat(p)
                     results.append({
                         "path": p,
-                        "is_dir": os.path.isdir(p),
-                        "size": st.st_size if os.path.isfile(p) else 0,
+                        "is_dir": is_dir(p),
+                        "size": st.st_size if is_file(p) else 0,
                     })
                 except OSError:
                     continue

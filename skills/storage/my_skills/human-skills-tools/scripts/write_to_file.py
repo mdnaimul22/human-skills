@@ -7,19 +7,8 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-_CURRENT_DIR = Path(__file__).resolve().parent
-_SKILLS_ROOT = _CURRENT_DIR
-for p in [_CURRENT_DIR, *_CURRENT_DIR.parents]:
-    if (p / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p
-        break
-    if (p / "skills" / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p / "skills"
-        break
-if str(_SKILLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(_SKILLS_ROOT))
-
 from helpers.tool import Tool, Response
+from helpers.files import exists, write_text
 
 
 @dataclass
@@ -143,18 +132,11 @@ class WriteToFile(Tool):
                 break_loop=False,
             )
 
-        if os.path.exists(target_file) and not overwrite:
+        if exists(target_file) and not overwrite:
             return Response(
                 message=f"❌ Error: '{target_file}' already exists. Pass \"overwrite\": \"true\" to replace it.",
                 break_loop=False,
             )
-
-        parent = os.path.dirname(target_file)
-        if parent:
-            try:
-                os.makedirs(parent, exist_ok=True)
-            except Exception as e:
-                return Response(message=f"❌ Error creating directory '{parent}': {e}", break_loop=False)
 
         check_result: _CheckResult | None = None
         if auto_check and code_content.strip():
@@ -168,8 +150,7 @@ class WriteToFile(Tool):
                 return Response(message="\n".join(error_lines), break_loop=False)
 
         try:
-            with open(target_file, "w", encoding="utf-8") as f:
-                f.write(code_content)
+            write_text(target_file, code_content)
         except Exception as e:
             return Response(message=f"❌ Error writing file: {e}", break_loop=False)
 

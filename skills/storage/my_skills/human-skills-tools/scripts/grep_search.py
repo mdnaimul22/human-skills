@@ -6,19 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-_CURRENT_DIR = Path(__file__).resolve().parent
-_SKILLS_ROOT = _CURRENT_DIR
-for p in [_CURRENT_DIR, *_CURRENT_DIR.parents]:
-    if (p / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p
-        break
-    if (p / "skills" / "helpers" / "tool.py").exists():
-        _SKILLS_ROOT = p / "skills"
-        break
-if str(_SKILLS_ROOT) not in sys.path:
-    sys.path.insert(0, str(_SKILLS_ROOT))
-
 from helpers.tool import Tool, Response
+from helpers.files import exists, is_file
 
 
 @dataclass
@@ -72,7 +61,7 @@ class GrepSearch(Tool):
         base_patterns = [f"*.{ext}" for ext in _SUPPORTED_EXTS]
         active_patterns = includes if includes else base_patterns
 
-        if os.path.isfile(path):
+        if is_file(path):
             return [path] if any(fnmatch.fnmatch(path, p) for p in active_patterns) else []
 
         files: list[str] = []
@@ -206,7 +195,7 @@ class GrepSearch(Tool):
                 break_loop=False,
             )
 
-        if not os.path.exists(path):
+        if not exists(path):
             return Response(message=f"❌ Error: Path '{path}' does not exist.", break_loop=False)
 
         try:
