@@ -37,12 +37,41 @@ class MediaItem:
 
 
 class PixabaySource:
+    name = "pixabay"
+    display_name = "Pixabay"
+    provider = "pixabay"
+    priority = 15
+    supports = {"video": True, "image": True}
 
     def __init__(self):
         self.api_key = Settings.PIXABAY_API_KEY
         self.base_url = Settings.PIXABAY_API_URL.rstrip("/")
         self.image_endpoint = self.base_url
         self.video_endpoint = f"{self.base_url}/videos/"
+
+    def is_available(self) -> bool:
+        return bool(self.api_key)
+
+    def search(self, query: str, filters: Any) -> list[MediaItem]:
+        kind = getattr(filters, "kind", "any") or "any"
+        results: list[MediaItem] = []
+        if kind in ("video", "any"):
+            results.extend(
+                self.search_videos(
+                    query,
+                    per_page=getattr(filters, "per_page", 5),
+                    page=getattr(filters, "page", 1),
+                )
+            )
+        if kind in ("image", "any"):
+            results.extend(
+                self.search_images(
+                    query,
+                    per_page=getattr(filters, "per_page", 5),
+                    page=getattr(filters, "page", 1),
+                )
+            )
+        return results
 
     def search_images(
         self,
