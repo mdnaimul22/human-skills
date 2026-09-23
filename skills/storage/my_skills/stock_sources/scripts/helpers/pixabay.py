@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urlparse
 import requests
+
+from .base import MediaItem, save_manifest
 
 try:
     from helpers.settings import Settings
@@ -23,17 +25,8 @@ _IMAGE_FORMATS = {
 }
 
 
-@dataclass
-class MediaItem:
-    source_id: str
-    kind: str
-    page_url: str
-    download_url: str
-    width: int
-    height: int
-    duration: float
-    creator: str
-    tags: str
+def _calc_score(likes: int, downloads: int, views: int) -> float:
+    return round((likes * 3.0) + (downloads * 1.5) + (views * 0.05), 2)
 
 
 class PixabaySource:
@@ -51,6 +44,154 @@ class PixabaySource:
 
     def is_available(self) -> bool:
         return bool(self.api_key)
+
+    def search_images(
+        self,
+        query: str,
+        per_page: int = 5,
+        page: int = 1,
+        image_format: str = "large",
+        orientation: Optional[str] = None,
+        aspect_ratio: Optional[str] = None,
+        colors: Optional[str] = None,
+        category: Optional[str] = None,
+    ) -> list[MediaItem]:
+        if not self.api_key:
+            return []
+
+        url_field = _IMAGE_FORMATS.get(image_format, "largeImageURL")
+        params: dict[str, Any] = {
+            "key": self.api_key,
+            "q": query,
+            "per_page": max(3, min(per_page * 3, 200)),
+            "page": max(1, page),
+            "safesearch": "true",
+        }
+        if orientation:
+            params["orientation"] = orientation
+        if colors:
+            params["colors"] = colors
+        if category:
+            params["category"] = category
+
+        resp = requests.get(self.image_endpoint, params=params, timeout=30)
+        resp.raise_for_status()
+        hits = resp.json().get("hits", []) or []
+
+        items: list[MediaItem] = []
+        for h in hits:
+            download_url = h.get(url_field) or h.get("largeImageURL") or h.get("webformatURL", "")
+            if not download_url:
+                continue
+
+            likes = int(h.get("likes") or 0)
+            downloads = int(h.get("downloads") or 0)
+            views = int(h.get("views") or 0)
+            score = _calc_score(likes, downloads, views)
+
+            item = MediaItem(
+                source_id=str(h.get("id")),
+                kind="image",
+                page_url=h.get("pageURL", "") or "",
+                download_url=download_url,
+                width=int(h.get("imageWidth") or 0),
+                height=int(h.get("imageHeight") or 0),
+                duration=0.0,
+                creator=h.get("user", "") or "",
+                tags=h.get("tags", "") or "",
+                views=views,
+                downloads=downloads,
+                likes=likes,
+                score=score,
+            )
+            item.aspect_ratio = item.resolve_aspect_ratio()
+            if aspect_ratio and item.aspect_ratio != aspect_ratio:
+                continue
+            items.append(item)
+
+        items.sort(key=lambda x: x.score, reverse=True)
+        return items[:per_page]
+
+    def search_videos(
+        self,
+        query: str,
+        per_page: int = 5,
+        page: int = 1,
+        video_format: str = "large",
+        min_duration: Optional[int] = None,
+        max_duration: Optional[int] = None,
+        aspect_ratio: Optional[str] = None,
+        category: Optional[str] = None,
+    ) -> list[MediaItem]:
+        if not self.api_key:
+            return []
+
+        params: dict[str, Any] = {
+            "key": self.api_key,
+            "q": query,
+            "per_page": max(3, min(per_page * 3, 200)),
+            "page": max(1, page),
+            "safesearch": "true",
+        }
+        if min_duration is not None:
+            params["min_duration"] = int(min_duration)
+        if max_duration is not None:
+            params["max_duration"] = int(max_duration)
+        if category:
+            params["category"] = category
+
+        resp = requests.get(self.video_endpoint, params=params, timeout=30)
+        resp.raise_for_status()
+        hits = resp.json().get("hits", []) or []
+
+        start_idx = _VIDEO_TIERS.index(video_format) if video_format in _VIDEO_TIERS else 0
+        tiers = _VIDEO_TIERS[start_idx:] + _VIDEO_TIERS[:start_idx]
+
+        items: list[MediaItem] = []
+        for h in hits:
+            duration = float(h.get("duration", 0) or 0)
+            if min_duration is not None and duration < min_duration:
+                continue
+            if max_duration is not None and duration > max_duration:
+                continue
+
+            videos = h.get("videos", {})
+            rend = None
+            for tier in tiers:
+                candidate = videos.get(tier)
+                if candidate and candidate.get("url"):
+                    rend = candidate
+                    break
+            if not rend:
+                continue
+
+            likes = int(h.get("likes") or 0)
+            downloads = int(h.get("downloads") or 0)
+            views = int(h.get("views") or 0)
+            score = _calc_score(likes, downloads, views)
+
+            item = MediaItem(
+                source_id=str(h.get("id")),
+                kind="video",
+                page_url=h.get("pageURL", "") or "",
+                download_url=rend["url"],
+                width=int(rend.get("width") or 0),
+                height=int(rend.get("height") or 0),
+                duration=duration,
+                creator=h.get("user", "") or "",
+                tags=h.get("tags", "") or "",
+                views=views,
+                downloads=downloads,
+                likes=likes,
+                score=score,
+            )
+            item.aspect_ratio = item.resolve_aspect_ratio()
+            if aspect_ratio and item.aspect_ratio != aspect_ratio:
+                continue
+            items.append(item)
+
+        items.sort(key=lambda x: x.score, reverse=True)
+        return items[:per_page]
 
     def search(self, query: str, filters: Any) -> list[MediaItem]:
         kind = getattr(filters, "kind", "any") or "any"
@@ -73,116 +214,15 @@ class PixabaySource:
             )
         return results
 
-    def search_images(
-        self,
-        query: str,
-        per_page: int = 5,
-        page: int = 1,
-        image_format: str = "large",
-        orientation: Optional[str] = None,
-    ) -> list[MediaItem]:
-        if not self.api_key:
-            return []
-
-        url_field = _IMAGE_FORMATS.get(image_format, "largeImageURL")
-
-        params: dict[str, Any] = {
-            "key": self.api_key,
-            "q": query,
-            "per_page": max(3, min(per_page, 200)),
-            "page": max(1, page),
-            "safesearch": "true",
-        }
-        if orientation:
-            params["orientation"] = orientation
-
-        resp = requests.get(self.image_endpoint, params=params, timeout=30)
-        resp.raise_for_status()
-        hits = resp.json().get("hits", []) or []
-
-        items: list[MediaItem] = []
-        for h in hits:
-            download_url = h.get(url_field) or h.get("largeImageURL") or h.get("webformatURL", "")
-            if not download_url:
-                continue
-            items.append(
-                MediaItem(
-                    source_id=str(h.get("id")),
-                    kind="image",
-                    page_url=h.get("pageURL", "") or "",
-                    download_url=download_url,
-                    width=int(h.get("imageWidth") or 0),
-                    height=int(h.get("imageHeight") or 0),
-                    duration=0.0,
-                    creator=h.get("user", "") or "",
-                    tags=h.get("tags", "") or "",
-                )
-            )
-        return items
-
-    def search_videos(
-        self,
-        query: str,
-        per_page: int = 5,
-        page: int = 1,
-        video_format: str = "large",
-        min_duration: Optional[int] = None,
-        max_duration: Optional[int] = None,
-    ) -> list[MediaItem]:
-        if not self.api_key:
-            return []
-
-        params: dict[str, Any] = {
-            "key": self.api_key,
-            "q": query,
-            "per_page": max(3, min(per_page, 200)),
-            "page": max(1, page),
-            "safesearch": "true",
-        }
-        if min_duration is not None:
-            params["min_duration"] = int(min_duration)
-        if max_duration is not None:
-            params["max_duration"] = int(max_duration)
-
-        resp = requests.get(self.video_endpoint, params=params, timeout=30)
-        resp.raise_for_status()
-        hits = resp.json().get("hits", []) or []
-
-        start_idx = _VIDEO_TIERS.index(video_format) if video_format in _VIDEO_TIERS else 0
-        tiers = _VIDEO_TIERS[start_idx:] + _VIDEO_TIERS[:start_idx]
-
-        items: list[MediaItem] = []
-        for h in hits:
-            videos = h.get("videos", {})
-            rend = None
-            for tier in tiers:
-                candidate = videos.get(tier)
-                if candidate and candidate.get("url"):
-                    rend = candidate
-                    break
-            if not rend:
-                continue
-            items.append(
-                MediaItem(
-                    source_id=str(h.get("id")),
-                    kind="video",
-                    page_url=h.get("pageURL", "") or "",
-                    download_url=rend["url"],
-                    width=int(rend.get("width") or 0),
-                    height=int(rend.get("height") or 0),
-                    duration=float(h.get("duration", 0) or 0),
-                    creator=h.get("user", "") or "",
-                    tags=h.get("tags", "") or "",
-                )
-            )
-        return items
-
-    def download(self, item: MediaItem, out_dir: Path) -> Path:
+    def download(self, item: Any, out_dir: Path) -> Path:
         out_dir.mkdir(parents=True, exist_ok=True)
-        suffix = Path(urlparse(item.download_url).path).suffix or (".mp4" if item.kind == "video" else ".jpg")
-        target = out_dir / f"{item.kind}_{item.source_id}{suffix}"
+        kind = getattr(item, "kind", "media")
+        source_id = getattr(item, "source_id", getattr(item, "clip_id", "item"))
+        download_url = item.download_url
+        suffix = Path(urlparse(download_url).path).suffix or (".mp4" if kind == "video" else ".jpg")
+        target = out_dir / f"{kind}_{source_id}{suffix}"
 
-        with requests.get(item.download_url, stream=True, timeout=120) as r:
+        with requests.get(download_url, stream=True, timeout=120) as r:
             r.raise_for_status()
             with open(target, "wb") as f:
                 for chunk in r.iter_content(chunk_size=1 << 16):
@@ -198,38 +238,101 @@ def search_pixabay(inputs: dict[str, Any]) -> dict[str, Any]:
     image_count = max(0, int(inputs.get("image_count", 5)))
     video_format = inputs.get("video_format", "large")
     image_format = inputs.get("image_format", "large")
+    aspect_ratio = inputs.get("aspect_ratio")
+    min_duration = inputs.get("min_duration")
+    max_duration = inputs.get("max_duration")
+    colors = inputs.get("colors")
+    category = inputs.get("category")
+    max_workers = max(1, min(int(inputs.get("concurrent_downloads", 6)), 12))
 
     client = PixabaySource()
     if not client.api_key:
         return {"success": False, "error": "Missing PIXABAY_API_KEY"}
 
     downloaded: dict[str, list[str]] = {"videos": [], "images": []}
+    manifest_items: list[dict[str, Any]] = []
     errors: list[str] = []
 
     try:
+        targets: list[MediaItem] = []
         if video_count:
-            videos = client.search_videos(query, per_page=max(3, video_count), video_format=video_format)
-            for item in videos[:video_count]:
-                try:
-                    path = client.download(item, output_dir)
-                    downloaded["videos"].append(str(path))
-                except Exception as exc:
-                    errors.append(f"video {item.source_id}: {exc}")
+            videos = client.search_videos(
+                query,
+                per_page=video_count,
+                video_format=video_format,
+                min_duration=min_duration,
+                max_duration=max_duration,
+                aspect_ratio=aspect_ratio,
+                category=category,
+            )
+            targets.extend(videos)
 
         if image_count:
-            images = client.search_images(query, per_page=max(3, image_count), image_format=image_format)
-            for item in images[:image_count]:
-                try:
-                    path = client.download(item, output_dir)
-                    downloaded["images"].append(str(path))
-                except Exception as exc:
-                    errors.append(f"image {item.source_id}: {exc}")
+            images = client.search_images(
+                query,
+                per_page=image_count,
+                image_format=image_format,
+                aspect_ratio=aspect_ratio,
+                colors=colors,
+                category=category,
+            )
+            targets.extend(images)
+
+        def _fetch(item: MediaItem) -> tuple[MediaItem, Optional[Path], Optional[str]]:
+            try:
+                sub_dir = output_dir / ("videos" if item.kind == "video" else "images")
+                dest = client.download(item, sub_dir)
+                return item, dest, None
+            except Exception as exc:
+                return item, None, str(exc)
+
+        if targets:
+            with ThreadPoolExecutor(max_workers=min(len(targets), max_workers)) as executor:
+                futures = [executor.submit(_fetch, it) for it in targets]
+                for future in as_completed(futures):
+                    item, path, err = future.result()
+                    if err or not path:
+                        errors.append(f"{item.kind} {item.source_id}: {err}")
+                        continue
+
+                    if item.kind == "video":
+                        downloaded["videos"].append(str(path))
+                    else:
+                        downloaded["images"].append(str(path))
+
+                    size_bytes = path.stat().st_size if path.exists() else 0
+                    manifest_items.append({
+                        "file_name": path.name,
+                        "file_path": str(path),
+                        "kind": item.kind,
+                        "source_id": item.source_id,
+                        "resolution": f"{item.width}x{item.height}",
+                        "aspect_ratio": item.aspect_ratio,
+                        "duration_seconds": item.duration,
+                        "file_size_bytes": size_bytes,
+                        "file_size_mb": round(size_bytes / (1024 * 1024), 2),
+                        "creator": item.creator,
+                        "page_url": item.page_url,
+                        "download_url": item.download_url,
+                        "views": item.views,
+                        "downloads": item.downloads,
+                        "likes": item.likes,
+                        "popularity_score": item.score,
+                        "tags": item.tags,
+                    })
+
+        manifest_path = None
+        if manifest_items:
+            manifest_path = save_manifest(output_dir, query, "pixabay", manifest_items)
 
         return {
             "success": bool(downloaded["videos"] or downloaded["images"]),
             "query": query,
+            "provider": "pixabay",
             "output_dir": str(output_dir),
+            "manifest_path": str(manifest_path) if manifest_path else "",
             "downloaded": downloaded,
+            "items_count": len(manifest_items),
             "errors": errors,
         }
     except Exception as exc:
