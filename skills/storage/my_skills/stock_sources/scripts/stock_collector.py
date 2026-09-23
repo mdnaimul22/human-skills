@@ -10,24 +10,39 @@ try:
 except ImportError:
     from skills.helpers.tool import Tool, Response
 
-_CURRENT_DIR = Path(__file__).resolve().parent
-_HELPERS_DIR = _CURRENT_DIR / "helpers"
-if str(_CURRENT_DIR) not in sys.path:
-    sys.path.insert(0, str(_CURRENT_DIR))
-if str(_HELPERS_DIR) not in sys.path:
-    sys.path.insert(0, str(_HELPERS_DIR))
+try:
+    from skills.storage.my_skills.stock_sources.scripts.helpers.pixabay import search_pixabay
+    from skills.storage.my_skills.stock_sources.scripts.helpers.pexels import search_pexels
+    from skills.storage.my_skills.stock_sources.scripts.helpers.archive_org import search_archive_org
+    from skills.storage.my_skills.stock_sources.scripts.helpers.base import save_manifest
+except ImportError:
+    import importlib.util
+    _h_dir = Path(__file__).resolve().parent / "helpers"
 
-from helpers.pixabay import search_pixabay
-from helpers.pexels import search_pexels
-from helpers.base import save_manifest
+    def _load_helper(name: str):
+        spec = importlib.util.spec_from_file_location(f"stock_helper_{name}", _h_dir / f"{name}.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    _pix = _load_helper("pixabay")
+    _pex = _load_helper("pexels")
+    _arc = _load_helper("archive_org")
+    _bas = _load_helper("base")
+    search_pixabay = _pix.search_pixabay
+    search_pexels = _pex.search_pexels
+    search_archive_org = _arc.search_archive_org
+    save_manifest = _bas.save_manifest
+
+_VALID_SOURCES = ("pixabay", "pexels", "archive_org")
 
 
 class StockCollector(Tool):
     name: str = "stock_collector"
-    description: str = "Unified stock media downloader for Pixabay and Pexels with popularity ranking, aspect ratio, duration filtering, color palette extraction, and manifest generation."
+    description: str = "Unified stock media downloader across Pixabay, Pexels, and Archive.org with popularity ranking, aspect ratio, duration filtering, color palette extraction, and manifest generation."
     arguments: dict = {
         "query": "Search term or prompt (REQUIRED).",
-        "sources": "Stock providers to search: 'all' (default), 'pixabay', 'pexels', or comma-separated 'pixabay,pexels'.",
+        "sources": "Stock providers to search: 'all' (default), 'pixabay', 'pexels', 'archive_org', or comma-separated.",
         "video_count": "Number of videos to download per provider (default: 2).",
         "image_count": "Number of images to download per provider (default: 2).",
         "aspect_ratio": "Filter by aspect ratio: 'horizontal', 'vertical', 'square' (optional).",
@@ -58,16 +73,16 @@ class StockCollector(Tool):
 
         enabled_sources: list[str] = []
         if sources_arg in ("all", "*"):
-            enabled_sources = ["pixabay", "pexels"]
+            enabled_sources = list(_VALID_SOURCES)
         else:
             for s in sources_arg.split(","):
                 s = s.strip()
-                if s in ("pixabay", "pexels") and s not in enabled_sources:
+                if s in _VALID_SOURCES and s not in enabled_sources:
                     enabled_sources.append(s)
 
         if not enabled_sources:
             return Response(
-                message=f"❌ Error: Invalid sources '{sources_arg}'. Supported sources: 'pixabay', 'pexels', or 'all'.",
+                message=f"❌ Error: Invalid sources '{sources_arg}'. Supported: {', '.join(_VALID_SOURCES)}, or 'all'.",
                 break_loop=False,
             )
 
@@ -96,8 +111,12 @@ class StockCollector(Tool):
 
             if source == "pixabay":
                 res = search_pixabay(params)
-            else:
+            elif source == "pexels":
                 res = search_pexels(params)
+            elif source == "archive_org":
+                res = search_archive_org(params)
+            else:
+                continue
 
             results[source] = res
             if not res.get("success") and res.get("error"):
