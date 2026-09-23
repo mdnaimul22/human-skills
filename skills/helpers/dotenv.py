@@ -3,10 +3,34 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from .paths import PROJECT_ROOT
-from . import files
+try:
+    from .paths import PROJECT_ROOT
+    from . import files
+except ImportError:
+    from skills.helpers.paths import PROJECT_ROOT
+    from skills.helpers import files
 
-_DEFAULT_DOTENV_PATHS = [".env", ".env.stock_resource", ".env.others"]
+
+def dotenv_values(dotenv_path=None, **kwargs):
+    values = {}
+    if dotenv_path and files.exists(str(dotenv_path)):
+        for line in files.read_text(str(dotenv_path)).splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" in line:
+                k, _, v = line.partition("=")
+                values[k.strip()] = v.strip().strip('"').strip("'")
+    return values
+
+_DEFAULT_DOTENV_PATHS = [
+    ".env",
+    ".env.stock_resource",
+    ".env.others",
+    "skills/helpers/.env",
+    "skills/helpers/.env.stock_resource",
+    "skills/helpers/.env.others",
+]
 
 
 def load_dotenv(path: Optional[str] = None) -> None:

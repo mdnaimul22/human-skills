@@ -31,7 +31,9 @@ class Settings(BaseSettings):
         env_file=(
             str(PROJECT_ROOT / ".env"),
             str(PROJECT_ROOT / ".env.others"),
-            str(PROJECT_ROOT / ".env.stock_resource"),
+            str(PROJECT_ROOT / "skills" / "helpers" / ".env"),
+            str(PROJECT_ROOT / "skills" / "helpers" / ".env.others"),
+            str(PROJECT_ROOT / "skills" / "helpers" / ".env.stock_resource"),
         ),
         env_file_encoding="utf-8",
         extra="allow",
