@@ -25,10 +25,17 @@ except ImportError:
         spec.loader.exec_module(mod)
         return mod
 
-    _pix = _load_helper("pixabay")
-    _pex = _load_helper("pexels")
-    _arc = _load_helper("archive_org")
-    _bas = _load_helper("base")
+    base = _load_helper("base")
+    pixabay = _load_helper("pixabay")
+    pexels = _load_helper("pexels")
+    archive_org = _load_helper("archive_org")
+    _pix = _load_helper("coverr")
+    _pex = _load_helper("dareful")
+    _arc = _load_helper("esa")
+    _pix = _load_helper("jaxa")
+    _pex = _load_helper("loc")
+    _arc = _load_helper("mixkit")
+    
     search_pixabay = _pix.search_pixabay
     search_pexels = _pex.search_pexels
     search_archive_org = _arc.search_archive_org
