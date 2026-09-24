@@ -170,3 +170,7 @@ results.csv
 .~lock.*#
 .~lock.*
 info.md
+extra_tools/
+.env
+.env.stock_resource
+

@@ -24,9 +24,11 @@ _VIDEO_FORMAT_PRIORITY = (
     "webm",
 )
 _MAX_FILE_SIZE_BYTES = 150 * 1024 * 1024
+_MAX_IMAGE_SIZE_BYTES = 80 * 1024 * 1024
 _DEFAULT_MAX_DURATION_SECONDS = 600.0
 _HEADERS = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "Connection": "close"
 }
 
 _STOP_WORDS = frozenset({
@@ -138,21 +140,49 @@ def _pick_video_file(files: list[dict]) -> Optional[dict]:
     return None
 
 
+def _pick_image_file(files: list[dict]) -> Optional[dict]:
+    if not files:
+        return None
+
+    candidates: list[tuple[int, dict]] = []
+    valid_extensions = (".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff")
+
+    for f in files:
+        name = (f.get("name") or "").lower()
+        fmt = (f.get("format") or "").lower()
+        if any(tag in name for tag in ("thumb", "preview", "_ia_thumb", "icon", ".xml", ".sqlite")):
+            continue
+        if any(fmt.startswith(t) for t in ("jpeg", "png", "single page processed jp2", "tiff", "web")) or any(name.endswith(ext) for ext in valid_extensions):
+            size = _safe_int(f.get("size"))
+            if 0 < size <= _MAX_IMAGE_SIZE_BYTES:
+                candidates.append((size, f))
+
+    if not candidates:
+        return None
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    return candidates[0][1]
+
+
 class ArchiveOrgSource:
     name = "archive_org"
     display_name = "Archive.org"
     provider = "archive_org"
     priority = 20
-    supports = {"video": True, "image": False}
+    supports = {"video": True, "image": True}
 
     def is_available(self) -> bool:
         return True
 
-    def _build_queries(self, user_query: str) -> list[tuple[str, str]]:
-        coll = " OR ".join(f"collection:{c}" for c in _DEFAULT_COLLECTIONS)
+    def _build_queries(self, user_query: str, mediatype: str = "movies") -> list[tuple[str, str]]:
+        if mediatype == "movies":
+            coll = " OR ".join(f"collection:{c}" for c in _DEFAULT_COLLECTIONS)
+            base_filter = f"mediatype:movies AND ({coll})"
+        else:
+            base_filter = "mediatype:image"
+
         user = user_query.strip()
         if not user:
-            return [("default", f"mediatype:movies AND ({coll})")]
+            return [("default", base_filter)]
 
         tokens = [
             t for t in re.split(r"\s+", user)
@@ -163,14 +193,14 @@ class ArchiveOrgSource:
         if not tokens:
             return [(
                 "quoted_fallback",
-                f'mediatype:movies AND ({coll}) AND ("{user}")',
+                f'{base_filter} AND ("{user}")',
             )]
 
         queries: list[tuple[str, str]] = []
         clean_phrase = " ".join(tokens)
         queries.append((
             "phrase_prox_10",
-            f'mediatype:movies AND ({coll}) AND ("{clean_phrase}"~10)',
+            f'{base_filter} AND ("{clean_phrase}"~10)',
         ))
 
         non_year = [t for t in tokens if not _looks_like_year(t)]
@@ -179,24 +209,24 @@ class ArchiveOrgSource:
             and_q = " AND ".join(distinctive)
             queries.append((
                 "distinctive_and",
-                f"mediatype:movies AND ({coll}) AND ({and_q})",
+                f"{base_filter} AND ({and_q})",
             ))
         elif len(non_year) == 1:
             queries.append((
                 "single_term",
-                f"mediatype:movies AND ({coll}) AND ({non_year[0]})",
+                f"{base_filter} AND ({non_year[0]})",
             ))
 
         top_tokens = sorted(tokens, key=lambda t: -len(t))[:3]
         or_q = " OR ".join(top_tokens)
         queries.append((
             "distinctive_or",
-            f"mediatype:movies AND ({coll}) AND ({or_q})",
+            f"{base_filter} AND ({or_q})",
         ))
 
         return queries
 
-    def _hydrate_media_item(
+    def _hydrate_video_item(
         self,
         doc: dict,
         min_duration: Optional[float] = None,
@@ -259,6 +289,59 @@ class ArchiveOrgSource:
 
         return item
 
+    def _hydrate_image_item(
+        self,
+        doc: dict,
+        aspect_ratio: Optional[str] = None,
+    ) -> Optional[MediaItem]:
+        identifier = doc.get("identifier")
+        if not identifier:
+            return None
+
+        try:
+            r = requests.get(f"{_METADATA_URL}/{identifier}/files", headers=_HEADERS, timeout=12)
+            r.raise_for_status()
+            data = r.json()
+            files = data.get("result") or data.get("files") or []
+        except Exception:
+            return None
+
+        picked = _pick_image_file(files)
+        if picked is None:
+            return None
+
+        width = _safe_int(picked.get("width"))
+        height = _safe_int(picked.get("height"))
+        file_name = picked.get("name", "")
+        download_url = f"{_DOWNLOAD_URL}/{identifier}/{file_name}"
+
+        title = _to_text(doc.get("title"))
+        description = _to_text(doc.get("description"))
+        subject = _to_text(doc.get("subject"))
+        tags = " ".join(s for s in (title, description, subject) if s).strip()[:500]
+
+        downloads = _safe_int(doc.get("downloads"))
+        score = float(downloads)
+
+        item = MediaItem(
+            source_id=identifier,
+            kind="image",
+            page_url=f"https://archive.org/details/{identifier}",
+            download_url=download_url,
+            width=width,
+            height=height,
+            duration=0.0,
+            creator=_to_text(doc.get("creator")),
+            tags=tags,
+            downloads=downloads,
+            score=score,
+        )
+        item.aspect_ratio = item.resolve_aspect_ratio()
+        if aspect_ratio and item.aspect_ratio != aspect_ratio:
+            return None
+
+        return item
+
     def search_videos(
         self,
         query: str,
@@ -270,7 +353,7 @@ class ArchiveOrgSource:
     ) -> list[MediaItem]:
         items: list[MediaItem] = []
 
-        for _label, solr_q in self._build_queries(query):
+        for _label, solr_q in self._build_queries(query, mediatype="movies"):
             params = [
                 ("q", solr_q),
                 ("fl[]", "identifier"),
@@ -279,8 +362,6 @@ class ArchiveOrgSource:
                 ("fl[]", "creator"),
                 ("fl[]", "date"),
                 ("fl[]", "subject"),
-                ("fl[]", "licenseurl"),
-                ("fl[]", "collection"),
                 ("fl[]", "downloads"),
                 ("rows", str(max(1, min(per_page * 3, 50)))),
                 ("page", str(max(1, page))),
@@ -299,7 +380,7 @@ class ArchiveOrgSource:
                 continue
 
             for doc in docs:
-                item = self._hydrate_media_item(
+                item = self._hydrate_video_item(
                     doc,
                     min_duration=min_duration,
                     max_duration=max_duration,
@@ -316,19 +397,81 @@ class ArchiveOrgSource:
         items.sort(key=lambda x: x.score, reverse=True)
         return items[:per_page]
 
-    def search(self, query: str, filters: SearchFilters) -> list[Candidate]:
-        kind = (filters.kind or "video").lower()
-        if kind not in ("video", "any"):
-            return []
+    def search_images(
+        self,
+        query: str,
+        per_page: int = 5,
+        page: int = 1,
+        aspect_ratio: Optional[str] = None,
+    ) -> list[MediaItem]:
+        items: list[MediaItem] = []
 
-        media_items = self.search_videos(
-            query=query,
-            per_page=filters.per_page,
-            page=filters.page,
-            min_duration=filters.min_duration,
-            max_duration=filters.max_duration,
-            aspect_ratio=filters.orientation,
-        )
+        for _label, solr_q in self._build_queries(query, mediatype="image"):
+            params = [
+                ("q", solr_q),
+                ("fl[]", "identifier"),
+                ("fl[]", "title"),
+                ("fl[]", "description"),
+                ("fl[]", "creator"),
+                ("fl[]", "date"),
+                ("fl[]", "subject"),
+                ("fl[]", "downloads"),
+                ("rows", str(max(1, min(per_page * 3, 50)))),
+                ("page", str(max(1, page))),
+                ("output", "json"),
+            ]
+
+            try:
+                r = requests.get(_SEARCH_URL, headers=_HEADERS, params=params, timeout=20)
+                r.raise_for_status()
+                data = r.json()
+            except Exception:
+                continue
+
+            docs = (data.get("response") or {}).get("docs", []) or []
+            if not docs:
+                continue
+
+            for doc in docs:
+                item = self._hydrate_image_item(
+                    doc,
+                    aspect_ratio=aspect_ratio,
+                )
+                if item is not None:
+                    items.append(item)
+                if len(items) >= per_page:
+                    break
+
+            if items:
+                break
+
+        items.sort(key=lambda x: x.score, reverse=True)
+        return items[:per_page]
+
+    def search(self, query: str, filters: SearchFilters) -> list[Candidate]:
+        kind = (filters.kind or "any").lower()
+        media_items: list[MediaItem] = []
+
+        if kind in ("video", "any"):
+            media_items.extend(
+                self.search_videos(
+                    query=query,
+                    per_page=filters.per_page,
+                    page=filters.page,
+                    min_duration=filters.min_duration,
+                    max_duration=filters.max_duration,
+                    aspect_ratio=filters.orientation,
+                )
+            )
+        if kind in ("image", "any") and len(media_items) < filters.per_page:
+            media_items.extend(
+                self.search_images(
+                    query=query,
+                    per_page=filters.per_page - len(media_items),
+                    page=filters.page,
+                    aspect_ratio=filters.orientation,
+                )
+            )
 
         candidates: list[Candidate] = []
         for it in media_items:
@@ -338,7 +481,7 @@ class ArchiveOrgSource:
                     source_id=it.source_id,
                     source_url=it.page_url,
                     download_url=it.download_url,
-                    kind="video",
+                    kind=it.kind,
                     width=it.width,
                     height=it.height,
                     duration=it.duration,
@@ -351,10 +494,10 @@ class ArchiveOrgSource:
 
     def download(self, item: Any, out_dir: Path) -> Path:
         out_dir.mkdir(parents=True, exist_ok=True)
-        kind = getattr(item, "kind", "video")
-        source_id = getattr(item, "source_id", getattr(item, "clip_id", "clip"))
+        kind = getattr(item, "kind", "media")
+        source_id = getattr(item, "source_id", getattr(item, "clip_id", "item"))
         download_url = item.download_url
-        suffix = Path(urlparse(download_url).path).suffix or ".mp4"
+        suffix = Path(urlparse(download_url).path).suffix or (".mp4" if kind == "video" else ".jpg")
         target = out_dir / f"{kind}_{source_id}{suffix}"
 
         with requests.get(download_url, headers=_HEADERS, stream=True, timeout=300) as r:
@@ -369,7 +512,11 @@ class ArchiveOrgSource:
 def search_archive_org(inputs: dict[str, Any]) -> dict[str, Any]:
     query = inputs["query"]
     output_dir = Path(inputs.get("output_dir", "downloads")) / query.replace(" ", "_")
-    video_count = max(0, int(inputs.get("video_count", 3)))
+    video_count = max(0, int(inputs.get("video_count", 0)))
+    image_count = max(0, int(inputs.get("image_count", 0)))
+    if video_count == 0 and image_count == 0:
+        video_count = 2
+
     aspect_ratio = inputs.get("aspect_ratio")
     min_duration = inputs.get("min_duration")
     max_duration = inputs.get("max_duration")
@@ -392,9 +539,17 @@ def search_archive_org(inputs: dict[str, Any]) -> dict[str, Any]:
             )
             targets.extend(videos)
 
+        if image_count:
+            images = client.search_images(
+                query,
+                per_page=image_count,
+                aspect_ratio=aspect_ratio,
+            )
+            targets.extend(images)
+
         def _fetch(item: MediaItem) -> tuple[MediaItem, Optional[Path], Optional[str]]:
             try:
-                sub_dir = output_dir / "videos"
+                sub_dir = output_dir / ("videos" if item.kind == "video" else "images")
                 dest = client.download(item, sub_dir)
                 return item, dest, None
             except Exception as exc:
@@ -409,8 +564,20 @@ def search_archive_org(inputs: dict[str, Any]) -> dict[str, Any]:
                         errors.append(f"{item.kind} {item.source_id}: {err}")
                         continue
 
-                    downloaded["videos"].append(str(path))
+                    if item.kind == "video":
+                        downloaded["videos"].append(str(path))
+                    else:
+                        downloaded["images"].append(str(path))
+
                     size_bytes = path.stat().st_size if path.exists() else 0
+                    if path.exists() and item.kind == "image" and (item.width <= 0 or item.height <= 0):
+                        try:
+                            from PIL import Image
+                            with Image.open(path) as img:
+                                item.width, item.height = img.size
+                                item.aspect_ratio = item.resolve_aspect_ratio()
+                        except Exception:
+                            pass
                     manifest_items.append({
                         "file_name": path.name,
                         "file_path": str(path),
@@ -434,7 +601,7 @@ def search_archive_org(inputs: dict[str, Any]) -> dict[str, Any]:
             manifest_path = save_manifest(output_dir, query, "archive_org", manifest_items)
 
         return {
-            "success": bool(downloaded["videos"]),
+            "success": bool(downloaded["videos"] or downloaded["images"]),
             "query": query,
             "provider": "archive_org",
             "output_dir": str(output_dir),
