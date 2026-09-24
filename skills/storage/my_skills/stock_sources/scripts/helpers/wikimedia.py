@@ -8,7 +8,7 @@ from typing import Any, Optional
 from urllib.parse import urlparse
 import requests
 
-from .base import Candidate, MediaItem, SearchFilters, save_manifest
+from .base import MediaItem, save_manifest
 
 _API_URL = "https://commons.wikimedia.org/w/api.php"
 _USER_AGENT = "HumanSkillsStockCollector/1.0 (contact@human-skills.local)"
@@ -216,49 +216,26 @@ class WikimediaSource:
             aspect_ratio=aspect_ratio,
         )
 
-    def search(self, query: str, filters: SearchFilters) -> list[Candidate]:
-        kind = (filters.kind or "any").lower()
-        items: list[MediaItem] = []
-
+    def search(self, query: str, filters: Any) -> list[MediaItem]:
+        kind = getattr(filters, "kind", "any") or "any"
+        results: list[MediaItem] = []
         if kind in ("video", "any"):
-            items.extend(
+            results.extend(
                 self.search_videos(
                     query=query,
-                    per_page=filters.per_page,
-                    page=filters.page,
-                    min_duration=filters.min_duration,
-                    max_duration=filters.max_duration,
-                    aspect_ratio=filters.orientation,
+                    per_page=getattr(filters, "per_page", 5),
+                    page=getattr(filters, "page", 1),
                 )
             )
-        if kind in ("image", "any") and len(items) < filters.per_page:
-            items.extend(
+        if kind in ("image", "any") and len(results) < getattr(filters, "per_page", 5):
+            results.extend(
                 self.search_images(
                     query=query,
-                    per_page=filters.per_page - len(items),
-                    page=filters.page,
-                    aspect_ratio=filters.orientation,
+                    per_page=getattr(filters, "per_page", 5) - len(results),
+                    page=getattr(filters, "page", 1),
                 )
             )
-
-        candidates: list[Candidate] = []
-        for it in items:
-            candidates.append(
-                Candidate(
-                    source=self.name,
-                    source_id=it.source_id,
-                    source_url=it.page_url,
-                    download_url=it.download_url,
-                    kind=it.kind,
-                    width=it.width,
-                    height=it.height,
-                    duration=it.duration,
-                    creator=it.creator,
-                    source_tags=it.tags,
-                    thumbnail_url=it.download_url,
-                )
-            )
-        return candidates
+        return results
 
     def download(self, item: Any, out_dir: Path) -> Path:
         out_dir.mkdir(parents=True, exist_ok=True)

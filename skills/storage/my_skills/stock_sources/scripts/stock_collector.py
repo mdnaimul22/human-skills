@@ -14,60 +14,26 @@ try:
     from skills.storage.my_skills.stock_sources.scripts.helpers.pixabay import search_pixabay
     from skills.storage.my_skills.stock_sources.scripts.helpers.pexels import search_pexels
     from skills.storage.my_skills.stock_sources.scripts.helpers.archive_org import search_archive_org
+    from skills.storage.my_skills.stock_sources.scripts.helpers.wikimedia import search_wikimedia
+    from skills.storage.my_skills.stock_sources.scripts.helpers.nasa import search_nasa
     from skills.storage.my_skills.stock_sources.scripts.helpers.base import save_manifest
 except ImportError:
-    import importlib.util
-    _h_dir = Path(__file__).resolve().parent / "helpers"
+    from helpers.pixabay import search_pixabay
+    from helpers.pexels import search_pexels
+    from helpers.archive_org import search_archive_org
+    from helpers.wikimedia import search_wikimedia
+    from helpers.nasa import search_nasa
+    from helpers.base import save_manifest
 
-    def _load_helper(name: str):
-        spec = importlib.util.spec_from_file_location(f"stock_helper_{name}", _h_dir / f"{name}.py")
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod
-
-    _base = _load_helper("base")
-    _pixabay = _load_helper("pixabay")
-    _pexels = _load_helper("pexels")
-    _archive = _load_helper("archive_org")
-    _coverr = _load_helper("coverr")
-    _dareful = _load_helper("dareful")
-    _esa = _load_helper("esa")
-    _jaxa = _load_helper("jaxa")
-    _loc = _load_helper("loc")
-    _mixkit = _load_helper("mixkit")
-    _nara = _load_helper("nara")
-    _nasa = _load_helper("nasa")
-    _noaa = _load_helper("noaa")
-    _pond5 = _load_helper("pond5")
-    _videoo = _load_helper("videoo")
-    _wikimedia = _load_helper("wikimedia")
-    
-    save_manifest = _base.save_manifest
-    search_pixabay = _pixabay.search_pixabay
-    search_pexels = _pexels.search_pexels
-    search_archive_org = _archive.search_archive_org
-    search_coverr = _coverr.search_coverr
-    search_darefull = _dareful.search_darefull
-    search_esa = _esa.search_esa
-    search_jaxa = _jaxa.search_jaxa
-    search_loc = _loc.search_loc
-    search_mixkit = _mixkit.search_mixkit
-    search_nara = _nara.search_nara
-    search_nasa = _nasa.search_nasa
-    search_noaa = _noaa.search_noaa
-    search_pond5 = _pond5.search_pond5
-    search_videoo = _videoo.search_videoo
-    search_wikimedia = _wikimedia.search_wikimedia
-
-_VALID_SOURCES = ("pixabay", "pexels", "archive_org")
+_VALID_SOURCES = ("pixabay", "pexels", "archive_org", "wikimedia", "nasa")
 
  
 class StockCollector(Tool):
     name: str = "stock_collector"
-    description: str = "Unified stock media downloader across Pixabay, Pexels, and Archive.org with popularity ranking, aspect ratio, duration filtering, color palette extraction, and manifest generation."
+    description: str = "Unified stock media downloader across Pixabay, Pexels, Archive.org, Wikimedia Commons, and NASA with popularity ranking, aspect ratio, duration filtering, color palette extraction, and manifest generation."
     arguments: dict = {
         "query": "Search term or prompt (REQUIRED).",
-        "sources": "Stock providers to search: 'all' (default), 'pixabay', 'pexels', 'archive_org', or comma-separated.",
+        "sources": "Stock providers to search: 'all' (default), 'pixabay', 'pexels', 'archive_org', 'wikimedia', 'nasa', or comma-separated.",
         "video_count": "Number of videos to download per provider (default: 2).",
         "image_count": "Number of images to download per provider (default: 2).",
         "aspect_ratio": "Filter by aspect ratio: 'horizontal', 'vertical', 'square' (optional).",
@@ -140,30 +106,10 @@ class StockCollector(Tool):
                 res = search_pexels(params)
             elif source == "archive_org":
                 res = search_archive_org(params)
-            elif source == "coverr":
-                res = search_coverr(params)
-            elif source == "dareful":
-                res = search_darefull(params)
-            elif source == "esa":
-                res = search_esa(params)
-            elif source == "jaxa":
-                res = search_jaxa(params)
-            elif source == "loc":
-                res = search_loc(params)
-            elif source == "mixkit":
-                res = search_mixkit(params)
-            elif source == "nara":
-                res = search_nara(params)
-            elif source == "nasa":
-                res = search_nasa(params)
-            elif source == "noaa":
-                res = search_noaa(params)
-            elif source == "pond5":
-                res = search_pond5(params)
-            elif source == "videoo":
-                res = search_videoo(params)
             elif source == "wikimedia":
                 res = search_wikimedia(params)
+            elif source == "nasa":
+                res = search_nasa(params)
             else:
                 continue
 

@@ -7,7 +7,7 @@ from typing import Any, Optional
 from urllib.parse import urlparse
 import requests
 
-from .base import Candidate, MediaItem, SearchFilters, save_manifest
+from .base import MediaItem, save_manifest
 
 _SEARCH_URL = "https://archive.org/advancedsearch.php"
 _METADATA_URL = "https://archive.org/metadata"
@@ -447,50 +447,6 @@ class ArchiveOrgSource:
 
         items.sort(key=lambda x: x.score, reverse=True)
         return items[:per_page]
-
-    def search(self, query: str, filters: SearchFilters) -> list[Candidate]:
-        kind = (filters.kind or "any").lower()
-        media_items: list[MediaItem] = []
-
-        if kind in ("video", "any"):
-            media_items.extend(
-                self.search_videos(
-                    query=query,
-                    per_page=filters.per_page,
-                    page=filters.page,
-                    min_duration=filters.min_duration,
-                    max_duration=filters.max_duration,
-                    aspect_ratio=filters.orientation,
-                )
-            )
-        if kind in ("image", "any") and len(media_items) < filters.per_page:
-            media_items.extend(
-                self.search_images(
-                    query=query,
-                    per_page=filters.per_page - len(media_items),
-                    page=filters.page,
-                    aspect_ratio=filters.orientation,
-                )
-            )
-
-        candidates: list[Candidate] = []
-        for it in media_items:
-            candidates.append(
-                Candidate(
-                    source=self.name,
-                    source_id=it.source_id,
-                    source_url=it.page_url,
-                    download_url=it.download_url,
-                    kind=it.kind,
-                    width=it.width,
-                    height=it.height,
-                    duration=it.duration,
-                    creator=it.creator,
-                    source_tags=it.tags,
-                    thumbnail_url=f"https://archive.org/services/img/{it.source_id}",
-                )
-            )
-        return candidates
 
     def download(self, item: Any, out_dir: Path) -> Path:
         out_dir.mkdir(parents=True, exist_ok=True)

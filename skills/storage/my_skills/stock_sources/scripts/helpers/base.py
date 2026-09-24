@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
-from dataclasses import dataclass, field
 from pathlib import Path
 import subprocess
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Any
 
 
 @dataclass
@@ -40,47 +40,6 @@ class MediaItem:
         return "square"
 
 
-@dataclass
-class Candidate:
-    source: str
-    source_id: str
-    source_url: str
-    download_url: str
-    kind: str
-    width: int = 0
-    height: int = 0
-    duration: float = 0.0
-    creator: str = ""
-    license: str = ""
-    source_tags: str = ""
-    thumbnail_url: str = ""
-    extra: dict[str, Any] = field(default_factory=dict)
-
-    @property
-    def clip_id(self) -> str:
-        return f"{self.source}_{self.source_id}"
-
-
-@dataclass
-class SearchFilters:
-    kind: str = "video"
-    min_duration: Optional[float] = None
-    max_duration: Optional[float] = None
-    orientation: Optional[str] = None
-    min_width: Optional[int] = None
-    per_page: int = 20
-    page: int = 1
-
-
-@runtime_checkable
-class StockSource(Protocol):
-    name: str
-
-    def is_available(self) -> bool: ...
-    def search(self, query: str, filters: SearchFilters) -> list[Candidate]: ...
-    def download(self, candidate: Any, out_path: Path) -> Path: ...
-
-
 def probe_media_metadata(path: Path, kind: str) -> tuple[int, int, float, str]:
     if not path.exists():
         return 0, 0, 0.0, "unknown"
@@ -102,7 +61,7 @@ def probe_media_metadata(path: Path, kind: str) -> tuple[int, int, float, str]:
                 "-select_streams", "v:0",
                 "-show_entries", "stream=width,height,duration",
                 "-of", "json",
-                str(path)
+                str(path),
             ]
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             if res.returncode == 0:

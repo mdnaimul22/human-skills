@@ -7,7 +7,7 @@ from typing import Any, Optional
 from urllib.parse import quote, urlparse, urlunparse
 import requests
 
-from .base import Candidate, MediaItem, SearchFilters, probe_media_metadata, save_manifest
+from .base import MediaItem, probe_media_metadata, save_manifest
 
 _SEARCH_URL = "https://images-api.nasa.gov/search"
 _UNSAFE_ID_CHARS = re.compile(r"[^A-Za-z0-9._\-]+")
@@ -208,32 +208,14 @@ class NasaSource:
                 break
         return items[:per_page]
 
-    def search(self, query: str, filters: SearchFilters) -> list[Candidate]:
-        kind = (filters.kind or "video").lower()
+    def search(self, query: str, filters: Any) -> list[MediaItem]:
+        kind = getattr(filters, "kind", "any") or "any"
         items: list[MediaItem] = []
         if kind in ("video", "any"):
-            items.extend(self.search_videos(query, per_page=filters.per_page, page=filters.page))
-        if kind in ("image", "any") and len(items) < filters.per_page:
-            items.extend(self.search_images(query, per_page=filters.per_page - len(items), page=filters.page))
-
-        candidates: list[Candidate] = []
-        for it in items:
-            candidates.append(
-                Candidate(
-                    source=self.name,
-                    source_id=it.source_id,
-                    source_url=it.page_url,
-                    download_url=it.download_url,
-                    kind=it.kind,
-                    width=it.width,
-                    height=it.height,
-                    duration=it.duration,
-                    creator=it.creator,
-                    source_tags=it.tags,
-                    thumbnail_url=it.download_url,
-                )
-            )
-        return candidates
+            items.extend(self.search_videos(query, per_page=getattr(filters, "per_page", 5), page=getattr(filters, "page", 1)))
+        if kind in ("image", "any") and len(items) < getattr(filters, "per_page", 5):
+            items.extend(self.search_images(query, per_page=getattr(filters, "per_page", 5) - len(items), page=getattr(filters, "page", 1)))
+        return items
 
     def download(self, item: Any, out_dir: Path) -> Path:
         out_dir.mkdir(parents=True, exist_ok=True)
