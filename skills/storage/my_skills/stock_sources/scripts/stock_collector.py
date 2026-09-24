@@ -25,25 +25,43 @@ except ImportError:
         spec.loader.exec_module(mod)
         return mod
 
-    base = _load_helper("base")
-    pixabay = _load_helper("pixabay")
-    pexels = _load_helper("pexels")
-    archive_org = _load_helper("archive_org")
-    _pix = _load_helper("coverr")
-    _pex = _load_helper("dareful")
-    _arc = _load_helper("esa")
-    _pix = _load_helper("jaxa")
-    _pex = _load_helper("loc")
-    _arc = _load_helper("mixkit")
+    _base = _load_helper("base")
+    _pixabay = _load_helper("pixabay")
+    _pexels = _load_helper("pexels")
+    _archive = _load_helper("archive_org")
+    _coverr = _load_helper("coverr")
+    _dareful = _load_helper("dareful")
+    _esa = _load_helper("esa")
+    _jaxa = _load_helper("jaxa")
+    _loc = _load_helper("loc")
+    _mixkit = _load_helper("mixkit")
+    _nara = _load_helper("nara")
+    _nasa = _load_helper("nasa")
+    _noaa = _load_helper("noaa")
+    _pond5 = _load_helper("pond5")
+    _videoo = _load_helper("videoo")
+    _wikimedia = _load_helper("wikimedia")
     
-    search_pixabay = _pix.search_pixabay
-    search_pexels = _pex.search_pexels
-    search_archive_org = _arc.search_archive_org
-    save_manifest = _bas.save_manifest
+    save_manifest = _base.save_manifest
+    search_pixabay = _pixabay.search_pixabay
+    search_pexels = _pexels.search_pexels
+    search_archive_org = _archive.search_archive_org
+    search_coverr = _coverr.search_coverr
+    search_darefull = _dareful.search_darefull
+    search_esa = _esa.search_esa
+    search_jaxa = _jaxa.search_jaxa
+    search_loc = _loc.search_loc
+    search_mixkit = _mixkit.search_mixkit
+    search_nara = _nara.search_nara
+    search_nasa = _nasa.search_nasa
+    search_noaa = _noaa.search_noaa
+    search_pond5 = _pond5.search_pond5
+    search_videoo = _videoo.search_videoo
+    search_wikimedia = _wikimedia.search_wikimedia
 
 _VALID_SOURCES = ("pixabay", "pexels", "archive_org")
 
-
+ 
 class StockCollector(Tool):
     name: str = "stock_collector"
     description: str = "Unified stock media downloader across Pixabay, Pexels, and Archive.org with popularity ranking, aspect ratio, duration filtering, color palette extraction, and manifest generation."
@@ -122,6 +140,30 @@ class StockCollector(Tool):
                 res = search_pexels(params)
             elif source == "archive_org":
                 res = search_archive_org(params)
+            elif source == "coverr":
+                res = search_coverr(params)
+            elif source == "dareful":
+                res = search_darefull(params)
+            elif source == "esa":
+                res = search_esa(params)
+            elif source == "jaxa":
+                res = search_jaxa(params)
+            elif source == "loc":
+                res = search_loc(params)
+            elif source == "mixkit":
+                res = search_mixkit(params)
+            elif source == "nara":
+                res = search_nara(params)
+            elif source == "nasa":
+                res = search_nasa(params)
+            elif source == "noaa":
+                res = search_noaa(params)
+            elif source == "pond5":
+                res = search_pond5(params)
+            elif source == "videoo":
+                res = search_videoo(params)
+            elif source == "wikimedia":
+                res = search_wikimedia(params)
             else:
                 continue
 
