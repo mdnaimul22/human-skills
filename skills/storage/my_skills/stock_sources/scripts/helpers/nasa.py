@@ -7,12 +7,13 @@ from typing import Any, Optional
 from urllib.parse import quote, urlparse, urlunparse
 import requests
 
-from .base import Candidate, MediaItem, SearchFilters, save_manifest
+from .base import Candidate, MediaItem, SearchFilters, probe_media_metadata, save_manifest
 
 _SEARCH_URL = "https://images-api.nasa.gov/search"
 _UNSAFE_ID_CHARS = re.compile(r"[^A-Za-z0-9._\-]+")
+
 _HEADERS = {
-    "User-Agent": "HumanSkillsStockCollector/1.0 (contact@human-skills.local)",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
     "Connection": "close",
 }
 
@@ -300,14 +301,12 @@ def search_nasa(inputs: dict[str, Any]) -> dict[str, Any]:
                         downloaded["images"].append(str(path))
 
                     size_bytes = path.stat().st_size if path.exists() else 0
-                    if path.exists() and item.kind == "image":
-                        try:
-                            from PIL import Image
-                            with Image.open(path) as img:
-                                item.width, item.height = img.size
-                                item.aspect_ratio = item.resolve_aspect_ratio()
-                        except Exception:
-                            pass
+                    if path.exists() and (item.width <= 0 or item.height <= 0):
+                        pw, ph, pdur, pratio = probe_media_metadata(path, item.kind)
+                        item.width = pw or item.width
+                        item.height = ph or item.height
+                        item.duration = pdur or item.duration
+                        item.aspect_ratio = pratio
 
                     manifest_items.append({
                         "file_name": path.name,
