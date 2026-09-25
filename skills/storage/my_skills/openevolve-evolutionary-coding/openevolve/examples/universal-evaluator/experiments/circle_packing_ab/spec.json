@@ -1,0 +1,103 @@
+{
+  "evaluation_id": "circle-packing-v1",
+  "objective": "Pack 26 disjoint circles inside the unit square [0,1]x[0,1] to maximize sum of radii and packing density",
+  "limits": {
+    "timeout_seconds": 15.0,
+    "memory_mb": 512,
+    "output_kb": 128
+  },
+  "collectors": [
+    {
+      "id": "static",
+      "type": "static"
+    },
+    {
+      "id": "runtime",
+      "type": "runtime"
+    }
+  ],
+  "fitness": {
+    "metrics": [
+      {
+        "id": "valid_packing",
+        "direction": "maximize",
+        "weight": 0.35,
+        "normalization": {
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "constraint": {
+          "minimum": 1.0,
+          "hard": true
+        }
+      },
+      {
+        "id": "circle_sum_radii",
+        "direction": "maximize",
+        "weight": 0.30,
+        "normalization": {
+          "minimum": 0.0,
+          "maximum": 2.635
+        }
+      },
+      {
+        "id": "packing_density",
+        "direction": "maximize",
+        "weight": 0.20,
+        "normalization": {
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      {
+        "id": "geometric_rigor",
+        "direction": "maximize",
+        "weight": 0.10,
+        "normalization": {
+          "minimum": 0.0,
+          "maximum": 2.0
+        },
+        "source": {
+          "kind": "judgment",
+          "question_id": "rigor"
+        }
+      },
+      {
+        "id": "runtime_ms",
+        "direction": "minimize",
+        "weight": 0.05,
+        "normalization": {
+          "minimum": 0.0,
+          "maximum": 2000.0
+        }
+      }
+    ]
+  },
+  "judge_questions": [
+    {
+      "id": "is_disjoint",
+      "type": "noul",
+      "instructions": "Does the source code mathematically ensure that all circles are disjoint and non-overlapping within the unit square?"
+    },
+    {
+      "id": "strategy",
+      "type": "choice",
+      "instructions": "Which circle packing technique is implemented in the source code?",
+      "criteria": {
+        "geometric_disjoint": "Strict geometric placement with non-overlapping bounds",
+        "overlapping_cheat": "Circles overlapping or placed at identical center",
+        "other": "Other approach"
+      }
+    },
+    {
+      "id": "rigor",
+      "type": "score",
+      "instructions": "Rate geometric validity and non-overlapping rigor from 1 to 3",
+      "criteria": [
+        "1 (invalid overlapping)",
+        "2 (heuristic placement)",
+        "3 (strict geometric optimization)"
+      ]
+    }
+  ]
+}

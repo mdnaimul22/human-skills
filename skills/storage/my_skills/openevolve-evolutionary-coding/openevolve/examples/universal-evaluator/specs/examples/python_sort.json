@@ -1,0 +1,83 @@
+{
+  "evaluation_id": "python-sort-v2",
+  "objective": "Sort an integer list in ascending order.",
+  "requirements": [
+    {
+      "id": "correctness",
+      "description": "Candidate must satisfy tests",
+      "type": "hard_constraint",
+      "metric": "test_pass_rate"
+    }
+  ],
+  "tests": [
+    {
+      "name": "unit",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ]
+    }
+  ],
+  "benchmarks": [],
+  "limits": {
+    "timeout_seconds": 30,
+    "memory_mb": 1024,
+    "output_kb": 256
+  },
+  "collectors": [
+    {
+      "id": "build",
+      "type": "build"
+    },
+    {
+      "id": "tests",
+      "type": "test"
+    },
+    {
+      "id": "runtime",
+      "type": "runtime"
+    },
+    {
+      "id": "static",
+      "type": "static"
+    }
+  ],
+  "fitness": {
+    "metrics": [
+      {
+        "id": "test_pass_rate",
+        "direction": "maximize",
+        "weight": 0.7,
+        "normalization": {
+          "minimum": 0,
+          "maximum": 1
+        },
+        "constraint": {
+          "minimum": 1,
+          "hard": true
+        }
+      },
+      {
+        "id": "runtime_ms",
+        "direction": "minimize",
+        "weight": 0.2,
+        "normalization": {
+          "minimum": 0,
+          "maximum": 10000
+        }
+      },
+      {
+        "id": "compile_success",
+        "direction": "maximize",
+        "weight": 0.1,
+        "normalization": {
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    ]
+  },
+  "judge_questions": []
+}

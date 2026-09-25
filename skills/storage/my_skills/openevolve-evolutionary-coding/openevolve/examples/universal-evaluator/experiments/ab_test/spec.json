@@ -1,0 +1,118 @@
+{
+  "evaluation_id": "ab-test-sort",
+  "objective": "Sort an integer list in ascending order with high correctness and performance.",
+  "requirements": [
+    {
+      "id": "correctness",
+      "description": "Candidate must pass all unit tests",
+      "type": "hard_constraint",
+      "metric": "test_pass_rate"
+    }
+  ],
+  "tests": [
+    {
+      "name": "unit",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ]
+    }
+  ],
+  "benchmarks": [],
+  "limits": {
+    "timeout_seconds": 15,
+    "memory_mb": 512,
+    "output_kb": 256
+  },
+  "collectors": [
+    {
+      "id": "build",
+      "type": "build"
+    },
+    {
+      "id": "static",
+      "type": "static"
+    },
+    {
+      "id": "tests",
+      "type": "test"
+    },
+    {
+      "id": "runtime",
+      "type": "runtime"
+    }
+  ],
+  "fitness": {
+    "metrics": [
+      {
+        "id": "test_pass_rate",
+        "direction": "maximize",
+        "weight": 0.6,
+        "normalization": {
+          "minimum": 0,
+          "maximum": 1
+        },
+        "constraint": {
+          "minimum": 1.0,
+          "hard": true
+        }
+      },
+      {
+        "id": "sorting_efficiency",
+        "direction": "maximize",
+        "weight": 0.2,
+        "normalization": {
+          "minimum": 0,
+          "maximum": 2
+        },
+        "source": {
+          "kind": "judgment",
+          "question_id": "sorting_efficiency"
+        }
+      },
+      {
+        "id": "runtime_ms",
+        "direction": "minimize",
+        "weight": 0.15,
+        "normalization": {
+          "minimum": 0,
+          "maximum": 5000
+        }
+      },
+      {
+        "id": "compile_success",
+        "direction": "maximize",
+        "weight": 0.05,
+        "normalization": {
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    ]
+  },
+  "judge_questions": [
+    "Is the sorting implementation clean, idiomatic, and free of algorithmic hacks or edge case defects?",
+    {
+      "id": "algorithm_family",
+      "type": "choice",
+      "instructions": "Which sorting approach is used in the source_code?",
+      "criteria": {
+        "timsort": "Python built-in Timsort algorithm",
+        "bubble_sort": "O(N^2) comparison sort like bubble sort",
+        "other": "other algorithm"
+      }
+    },
+    {
+      "id": "sorting_efficiency",
+      "type": "score",
+      "instructions": "Rate the time efficiency and algorithmic complexity of the source code",
+      "criteria": [
+        "poor (O(N^2) or nested loops)",
+        "moderate (O(N log N) or linear)",
+        "optimal (built-in or vectorized)"
+      ]
+    }
+  ]
+}
