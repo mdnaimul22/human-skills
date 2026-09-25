@@ -1,247 +1,218 @@
+"""Mixkit (by Envato) stock video source adapter.
+
+Scrapes the Mixkit website (``mixkit.co``) for free stock video clips.
+Mixkit offers curated, high-quality footage (HD and 4K) under a free
+licence with no attribution required. The library is smaller than
+Pixabay/Pexels but has higher average quality due to Envato's curation.
+
+No API available — this adapter scrapes Mixkit search pages.
+
+What Mixkit is good for
+-----------------------
+- High-quality curated B-roll (nature, business, technology, lifestyle)
+- Clean, modern footage with consistent quality
+- No-attribution-needed clips for quick gap-fills
+- Nature and landscape establishing shots
+"""
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
+import re
 from pathlib import Path
-from typing import Any, Optional
-from urllib.parse import urlparse
-from bs4 import BeautifulSoup
-import requests
+from typing import Any
 
-from .base import Candidate, MediaItem, SearchFilters, probe_media_metadata, save_manifest
+from .base import Candidate, SearchFilters
 
-_BASE_URL = "https://mixkit.co"
-_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Connection": "close",
-}
+_log = logging.getLogger(__name__)
+
+_SEARCH_URL = "https://mixkit.co/free-stock-video/"
+_LICENSE = "Mixkit License (free for commercial and personal use, no attribution required)"
 
 
 class MixkitSource:
+    """Mixkit video adapter. Satisfies `StockSource`."""
+
     name = "mixkit"
     display_name = "Mixkit"
-    provider = "mixkit"
+    provider = "envato"
     priority = 19
+    install_instructions = (
+        "Mixkit works without an API key. Scrapes the Mixkit website. "
+        "Requires beautifulsoup4: pip install beautifulsoup4"
+    )
     supports = {"video": True, "image": False}
 
     def is_available(self) -> bool:
-        return True
-
-    def search_videos(
-        self,
-        query: str,
-        per_page: int = 5,
-        min_duration: Optional[float] = None,
-        max_duration: Optional[float] = None,
-        aspect_ratio: Optional[str] = None,
-    ) -> list[MediaItem]:
-        slug = query.lower().strip().replace(" ", "-")
-        search_url = f"{_BASE_URL}/free-stock-video/{slug}/"
-
         try:
-            r = requests.get(search_url, headers=_HEADERS, timeout=20)
-            if r.status_code == 404:
-                search_url = f"{_BASE_URL}/free-stock-video/"
-                r = requests.get(search_url, headers=_HEADERS, timeout=20)
-            r.raise_for_status()
-        except Exception:
-            return []
-
-        soup = BeautifulSoup(r.text, "html.parser")
-        cards = soup.select(".item-grid__item, .video-item, article, [class*='item-grid']")
-        items: list[MediaItem] = []
-        seen_ids = set()
-
-        for card in cards:
-            video_el = card.select_one("video")
-            if not video_el:
-                continue
-
-            src = video_el.get("src") or ""
-            if not src:
-                continue
-
-            hd_src = src.replace("-360.mp4", "-720.mp4")
-
-            title_el = card.select_one("h2, h3, [class*='title'], a")
-            title = title_el.get_text(strip=True) if title_el else ""
-
-            link_el = card.select_one("a[href]")
-            href = link_el.get("href", "") if link_el else ""
-            if href and not href.startswith("http"):
-                page_url = f"{_BASE_URL}{href}"
-            else:
-                page_url = href or search_url
-
-            parsed = urlparse(src).path
-            clip_id = Path(parsed).stem.split("-")[0]
-            if clip_id in seen_ids:
-                continue
-            seen_ids.add(clip_id)
-
-            item = MediaItem(
-                source_id=clip_id,
-                kind="video",
-                page_url=page_url,
-                download_url=hd_src,
-                width=1280,
-                height=720,
-                duration=0.0,
-                creator="Mixkit / Envato",
-                tags=f"{title} {query}".strip(),
-                score=10.0,
-            )
-            item.aspect_ratio = item.resolve_aspect_ratio()
-
-            if aspect_ratio and item.aspect_ratio != aspect_ratio:
-                continue
-
-            items.append(item)
-            if len(items) >= per_page:
-                break
-
-        return items[:per_page]
+            import bs4  # noqa: F401
+            return True
+        except ImportError:
+            return False
 
     def search(self, query: str, filters: SearchFilters) -> list[Candidate]:
+        import requests
+        from bs4 import BeautifulSoup
+
         kind = (filters.kind or "video").lower()
         if kind == "image":
             return []
 
-        media_items = self.search_videos(
-            query=query,
-            per_page=filters.per_page,
-            min_duration=filters.min_duration,
-            max_duration=filters.max_duration,
-            aspect_ratio=filters.orientation,
-        )
-
-        candidates: list[Candidate] = []
-        for it in media_items:
-            candidates.append(
-                Candidate(
-                    source=self.name,
-                    source_id=it.source_id,
-                    source_url=it.page_url,
-                    download_url=it.download_url,
-                    kind="video",
-                    width=it.width,
-                    height=it.height,
-                    duration=it.duration,
-                    creator=it.creator,
-                    source_tags=it.tags,
-                    thumbnail_url=it.download_url.replace("-720.mp4", "-thumb.jpg"),
-                )
-            )
-        return candidates
-
-    def download(self, item: Any, out_dir: Path) -> Path:
-        out_dir.mkdir(parents=True, exist_ok=True)
-        kind = getattr(item, "kind", "video")
-        source_id = getattr(item, "source_id", getattr(item, "clip_id", "clip"))
-        download_url = item.download_url
-        suffix = Path(urlparse(download_url).path).suffix or ".mp4"
-        target = out_dir / f"{kind}_{source_id}{suffix}"
+        # Mixkit search URL pattern
+        slug = query.lower().replace(" ", "-")
+        search_url = f"https://mixkit.co/free-stock-video/{slug}/"
 
         try:
-            with requests.get(download_url, headers=_HEADERS, stream=True, timeout=120) as r:
-                r.raise_for_status()
-                with open(target, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=1 << 16):
-                        if chunk:
-                            f.write(chunk)
-            return target
-        except Exception:
-            fallback_url = download_url.replace("-720.mp4", "-360.mp4")
-            with requests.get(fallback_url, headers=_HEADERS, stream=True, timeout=120) as r:
-                r.raise_for_status()
-                with open(target, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=1 << 16):
-                        if chunk:
-                            f.write(chunk)
-            return target
-
-
-def search_mixkit(inputs: dict[str, Any]) -> dict[str, Any]:
-    query = inputs["query"]
-    output_dir = Path(inputs.get("output_dir", "downloads")) / query.replace(" ", "_")
-    video_count = max(0, int(inputs.get("video_count", 2)))
-    aspect_ratio = inputs.get("aspect_ratio")
-    min_duration = inputs.get("min_duration")
-    max_duration = inputs.get("max_duration")
-    max_workers = max(1, min(int(inputs.get("concurrent_downloads", 4)), 8))
-
-    client = MixkitSource()
-    downloaded: dict[str, list[str]] = {"videos": [], "images": []}
-    manifest_items: list[dict[str, Any]] = []
-    errors: list[str] = []
-
-    try:
-        targets: list[MediaItem] = []
-        if video_count:
-            videos = client.search_videos(
-                query,
-                per_page=video_count,
-                min_duration=float(min_duration) if min_duration is not None else None,
-                max_duration=float(max_duration) if max_duration is not None else None,
-                aspect_ratio=aspect_ratio,
+            r = requests.get(
+                search_url,
+                timeout=30,
+                headers={"User-Agent": "OpenMontage/1.0"},
             )
-            targets.extend(videos)
+            r.raise_for_status()
+        except Exception as e:
+            # Contract: an empty list means "nothing matched", so a
+            # transport failure has to propagate. See `base.StockSource`.
+            _log.warning("Mixkit search failed: %s", e)
+            raise
 
-        def _fetch(item: MediaItem) -> tuple[MediaItem, Optional[Path], Optional[str]]:
-            try:
-                sub_dir = output_dir / "videos"
-                dest = client.download(item, sub_dir)
-                return item, dest, None
-            except Exception as exc:
-                return item, None, str(exc)
+        soup = BeautifulSoup(r.text, "html.parser")
+        out: list[Candidate] = []
 
-        if targets:
-            with ThreadPoolExecutor(max_workers=min(len(targets), max_workers)) as executor:
-                futures = [executor.submit(_fetch, it) for it in targets]
-                for future in as_completed(futures):
-                    item, path, err = future.result()
-                    if err or not path:
-                        errors.append(f"{item.kind} {item.source_id}: {err}")
-                        continue
+        # Mixkit lists video cards with preview videos and download links
+        cards = soup.select(".item-grid__item, .video-item, article, [class*='VideoCard']")
+        for card in cards[:filters.per_page]:
+            link_el = card.select_one("a[href]")
+            if not link_el:
+                continue
 
-                    downloaded["videos"].append(str(path))
-                    size_bytes = path.stat().st_size if path.exists() else 0
+            href = link_el.get("href", "")
+            if not href:
+                continue
+            if not href.startswith("http"):
+                href = f"https://mixkit.co{href}"
 
-                    if path.exists():
-                        pw, ph, pdur, pratio = probe_media_metadata(path, "video")
-                        item.width = pw or item.width
-                        item.height = ph or item.height
-                        item.duration = pdur or item.duration
-                        item.aspect_ratio = pratio
+            # Skip non-video links
+            if "/free-stock-video/" not in href and "/video/" not in href:
+                continue
 
-                    manifest_items.append({
-                        "file_name": path.name,
-                        "file_path": str(path),
-                        "kind": item.kind,
-                        "source_id": item.source_id,
-                        "resolution": f"{item.width}x{item.height}",
-                        "aspect_ratio": item.aspect_ratio,
-                        "duration_seconds": item.duration,
-                        "file_size_bytes": size_bytes,
-                        "file_size_mb": round(size_bytes / (1024 * 1024), 2),
-                        "creator": item.creator,
-                        "page_url": item.page_url,
-                        "download_url": item.download_url,
-                        "tags": item.tags,
-                    })
+            title = ""
+            title_el = card.select_one("h3, h2, .title, [class*='title']")
+            if title_el:
+                title = title_el.get_text(strip=True)
+            if not title:
+                title = link_el.get_text(strip=True)
 
-        manifest_path = None
-        if manifest_items:
-            manifest_path = save_manifest(output_dir, query, "mixkit", manifest_items)
+            # Thumbnail
+            thumb = ""
+            img_el = card.select_one("img")
+            if img_el:
+                thumb = img_el.get("src", "") or img_el.get("data-src", "") or ""
 
-        return {
-            "success": bool(downloaded["videos"]),
-            "query": query,
-            "provider": "mixkit",
-            "output_dir": str(output_dir),
-            "manifest_path": str(manifest_path) if manifest_path else "",
-            "downloaded": downloaded,
-            "items_count": len(manifest_items),
-            "errors": errors,
-        }
-    except Exception as exc:
-        return {"success": False, "error": f"Mixkit search failed: {exc}"}
+            # Video preview
+            video_el = card.select_one("video source[src], video[src]")
+            preview_url = ""
+            if video_el:
+                preview_url = video_el.get("src", "") or ""
+
+            # Extract ID from URL
+            clip_id = href.rstrip("/").rsplit("/", 1)[-1] if href else ""
+
+            out.append(
+                Candidate(
+                    source=self.name,
+                    source_id=f"mixkit_{clip_id}",
+                    source_url=href,
+                    download_url=href,  # Resolved in download()
+                    kind="video",
+                    width=0,
+                    height=0,
+                    duration=0.0,
+                    creator="Mixkit",
+                    license=_LICENSE,
+                    source_tags=f"{title} {query}",
+                    thumbnail_url=thumb,
+                    extra={
+                        "detail_url": href,
+                        "preview_url": preview_url,
+                    },
+                )
+            )
+
+        return out
+
+    def download(self, candidate: Candidate, out_path: Path) -> Path:
+        """Download by resolving the detail page for the actual download URL."""
+        import requests
+        from bs4 import BeautifulSoup
+
+        out_path = Path(out_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        detail_url = candidate.extra.get("detail_url", candidate.download_url)
+
+        # Direct media URL
+        if any(detail_url.lower().endswith(ext) for ext in (".mp4", ".mov", ".webm")):
+            return self._stream_download(detail_url, out_path)
+
+        try:
+            r = requests.get(
+                detail_url, timeout=30,
+                headers={"User-Agent": "OpenMontage/1.0"},
+            )
+            r.raise_for_status()
+            soup = BeautifulSoup(r.text, "html.parser")
+
+            download_url = None
+
+            # Look for download button/link
+            for a in soup.select("a[href]"):
+                href = a.get("href", "")
+                text = (a.get_text(strip=True) or "").lower()
+                classes = " ".join(a.get("class", []))
+                if "download" in text or "download" in classes:
+                    if href and any(ext in href.lower() for ext in [".mp4", ".mov", ".webm"]):
+                        download_url = href
+                        break
+                    elif href and "/download/" in href:
+                        download_url = href
+                        break
+
+            # Look for video source tags
+            if not download_url:
+                for source in soup.select("video source[src]"):
+                    src = source.get("src", "")
+                    if src and any(ext in src.lower() for ext in [".mp4", ".mov"]):
+                        download_url = src
+                        break
+
+            # Look for data attributes with video URLs
+            if not download_url:
+                for el in soup.select("[data-video-url], [data-download-url], [data-src]"):
+                    url = el.get("data-video-url") or el.get("data-download-url") or el.get("data-src") or ""
+                    if url and any(ext in url.lower() for ext in [".mp4", ".mov"]):
+                        download_url = url
+                        break
+
+            if not download_url:
+                raise ValueError(f"Could not find download URL on Mixkit page: {detail_url}")
+
+            if not download_url.startswith("http"):
+                download_url = f"https://mixkit.co{download_url}"
+
+            return self._stream_download(download_url, out_path)
+
+        except Exception as e:
+            raise RuntimeError(f"Mixkit download failed for {detail_url}: {e}") from e
+
+    def _stream_download(self, url: str, out_path: Path) -> Path:
+        import requests
+
+        with requests.get(
+            url, stream=True, timeout=120,
+            headers={"User-Agent": "OpenMontage/1.0"},
+        ) as r:
+            r.raise_for_status()
+            with open(out_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=1 << 16):
+                    if chunk:
+                        f.write(chunk)
+        return out_path
