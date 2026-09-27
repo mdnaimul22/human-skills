@@ -58,12 +58,7 @@ Find files or directories matching a glob pattern or filename with directory dep
 
 ### 📋 HOW TO CALL THIS TOOL:
 
-Single-line CLI execution:
-```bash
-human-skills '{"tool_name": "find_by_name", "tool_args": {"search_directory": "/home/user_name/workdir/my-project", "pattern": "*.py", "type": "file", "max_depth": "3", "excludes": "node_modules,__pycache__,.git", "full_path": "false"}}'
-```
-
-Which maps to this JSON payload:
+For CLI execution maps to this JSON payload:
 ```json
 {
     "tool_name": "find_by_name",
@@ -76,14 +71,6 @@ Which maps to this JSON payload:
         "full_path":          "false"
     }
 }
-```
-
-Expected output:
-```
-Found 3 result(s) matching '*.py' in /home/user_name/workdir/my-project:
-  main.py (1.4 KB)
-  src/utils.py (3.2 KB)
-  src/config.py (850 B)
 ```
 
 ### 📁 Common Scenarios for `find_by_name`:
@@ -127,12 +114,6 @@ High-speed code and text search across files with line numbers, code snippets, a
 
 ### 📋 HOW TO CALL THIS TOOL:
 
-Single-line CLI execution:
-```bash
-human-skills '{"tool_name": "grep_search", "tool_args": {"query": "def execute", "search_path": "/home/user_name/workdir/my-project", "case_insensitive": "false", "match_per_line": "true", "includes": "*.py"}}'
-```
-
-Which maps to this JSON payload:
 ```json
 {
     "tool_name": "grep_search",
@@ -144,17 +125,6 @@ Which maps to this JSON payload:
         "includes":           "*.py"
     }
 }
-```
-
-Expected output:
-```
-Found 2 match(es) for 'def execute' in /home/user_name/workdir/my-project
-
-📄 src/core.py
-  L42 [async_function: execute]:     async def execute(self, **kwargs) -> Response:
-
-📄 src/runner.py
-  L18 [function: execute]:     def execute(command: str) -> None:
 ```
 
 ### 📁 Common Scenarios for `grep_search`:
@@ -197,12 +167,6 @@ Inspect directory contents and display a clean Markdown table with file types, h
 
 ### 📋 HOW TO CALL THIS TOOL:
 
-Single-line CLI execution:
-```bash
-human-skills '{"tool_name": "list_dir", "tool_args": {"directory_path": "/home/user_name/workdir/my-project"}}'
-```
-
-Which maps to this JSON payload:
 ```json
 {
     "tool_name": "list_dir",
@@ -260,12 +224,6 @@ Read and inspect file contents with 1-indexed line numbers, total line count met
 
 ### 📋 HOW TO CALL THIS TOOL:
 
-Single-line CLI execution:
-```bash
-human-skills '{"tool_name": "view_file", "tool_args": {"absolute_path": "/home/user_name/workdir/my-project/main.py", "start_line": "1", "end_line": "15"}}'
-```
-
-Which maps to this JSON payload:
 ```json
 {
     "tool_name": "view_file",
@@ -277,20 +235,6 @@ Which maps to this JSON payload:
 }
 ```
 
-Expected output:
-```
-File: /home/user_name/workdir/my-project/main.py  |  Total lines: 45  |  Showing: L1–L15
-────────────────────────────────────────────────────────────────────────
-1: import os
-2: import sys
-3: from pathlib import Path
-4: 
-5: def main():
-6:     print("Application starting...")
-7: 
-8: if __name__ == "__main__":
-9:     main()
-```
 
 ### 📁 Common Scenarios for `view_file`:
 
@@ -331,12 +275,6 @@ Create new files or overwrite existing ones safely. Includes automatic parent di
 
 ### 📋 HOW TO CALL THIS TOOL:
 
-Single-line CLI execution:
-```bash
-human-skills '{"tool_name": "write_to_file", "tool_args": {"target_file": "/home/user_name/workdir/my-project/src/config.py", "code_content": "PORT = 8080\nDEBUG = True\n", "overwrite": "true", "auto_check": "true", "strict_mode": "true"}}'
-```
-
-Which maps to this JSON payload:
 ```json
 {
     "tool_name": "write_to_file",
@@ -348,14 +286,6 @@ Which maps to this JSON payload:
         "strict_mode":        "true"
     }
 }
-```
-
-Expected output:
-```
-✅ File created: /home/user_name/workdir/my-project/src/config.py
-   Size    : 25 B
-   Lines   : 2
-   Syntax  : ✓ passed
 ```
 
 ### 📁 Common Scenarios for `write_to_file`:
