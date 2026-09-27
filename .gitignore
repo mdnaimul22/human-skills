@@ -173,4 +173,11 @@ info.md
 extra_tools/
 .env
 .env.stock_resource
+data/
+downloads_test/
+*.mp4
+*.webm
+*.mov
+*.mkv
+*.avi
 
