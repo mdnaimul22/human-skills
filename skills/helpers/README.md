@@ -54,6 +54,6 @@ human-skills path/to/payload.json
 To inspect all correctly formatted tools currently detected by the auto-discovery engine:
 
 ```bash
-human-skills --list
+human-skills --list-all
 ```
 *Outputs a bulleted list of tools detected and ready to execute.*
