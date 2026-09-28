@@ -17,10 +17,10 @@ from typing import Any, Optional
 
 @dataclass
 class Response:
-    """Mirrors the unified Response dataclass."""
     message: str
     break_loop: bool
     additional: Optional[dict[str, Any]] = None
+    success: bool = True
 
 
 # ── Tool ──────────────────────────────────────────────────────────────────────

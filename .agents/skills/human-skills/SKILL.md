@@ -117,6 +117,7 @@ human-skills '{
   }
 }'
 ```
+*Note: `path` defaults to current path; `preview` supports `png` or `svg`; `theme` supports `dark`, `neutral`, `forest`, `base`.*
 #### Pro-Tips & Best Practices
 
 1. **Case-Insensitive Resolution**: Category, skill, and tool queries are automatically normalized (e.g. `human-skills --list Custom` or `human-skills --tool_info TREE_GEN` resolve seamlessly).

@@ -43,6 +43,13 @@ def _extract_message(result) -> str:
         return str(result)
 
 
+def _extract_success(result) -> bool:
+    try:
+        return bool(result.success)
+    except AttributeError:
+        return True
+
+
 def _get_category_for_path(path: str) -> str:
     try:
         storage_rel = get_rel_path(path, base=STORAGE_BASE_DIR)
@@ -87,10 +94,10 @@ def _resolve_runner(module_name: str, path: str) -> Optional[dict]:
     if target_cls is not None:
         execute_method = getattr(target_cls, "execute", None)
         if callable(execute_method):
-            def _run_async(args: dict, _cls=target_cls) -> str:
+            def _run_async(args: dict, _cls=target_cls) -> tuple[str, bool]:
                 instance = _cls(args=args)
                 result = asyncio.run(instance.execute())
-                return _extract_message(result)
+                return _extract_message(result), _extract_success(result)
 
             return {
                 "runner": _run_async,
@@ -237,14 +244,18 @@ def _load_payload(source: str) -> dict:
 
 
 def dispatch(payload: dict) -> str:
+    return dispatch_with_status(payload)[0]
+
+
+def dispatch_with_status(payload: dict) -> tuple[str, bool]:
     tool_name = payload.get("tool_name", "").strip()
     tool_args = payload.get("tool_args", {})
 
     if not tool_name:
-        return "Error: `tool_name` is required in the JSON payload."
+        return "Error: `tool_name` is required in the JSON payload.", False
 
     if type(tool_args) is not dict:
-        return "Error: `tool_args` must be a JSON object (dict)."
+        return "Error: `tool_args` must be a JSON object (dict).", False
 
     registry = _build_registry()
 
@@ -259,7 +270,7 @@ def dispatch(payload: dict) -> str:
 
     if not target_tool or target_tool not in registry:
         available = ", ".join(sorted(registry.keys())) or "(none)"
-        return f"Error: Unknown tool '{tool_name}'. Available tools: {available}"
+        return f"Error: Unknown tool '{tool_name}'. Available tools: {available}", False
 
     normalised = {
         str(k): v if type(v) is str else str(v)
@@ -430,10 +441,10 @@ def main() -> None:
         print(f"Error: Invalid JSON — {e}", file=sys.stderr)
         sys.exit(1)
 
-    result = dispatch(payload)
-    print(result)
-    is_error = result.startswith("❌") or result.startswith("Error:") or result.startswith("Error ")
-    sys.exit(1 if is_error else 0)
+    message, ok = dispatch_with_status(payload)
+    print(message)
+    legacy_error = message.startswith(("❌", "Error:", "Error "))
+    sys.exit(0 if ok and not legacy_error else 1)
 
 
 if __name__ == "__main__":

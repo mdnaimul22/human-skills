@@ -534,6 +534,7 @@ def _handle_example_request(query: str) -> Response:
         return Response(
             message=f"Example '{query}' not found in db.\nAvailable scene_names:\n  • " + "\n  • ".join(sorted(examples.keys())),
             break_loop=False,
+            success=False,
         )
 
     s_name = matched.get("scene_name", "")
