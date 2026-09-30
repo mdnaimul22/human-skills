@@ -3,16 +3,16 @@ param()
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "=================================================================" -ForegroundColor Cyan
-Write-Host "🚀 Installing human-skills global CLI dispatcher for Windows..." -ForegroundColor Cyan
-Write-Host "=================================================================" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host "Installing human-skills global CLI dispatcher for Windows..." -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoDir = Split-Path -Parent $scriptDir
 $execPath = Join-Path $repoDir "skills\helpers\execute.py"
 
 if (-not (Test-Path $execPath)) {
-    Write-Error "❌ Error: Could not find execute.py at '$execPath'"
+    Write-Error "Error: Could not find execute.py at '$execPath'"
     exit 1
 }
 
@@ -32,13 +32,13 @@ foreach ($cmd in @("python", "python3", "py")) {
 }
 
 if (-not $pythonExe) {
-    Write-Error "❌ Error: Python 3 (>= 3.8) is required but not found in PATH."
-    Write-Host "💡 Please install Python from https://www.python.org/ or via Microsoft Store, and check 'Add Python to PATH'." -ForegroundColor Yellow
+    Write-Error "Error: Python 3 (>= 3.8) is required but not found in PATH."
+    Write-Host "Please install Python from https://www.python.org/ or via Microsoft Store, and check 'Add Python to PATH'." -ForegroundColor Yellow
     exit 1
 }
 
 $pyVer = & $pythonExe -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
-Write-Host "🐍 Detected Python: $pythonExe (v$pyVer)" -ForegroundColor Green
+Write-Host "Detected Python: $pythonExe (v$pyVer)" -ForegroundColor Green
 
 $destDir = Join-Path $env:USERPROFILE ".local\bin"
 if (-not (Test-Path $destDir)) {
@@ -61,27 +61,27 @@ if ($paths -notcontains $destDir) {
     $newPath = if ($userPath) { "$userPath;$destDir" } else { $destDir }
     [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
     $env:Path = "$destDir;$env:Path"
-    Write-Host "🔄 Added $destDir to your Windows User PATH." -ForegroundColor Yellow
+    Write-Host "Added $destDir to your Windows User PATH." -ForegroundColor Yellow
 } else {
-    Write-Host "ℹ️ $destDir is already in User PATH." -ForegroundColor Gray
+    Write-Host "$destDir is already in User PATH." -ForegroundColor Gray
 }
 
-Write-Host "🔍 Verifying installation..." -ForegroundColor Cyan
+Write-Host "Verifying installation..." -ForegroundColor Cyan
 try {
     & $cmdFile --list | Out-Null
-    Write-Host "✅ Verification passed! 'human-skills' command is verified functional." -ForegroundColor Green
+    Write-Host "Verification passed! 'human-skills' command is verified functional." -ForegroundColor Green
 } catch {
     Write-Warning "Execution test failed: $_"
 }
 
 Write-Host "=================================================================" -ForegroundColor Green
-Write-Host "🎉 human-skills installed successfully!" -ForegroundColor Green
-Write-Host "📍 Installed wrappers:" -ForegroundColor White
+Write-Host "human-skills installed successfully!" -ForegroundColor Green
+Write-Host "Installed wrappers:" -ForegroundColor White
 Write-Host "  • CMD:        $cmdFile" -ForegroundColor White
 Write-Host "  • PowerShell: $psFile" -ForegroundColor White
 Write-Host ""
 Write-Host "You can now run 'human-skills' from ANY PowerShell or CMD window:" -ForegroundColor Cyan
-Write-Host "  • human-skills --list" -ForegroundColor White
-Write-Host "  • human-skills --list-all" -ForegroundColor White
-Write-Host "  • human-skills --tool_info tree_gen" -ForegroundColor White
+Write-Host "human-skills --list" -ForegroundColor White
+Write-Host "human-skills --list-all" -ForegroundColor White
+Write-Host "human-skills --tool_info tree_gen" -ForegroundColor White
 Write-Host "=================================================================" -ForegroundColor Green
