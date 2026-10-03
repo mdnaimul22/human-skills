@@ -55,3 +55,14 @@ class BaseRepository(Generic[T]):
     async def exists(self, id: int | str) -> bool:
         obj = await self.session.get(self.model, id)
         return obj is not None
+
+    async def list_by_owner(self, user_id: str, limit: int = 100, offset: int = 0) -> Sequence[T]:
+        stmt = select(self.model).where(self.model.user_id == user_id).limit(limit).offset(offset)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def count_by_owner(self, user_id: str) -> int:
+        stmt = select(func.count()).select_from(self.model).where(self.model.user_id == user_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
+

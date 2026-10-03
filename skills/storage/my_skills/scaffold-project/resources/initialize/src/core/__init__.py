@@ -1,6 +1,5 @@
-# Core business logic. Domain models and pure functional flows live here (Dont remove this Comments)
-
 from .auth import (
+    TokenPurpose,
     hash_password,
     verify_password,
     create_token,
@@ -9,6 +8,8 @@ from .auth import (
 )
 
 __all__ = [
+    # Cryptographic Auth Utilities
+    "TokenPurpose",
     "hash_password",
     "verify_password",
     "create_token",

@@ -26,19 +26,24 @@ from .connection import (
     session_scope,
     create_tables,
 )
-from .models import Base, User, TimestampMixin
+from .models import Base, User, TimestampMixin, OwnershipMixin
 from .repository import BaseRepository
 from .repositories import UserRepository
 
 __all__ = [
+    # Database Connection Lifecycle & Session Management
     "init_db",
     "shutdown_db",
     "get_session",
     "session_scope",
     "create_tables",
+    # SQLAlchemy ORM Models & Mixins
     "Base",
     "User",
     "TimestampMixin",
+    "OwnershipMixin",
+    # Repositories & Data Access Layer
     "BaseRepository",
     "UserRepository",
 ]
+
