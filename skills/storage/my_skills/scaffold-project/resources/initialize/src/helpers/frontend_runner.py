@@ -11,7 +11,7 @@ from typing import Optional
 from src.config import Settings, setup_logger, exists, get_abs_path
 from src.helpers.port_utils import kill_pid
 
-logger = setup_logger(Settings.LOG_DIR / "helper.log", name="app.helpers.frontend")
+logger = setup_logger(boss_name="helpers.main.txt", his_name="helpers.frontend.txt")
 
 
 def get_frontend_port() -> int:

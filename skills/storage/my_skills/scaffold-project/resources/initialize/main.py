@@ -13,9 +13,10 @@ from src.helpers import (
     register_error_handlers,
     kill_pid,
     generate_nginx_config,
+    setup_tailscale_ingress,
 )
 from src.db import init_db, shutdown_db, create_tables
-from src.routers import auth_router
+from src.routers import auth_router, agent_router
 
 # Optional Frontend Orchestration (graceful fallback if web/ is not present)
 try:
@@ -25,10 +26,7 @@ except ImportError:
     _has_frontend = False
 
 # 1. Initialize Logger
-logger = setup_logger(
-    Settings.LOG_DIR / "app.log", 
-    name="app.main"
-)
+logger = setup_logger(boss_name="main.txt")
 
 # 2. Define Lifespan (Startup/Shutdown events)
 @asynccontextmanager
@@ -44,6 +42,10 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("Nginx configuration auto-generation skipped or failed")
     
+    if Settings.ENABLE_TAILSCALE:
+        public_url = await setup_tailscale_ingress()
+        logger.info(f"Tailscale Ingress active: {public_url}")
+
     yield
     
     # --- Shutdown ---
@@ -67,6 +69,7 @@ register_error_handlers(app, logger)
 
 # 5. Include Routers
 app.include_router(auth_router)
+app.include_router(agent_router)
 
 @app.get("/", include_in_schema=False)
 async def root():
@@ -76,18 +79,18 @@ async def root():
     return {
         "status": "ok",
         "project": Settings.PROJECT_NAME,
-        "environment": Settings.ENV,
         "version": Settings.VERSION
     }
+
 
 @app.get("/health", tags=["System"])
 async def health_check():
     return {
         "status": "ok", 
         "project": Settings.PROJECT_NAME,
-        "environment": Settings.ENV,
         "version": Settings.VERSION
     }
+
 
 if __name__ == "__main__":
     host = Settings.API_HOST

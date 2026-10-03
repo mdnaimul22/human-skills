@@ -9,7 +9,7 @@ from src.config import (
 )
 from src.helpers import parse_iso, time_now, time_now_iso
 
-logger = setup_logger(Settings.LOG_DIR / "provider.log", name="myproject.providers.proxy")
+logger = setup_logger(boss_name="providers.main.txt", his_name="providers.proxy.txt")
 
 
 class ProxyManager:

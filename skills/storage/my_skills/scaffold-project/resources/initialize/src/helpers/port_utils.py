@@ -14,7 +14,7 @@ from typing import List, Set
 
 from src.config import setup_logger, Settings
 
-logger = setup_logger(Settings.LOG_DIR / "helper.log", name="app.helpers.port_utils")
+logger = setup_logger(boss_name="helpers.main.txt", his_name="helpers.port_utils.txt")
 
 
 def get_pid(port: int) -> List[int]:
