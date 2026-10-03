@@ -169,7 +169,7 @@ class SetUI(Tool):
         output_dir: str | None = None,
         density: int | None = None,
         motion: int | None = None,
-    ) -> dict | None:
+    ) -> tuple[dict | None, str]:
         storage_root = Path(__file__).resolve().parents[3]
         target_scripts = (
             storage_root
@@ -178,9 +178,11 @@ class SetUI(Tool):
             / "scripts"
         )
         if not target_scripts.exists():
+            target_scripts = Path("/home/naimul/human-skills/skills/storage/nextlevelbuilder_ui-ux-pro-max/ui-ux-pro-max/scripts")
+        if not target_scripts.exists():
             target_scripts = storage_root / "my_skills" / "ui-ux-pro-max" / "scripts"
         if not target_scripts.exists():
-            return None
+            return None, f"ui-ux-pro-max scripts directory not found at {target_scripts}"
 
         scripts_str = str(target_scripts)
         if scripts_str not in sys.path:
@@ -198,15 +200,15 @@ class SetUI(Tool):
             if output_dir:
                 try:
                     persist_design_system(ds, output_dir=output_dir)
-                except (OSError, ValueError, RuntimeError) as err:
-                    _ = str(err)
+                except Exception:
+                    pass
                 try:
                     self._persist_brand_and_tokens(ds, Path(output_dir))
-                except (OSError, ValueError, RuntimeError) as err:
-                    _ = str(err)
-            return ds
-        except Exception:
-            return None
+                except Exception:
+                    pass
+            return ds, ""
+        except Exception as e:
+            return None, str(e)
         finally:
             if scripts_str in sys.path:
                 sys.path.remove(scripts_str)
@@ -229,7 +231,11 @@ class SetUI(Tool):
             script_rel_path = "templates/frontend/setup.py"
 
         resource_script = (
-            Path(__file__).resolve().parent.parent / script_rel_path
+            Path(__file__).resolve().parent.parent
+            / "resources"
+            / "initialize"
+            / "frontend"
+            / script_rel_path
         )
         if not resource_script.exists():
             return Response(
@@ -246,7 +252,7 @@ class SetUI(Tool):
         ds_info = ""
 
         if design_query:
-            design_system = self._generate_design_system(
+            design_system, ds_err = self._generate_design_system(
                 design_query,
                 project_name=dest_path.name,
                 output_dir=str(dest_path),
@@ -257,7 +263,7 @@ class SetUI(Tool):
                 env["DESIGN_SYSTEM_JSON"] = json.dumps(design_system, ensure_ascii=False)
                 ds_info = f"\n🧠 Design system generated for: \"{design_query}\""
             else:
-                ds_info = "\n⚠️ ui-ux-pro-max skill not found. Scaffolding without custom theme."
+                ds_info = f"\n⚠️ Design system generation warning: {ds_err}. Scaffolding without custom theme."
 
         try:
             result = subprocess.run(

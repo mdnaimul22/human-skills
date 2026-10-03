@@ -19,6 +19,8 @@ def get_frontend_port() -> int:
 
 
 def ensure_production_build() -> bool:
+    if not exists("web"):
+        return False
     web_abs_path = get_abs_path("web")
 
     if not exists("web/.next"):
@@ -40,6 +42,8 @@ class FrontendManager:
         self.proc: Optional[subprocess.Popen] = None
 
     def start(self) -> Optional[subprocess.Popen]:
+        if not exists("web"):
+            return None
         web_abs_path = get_abs_path("web")
         port = get_frontend_port()
 
@@ -72,7 +76,9 @@ class FrontendManager:
             return None
 
     def stop(self) -> None:
-        if self.proc and self.proc.poll() is None:
+        if not exists("web") or not self.proc:
+            return
+        if self.proc.poll() is None:
             logger.info("Shutting down frontend process group...")
             try:
                 if sys.platform != "win32":

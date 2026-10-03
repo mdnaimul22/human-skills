@@ -188,6 +188,13 @@ def step_copy_templates():
 
     copied = []
 
+    # next.config.ts → overwrite with centralized .env loader
+    src_next_config = RESOURCES_DIR / "next.config.ts"
+    if src_next_config.exists():
+        dst_next_config = WEB_DIR / "next.config.ts"
+        shutil.copy2(src_next_config, dst_next_config)
+        copied.append("next.config.ts")
+
     # globals.css → overwrite the one create-next-app generated
     src_css = RESOURCES_DIR / "globals.css"
     if src_css.exists():
@@ -473,8 +480,7 @@ def step_summary():
     print("📋 Next steps:")
     print("   1. cd web && npm run dev")
     print("   2. Open http://localhost:3000")
-    print("   3. Add NEXT_PUBLIC_API_URL to web/.env.local")
-    print("   4. Generate types: bash web/scripts/generate-types.sh")
+    print("   3. Generate types: bash web/scripts/generate-types.sh")
     print()
     if has_custom:
         try:

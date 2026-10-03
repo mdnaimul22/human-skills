@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 import uvicorn
 
-from src.config import Settings, setup_logger, shutdown_logger
+from src.config import Settings, setup_logger, shutdown_logger, exists
 from src.helpers import (
     register_cors,
     register_middleware,
@@ -20,9 +20,11 @@ from src.routers import auth_router, agent_router
 
 # Optional Frontend Orchestration (graceful fallback if web/ is not present)
 try:
+    if not exists("web"):
+        raise ImportError("Frontend 'web' directory not found")
     from src.helpers import start_frontend, stop_frontend
     _has_frontend = True
-except ImportError:
+except (ImportError, AttributeError):
     _has_frontend = False
 
 # 1. Initialize Logger

@@ -182,3 +182,8 @@ downloads_test/
 *.avi
 
 media/
+demo/
+
+# Sensitive model and API keys
+.models
+!.models.example
