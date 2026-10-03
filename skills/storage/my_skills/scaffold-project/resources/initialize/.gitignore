@@ -140,7 +140,9 @@ pnpm-lock.yaml
 
 # Environment and simulation data
 .env
+.models
 env
+
 
 archived/
 

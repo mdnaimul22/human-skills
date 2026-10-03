@@ -58,11 +58,67 @@ project_root/
     ├── db/                  ← [Built-in] Connection, base repository, models, repositories
     ├── helpers/             ← [Built-in] Exceptions, retry, middleware, port utils
     ├── core/                ← [Built-in] Pure business logic (auth, tokens, crypto)
-    ├── providers/           ← [Built-in] External service integrations (Tailscale, Email)
+    ├── providers/           ← [Built-in] External service integrations (Email, Google, Tailscale)
     ├── schema/              ← [Built-in] Pydantic data contracts
     ├── services/            ← [Built-in] Use-case orchestration (Core + Providers + DB)
     └── routers/             ← [Built-in] HTTP API endpoints & dependencies
 ```
+
+## Built-in Auth System
+
+The scaffold ships with a **production-grade authentication system** out of the box:
+
+### Auth Endpoints
+
+| Method | Endpoint | Auth | Purpose |
+|:---|:---|:---|:---|
+| `POST` | `/api/auth/register` | ❌ | Email signup → sends verification email |
+| `GET` | `/api/auth/verify-email` | ❌ | Verify email via token in query |
+| `POST` | `/api/auth/login` | ❌ | Email/password login → access + refresh tokens |
+| `POST` | `/api/auth/google` | ❌ | Google OAuth login/signup |
+| `POST` | `/api/auth/refresh` | ❌ | Rotate access + refresh tokens |
+| `POST` | `/api/auth/forgot-password` | ❌ | Request password reset email |
+| `POST` | `/api/auth/reset-password` | ❌ | Reset password with token |
+| `POST` | `/api/auth/change-password` | ✅ | Change password (authenticated) |
+| `GET` | `/api/auth/me` | ✅ | Get current user profile |
+| `PATCH` | `/api/auth/me` | ✅ | Update profile (name) |
+| `POST` | `/api/auth/logout` | ✅ | Client-side token clear guidance |
+
+### JWT Token Design
+
+Purpose-scoped tokens prevent cross-purpose token abuse:
+
+| Purpose | Expiry | Usage |
+|:---|:---|:---|
+| `access` | 15 minutes | API Authorization header |
+| `refresh` | 7 days | POST /refresh only |
+| `verify_email` | 24 hours | Email verification link |
+| `reset_password` | 1 hour | Password reset link |
+
+### User ↔ Service Data Ownership
+
+Use `OwnershipMixin` for any model that belongs to a user:
+
+```python
+from src.db import Base, TimestampMixin, OwnershipMixin
+
+class Post(Base, TimestampMixin, OwnershipMixin):
+    __tablename__ = "posts"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+```
+
+`BaseRepository` provides `list_by_owner(user_id)` and `count_by_owner(user_id)` for scoped queries.
+
+### Google OAuth Setup (Optional)
+
+1. Set `GOOGLE_CLIENT_ID` in `.env`
+2. Install: `pip install google-auth` (or `pip install .[google]`)
+3. Frontend sends Google ID token → `POST /api/auth/google`
+
+If `GOOGLE_CLIENT_ID` is not set, the endpoint returns a clear error.
+
+---
 
 ## main.py Features
 
@@ -71,7 +127,7 @@ The generated `main.py` includes:
 1. **FastAPI app** with lifespan (startup/shutdown hooks)
 2. **Logger** initialized via `setup_logger`
 3. **CORS, Middleware, Error Handlers** auto-registered from `src/helpers`
-4. **Database** hooks (commented out, uncomment when needed)
+4. **Database** hooks (init + create_tables on startup, shutdown on exit)
 5. **Health check** endpoint at `/health`
 6. **Auto-kill switch** — `kill_pid(port)` frees the port before starting
 
@@ -85,8 +141,11 @@ The generated `main.py` includes:
 
 - [ ] Copy `.env.example` → `.env` and fill mandatory fields
 - [ ] Add project-specific fields to `src/config/settings.py`
+- [ ] Set `JWT_SECRET` to a strong random value for production
+- [ ] Configure SMTP settings for email verification/password reset
+- [ ] (Optional) Set `GOOGLE_CLIENT_ID` for Google OAuth
 - [ ] Rename `AppError` in `exceptions.py` to your project name (optional)
-- [ ] Add dependencies to `pyproject.toml` (e.g. `tenacity`, `fastapi`, `sqlalchemy[asyncio]`)
+- [ ] Add dependencies to `pyproject.toml`
 - [ ] ⚠️ Never remove `kill_pid(port)` from `main.py`
 
 ---
