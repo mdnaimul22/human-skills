@@ -4,6 +4,7 @@ import pickle
 import shutil
 from pathlib import Path
 from typing import Any, Union
+import yaml
 
 from .paths import PROJECT_ROOT, resolve_sandboxed
 
@@ -34,6 +35,15 @@ def read_json(relative_path: str) -> Any:
 
 def write_json(relative_path: str, data: Any, indent: int = 2) -> None:
     write_text(relative_path, json.dumps(data, indent=indent, ensure_ascii=False))
+
+
+def read_yaml(relative_path: str) -> Any:
+    return yaml.safe_load(read_text(relative_path))
+
+
+def write_yaml(relative_path: str, data: Any) -> None:
+    write_text(relative_path, yaml.safe_dump(data, sort_keys=False))
+
 
 
 def read_pickle(path: str) -> Any:
