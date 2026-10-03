@@ -13,6 +13,14 @@ from .auth import (
     GoogleUserInfo,
 )
 from .common import StatusResponse, PaginatedResponse
+from .agent import (
+    AgentProfile,
+    ToolCallRecord,
+    BaseAgentOutput,
+    AgentOutput,
+    AgentRequest,
+    AgentResponse,
+)
 
 __all__ = [
     # Authentication & User Schemas
@@ -31,4 +39,11 @@ __all__ = [
     # Common Envelope Schemas
     "StatusResponse",
     "PaginatedResponse",
+    # Agent & Tool Call Schemas
+    "AgentProfile",
+    "ToolCallRecord",
+    "BaseAgentOutput",
+    "AgentOutput",
+    "AgentRequest",
+    "AgentResponse",
 ]
