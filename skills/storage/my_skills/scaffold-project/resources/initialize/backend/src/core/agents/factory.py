@@ -10,11 +10,12 @@ from .base import Agent
 logger = setup_logger(boss_name="core.agents.main.txt", his_name="core.agents.factory.txt")
 
 
-class AgentRegistry:
-    def __init__(self, auto_discover: bool = False) -> None:
+class AgentFactory:
+    def __init__(self, directories: tuple[str, ...] = ("data/agents",), auto_discover: bool = True) -> None:
         self._profiles: dict[str, AgentProfile] = {}
+        self._rotation_counters: dict[str, int] = {}
         if auto_discover:
-            self.auto_discover()
+            self.auto_discover(directories)
 
     def register(self, profile: AgentProfile) -> None:
         name = profile.name.strip()
@@ -51,22 +52,17 @@ class AgentRegistry:
                         logger.warning(f"Skipping invalid agent config in {p}: {exc}")
         return loaded
 
-
-
-    def get(self, name: str) -> AgentProfile:
+    def get_profile(self, name: str) -> AgentProfile:
         clean_name = name.strip()
         if clean_name not in self._profiles:
             raise NotFoundError(f"Agent profile '{clean_name}' not found")
         return self._profiles[clean_name]
 
+    def get(self, name: str) -> AgentProfile:
+        return self.get_profile(name)
+
     def list_profiles(self) -> list[AgentProfile]:
         return list(self._profiles.values())
-
-
-class AgentFactory:
-    def __init__(self, registry: AgentRegistry) -> None:
-        self.registry = registry
-        self._rotation_counters: dict[str, int] = {}
 
     def _current_client_index(self, profile: AgentProfile, explicit_index: int | None) -> int:
         if explicit_index is not None:
@@ -80,8 +76,6 @@ class AgentFactory:
 
     def _resolve_prompt(self, profile: AgentProfile) -> str:
         if profile.prompt_instruction:
-            if exists(profile.prompt_instruction):
-                return read_text(profile.prompt_instruction)
             return profile.prompt_instruction
         if profile.prompt_path:
             if exists(profile.prompt_path):
@@ -95,7 +89,7 @@ class AgentFactory:
         client_index: int | None = None,
         model: Model | None = None,
     ) -> Agent[AgentOutput]:
-        profile = self.registry.get(agent_name)
+        profile = self.get_profile(agent_name)
         prompt_content = self._resolve_prompt(profile)
         client_index = self._current_client_index(profile, client_index)
 
@@ -107,15 +101,3 @@ class AgentFactory:
             client_index=client_index,
             model=model,
         )
-
-
-default_agent_registry = AgentRegistry()
-default_agent_registry.auto_discover()
-default_agent_factory = AgentFactory(default_agent_registry)
-
-__all__ = [
-    "AgentRegistry",
-    "AgentFactory",
-    "default_agent_registry",
-    "default_agent_factory",
-]

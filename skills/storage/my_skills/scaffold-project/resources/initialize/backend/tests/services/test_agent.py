@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from src.core.agents import GeneralAgent
+from src.core.agents import AgentFactory
 from src.services.agent import AgentService
 from src.schema import AgentRequest
 
@@ -18,7 +18,7 @@ class TestAgentService:
             "status": "completed",
         }
         service = AgentService()
-        service.agent = GeneralAgent(model=TestModel(custom_output_args=mock_output))
+        service.agent = service.factory.create("general", client_index=0, model=TestModel(custom_output_args=mock_output))
 
         req = AgentRequest(prompt="Execute service task", client_index=0)
         res = await service.execute(req)
@@ -37,7 +37,7 @@ class TestAgentService:
             "status": "completed",
         }
         service = AgentService()
-        service.agent = GeneralAgent(model=TestModel(custom_output_args=mock_output))
+        service.agent = service.factory.create("general", client_index=0, model=TestModel(custom_output_args=mock_output))
 
         res = await service.execute(AgentRequest(prompt="Check duration"))
         assert isinstance(res.duration_ms, float)
@@ -46,3 +46,14 @@ class TestAgentService:
     async def test_service_empty_prompt_raises(self):
         with pytest.raises(Exception):
             AgentRequest(prompt="")
+
+    def test_service_list_agents(self):
+        service = AgentService()
+        agents = service.list_agents()
+        assert len(agents) >= 1
+        assert any(a.name == "general" for a in agents)
+
+    def test_service_get_agent_profile(self):
+        service = AgentService()
+        profile = service.get_agent_profile("general")
+        assert profile.name == "general"

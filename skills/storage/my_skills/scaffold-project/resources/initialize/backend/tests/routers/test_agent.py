@@ -78,3 +78,28 @@ class TestAgentRouter:
         assert data["output"]["summary"] == "Agent task finished"
         assert data["output"]["content"] == "Comprehensive answer content"
         assert data["duration_ms"] == 45.2
+
+    @pytest.mark.asyncio
+    async def test_list_agents_unauthorized(self, client: AsyncClient):
+        resp = await client.get("/api/agent/list")
+        assert resp.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_list_agents_success_with_auth(self, client: AsyncClient, db_session):
+        repo = UserRepository(db_session)
+        user = await repo.create(
+            email="agent_list@example.com",
+            name="Agent List User",
+            password_hash="mock_hash",
+        )
+        await db_session.commit()
+        token = create_token(user.id, "access")
+
+        resp = await client.get(
+            "/api/agent/list",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert isinstance(data, list)
+        assert any(item["name"] == "general" for item in data)

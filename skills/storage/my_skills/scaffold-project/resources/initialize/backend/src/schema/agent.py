@@ -15,10 +15,7 @@ class AgentProfile(BaseModel):
     def validate_prompt_source(self) -> AgentProfile:
         if not self.prompt_path and not self.prompt_instruction:
             raise ValueError("Either prompt_instruction or prompt_path must be provided")
-        if not self.prompt_path and self.prompt_instruction:
-            self.prompt_path = self.prompt_instruction
         return self
-
 
 
 class ToolCallRecord(BaseModel):
@@ -35,6 +32,7 @@ class BaseAgentOutput(BaseModel):
 class AgentOutput(BaseAgentOutput):
     summary: str = Field(..., min_length=1)
     content: str = Field(..., min_length=1)
+    data: dict[str, JsonValue] = Field(default_factory=dict)
     status: str = Field(default="completed", pattern=r"^(completed|failed|requires_input)$")
 
 
@@ -42,6 +40,7 @@ class AgentRequest(BaseModel):
     prompt: str = Field(..., min_length=1)
     agent_name: str = Field(default="general", pattern=r"^[a-zA-Z0-9_-]+$")
     instructions: str | None = None
+    parameters: dict[str, JsonValue] = Field(default_factory=dict)
     client_index: int | None = Field(default=None, ge=0)
 
 

@@ -8,21 +8,18 @@ from .auth import (
 )
 from .agents import (
     Agent,
-    GeneralAgent,
+    AgentFactory,
     ToolCallRecord,
 )
 
 __all__ = [
-    # Cryptographic Auth Utilities
     "TokenPurpose",
     "hash_password",
     "verify_password",
     "create_token",
     "decode_token",
     "decode_token_payload",
-    # Intelligent Agents
     "Agent",
-    "GeneralAgent",
+    "AgentFactory",
     "ToolCallRecord",
 ]
-

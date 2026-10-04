@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from src.core.agents import GeneralAgent, Agent, ToolCallRecord
+from src.core.agents import Agent, ToolCallRecord, AgentFactory
 from src.core.validators import GeneralAgentValidator
 from src.schema import AgentOutput
 from src.helpers import ValidationError
@@ -61,9 +61,10 @@ class TestGeneralAgentValidator:
             )
 
 
-class TestGeneralAgent:
+class TestAgentEngine:
     def test_init_success(self):
-        agent = GeneralAgent()
+        factory = AgentFactory()
+        agent = factory.create("general")
         assert agent.agent_name == "agent.general"
         assert agent.client_index == 0
         assert agent.system_prompt != ""
@@ -87,13 +88,15 @@ class TestGeneralAgent:
             )
 
     def test_client_index_out_of_range_raises(self):
-        agent = GeneralAgent(client_index=999)
+        factory = AgentFactory()
+        agent = factory.create("general", client_index=999)
         with pytest.raises(ValidationError):
             agent._build_agent()
 
     @pytest.mark.asyncio
     async def test_empty_raw_information_raises(self):
-        agent = GeneralAgent()
+        factory = AgentFactory()
+        agent = factory.create("general")
         with pytest.raises(ValidationError):
             await agent.run_async("")
 
@@ -106,7 +109,8 @@ class TestGeneralAgent:
             "status": "completed",
         }
         model = TestModel(custom_output_args=mock_output)
-        agent = GeneralAgent(model=model)
+        factory = AgentFactory()
+        agent = factory.create("general", model=model)
 
         result = await agent.run_async("What is the system status?")
         assert result.summary == "Processed query"
@@ -122,7 +126,8 @@ class TestGeneralAgent:
             "status": "completed",
         }
         model = TestModel(custom_output_args=mock_output)
-        agent = GeneralAgent(model=model)
+        factory = AgentFactory()
+        agent = factory.create("general", model=model)
 
         result = await agent.run_async("Analyze logs", additional_instructions="Format as bullet points")
         assert result.summary == "Processed with instructions"
@@ -135,7 +140,8 @@ class TestGeneralAgent:
             "status": "completed",
         }
         model = TestModel(custom_output_args=mock_output)
-        agent = GeneralAgent(model=model)
+        factory = AgentFactory()
+        agent = factory.create("general", model=model)
 
         result = agent.run("Perform sync computation")
         assert result.summary == "Sync execution"
