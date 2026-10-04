@@ -5,7 +5,7 @@ import { fetchMedia } from "../../../scripts/lib/media-fetch.mjs";
 // credentials (oauth → Bearer, else api_key → X-Api-Key; $HEYGEN_CONFIG_DIR
 // overrides the dir). Vendored so the skill ships standalone. Pure node.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
@@ -17,13 +17,24 @@ export const HEYGEN_CLI_SOURCE_HEADERS = { "X-HeyGen-Source": "cli" };
 // OAuth-only cli-source header above, which also gates the free allowance.
 export const HEYGEN_CLIENT_SOURCE_HEADERS = { "X-HeyGen-Client-Source": "media-use" };
 
+// A missing `.env`, or a `.env` folder (some home dirs have one), is no env file: null. Read without checking first,
+// so the file cannot change between a check and the read.
+function envFileText(path) {
+  try {
+    return readFileSync(path, "utf8");
+  } catch (error) {
+    if (["ENOENT", "ENOTDIR", "EISDIR"].includes(error.code)) return null;
+    throw error;
+  }
+}
+
 // Walk up ≤5 dirs from startDir; load the first .env (shell env always wins).
 export function loadEnvFromDir(startDir) {
   let dir = resolve(startDir);
   for (let i = 0; i < 5; i++) {
-    const envPath = join(dir, ".env");
-    if (existsSync(envPath)) {
-      for (const raw of readFileSync(envPath, "utf8").split("\n")) {
+    const text = envFileText(join(dir, ".env"));
+    if (text != null) {
+      for (const raw of text.split("\n")) {
         let line = raw.trim();
         if (!line || line.startsWith("#")) continue;
         if (line.startsWith("export ")) line = line.slice(7).trim();
@@ -48,17 +59,29 @@ export function loadEnvFromDir(startDir) {
 
 // → { headers } | { expired: true } | null. Never throws.
 export function heygenCredential() {
+  const cred = resolveCredential();
+  return cred?.unreadable ? null : cred;
+}
+
+// heygenCredential's answer, or { unreadable: { file, code } } when the credentials path exists but cannot be read
+// (a folder, a locked ~/.heygen), so heygenAuthHeaders can say to fix that path: logging in again would fail there too.
+// Read without checking first, so the file cannot change between a check and the read.
+function resolveCredential() {
   const envKey = process.env.HEYGEN_API_KEY || process.env.HYPERFRAMES_API_KEY;
   if (envKey) return { headers: { "X-Api-Key": envKey } };
 
   const file = join(process.env.HEYGEN_CONFIG_DIR || join(homedir(), ".heygen"), "credentials");
-  if (!existsSync(file)) return null;
-  const raw = readFileSync(file, "utf8").trim();
+  let raw;
+  try {
+    raw = readFileSync(file, "utf8").trim();
+  } catch (error) {
+    return error.code === "ENOENT" ? null : { unreadable: { file, code: error.code } };
+  }
   if (!raw) return null;
   if (!raw.startsWith("{")) return { headers: { "X-Api-Key": raw } };
 
   // A malformed credentials file (partial write / wrong shape) must degrade to
-  // "no credential", not crash the engine at startup — this function never throws.
+  // "no credential", not crash the engine at startup.
   let cred;
   try {
     cred = JSON.parse(raw);
@@ -88,7 +111,7 @@ export function heygenAuthMethod() {
 
 // → auth headers object, or throw with a fix hint.
 export function heygenAuthHeaders() {
-  const cred = heygenCredential();
+  const cred = resolveCredential();
   if (cred?.headers) {
     // Only tag OAuth (Bearer) traffic as cli-source — the backend uses it to
     // grant the free allowance for OAuth requests and ignores it for API-key
@@ -98,6 +121,10 @@ export function heygenAuthHeaders() {
       ? { ...cred.headers, ...HEYGEN_CLI_SOURCE_HEADERS, ...HEYGEN_CLIENT_SOURCE_HEADERS }
       : { ...cred.headers, ...HEYGEN_CLIENT_SOURCE_HEADERS };
   }
+  if (cred?.unreadable)
+    throw new Error(
+      `HeyGen credentials at ${cred.unreadable.file} can't be read (${cred.unreadable.code}) — fix or remove that path, then run \`npx hyperframes auth login\``,
+    );
   if (cred?.expired)
     throw new Error(
       "HeyGen OAuth token expired — run `npx hyperframes auth refresh` (or `npx hyperframes auth login`)",
