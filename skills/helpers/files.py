@@ -121,7 +121,9 @@ def get_rel_path(path: Union[str, Path], base: Union[str, Path, None] = None) ->
     except (ValueError, OSError):
         pass
 
-    clean_base = str(base_dir).rstrip("/")
-    if p_str.startswith(clean_base + "/"):
-        return p_str[len(clean_base) + 1:].lstrip("/")
+    # Windows-safe prefix strip: accept both "/" and "\" separators.
+    clean_base = str(base_dir).rstrip("/\\")
+    rest = p_str[len(clean_base):] if p_str.startswith(clean_base) else None
+    if rest is not None and (rest.startswith("/") or rest.startswith("\\")):
+        return rest.lstrip("/\\")
     return p_str

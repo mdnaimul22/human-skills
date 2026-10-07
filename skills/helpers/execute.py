@@ -7,6 +7,16 @@ import importlib.util
 import ast
 from typing import Optional, Dict, List
 
+# Windows consoles default to cp1252/cp437 which cannot encode emoji.
+# Force UTF-8 stdout/stderr so --list / tool output never crashes.
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 try:
     from paths import (
         PROJECT_ROOT,
@@ -272,10 +282,7 @@ def dispatch_with_status(payload: dict) -> tuple[str, bool]:
         available = ", ".join(sorted(registry.keys())) or "(none)"
         return f"Error: Unknown tool '{tool_name}'. Available tools: {available}", False
 
-    normalised = {
-        str(k): v if type(v) is str else str(v)
-        for k, v in tool_args.items()
-    }
+    normalised = dict(tool_args)
 
     return registry[target_tool]["runner"](normalised)
 
@@ -443,8 +450,7 @@ def main() -> None:
 
     message, ok = dispatch_with_status(payload)
     print(message)
-    legacy_error = message.startswith(("❌", "Error:", "Error "))
-    sys.exit(0 if ok and not legacy_error else 1)
+    sys.exit(0 if ok else 1)
 
 
 if __name__ == "__main__":
