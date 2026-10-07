@@ -15,13 +15,15 @@ if not exist "%EXEC_PATH%" (
 )
 
 set "PYTHON_EXE="
+set "PYTHON_ARGS="
 where python >nul 2>&1
 if !errorlevel! equ 0 (
     set "PYTHON_EXE=python"
 ) else (
     where py >nul 2>&1
     if !errorlevel! equ 0 (
-        set "PYTHON_EXE=py -3"
+        set "PYTHON_EXE=py"
+        set "PYTHON_ARGS= -3"
     ) else (
         where python3 >nul 2>&1
         if !errorlevel! equ 0 (
@@ -45,7 +47,8 @@ set "CMD_FILE=%DEST_DIR%\human-skills.cmd"
 
 (
     echo @echo off
-    echo "%PYTHON_EXE%" "%EXEC_PATH%" %%*
+    echo set "PYTHONUTF8=1"
+    echo "%PYTHON_EXE%"%PYTHON_ARGS% "%EXEC_PATH%" %%*
 ) > "%CMD_FILE%"
 
 for /f "tokens=2* delims= " %%A in ('reg query "HKCU\Environment" /v Path 2^>nul') do set "USER_PATH=%%B"

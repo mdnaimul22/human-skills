@@ -7,8 +7,11 @@ name = "human-skills"
 version = "1.0.0"
 description = "Master dispatcher and unified gateway for human-verified AI coding skills and tools"
 readme = "README.md"
-requires-python = ">=3.8"
-dependencies = []
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+]
 
 [project.scripts]
 human-skills = "skills.helpers.execute:main"

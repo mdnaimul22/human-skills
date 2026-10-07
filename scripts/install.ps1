@@ -48,10 +48,10 @@ if (-not (Test-Path $destDir)) {
 $cmdFile = Join-Path $destDir "human-skills.cmd"
 $psFile = Join-Path $destDir "human-skills.ps1"
 
-$cmdScript = "@echo off`r`n`"$pythonExe`" `"$execPath`" %*`r`n"
+$cmdScript = '@echo off' + "`r`n" + 'set "PYTHONUTF8=1"' + "`r`n" + '"' + $pythonExe + '" "' + $execPath + '" %*' + "`r`n"
 [System.IO.File]::WriteAllText($cmdFile, $cmdScript, [System.Text.Encoding]::ASCII)
 
-$psScript = "& `"$pythonExe`" `"$execPath`" `$args`r`n"
+$psScript = '$env:PYTHONUTF8 = ' + "'1'" + "`r`n" + '& "' + $pythonExe + '" "' + $execPath + '" $args' + "`r`n"
 [System.IO.File]::WriteAllText($psFile, $psScript, [System.Text.Encoding]::UTF8)
 
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -68,8 +68,12 @@ if ($paths -notcontains $destDir) {
 
 Write-Host "Verifying installation..." -ForegroundColor Cyan
 try {
-    & $cmdFile --list | Out-Null
-    Write-Host "Verification passed! 'human-skills' command is verified functional." -ForegroundColor Green
+    & $cmdFile --list-all > $null 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Verification passed! 'human-skills' command is verified functional." -ForegroundColor Green
+    } else {
+        Write-Warning "Verification exited with code $LASTEXITCODE - check PYTHONUTF8 / Python version."
+    }
 } catch {
     Write-Warning "Execution test failed: $_"
 }
@@ -77,8 +81,8 @@ try {
 Write-Host "=================================================================" -ForegroundColor Green
 Write-Host "human-skills installed successfully!" -ForegroundColor Green
 Write-Host "Installed wrappers:" -ForegroundColor White
-Write-Host "  • CMD:        $cmdFile" -ForegroundColor White
-Write-Host "  • PowerShell: $psFile" -ForegroundColor White
+Write-Host "  CMD:        $cmdFile" -ForegroundColor White
+Write-Host "  PowerShell: $psFile" -ForegroundColor White
 Write-Host ""
 Write-Host "You can now run 'human-skills' from ANY PowerShell or CMD window:" -ForegroundColor Cyan
 Write-Host "human-skills --list" -ForegroundColor White
