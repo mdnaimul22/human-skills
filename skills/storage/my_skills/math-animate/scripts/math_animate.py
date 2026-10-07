@@ -343,7 +343,7 @@ def _commit_rendered_output(
     if not rendered:
         return False, "Render completed but output file was not found in scratch directory.", {}
 
-    target_parent = output_target.rsplit("/", 1)[0] if "/" in output_target else ""
+    target_parent = os.path.dirname(output_target)
     if target_parent:
         ensure_dir(target_parent)
 

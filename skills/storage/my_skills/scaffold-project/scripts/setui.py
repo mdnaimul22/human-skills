@@ -266,8 +266,9 @@ class SetUI(Tool):
                 ds_info = f"\n⚠️ Design system generation warning: {ds_err}. Scaffolding without custom theme."
 
         try:
+            # NOTE: sys.executable — "python3" does not exist on stock Windows.
             result = subprocess.run(
-                ["python3", "-u", str(resource_script)],
+                [sys.executable, "-u", str(resource_script)],
                 cwd=str(dest_path),
                 env=env,
                 stdout=subprocess.PIPE,

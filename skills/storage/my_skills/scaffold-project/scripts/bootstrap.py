@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from pathlib import Path
 from helpers.tool import Tool, Response
 
@@ -30,8 +31,9 @@ class Bootstrap(Tool):
 
         try:
             # Run the bootstrap script inside the destination directory
+            # NOTE: use sys.executable — "python3" does not exist on stock Windows.
             result = subprocess.run(
-                ["python3", str(resource_script)],
+                [sys.executable, str(resource_script)],
                 cwd=str(dest_path),
                 capture_output=True,
                 text=True

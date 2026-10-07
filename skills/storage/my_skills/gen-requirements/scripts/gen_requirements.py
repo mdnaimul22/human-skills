@@ -198,8 +198,8 @@ class GenerateRequirements(Tool):
         if hasattr(sys, "stdlib_module_names"):
             return set(sys.stdlib_module_names)
         try:
-            import distutils.sysconfig
-            stdlib_dir = distutils.sysconfig.get_python_lib(standard_lib=True)
+            import sysconfig
+            stdlib_dir = sysconfig.get_path("stdlib")
             names = set()
             for item in os.listdir(stdlib_dir):
                 if item.endswith(".py"):

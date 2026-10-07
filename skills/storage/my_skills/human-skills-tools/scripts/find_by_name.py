@@ -1,5 +1,7 @@
 import os
 import sys
+import fnmatch
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -9,7 +11,7 @@ from helpers.files import is_dir, is_file
 
 class FindByName(Tool):
     name = "find_by_name"
-    description = "Find files or directories by name or glob pattern using the system find command."
+    description = "Find files or directories by name or glob pattern (portable pure-Python search; uses GNU find when available, falls back to os.walk on Windows)."
     arguments = {
         "search_directory": "Root directory to search in. (REQUIRED)",
         "pattern": "Filename glob pattern (e.g. '*.py'). Default: '*'.",
@@ -67,30 +69,84 @@ class FindByName(Tool):
                 break_loop=False,
             )
 
-        cmd = ["find", search_directory]
-
-        if max_depth:
-            try:
-                cmd.extend(["-maxdepth", str(int(max_depth))])
-            except ValueError:
-                pass
-
-        if file_type == "file":
-            cmd.extend(["-type", "f"])
-        elif file_type == "directory":
-            cmd.extend(["-type", "d"])
-
-        if pattern != "*":
-            cmd.extend(["-path" if full_path else "-name", pattern])
-
         excludes = [e.strip() for e in excludes_raw.split(",") if e.strip()]
-        for exc in excludes:
-            cmd.extend(["-not", "-path", f"*/{exc}/*"])
+
+        # Prefer GNU find on POSIX, but fall back to pure-Python walk on
+        # Windows (where `find` is a different text-search tool) or when
+        # the binary is missing.
+        use_find = shutil.which("find") is not None and os.name != "nt"
+        raw_paths: list[str] = []
+        if use_find:
+            cmd = ["find", search_directory]
+
+            if max_depth:
+                try:
+                    cmd.extend(["-maxdepth", str(int(max_depth))])
+                except ValueError:
+                    pass
+
+            if file_type == "file":
+                cmd.extend(["-type", "f"])
+            elif file_type == "directory":
+                cmd.extend(["-type", "d"])
+
+            if pattern != "*":
+                cmd.extend(["-path" if full_path else "-name", pattern])
+
+            for exc in excludes:
+                cmd.extend(["-not", "-path", f"*/{exc}/*"])
+
+            try:
+                proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                raw_paths = [l.strip() for l in proc.stdout.splitlines() if l.strip()]
+            except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+                use_find = False
+
+        if not use_find:
+            try:
+                max_d: int | None = None
+                if max_depth:
+                    try:
+                        max_d = int(max_depth)
+                    except ValueError:
+                        max_d = None
+                base = Path(search_directory).resolve()
+                base_depth = len(base.parts)
+                for root, dirs, files in os.walk(base, followlinks=False):
+                    try:
+                        depth = len(Path(root).parts) - base_depth
+                    except Exception:
+                        depth = 0
+                    if max_d is not None and depth > max_d:
+                        dirs[:] = []
+                        continue
+                    # prune excluded segments in-place
+                    if excludes:
+                        dirs[:] = [d for d in dirs if d not in excludes
+                                   and not any(e in str(Path(root) / d) for e in excludes)]
+                    rel_root = os.path.relpath(root, str(base))
+                    candidates: list[str] = []
+                    if file_type in ("any", "directory"):
+                        candidates.extend(dirs)
+                    if file_type in ("any", "file"):
+                        candidates.extend(files)
+                    for name in candidates:
+                        is_d = name in dirs
+                        full = str(Path(root) / name)
+                        if excludes and any(e in full for e in excludes):
+                            continue
+                        target = full if full_path else name
+                        if pattern == "*" or fnmatch.fnmatch(target, pattern) \
+                                or fnmatch.fnmatch(os.path.basename(full), pattern):
+                            raw_paths.append(full)
+                    if rel_root == "." and max_d == 0:
+                        break
+            except subprocess.TimeoutExpired:
+                return Response(message="Error: find_by_name search timed out after 30 seconds.", break_loop=False)
+            except Exception as e:
+                return Response(message=f"Error during file search: {e}", break_loop=False)
 
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            raw_paths = [l.strip() for l in proc.stdout.splitlines() if l.strip()]
-
             results: list[dict] = []
             for p in raw_paths:
                 try:
