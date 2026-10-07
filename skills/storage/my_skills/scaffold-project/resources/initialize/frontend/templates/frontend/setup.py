@@ -59,10 +59,15 @@ def run(
     timeout: int = 600,
 ) -> subprocess.CompletedProcess:
     """Run a command, merge stdout+stderr, enforce per-step timeout."""
+    # Windows: npm/npx are .cmd shims — CreateProcess cannot run them
+    # directly, route through cmd.exe.
+    if os.name == "nt" and cmd and cmd[0] in ("npm", "npx"):
+        cmd = ["cmd", "/c", *cmd]
     return subprocess.run(
         cmd, cwd=str(cwd or PROJECT_DIR),
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        text=True, check=check, timeout=timeout,
+        text=True, encoding="utf-8", errors="replace",
+        check=check, timeout=timeout,
     )
 
 

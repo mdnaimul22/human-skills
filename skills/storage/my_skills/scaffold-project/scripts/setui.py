@@ -244,6 +244,9 @@ class SetUI(Tool):
             )
 
         env = os.environ.copy()
+        # Child setup scripts print emoji; force UTF-8 so they survive
+        # Windows cp1252 consoles (stdout is piped, locale-encoded).
+        env["PYTHONUTF8"] = "1"
         design_query = self.args.get("design_query", "")
         density_arg = self.args.get("density")
         motion_arg = self.args.get("motion")
@@ -267,6 +270,8 @@ class SetUI(Tool):
 
         try:
             # NOTE: sys.executable — "python3" does not exist on stock Windows.
+            # encoding="utf-8": child emits emoji under PYTHONUTF8=1; the
+            # parent must decode the pipe the same way (locale is cp1252).
             result = subprocess.run(
                 [sys.executable, "-u", str(resource_script)],
                 cwd=str(dest_path),
@@ -274,6 +279,8 @@ class SetUI(Tool):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=2400,
             )
 

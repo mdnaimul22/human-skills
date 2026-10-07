@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -32,11 +33,17 @@ class Bootstrap(Tool):
         try:
             # Run the bootstrap script inside the destination directory
             # NOTE: use sys.executable — "python3" does not exist on stock Windows.
+            # PYTHONUTF8=1: resource scripts print emoji, fatal on cp1252 consoles.
+            env = os.environ.copy()
+            env["PYTHONUTF8"] = "1"
             result = subprocess.run(
                 [sys.executable, str(resource_script)],
                 cwd=str(dest_path),
                 capture_output=True,
-                text=True
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=env,
             )
             
             if result.returncode == 0:

@@ -42,12 +42,19 @@ def copy_tree(src: Path, dst: Path) -> list[str]:
     return copied
 
 # ── Step Functions ─────────────────────────────────────────────
+def _cmd(name: str) -> list:
+    """Windows: npm/npx are .cmd shims, route through cmd.exe."""
+    if os.name == "nt" and name in ("npm", "npx"):
+        return ["cmd", "/c", name]
+    return [name]
+
+
 def step_check_node():
     """Verify node and npm are available."""
     print("🔍 Checking Node.js and npm...")
     try:
-        node_result = subprocess.run(["node", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
-        npm_result = subprocess.run(["npm", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+        node_result = subprocess.run([*_cmd("node"), "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+        npm_result = subprocess.run([*_cmd("npm"), "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
         if node_result.returncode != 0 or npm_result.returncode != 0:
             print("❌ Node.js and npm are required. Install from: https://nodejs.org")
             sys.exit(1)
@@ -262,9 +269,9 @@ def step_summary():
 def step_npm_install_build():
     """Run npm install and npm run build automatically."""
     print("\n📦 Installing dependencies (npm install)...")
-    subprocess.run(["npm", "install"], cwd=EXTENSION_DIR, check=True)
+    subprocess.run([*_cmd("npm"), "install"], cwd=EXTENSION_DIR, check=True)
     print("🏗️  Building production bundle (npm run build)...")
-    subprocess.run(["npm", "run", "build"], cwd=EXTENSION_DIR, check=True)
+    subprocess.run([*_cmd("npm"), "run", "build"], cwd=EXTENSION_DIR, check=True)
     print("   ✅ Build complete! 'dist' folder is ready.")
 
 if __name__ == "__main__":
