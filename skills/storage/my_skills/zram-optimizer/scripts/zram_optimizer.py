@@ -19,6 +19,19 @@ import argparse
 import io
 import contextlib
 
+
+def _is_root() -> bool:
+    """Portable root check: os.geteuid does not exist on Windows."""
+    try:
+        return os.geteuid() == 0  # type: ignore[attr-defined]
+    except AttributeError:
+        # Windows: check admin via ctypes, otherwise False.
+        try:
+            import ctypes
+            return bool(ctypes.windll.shell32.IsUserAnAdmin())
+        except Exception:
+            return False
+
 from pathlib import Path
 
 _CURRENT_DIR = Path(__file__).resolve().parent
@@ -251,7 +264,7 @@ def ensure_zram_module():
         print("[SUCCESS] zram module loaded successfully.")
 
 def cmd_bench(args):
-    if os.geteuid() != 0:
+    if not _is_root():
         print("ERROR: This command must be run as root (sudo).", file=sys.stderr)
         sys.exit(1)
 
@@ -377,7 +390,7 @@ def cmd_bench(args):
 # ──────────────────────────────────────────────
 
 def cmd_deploy(args):
-    if os.geteuid() != 0:
+    if not _is_root():
         print("ERROR: This command must be run as root (sudo).", file=sys.stderr)
         sys.exit(1)
 
@@ -552,6 +565,13 @@ class ZramOptimizer(Tool):
     instruction = "For Skill instruction run human-skills --skill_info zram-optimizer"
 
     async def execute(self, **kwargs) -> Response:
+        if os.name == "nt" or sys.platform.startswith("win"):
+            return Response(
+                message="Error: 'zram_optimizer' is Linux-only (requires /sys/block/zram*, "
+                        "modprobe, systemd). It cannot run on Windows. "
+                        "Run it inside WSL2 or a Linux VM/container instead.",
+                break_loop=False,
+            )
         command = self.args.get("command")
         
         f = io.StringIO()
