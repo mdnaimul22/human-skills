@@ -246,11 +246,96 @@ def _warn(msg: str) -> None:
     print(f"[execute] WARNING: {msg}", file=sys.stderr)
 
 
+def _read_stdin_text() -> str:
+    try:
+        if sys.stdin.isatty():
+            return ""
+    except Exception:
+        pass
+    try:
+        data = sys.stdin.read()
+    except Exception:
+        return ""
+    return data or ""
+
+
+def _coerce_arg_value(raw: str):
+    text = raw.strip()
+    if text == "":
+        return ""
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return raw
+
+
+def _parse_tool_style(argv: List[str]) -> dict:
+    tool_name = ""
+    tool_args: Dict[str, object] = {}
+    i = 0
+    while i < len(argv):
+        tok = argv[i]
+        if tok in ("--tool", "--tool_name", "--tool-name") and not tool_name:
+            i += 1
+            if i >= len(argv):
+                raise ValueError("--tool requires a tool name.")
+            token = argv[i]
+            if "=" in token and not tool_name:
+                # Support --tool=name form arriving as separate token.
+                _, _, val = token.partition("=")
+                tool_name = val.strip()
+            else:
+                tool_name = token.strip()
+        elif tok.startswith("--tool=") or tok.startswith("--tool_name=") or tok.startswith("--tool-name="):
+            _, _, val = tok.partition("=")
+            tool_name = val.strip()
+        elif tok in ("--arg", "--args", "-a"):
+            i += 1
+            if i >= len(argv):
+                raise ValueError("--arg requires k=v.")
+            kv = argv[i]
+            key, sep, val = kv.partition("=")
+            if not sep or not key.strip():
+                raise ValueError(f"Bad --arg {kv!r}: expected k=v.")
+            tool_args[key.strip()] = _coerce_arg_value(val)
+        elif tok.startswith("--arg=") or tok.startswith("--args="):
+            _, _, kv = tok.partition("=")
+            key, sep, val = kv.partition("=")
+            if not sep or not key.strip():
+                raise ValueError(f"Bad {tok!r}: expected --arg k=v.")
+            tool_args[key.strip()] = _coerce_arg_value(val)
+        else:
+            raise ValueError(f"Unexpected argument {tok!r} in --tool mode.")
+        i += 1
+    if not tool_name:
+        raise ValueError("--tool requires a tool name.")
+    return {"tool_name": tool_name, "tool_args": tool_args}
+
+
 def _load_payload(source: str) -> dict:
     stripped = source.strip()
+    if not stripped:
+        raise ValueError("Empty payload.")
     if stripped.endswith(".json") and exists(stripped):
         return read_json(stripped)
+    # CMD passes single quotes literally:  '{"a":1}' -> strip one outer pair.
+    if len(stripped) >= 2 and stripped[0] == "'" and stripped[-1] == "'":
+        inner = stripped[1:-1].strip()
+        if inner.startswith("{"):
+            stripped = inner
     return json.loads(stripped)
+
+
+def _print_usage() -> None:
+    print(__doc__ or "human-skills Command Center")
+    print("\nUsage:")
+    print("  • human-skills --list [all | <dir_name>] (or --list-all)")
+    print("  • human-skills --skill_info <skill_name>")
+    print("  • human-skills --tool_info <tool_name>")
+    print("  • human-skills '{\"tool_name\": \"<name>\", \"tool_args\": {...}}'")
+    print("  • human-skills payload.json  (file path, Windows-safe)")
+    print("  • echo {\"tool_name\": ...} | human-skills  (stdin, Windows-safe)")
+    print("  • human-skills --tool <name> --arg k=v [--arg k2=v2 ...]  (no JSON quoting)")
 
 
 def dispatch(payload: dict) -> str:
@@ -380,13 +465,23 @@ def _handle_list(args: List[str]) -> None:
 
 
 def main() -> None:
-    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
-        print(__doc__ or "human-skills Command Center")
-        print("\nUsage:")
-        print("  • human-skills --list [all | <dir_name>] (or --list-all)")
-        print("  • human-skills --skill_info <skill_name>")
-        print("  • human-skills --tool_info <tool_name>")
-        print("  • human-skills '{\"tool_name\": \"<name>\", \"tool_args\": {...}}'")
+    if len(sys.argv) < 2:
+        stdin_text = _read_stdin_text()
+        if stdin_text.strip():
+            try:
+                payload = _load_payload(stdin_text)
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"Error: Invalid JSON on stdin — {e}", file=sys.stderr)
+                print("Hint: pipe valid JSON, pass a payload.json file, or use --tool NAME --arg k=v.", file=sys.stderr)
+                sys.exit(1)
+            message, ok = dispatch_with_status(payload)
+            print(message)
+            sys.exit(0 if ok else 1)
+        _print_usage()
+        sys.exit(0)
+
+    if sys.argv[1] in ("-h", "--help"):
+        _print_usage()
         sys.exit(0)
 
     if sys.argv[1] == "--skill_info":
@@ -440,12 +535,42 @@ def main() -> None:
         list_args = ["all"] if sys.argv[1] in ("--list-all", "--list_all", "--list all") else sys.argv[2:]
         _handle_list(list_args)
 
-    source = sys.argv[1]
+    if sys.argv[1] in ("--tool", "--tool_name", "--tool-name") or sys.argv[1].startswith("--tool"):
+        try:
+            payload = _parse_tool_style(sys.argv[1:])
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            print("Usage: human-skills --tool <name> --arg k=v [--arg k2=v2 ...]", file=sys.stderr)
+            sys.exit(1)
+        message, ok = dispatch_with_status(payload)
+        print(message)
+        sys.exit(0 if ok else 1)
+
+    if sys.argv[1] in ("-", "--stdin"):
+        stdin_text = _read_stdin_text()
+        if not stdin_text.strip():
+            print("Error: No JSON received on stdin.", file=sys.stderr)
+            sys.exit(1)
+        try:
+            payload = _load_payload(stdin_text)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error: Invalid JSON on stdin — {e}", file=sys.stderr)
+            sys.exit(1)
+        message, ok = dispatch_with_status(payload)
+        print(message)
+        sys.exit(0 if ok else 1)
+
+    # Join all argv parts: CMD/PowerShell may split unquoted JSON on spaces.
+    source = " ".join(sys.argv[1:])
 
     try:
         payload = _load_payload(source)
     except (json.JSONDecodeError, ValueError) as e:
         print(f"Error: Invalid JSON — {e}", file=sys.stderr)
+        print("Windows-safe alternatives (no quoting needed):", file=sys.stderr)
+        print("  human-skills payload.json", file=sys.stderr)
+        print("  echo JSON | human-skills  (stdin, no quoting needed)", file=sys.stderr)
+        print("  human-skills --tool <name> --arg k=v", file=sys.stderr)
         sys.exit(1)
 
     message, ok = dispatch_with_status(payload)
