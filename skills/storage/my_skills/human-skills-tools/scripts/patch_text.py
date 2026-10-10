@@ -42,7 +42,10 @@ def _apply_bounded_replace(
 
     first_match_offset = slice_text.index(target_content)
     match_line_from = (prefix + slice_text[:first_match_offset]).count("\n") + 1
-    match_line_to = match_line_from + max(target_content.count("\n"), 0)
+    nl_count = target_content.count("\n")
+    if target_content.endswith("\n"):
+        nl_count = max(nl_count - 1, 0)
+    match_line_to = match_line_from + nl_count
     return new_content, match_line_from, match_line_to
 
 
@@ -153,7 +156,11 @@ class PatchText(Tool):
                     return Response(message=f"❌ Error: TargetContent not found in file: {chunk['target_content'][:60]}", break_loop=False)
                 idx = original_content.index(chunk["target_content"])
                 chunk["start_line"] = original_content[:idx].count("\n") + 1
-                chunk["end_line"] = chunk["start_line"] + max(chunk["target_content"].count("\n"), 0)
+            if chunk["end_line"] is None:
+                nl_count = chunk["target_content"].count("\n")
+                if chunk["target_content"].endswith("\n"):
+                    nl_count = max(nl_count - 1, 0)
+                chunk["end_line"] = chunk["start_line"] + nl_count
 
         if len(parsed_chunks) > 1:
             sorted_by_line = sorted(parsed_chunks, key=lambda c: (c["start_line"] or 0))
