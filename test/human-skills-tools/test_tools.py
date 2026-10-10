@@ -20,6 +20,7 @@ from grep_search import GrepSearch
 from list_dir import ListDir
 from view_file import ViewFile
 from write_to_file import WriteToFile
+from patch_text import PatchText
 from skills.helpers.execute import dispatch
 
 
@@ -391,3 +392,127 @@ def test_cli_integration(tmp_path):
     assert run.returncode == 0
     assert "File created:" in run.stdout
     assert test_file.exists()
+
+
+@pytest.mark.asyncio
+async def test_patch_text_exact_replace(tmp_path):
+    target = tmp_path / "hello.py"
+    target.write_text("def run():\n    return 1\n")
+    tool = PatchText(args={
+        "TargetFile": str(target),
+        "TargetContent": "return 1",
+        "ReplacementContent": "return 2",
+    })
+    res = await tool.execute()
+    assert "File updated successfully" in res.message
+    assert target.read_text() == "def run():\n    return 2\n"
+
+
+@pytest.mark.asyncio
+async def test_patch_text_bounded_replace(tmp_path):
+    target = tmp_path / "app.txt"
+    target.write_text("item = 1\nitem = 2\nitem = 3\n")
+    tool = PatchText(args={
+        "TargetFile": str(target),
+        "TargetContent": "item = 2",
+        "ReplacementContent": "item = 20",
+        "StartLine": "2",
+        "EndLine": "2",
+    })
+    res = await tool.execute()
+    assert "File updated successfully" in res.message
+    assert target.read_text() == "item = 1\nitem = 20\nitem = 3\n"
+
+
+@pytest.mark.asyncio
+async def test_patch_text_allow_multiple(tmp_path):
+    target = tmp_path / "multi.txt"
+    target.write_text("alpha beta alpha gamma")
+    tool = PatchText(args={
+        "TargetFile": str(target),
+        "TargetContent": "alpha",
+        "ReplacementContent": "delta",
+        "AllowMultiple": "true",
+    })
+    res = await tool.execute()
+    assert "File updated successfully" in res.message
+    assert target.read_text() == "delta beta delta gamma"
+
+
+@pytest.mark.asyncio
+async def test_patch_text_multi_chunks(tmp_path):
+    target = tmp_path / "fruits.txt"
+    target.write_text("L1: apple\nL2: banana\nL3: cherry\nL4: date\n")
+    tool = PatchText(args={
+        "TargetFile": str(target),
+        "ReplacementChunks": [
+            {"StartLine": 1, "EndLine": 1, "TargetContent": "apple", "ReplacementContent": "APPLE_FRUIT"},
+            {"StartLine": 3, "EndLine": 3, "TargetContent": "cherry", "ReplacementContent": "CHERRY_FRUIT"},
+        ],
+    })
+    res = await tool.execute()
+    assert "File updated successfully" in res.message
+    assert "2 chunk(s) applied" in res.message
+    assert target.read_text() == "L1: APPLE_FRUIT\nL2: banana\nL3: CHERRY_FRUIT\nL4: date\n"
+
+
+@pytest.mark.asyncio
+async def test_patch_text_overlapping_chunks_error(tmp_path):
+    target = tmp_path / "overlap.txt"
+    target.write_text("line 1\nline 2\nline 3\n")
+    tool = PatchText(args={
+        "TargetFile": str(target),
+        "ReplacementChunks": [
+            {"StartLine": 1, "EndLine": 2, "TargetContent": "line 1\nline 2", "ReplacementContent": "new 1-2"},
+            {"StartLine": 2, "EndLine": 3, "TargetContent": "line 2\nline 3", "ReplacementContent": "new 2-3"},
+        ],
+    })
+    res = await tool.execute()
+    assert "Overlapping replacement chunks detected" in res.message
+
+
+@pytest.mark.asyncio
+async def test_patch_text_syntax_validation_failure(tmp_path):
+    target = tmp_path / "broken.py"
+    target.write_text("def valid():\n    return 42\n")
+    tool = PatchText(args={
+        "TargetFile": str(target),
+        "TargetContent": "return 42",
+        "ReplacementContent": "def : syntax error",
+        "auto_check": "true",
+        "strict_mode": "true",
+    })
+    res = await tool.execute()
+    assert "Syntax validation failed" in res.message
+    assert target.read_text() == "def valid():\n    return 42\n"
+
+
+@pytest.mark.asyncio
+async def test_patch_text_syntax_default_not_strict(tmp_path):
+    target = tmp_path / "loose.py"
+    target.write_text("def valid():\n    return 42\n")
+    tool = PatchText(args={
+        "TargetFile": str(target),
+        "TargetContent": "return 42",
+        "ReplacementContent": "def : syntax error",
+        "auto_check": "true",
+    })
+    res = await tool.execute()
+    assert "warnings (file modified anyway)" in res.message
+    assert "def : syntax error" in target.read_text()
+
+
+def test_patch_text_dispatch(tmp_path):
+    target = tmp_path / "dispatch_patch.py"
+    target.write_text("STATUS = 'draft'\n")
+    res = dispatch({
+        "tool_name": "patch_text",
+        "tool_args": {
+            "TargetFile": str(target),
+            "TargetContent": "STATUS = 'draft'",
+            "ReplacementContent": "STATUS = 'published'",
+        }
+    })
+    assert "File updated successfully" in res
+    assert target.read_text() == "STATUS = 'published'\n"
+

@@ -1,9 +1,9 @@
 ---
 name: "human-skills-tools"
-description: "Core file system inspection and manipulation toolset for agents: find_by_name, grep_search, list_dir, view_file, and write_to_file."
-version: "1.0.0"
+description: "Core file system inspection and manipulation toolset for agents: find_by_name, grep_search, list_dir, view_file, write_to_file, and patch_text."
+version: "1.2.0"
 author: "Human Skills Team"
-tags: ["filesystem", "tools", "inspection", "search", "grep", "file-reader", "file-writer", "list-dir"]
+tags: ["filesystem", "tools", "inspection", "search", "grep", "file-reader", "file-writer", "list-dir", "patch", "replace"]
 trigger_patterns:
   - "find files"
   - "search codebase"
@@ -13,6 +13,9 @@ trigger_patterns:
   - "read file"
   - "write file"
   - "create file"
+  - "patch text"
+  - "patch file"
+  - "replace file content"
 ---
 
 # Human Skills Tools — File System & Code Inspection Suite
@@ -23,12 +26,13 @@ trigger_patterns:
 
 ## When to Use
 
-Activate this skill when you need to inspect, search, traverse, read, or create files in a project workspace:
+Activate this skill when you need to inspect, search, traverse, read, create, or edit files in a project workspace:
 - Locate files by name or pattern across directories (`find_by_name`)
 - Search code patterns, function definitions, or strings across files (`grep_search`)
 - Explore folder contents, file sizes, modification times, and permissions (`list_dir`)
 - Read and inspect exact source code lines with line numbering and range slicing (`view_file`)
 - Safely write or overwrite files with automated syntax validation (`write_to_file`)
+- Safely patch text, replace spans, or apply context diffs (`patch_text`)
 
 ---
 
@@ -40,7 +44,8 @@ Activate this skill when you need to inspect, search, traverse, read, or create 
 | Search code for text, tokens, or functions | `grep_search` | AST context tagging (functions/classes), line numbers, file filters |
 | Inspect directory contents and metadata | `list_dir` | Markdown table with file types, sizes, timestamps, permissions |
 | Read source code or config files | `view_file` | Numbered lines, line ranges (`start_line`, `end_line`), memory caching |
-| Create or modify files safely | `write_to_file` | Automated syntax validation (Python, JSON, YAML, XML), auto `mkdir -p` |
+| Create or full-overwrite files safely | `write_to_file` | Automated syntax validation (Python, JSON, YAML, XML), auto `mkdir -p` |
+| Surgically patch or replace code in existing file | `patch_text` | Exact replace, line bounds, context patch, multi-replace, syntax safety |
 
 ---
 
@@ -325,6 +330,81 @@ human-skills '{
         "target_file":        "/home/user_name/workdir/my-project/src/__init__.py",
         "code_content":       "",
         "overwrite":          "true"
+    }
+}'
+```
+
+---
+
+## 6. The `patch_text` Tool
+
+Safely replace code blocks, text spans, line ranges, or multiple non-contiguous chunks in files with integrated syntax validation.
+
+### 📝 PARAMETERS:
+- `TargetFile`: **REQUIRED** - Absolute path to the file to edit (alias: `target_file`, `path`).
+- `TargetContent`: *OPTIONAL* - Exact text or code block to replace for a single edit (alias: `old_text`, `target_content`).
+- `ReplacementContent`: *OPTIONAL* - Replacement text or code block (alias: `new_text`, `replacement_content`). Default: `""` (deletion).
+- `StartLine`: *OPTIONAL* - 1-based start line to restrict replacement range (alias: `start_line`).
+- `EndLine`: *OPTIONAL* - 1-based end line to restrict replacement range (alias: `end_line`).
+- `AllowMultiple`: *OPTIONAL* - Replace all occurrences if `"true"`. Default: `"false"` (alias: `allow_multiple`).
+- `ReplacementChunks`: *OPTIONAL* - Array of chunk objects for multiple non-contiguous replacements: `[{"TargetContent": str, "ReplacementContent": str, "StartLine": int, "EndLine": int, "AllowMultiple": bool}]` (alias: `replacement_chunks`, `chunks`).
+- `auto_check`: *OPTIONAL* - Validate syntax before saving (`"true"` / `"false"`). Default: `"true"`.
+- `strict_mode`: *OPTIONAL* - Abort replacement on syntax errors (`"true"` / `"false"`). Default: `"false"`.
+
+### 📋 HOW TO CALL THIS TOOL:
+
+#### Scenario A: Exact code replacement (Single block)
+```bash
+human-skills '{
+    "tool_name": "patch_text",
+    "tool_args": {
+        "TargetFile":         "/home/user_name/workdir/my-project/src/service.py",
+        "TargetContent":      "def get_user():\n    return None",
+        "ReplacementContent": "def get_user():\n    return User(id=1)"
+    }
+}'
+```
+
+#### Scenario B: Line-bounded replacement (Safe targeting)
+```bash
+human-skills '{
+    "tool_name": "patch_text",
+    "tool_args": {
+        "TargetFile":         "/home/user_name/workdir/my-project/src/config.py",
+        "TargetContent":      "PORT = 3000",
+        "ReplacementContent": "PORT = 8080",
+        "StartLine":          "10",
+        "EndLine":            "25"
+    }
+}'
+```
+
+#### Scenario C: Multi-chunk replacement (Multiple non-contiguous locations simultaneously)
+```bash
+human-skills '{
+    "tool_name": "patch_text",
+    "tool_args": {
+        "TargetFile": "/home/user_name/workdir/my-project/src/app.py",
+        "ReplacementChunks": [
+            {
+                "StartLine": 5,
+                "EndLine": 7,
+                "TargetContent": "PORT = 3000",
+                "ReplacementContent": "PORT = 8080"
+            },
+            {
+                "StartLine": 20,
+                "EndLine": 25,
+                "TargetContent": "DEBUG = False",
+                "ReplacementContent": "DEBUG = True"
+            },
+            {
+                "StartLine": 50,
+                "EndLine": 55,
+                "TargetContent": "TIMEOUT = 10",
+                "ReplacementContent": "TIMEOUT = 30"
+            }
+        ]
     }
 }'
 ```

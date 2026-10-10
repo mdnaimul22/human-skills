@@ -1,109 +1,6 @@
-import os
-import ast
-import sys
-import json
-import tempfile
-import subprocess
-from dataclasses import dataclass
-from pathlib import Path
-
 from helpers.tool import Tool, Response
 from helpers.files import exists, write_text
-
-
-@dataclass
-class _CheckResult:
-    valid: bool
-    errors: list[str]
-    warnings: list[str]
-
-
-def _check_python(content: str) -> _CheckResult:
-    errors: list[str] = []
-    warnings: list[str] = []
-    if not content.strip():
-        return _CheckResult(True, [], [])
-    try:
-        ast.parse(content)
-    except SyntaxError as e:
-        errors.append(f"Python SyntaxError: {e.msg} at line {e.lineno}")
-    except Exception as e:
-        errors.append(f"Python parse error: {e}")
-    return _CheckResult(len(errors) == 0, errors, warnings)
-
-
-def _check_json(content: str) -> _CheckResult:
-    errors: list[str] = []
-    if not content.strip():
-        return _CheckResult(True, [], [])
-    try:
-        json.loads(content)
-    except json.JSONDecodeError as e:
-        errors.append(f"JSON error: {e.msg} at L{e.lineno}:{e.colno}")
-    return _CheckResult(len(errors) == 0, errors, [])
-
-
-def _check_yaml(content: str) -> _CheckResult:
-    errors: list[str] = []
-    warnings: list[str] = []
-    if not content.strip():
-        return _CheckResult(True, [], [])
-    try:
-        import yaml
-        yaml.safe_load(content)
-    except ImportError:
-        warnings.append("PyYAML not installed — YAML syntax check skipped.")
-    except Exception as e:
-        errors.append(f"YAML error: {e}")
-    return _CheckResult(len(errors) == 0, errors, warnings)
-
-
-def _check_xml(content: str) -> _CheckResult:
-    errors: list[str] = []
-    if not content.strip():
-        return _CheckResult(True, [], [])
-    try:
-        import xml.etree.ElementTree as ET
-        ET.fromstring(content)
-    except Exception as e:
-        errors.append(f"XML error: {e}")
-    return _CheckResult(len(errors) == 0, errors, [])
-
-
-_CHECKERS: dict[str, callable] = {
-    ".py":   _check_python,
-    ".json": _check_json,
-    ".yaml": _check_yaml,
-    ".yml":  _check_yaml,
-    ".xml":  _check_xml,
-}
-
-
-def _validate(content: str, target_file: str) -> _CheckResult:
-    ext = Path(target_file).suffix.lower()
-    checker = _CHECKERS.get(ext)
-    if not checker:
-        return _CheckResult(True, [], [f"No syntax checker for '{ext}' files — skipped."])
-    result = checker(content)
-    if result.errors:
-        return result
-    if ext == ".py":
-        tmp = tempfile.NamedTemporaryFile(mode="w", suffix=ext, delete=False)
-        try:
-            tmp.write(content)
-            tmp.close()
-            r = subprocess.run(
-                [sys.executable, "-m", "py_compile", tmp.name],
-                capture_output=True, text=True, timeout=10,
-            )
-            if r.returncode != 0:
-                result.errors.append(f"py_compile: {r.stderr.strip()}")
-                result.valid = False
-        except Exception:
-            pass
-        finally:
-            os.unlink(tmp.name)
-    return result
+from helpers.validator import validate_syntax, CheckResult
 
 
 class WriteToFile(Tool):
@@ -138,9 +35,9 @@ class WriteToFile(Tool):
                 break_loop=False,
             )
 
-        check_result: _CheckResult | None = None
+        check_result: CheckResult | None = None
         if auto_check and code_content.strip():
-            check_result = _validate(code_content, target_file)
+            check_result = validate_syntax(code_content, target_file)
             if strict_mode and not check_result.valid:
                 error_lines = ["❌ Syntax validation failed — file NOT created.", ""]
                 error_lines += [f"  × {err}" for err in check_result.errors]
