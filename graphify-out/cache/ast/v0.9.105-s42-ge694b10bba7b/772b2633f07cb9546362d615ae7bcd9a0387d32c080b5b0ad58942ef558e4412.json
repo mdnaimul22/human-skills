@@ -1,1 +1,0 @@
-{"nodes": [{"id": "pkg_ecc_tasteforge", "label": "ecc-tasteforge", "file_type": "code", "type": "package", "ecosystem": "python", "source_file": "skills/storage/affaan-m_ECC/taste-application/scripts/pyproject.toml", "source_location": "L1", "version": "1.0.0"}], "edges": []}
