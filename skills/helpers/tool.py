@@ -1,53 +1,53 @@
-"""
-helpers/tool.py — Standalone shim for Unified Tool & Response
-================================================================
-Provides drop-in replacements for the standard `Tool` base class
-and `Response` dataclass so that existing tools can be used without
-a specific framework runtime.
-
-Drop this `helpers/` folder next to any tool script and
-it will import cleanly. execute.py handles the rest.
-"""
-
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Optional
 
 
-# ── Response ──────────────────────────────────────────────────────────────────
+class ToolStatus(str, Enum):
+    SUCCESS = "success"
+    VALIDATION_ERROR = "validation_error"
+    EXECUTION_ERROR = "execution_error"
+    NOT_FOUND = "not_found"
+    CRASHED = "crashed"
+
 
 @dataclass
 class Response:
     message: str
-    break_loop: bool
+    break_loop: bool = False
     additional: Optional[dict[str, Any]] = None
     success: bool = True
+    status: Optional[ToolStatus] = None
+    duration_ms: float = 0.0
+    error_code: Optional[str] = None
 
+    def __post_init__(self) -> None:
+        if self.status is None:
+            self.status = ToolStatus.SUCCESS if self.success else ToolStatus.EXECUTION_ERROR
+        else:
+            self.success = (self.status == ToolStatus.SUCCESS)
 
-# ── Tool ──────────────────────────────────────────────────────────────────────
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "status": self.status.value if isinstance(self.status, ToolStatus) else str(self.status),
+            "success": self.success,
+            "message": self.message,
+            "break_loop": self.break_loop,
+            "duration_ms": self.duration_ms,
+            "error_code": self.error_code,
+            "additional": self.additional or {},
+        }
+
 
 class Tool:
     name: str = ""
     description: str = ""
-    arguments: str = ""  # Document expected argument shape
-    instruction: str = ""  # Where to read docs or how to use
+    arguments: str = ""
+    instruction: str = ""
 
-    """
-    Minimal standalone base class that mirrors the universal Tool interface.
-
-    Only the attributes that tools actually USE are provided:
-        self.args  — dict of arguments passed by the caller
-        self.name  — tool name (defaults to class name)
-
-    Everything framework-specific (agent, loop_data, log, PrintStyle, etc.)
-    is silently absent; tools that reference those will raise AttributeError,
-    which is the correct signal that they need further porting.
-    """
-
-    def __init__(self, args: Optional[dict] = None, name: str = "", **kwargs) -> None:
+    def __init__(self, args: Optional[dict[str, Any]] = None, name: str = "", **kwargs: Any) -> None:
         self.args: dict[str, Any] = args or {}
         self.name: str = name or self.__class__.__name__
 
-    async def execute(self, **kwargs) -> Response:
-        raise NotImplementedError(
-            f"{self.__class__.__name__}.execute() must be implemented."
-        )
+    async def execute(self, **kwargs: Any) -> Response:
+        raise NotImplementedError(f"{self.__class__.__name__}.execute() must be implemented.")

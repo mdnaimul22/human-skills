@@ -5,10 +5,10 @@ import inspect
 import importlib
 import importlib.util
 import ast
-from typing import Optional, Dict, List
+import time
+from enum import Enum
+from typing import Optional, Dict, List, Any, Tuple
 
-# Windows consoles default to cp1252/cp437 which cannot encode emoji.
-# Force UTF-8 stdout/stderr so --list / tool output never crashes.
 try:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -19,41 +19,76 @@ except Exception:
 
 try:
     from paths import (
-        PROJECT_ROOT,
-        SKILLS_DIR,
-        STORAGE_DIR,
-        HELPERS_DIR,
-        STORAGE_BASE_DIR,
-        EXCLUDED_NAMES,
+        PROJECT_ROOT, SKILLS_DIR, STORAGE_DIR,
+        HELPERS_DIR, STORAGE_BASE_DIR, EXCLUDED_NAMES,
     )
 except ImportError:
     from skills.helpers.paths import (
-        PROJECT_ROOT,
-        SKILLS_DIR,
-        STORAGE_DIR,
-        HELPERS_DIR,
-        STORAGE_BASE_DIR,
-        EXCLUDED_NAMES,
+        PROJECT_ROOT, SKILLS_DIR, STORAGE_DIR,
+        HELPERS_DIR, STORAGE_BASE_DIR, EXCLUDED_NAMES,
     )
 
 from skills.helpers.files import (
-    exists,
-    is_dir,
-    list_files,
-    read_text,
-    read_json,
-    get_rel_path,
+    exists, is_dir, list_files, read_text, read_json, get_rel_path,
 )
+from skills.helpers.tool import ToolStatus, Response
 
 
-def _extract_message(result) -> str:
+class DispatchPhase(str, Enum):
+    INGESTED = "ingested"
+    VALIDATING = "validating"
+    RESOLVING = "resolving"
+    EXECUTING = "executing"
+    FORMATTING = "formatting"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class DispatchResult:
+    def __init__(
+        self, status: str, phase: DispatchPhase, message: str,
+        tool_name: str = "", duration_ms: float = 0.0,
+        data: Optional[dict[str, Any]] = None,
+        error_code: Optional[str] = None, hint: Optional[str] = None,
+    ) -> None:
+        self.status = status
+        self.phase = phase
+        self.message = message
+        self.tool_name = tool_name
+        self.duration_ms = duration_ms
+        self.data = data or {}
+        self.error_code = error_code
+        self.hint = hint
+
+    def to_dict(self) -> dict[str, Any]:
+        res: dict[str, Any] = {
+            "status": self.status,
+            "phase": self.phase.value if isinstance(self.phase, DispatchPhase) else str(self.phase),
+            "tool_name": self.tool_name,
+            "duration_ms": round(self.duration_ms, 2),
+            "message": self.message,
+            "data": self.data,
+        }
+        if self.error_code:
+            res["error_code"] = self.error_code
+        if self.hint:
+            res["hint"] = self.hint
+        return res
+
+
+_REGISTRY_CACHE: Dict[str, dict] = {}
+_REGISTRY_CACHE_TIME: float = 0.0
+_REGISTRY_TTL_SECONDS: float = 60.0
+
+
+def _extract_message(result: Any) -> str:
     try:
         return str(result.message)
     except AttributeError:
         return str(result)
 
 
-def _extract_success(result) -> bool:
+def _extract_success(result: Any) -> bool:
     try:
         return bool(result.success)
     except AttributeError:
@@ -104,10 +139,27 @@ def _resolve_runner(module_name: str, path: str) -> Optional[dict]:
     if target_cls is not None:
         execute_method = getattr(target_cls, "execute", None)
         if callable(execute_method):
-            def _run_async(args: dict, _cls=target_cls) -> tuple[str, bool]:
-                instance = _cls(args=args)
-                result = asyncio.run(instance.execute())
-                return _extract_message(result), _extract_success(result)
+            def _run_async(args: dict, _cls=target_cls) -> Response:
+                t0 = time.perf_counter()
+                try:
+                    instance = _cls(args=args)
+                    raw_res = asyncio.run(instance.execute())
+                    duration = (time.perf_counter() - t0) * 1000.0
+                    if isinstance(raw_res, Response):
+                        raw_res.duration_ms = duration
+                        return raw_res
+                    msg = _extract_message(raw_res)
+                    succ = _extract_success(raw_res)
+                    return Response(
+                        message=msg, success=succ, duration_ms=duration,
+                        status=ToolStatus.SUCCESS if succ else ToolStatus.EXECUTION_ERROR,
+                    )
+                except Exception as exc:
+                    duration = (time.perf_counter() - t0) * 1000.0
+                    return Response(
+                        message=f"❌ Unhandled tool exception: {exc}", success=False,
+                        status=ToolStatus.CRASHED, duration_ms=duration, error_code="UNHANDLED_EXCEPTION",
+                    )
 
             return {
                 "runner": _run_async,
@@ -118,23 +170,24 @@ def _resolve_runner(module_name: str, path: str) -> Optional[dict]:
                 "category": _get_category_for_path(path),
                 "file_path": path,
             }
-
     return None
 
 
-def _build_registry() -> Dict[str, dict]:
-    registry: Dict[str, dict] = {}
-    py_files = []
+def _build_registry(force_refresh: bool = False) -> Dict[str, dict]:
+    global _REGISTRY_CACHE, _REGISTRY_CACHE_TIME
+    now = time.time()
+    if not force_refresh and _REGISTRY_CACHE and (now - _REGISTRY_CACHE_TIME < _REGISTRY_TTL_SECONDS):
+        return _REGISTRY_CACHE
 
+    registry: Dict[str, dict] = {}
+    py_files: list[Any] = []
     if exists(STORAGE_DIR):
         py_files.extend(list_files(STORAGE_DIR, "**/scripts/*.py"))
-
     py_files.extend(list_files(SKILLS_DIR, "*/scripts/*.py"))
 
     for py_file in sorted(set(py_files)):
         if py_file.name in EXCLUDED_NAMES:
             continue
-
         parent_dir = str(py_file.parent)
         grandparent_dir = str(py_file.parent.parent)
         if parent_dir not in sys.path:
@@ -144,14 +197,15 @@ def _build_registry() -> Dict[str, dict]:
 
         tool_name = py_file.stem
         runner = _resolve_runner(tool_name, str(py_file))
-
         if runner is not None:
             registry[tool_name] = runner
             cls_name = runner.get("name")
             if cls_name and cls_name != tool_name and cls_name not in registry:
                 registry[cls_name] = runner
 
-    return registry
+    _REGISTRY_CACHE = registry
+    _REGISTRY_CACHE_TIME = now
+    return _REGISTRY_CACHE
 
 
 def _get_categories_map() -> Dict[str, List[str]]:
@@ -167,7 +221,6 @@ def _get_categories_map() -> Dict[str, List[str]]:
         path_str = str(path)
         if is_dir(path_str) and path.name not in ("helpers", "storage") and exists(f"{path_str}/SKILL.md"):
             categories.setdefault("other", []).append(path.name)
-
     return categories
 
 
@@ -189,20 +242,15 @@ def _match_category(target: str, categories_map: Dict[str, List[str]]) -> Option
     query = target.strip().lower()
     if not query:
         return None
-
     index = _build_category_index(categories_map)
-
     if query in index:
         return index[query]
-
     query_norm = query.replace(" ", "").replace("_", "").replace("-", "")
     if query_norm in index:
         return index[query_norm]
-
     matches = {real_name for k, real_name in index.items() if query_norm in k}
     if len(matches) == 1:
         return next(iter(matches))
-
     return None
 
 
@@ -223,7 +271,6 @@ def _find_skill_md(skill_name: str) -> Optional[str]:
         direct = f"{STORAGE_DIR}/{clean_name}/SKILL.md"
         if exists(direct):
             return direct
-
         for md_path in list_files(STORAGE_DIR, "**/SKILL.md"):
             if md_path.parent.name.lower().replace("_", "-") == clean_lower:
                 return str(md_path)
@@ -238,7 +285,6 @@ def _find_skill_md(skill_name: str) -> Optional[str]:
             candidate = f"{path_str}/SKILL.md"
             if exists(candidate):
                 return candidate
-
     return None
 
 
@@ -281,7 +327,6 @@ def _parse_tool_style(argv: List[str]) -> dict:
                 raise ValueError("--tool requires a tool name.")
             token = argv[i]
             if "=" in token and not tool_name:
-                # Support --tool=name form arriving as separate token.
                 _, _, val = token.partition("=")
                 tool_name = val.strip()
             else:
@@ -318,7 +363,6 @@ def _load_payload(source: str) -> dict:
         raise ValueError("Empty payload.")
     if stripped.endswith(".json") and exists(stripped):
         return read_json(stripped)
-    # CMD passes single quotes literally:  '{"a":1}' -> strip one outer pair.
     if len(stripped) >= 2 and stripped[0] == "'" and stripped[-1] == "'":
         inner = stripped[1:-1].strip()
         if inner.startswith("{"):
@@ -333,27 +377,41 @@ def _print_usage() -> None:
     print("  • human-skills --skill_info <skill_name>")
     print("  • human-skills --tool_info <tool_name>")
     print("  • human-skills '{\"tool_name\": \"<name>\", \"tool_args\": {...}}'")
+    print("  • human-skills --json '{\"tool_name\": \"<name>\", \"tool_args\": {...}}'  (machine-readable JSON)")
     print("  • human-skills payload.json  (file path, Windows-safe)")
     print("  • echo {\"tool_name\": ...} | human-skills  (stdin, Windows-safe)")
     print("  • human-skills --tool <name> --arg k=v [--arg k2=v2 ...]  (no JSON quoting)")
 
 
-def dispatch(payload: dict) -> str:
-    return dispatch_with_status(payload)[0]
+def _is_json_requested(payload: dict) -> bool:
+    if payload.get("output_format") == "json" or payload.get("json") is True:
+        return True
+    args = payload.get("tool_args")
+    if isinstance(args, dict):
+        return args.get("output_format") == "json" or args.get("json") is True
+    return False
 
 
-def dispatch_with_status(payload: dict) -> tuple[str, bool]:
-    tool_name = payload.get("tool_name", "").strip()
+def dispatch_structured(payload: dict) -> DispatchResult:
+    tool_name = str(payload.get("tool_name", "")).strip()
     tool_args = payload.get("tool_args", {})
 
     if not tool_name:
-        return "Error: `tool_name` is required in the JSON payload.", False
+        return DispatchResult(
+            status=ToolStatus.VALIDATION_ERROR.value, phase=DispatchPhase.VALIDATING,
+            message="Error: `tool_name` is required in the JSON payload.",
+            error_code="MISSING_TOOL_NAME", hint="Provide a valid tool_name in your payload.",
+        )
 
-    if type(tool_args) is not dict:
-        return "Error: `tool_args` must be a JSON object (dict).", False
+    if not isinstance(tool_args, dict):
+        return DispatchResult(
+            status=ToolStatus.VALIDATION_ERROR.value, phase=DispatchPhase.VALIDATING,
+            message="Error: `tool_args` must be a JSON object (dict).",
+            tool_name=tool_name, error_code="INVALID_TOOL_ARGS",
+            hint="tool_args must be a dictionary of arguments.",
+        )
 
     registry = _build_registry()
-
     tool_index = {name.lower(): name for name in registry.keys()}
     for name in list(registry.keys()):
         tool_index[name.lower().replace("-", "_")] = name
@@ -365,11 +423,54 @@ def dispatch_with_status(payload: dict) -> tuple[str, bool]:
 
     if not target_tool or target_tool not in registry:
         available = ", ".join(sorted(registry.keys())) or "(none)"
-        return f"Error: Unknown tool '{tool_name}'. Available tools: {available}", False
+        return DispatchResult(
+            status=ToolStatus.NOT_FOUND.value, phase=DispatchPhase.RESOLVING,
+            message=f"Error: Unknown tool '{tool_name}'. Available tools: {available}",
+            tool_name=tool_name, error_code="UNKNOWN_TOOL",
+            hint="Check available tools with: human-skills --list all",
+        )
 
+    runner_meta = registry[target_tool]
     normalised = dict(tool_args)
 
-    return registry[target_tool]["runner"](normalised)
+    try:
+        raw_res = runner_meta["runner"](normalised)
+        if isinstance(raw_res, Response):
+            res_obj = raw_res
+        elif isinstance(raw_res, tuple) and len(raw_res) >= 2:
+            res_obj = Response(
+                message=str(raw_res[0]), success=bool(raw_res[1]),
+                status=ToolStatus.SUCCESS if raw_res[1] else ToolStatus.EXECUTION_ERROR,
+            )
+        else:
+            res_obj = Response(message=str(raw_res), success=True, status=ToolStatus.SUCCESS)
+    except Exception as exc:
+        res_obj = Response(
+            message=f"Error: Tool execution raised exception: {exc}",
+            success=False, status=ToolStatus.CRASHED, error_code="EXECUTION_CRASH",
+        )
+
+    status_str = res_obj.status.value if isinstance(res_obj.status, ToolStatus) else ("success" if res_obj.success else "execution_error")
+    phase = DispatchPhase.COMPLETED if res_obj.success else DispatchPhase.FAILED
+
+    return DispatchResult(
+        status=status_str, phase=phase, message=res_obj.message,
+        tool_name=target_tool, duration_ms=res_obj.duration_ms,
+        data=res_obj.additional or {}, error_code=res_obj.error_code,
+    )
+
+
+def dispatch_with_status(payload: dict) -> tuple[str, bool]:
+    is_json = _is_json_requested(payload)
+    result = dispatch_structured(payload)
+    is_success = (result.status == ToolStatus.SUCCESS.value)
+    if is_json:
+        return json.dumps(result.to_dict(), indent=2), is_success
+    return result.message, is_success
+
+
+def dispatch(payload: dict) -> str:
+    return dispatch_with_status(payload)[0]
 
 
 def _handle_list(args: List[str]) -> None:
@@ -465,15 +566,26 @@ def _handle_list(args: List[str]) -> None:
 
 
 def main() -> None:
+    wants_json = False
+    if "--json" in sys.argv:
+        sys.argv.remove("--json")
+        wants_json = True
+
     if len(sys.argv) < 2:
         stdin_text = _read_stdin_text()
         if stdin_text.strip():
             try:
                 payload = _load_payload(stdin_text)
             except (json.JSONDecodeError, ValueError) as e:
-                print(f"Error: Invalid JSON on stdin — {e}", file=sys.stderr)
-                print("Hint: pipe valid JSON, pass a payload.json file, or use --tool NAME --arg k=v.", file=sys.stderr)
+                err_msg = f"Error: Invalid JSON on stdin — {e}"
+                if wants_json:
+                    print(json.dumps({"status": "validation_error", "phase": "ingested", "message": err_msg}, indent=2))
+                else:
+                    print(err_msg, file=sys.stderr)
+                    print("Hint: pipe valid JSON, pass a payload.json file, or use --tool NAME --arg k=v.", file=sys.stderr)
                 sys.exit(1)
+            if wants_json:
+                payload["output_format"] = "json"
             message, ok = dispatch_with_status(payload)
             print(message)
             sys.exit(0 if ok else 1)
@@ -488,13 +600,11 @@ def main() -> None:
         if len(sys.argv) < 3:
             print("Error: --skill_info requires a skill name.", file=sys.stderr)
             sys.exit(1)
-
         skill_name = sys.argv[2]
         skill_md_path = _find_skill_md(skill_name)
         if not skill_md_path or not exists(skill_md_path):
             print(f"Error: Skill documentation for '{skill_name}' not found.", file=sys.stderr)
             sys.exit(1)
-
         print(read_text(skill_md_path))
         sys.exit(0)
 
@@ -502,10 +612,8 @@ def main() -> None:
         if len(sys.argv) < 3:
             print("Error: --tool_info requires an exact tool name.", file=sys.stderr)
             sys.exit(1)
-
         target_tool = sys.argv[2]
         registry = _build_registry()
-
         tool_index = {name.lower(): name for name in registry.keys()}
         for name in list(registry.keys()):
             tool_index[name.lower().replace("-", "_")] = name
@@ -527,7 +635,6 @@ def main() -> None:
             "instruction": tool_info.get("instruction", ""),
             "category": tool_info.get("category", ""),
         }
-
         print(json.dumps(output, indent=2))
         sys.exit(0)
 
@@ -539,9 +646,15 @@ def main() -> None:
         try:
             payload = _parse_tool_style(sys.argv[1:])
         except ValueError as e:
-            print(f"Error: {e}", file=sys.stderr)
-            print("Usage: human-skills --tool <name> --arg k=v [--arg k2=v2 ...]", file=sys.stderr)
+            err_msg = f"Error: {e}"
+            if wants_json:
+                print(json.dumps({"status": "validation_error", "phase": "ingested", "message": err_msg}, indent=2))
+            else:
+                print(err_msg, file=sys.stderr)
+                print("Usage: human-skills --tool <name> --arg k=v [--arg k2=v2 ...]", file=sys.stderr)
             sys.exit(1)
+        if wants_json:
+            payload["output_format"] = "json"
         message, ok = dispatch_with_status(payload)
         print(message)
         sys.exit(0 if ok else 1)
@@ -554,25 +667,35 @@ def main() -> None:
         try:
             payload = _load_payload(stdin_text)
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"Error: Invalid JSON on stdin — {e}", file=sys.stderr)
+            err_msg = f"Error: Invalid JSON on stdin — {e}"
+            if wants_json:
+                print(json.dumps({"status": "validation_error", "phase": "ingested", "message": err_msg}, indent=2))
+            else:
+                print(err_msg, file=sys.stderr)
             sys.exit(1)
+        if wants_json:
+            payload["output_format"] = "json"
         message, ok = dispatch_with_status(payload)
         print(message)
         sys.exit(0 if ok else 1)
 
-    # Join all argv parts: CMD/PowerShell may split unquoted JSON on spaces.
     source = " ".join(sys.argv[1:])
-
     try:
         payload = _load_payload(source)
     except (json.JSONDecodeError, ValueError) as e:
-        print(f"Error: Invalid JSON — {e}", file=sys.stderr)
-        print("Windows-safe alternatives (no quoting needed):", file=sys.stderr)
-        print("  human-skills payload.json", file=sys.stderr)
-        print("  echo JSON | human-skills  (stdin, no quoting needed)", file=sys.stderr)
-        print("  human-skills --tool <name> --arg k=v", file=sys.stderr)
+        err_msg = f"Error: Invalid JSON — {e}"
+        if wants_json:
+            print(json.dumps({"status": "validation_error", "phase": "ingested", "message": err_msg}, indent=2))
+        else:
+            print(err_msg, file=sys.stderr)
+            print("Windows-safe alternatives (no quoting needed):", file=sys.stderr)
+            print("  human-skills payload.json", file=sys.stderr)
+            print("  echo JSON | human-skills  (stdin, no quoting needed)", file=sys.stderr)
+            print("  human-skills --tool <name> --arg k=v", file=sys.stderr)
         sys.exit(1)
 
+    if wants_json:
+        payload["output_format"] = "json"
     message, ok = dispatch_with_status(payload)
     print(message)
     sys.exit(0 if ok else 1)
