@@ -222,7 +222,10 @@ class PatchText(Tool):
             f"   Size    : {size_s}",
         ]
         if check_result:
-            lines.append("   Syntax  : ✓ passed" if check_result.valid else "   Syntax  : ⚠️  warnings (file modified anyway)")
+            if check_result.valid:
+                lines.append("   Syntax  : ✓ passed (with warnings)" if check_result.warnings else "   Syntax  : ✓ passed")
+            else:
+                lines.append("   Syntax  : ⚠️  warnings (file modified anyway)")
             if check_result.warnings:
                 for w in check_result.warnings:
                     lines.append(f"   ! {w}")

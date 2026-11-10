@@ -1,10 +1,20 @@
 import ast
 import json
+import os
+import re
+import shutil
+import subprocess
+import time
 import tomllib
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
 from dataclasses import dataclass
 from typing import Callable, TypedDict
+
+try:
+    from helpers.files import exists, ensure_dir, delete, get_mtime, get_abs_path
+except ImportError:
+    from skills.helpers.files import exists, ensure_dir, delete, get_mtime, get_abs_path
 
 
 class SchemaRule(TypedDict, total=False):
@@ -45,13 +55,15 @@ VALIDATION_SCHEMA: dict[str, SchemaRule | str | None] = {
     ".svg": ".xml",
     ".xhtml": ".xml",
     ".html": {
-        "parser": "html.parser.HTMLParser",
+        "parser": "html.parser+acorn",
         "checks": [
             "tag_matching",
             "void_element_rules",
             "unclosed_tags",
             "malformed_syntax",
             "comment_integrity",
+            "script_syntax_ast",
+            "script_scope_symbols",
         ],
         "severity": "structural",
     },
@@ -62,12 +74,14 @@ VALIDATION_SCHEMA: dict[str, SchemaRule | str | None] = {
         "severity": "structural",
     },
     ".js": {
-        "parser": "bracket_state_machine",
+        "parser": "acorn+bracket_state_machine",
         "checks": [
             "bracket_matching",
             "string_integrity",
             "template_literal_integrity",
             "comment_integrity",
+            "syntax_tree_parse",
+            "scope_symbols",
         ],
         "severity": "structural",
     },
@@ -217,8 +231,254 @@ class HtmlTagValidator(HTMLParser):
                 self.errors.append(f"HTML: unclosed tag <{tag}> opened at L{pos[0]}:{pos[1]}")
 
 
+_ACORN_ENV_CACHE: dict[str, str] | None = None
+_ACORN_AVAILABLE_CACHE: bool | None = None
+
+
+def _get_acorn_env() -> dict[str, str]:
+    global _ACORN_ENV_CACHE
+    if _ACORN_ENV_CACHE is not None:
+        return _ACORN_ENV_CACHE
+    env = os.environ.copy()
+    paths: list[str] = []
+    try:
+        res = subprocess.run(["npm", "root", "-g"], capture_output=True, text=True, timeout=2)
+        if res.returncode == 0 and res.stdout.strip():
+            paths.append(res.stdout.strip())
+    except Exception:
+        pass
+    home_cache = os.path.expanduser("~/.cache/human-skills/acorn/node_modules")
+    if os.path.isdir(home_cache):
+        paths.append(home_cache)
+    cur = env.get("NODE_PATH", "")
+    if paths:
+        extra = ":".join(paths)
+        env["NODE_PATH"] = f"{extra}:{cur}" if cur else extra
+    _ACORN_ENV_CACHE = env
+    return env
+
+
+def _missing_system_binaries() -> list[str]:
+    missing: list[str] = []
+    if not shutil.which("node"):
+        missing.append("nodejs")
+    if not shutil.which("npm"):
+        missing.append("npm")
+    return missing
+
+
+def _build_install_commands(missing_modules: list[str], missing_binaries: list[str]) -> list[str]:
+    commands: list[str] = []
+    sudo_ok = subprocess.run(["sudo", "-n", "true"], capture_output=True).returncode == 0
+    if sudo_ok and ("nodejs" in missing_binaries or "npm" in missing_binaries):
+        commands.append("sudo apt-get update -qq && sudo apt-get install -y -qq nodejs npm")
+
+    if "acorn" in missing_modules:
+        commands.append('npm install -g acorn 2>/dev/null || npm install --prefix "$HOME/.cache/human-skills/acorn" acorn')
+
+    return commands
+
+
+def _launch_background_installer(missing_modules: list[str], missing_binaries: list[str]) -> None:
+    scratch_dir = "data/scratch/validator"
+    ensure_dir(scratch_dir)
+    lock_file = f"{scratch_dir}/installer.lock"
+    log_file = f"{scratch_dir}/installer.log"
+
+    if exists(lock_file):
+        age = time.time() - get_mtime(lock_file)
+        if age < 600:
+            return
+        delete(lock_file)
+
+    commands = _build_install_commands(missing_modules, missing_binaries)
+    if not commands:
+        return
+
+    abs_lock = get_abs_path(lock_file)
+    abs_log = get_abs_path(log_file)
+    chained = f"touch {abs_lock} && ( " + " && ".join(commands) + f" ) > {abs_log} 2>&1 ; rm -f {abs_lock}"
+    subprocess.Popen(
+        ["bash", "-c", chained],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+
+def _ensure_acorn_available() -> bool:
+    global _ACORN_AVAILABLE_CACHE
+    if _ACORN_AVAILABLE_CACHE is True:
+        return True
+
+    missing_binaries = _missing_system_binaries()
+    missing_modules: list[str] = []
+
+    if shutil.which("node"):
+        env = _get_acorn_env()
+        try:
+            res = subprocess.run(
+                ["node", "-e", "require('acorn')"],
+                capture_output=True,
+                timeout=2,
+                env=env,
+            )
+            if res.returncode == 0:
+                _ACORN_AVAILABLE_CACHE = True
+                return True
+        except Exception:
+            pass
+        missing_modules.append("acorn")
+    else:
+        missing_modules.append("acorn")
+
+    _launch_background_installer(missing_modules, missing_binaries)
+    return False
+
+
+_ACORN_RUNNER_SCRIPT = """
+const fs = require('fs');
+let acorn;
+try { acorn = require('acorn'); } catch (e) { process.exit(2); }
+
+const payload = JSON.parse(fs.readFileSync(0, 'utf-8'));
+const code = payload.code;
+const offset = payload.offset || 0;
+
+const BROWSER_GLOBALS = new Set([
+  'window', 'document', 'canvas', 'ctx', 'Math', 'requestAnimationFrame', 'cancelAnimationFrame',
+  'performance', 'console', 'Array', 'Object', 'String', 'Number', 'Boolean', 'Symbol', 'BigInt',
+  'Date', 'RegExp', 'Error', 'TypeError', 'RangeError', 'ReferenceError', 'SyntaxError',
+  'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise', 'JSON', 'Proxy', 'Reflect',
+  'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'queueMicrotask',
+  'addEventListener', 'removeEventListener', 'dispatchEvent',
+  'innerWidth', 'innerHeight', 'outerWidth', 'outerHeight', 'screen',
+  'location', 'navigator', 'history', 'localStorage', 'sessionStorage',
+  'Image', 'Audio', 'ImageData', 'Path2D', 'CanvasRenderingContext2D', 'WebGLRenderingContext',
+  'HTMLElement', 'HTMLCanvasElement', 'Element', 'Node', 'Event', 'CustomEvent',
+  'fetch', 'XMLHttpRequest', 'WebSocket', 'FormData', 'URL', 'URLSearchParams', 'Blob', 'File',
+  'FileReader', 'Int8Array', 'Uint8Array', 'Uint8ClampedArray', 'Int16Array', 'Uint16Array',
+  'Int32Array', 'Uint32Array', 'Float32Array', 'Float64Array', 'BigInt64Array', 'BigUint64Array',
+  'ArrayBuffer', 'DataView', 'Atomics', 'WebAssembly',
+  'NaN', 'undefined', 'Infinity', 'isNaN', 'isFinite', 'parseInt', 'parseFloat',
+  'encodeURI', 'encodeURIComponent', 'decodeURI', 'decodeURIComponent'
+]);
+
+const errors = [];
+const warnings = [];
+
+let ast;
+try {
+  ast = acorn.parse(code, { ecmaVersion: 'latest', locations: true, sourceType: 'script' });
+} catch (err) {
+  const line = offset + (err.loc ? err.loc.line - 1 : 0);
+  const col = err.loc ? err.loc.column + 1 : 1;
+  errors.push(`JS SyntaxError at L${line}:C${col} - ${err.message}`);
+}
+
+if (ast) {
+  function checkIdentifier(idNode, scope) {
+    if (!idNode || idNode.type !== 'Identifier') return;
+    const name = idNode.name;
+    if (!scope.has(name) && !BROWSER_GLOBALS.has(name)) {
+      const l = offset + idNode.loc.start.line - 1;
+      const c = idNode.loc.start.column + 1;
+      warnings.push(`JS ReferenceWarning at L${l}:C${c} - "${name}" is not defined`);
+    }
+  }
+
+  function walk(node, scope) {
+    if (!node || typeof node !== 'object') return;
+
+    if (node.type === 'VariableDeclaration') {
+      for (const d of node.declarations) {
+        if (d.id && d.id.type === 'Identifier') scope.add(d.id.name);
+        if (d.init) walk(d.init, scope);
+      }
+      return;
+    }
+    if (node.type === 'FunctionDeclaration') {
+      if (node.id && node.id.type === 'Identifier') scope.add(node.id.name);
+      const inner = new Set(scope);
+      for (const p of node.params) {
+        if (p.type === 'Identifier') inner.add(p.name);
+      }
+      walk(node.body, inner);
+      return;
+    }
+    if (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
+      const inner = new Set(scope);
+      if (node.id && node.id.type === 'Identifier') inner.add(node.id.name);
+      for (const p of node.params) {
+        if (p.type === 'Identifier') inner.add(p.name);
+      }
+      walk(node.body, inner);
+      return;
+    }
+    if (node.type === 'CatchClause') {
+      const inner = new Set(scope);
+      if (node.param && node.param.type === 'Identifier') inner.add(node.param.name);
+      walk(node.body, inner);
+      return;
+    }
+    if (node.type === 'MemberExpression') {
+      walk(node.object, scope);
+      if (node.computed) walk(node.property, scope);
+      return;
+    }
+    if (node.type === 'Property') {
+      if (node.computed) walk(node.key, scope);
+      walk(node.value, scope);
+      return;
+    }
+    if (node.type === 'Identifier') {
+      checkIdentifier(node, scope);
+      return;
+    }
+
+    for (const k of Object.keys(node)) {
+      if (k === 'loc' || k === 'range') continue;
+      const child = node[k];
+      if (Array.isArray(child)) {
+        for (const item of child) walk(item, scope);
+      } else if (child && typeof child === 'object') {
+        walk(child, scope);
+      }
+    }
+  }
+
+  walk(ast, new Set());
+}
+
+console.log(JSON.stringify({ errors, warnings }));
+"""
+
+
+def _run_acorn_validation(code: str, offset: int = 0) -> tuple[list[str], list[str]]:
+    if not _ensure_acorn_available():
+        return [], ["Acorn parser not detected — background installation launched (data/scratch/validator/installer.log). It will activate automatically."]
+    env = _get_acorn_env()
+    payload = json.dumps({"code": code, "offset": offset})
+    try:
+        res = subprocess.run(
+            ["node", "-e", _ACORN_RUNNER_SCRIPT],
+            input=payload,
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=3,
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            parsed = json.loads(res.stdout.strip())
+            return parsed.get("errors", []), parsed.get("warnings", [])
+    except Exception as e:
+        return [f"Acorn validation execution error: {e}"], []
+    return [], []
+
+
 def _check_html(content: str) -> CheckResult:
     errors: list[str] = []
+    warnings: list[str] = []
     validator = HtmlTagValidator()
     try:
         validator.feed(content)
@@ -227,7 +487,18 @@ def _check_html(content: str) -> CheckResult:
     validator.finish()
     validator.close()
     errors.extend(validator.errors)
-    return CheckResult(len(errors) == 0, errors, [])
+
+    pattern = re.compile(r"<script(?:\s+[^>]*)?>([\s\S]*?)</script>", re.IGNORECASE)
+    for match in pattern.finditer(content):
+        script_code = match.group(1)
+        if not script_code.strip():
+            continue
+        offset = content[:match.start(1)].count("\n") + 1
+        script_errors, script_warnings = _run_acorn_validation(script_code, offset)
+        errors.extend(script_errors)
+        warnings.extend(script_warnings)
+
+    return CheckResult(len(errors) == 0, errors, warnings)
 
 
 def _skip_block_comment(content: str, i: int, n: int, line: int, lang: str) -> tuple[int, int, str | None]:
@@ -414,7 +685,11 @@ def _check_js(content: str) -> CheckResult:
     errors, stack = _scan_js_tokens(content)
     for bracket, open_line in stack:
         errors.append(f"JS: unclosed '{bracket}' opened at L{open_line}")
-    return CheckResult(len(errors) == 0, errors, [])
+    acorn_errors, acorn_warnings = _run_acorn_validation(content, offset=1)
+    for err in acorn_errors:
+        if err not in errors:
+            errors.append(err)
+    return CheckResult(len(errors) == 0, errors, acorn_warnings)
 
 
 CheckerFunc = Callable[[str], CheckResult]

@@ -19,9 +19,59 @@ from skills.helpers.execute import dispatch
 
 
 def _get_html_fixture(tmp_path: Path) -> Path:
-    source = _PROJECT_ROOT / "test" / "ai-1791629104273-518_animation.html"
     target = tmp_path / "animation_test.html"
-    shutil.copy(source, target)
+    source = _PROJECT_ROOT / "test" / "ai-1791629104273-518_animation.html"
+    if source.exists():
+        shutil.copy(source, target)
+        return target
+
+    lines = [f"// line_{i+1}" for i in range(305)]
+    lines[0] = "<!DOCTYPE html>"
+    lines[1] = "<html>"
+    lines[2] = "<head>"
+    lines[3] = '  <meta charset="utf-8">'
+    lines[4] = '  <meta name="viewport" content="width=device-width, initial-scale=1.0">'
+    lines[5] = "<title>Neural Data Matrix Network</title>"
+    lines[6] = "<style>"
+    lines[7] = "  html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: #030712; }"
+    lines[8] = "  #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }"
+    lines[9] = "</style>"
+    lines[10] = "</head>"
+    lines[11] = "<body>"
+    lines[12] = '  <canvas id="canvas"></canvas>'
+    lines[13] = "  <script>"
+    lines[17] = "const LOOP_DURATION = 10.0;"
+    lines[18] = "const LAYERS_CONFIG = [5, 7, 8, 7, 6, 3];"
+    lines[19] = "const LAYER_COLORS = ["
+    lines[20] = "  { r: 0, g: 210, b: 255 },   // Cyan"
+    lines[21] = "  { r: 40, g: 150, b: 255 },  // Deep Cyan-Blue"
+    lines[22] = "  { r: 150, g: 80, b: 255 },  // Electric Violet"
+    lines[23] = "  { r: 235, g: 60, b: 220 },  // Neon Magenta"
+    lines[24] = "  { r: 255, g: 110, b: 50 },  // Bright Coral"
+    lines[25] = "  { r: 255, g: 190, b: 40 }   // Gold / Orange"
+    lines[26] = "];"
+    lines[27] = "let width, height, baseDim, cx, cy;"
+    lines[28] = "let matrixChars = [];"
+    lines[29] = "let packets = [];"
+    lines[46] = "  const chars = '0101010101100101ABCDEF';"
+    lines[79] = "  const bgGrad = ctx.createRadialGradient(cx, cy, baseDim * 0.1, cx, cy, Math.hypot(width, height) * 0.65);"
+    lines[80] = "  bgGrad.addColorStop(0, '#09152e');"
+    lines[81] = "  bgGrad.addColorStop(0.5, '#050c1e');"
+    lines[82] = "  bgGrad.addColorStop(1, '#02050d');"
+    lines[83] = "  ctx.fillStyle = bgGrad;"
+    lines[95] = "  const offsetX = Math.sin(loopPhase * 2 + l * 1.3 + i * 0.7) * baseDim * 0.006;"
+    lines[104] = "    const charY = (mc.y - (loopProgress * mc.speed * height)) % height;"
+    lines[105] = "    const finalY = charY < 0 ? charY + height : charY;"
+    lines[106] = "    const pulse = 0.5 + 0.5 * Math.sin(loopProgress * Math.PI * 2 * 3 + mc.phase);"
+    lines[109] = "  // Subtle Tech Matrix Grid"
+    lines[178] = "        ctx.strokeStyle = synGrad;"
+    lines[179] = "        ctx.lineWidth = Math.max(1, baseDim * 0.0018);"
+    lines[298] = "resize();"
+    lines[299] = "requestAnimationFrame(render);"
+    lines[300] = "  </script>"
+    lines[301] = "</body>"
+    lines[302] = "</html>"
+    target.write_text("\n".join(lines[:303]) + "\n")
     return target
 
 

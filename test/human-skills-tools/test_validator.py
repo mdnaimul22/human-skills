@@ -168,3 +168,57 @@ def test_unknown_extension_warns():
 def test_empty_content():
     assert validate_syntax("", "app.py").valid is True
     assert validate_syntax("   \n\t  ", "index.html").valid is True
+
+
+def test_html_embedded_script_syntax_error():
+    content = "<html>\n<body>\n<script>\nconst x = ;\n</script>\n</body>\n</html>"
+    res = validate_syntax(content, "index.html")
+    assert res.valid is False
+    assert any("JS SyntaxError at L4:C11" in err for err in res.errors)
+
+
+def test_html_embedded_script_reference_warning():
+    content = "<html>\n<body>\n<script>\nconst a = 1;\nconsole.log(layerCoords.length);\n</script>\n</body>\n</html>"
+    res = validate_syntax(content, "index.html")
+    assert res.valid is True
+    assert any('JS ReferenceWarning at L5:C13 - "layerCoords" is not defined' in w for w in res.warnings)
+
+
+def test_html_multiple_scripts_offset_tracking():
+    content = (
+        "<html>\n"
+        "<head>\n"
+        "<script>\n"
+        "const first = 10;\n"
+        "</script>\n"
+        "</head>\n"
+        "<body>\n"
+        "<script>\n"
+        "console.log(unknownSecondSymbol);\n"
+        "</script>\n"
+        "</body>\n"
+        "</html>"
+    )
+    res = validate_syntax(content, "app.html")
+    assert res.valid is True
+    assert any('L9:C13 - "unknownSecondSymbol" is not defined' in w for w in res.warnings)
+
+
+def test_background_installer_build_commands():
+    from helpers.validator import _build_install_commands
+    cmds = _build_install_commands(["acorn"], [])
+    assert any("acorn" in c for c in cmds)
+
+
+def test_background_installer_lock_creation(tmp_path, monkeypatch):
+    import subprocess
+    from helpers import validator, files
+    monkeypatch.setattr(files, "ensure_dir", lambda p: None)
+    monkeypatch.setattr(files, "exists", lambda p: False)
+    monkeypatch.setattr(files, "get_abs_path", lambda p: str(tmp_path / "test.lock"))
+    executed = []
+    monkeypatch.setattr(validator.subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(args=[], returncode=1))
+    monkeypatch.setattr(validator.subprocess, "Popen", lambda cmd, **kwargs: executed.append(cmd))
+    validator._launch_background_installer(["acorn"], [])
+    assert len(executed) == 1
+    assert "acorn" in executed[0][2]
