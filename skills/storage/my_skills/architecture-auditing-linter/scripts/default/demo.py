@@ -33,14 +33,20 @@ class UDBDPlugin:
         
         unused_methods = []
         
-        for method_key, method_info in method_analyzer.all_methods.items():
-            class_name, method_name = method_key
-            
+        for (class_name, method_name), method_info in method_analyzer.all_methods.items():
             if (method_name.startswith('__') and method_name.endswith('__')) or not method_name.startswith('_'):
                 continue
             
-            is_used = self._is_method_used_enhanced(
-                class_name, method_name, method_analyzer
+            is_used = (
+                (class_name, method_name) in method_analyzer.local_method_calls
+                or method_name in method_analyzer.local_function_calls.get(class_name, set())
+                or (class_name, method_name) in method_analyzer.self_method_calls
+                or (class_name, method_name) in method_analyzer.instance_method_calls
+                or (class_name, method_name) in method_analyzer.static_style_calls
+                or method_name in method_analyzer.method_names_called
+                or method_name in method_analyzer.attribute_references
+                or method_name in method_analyzer.string_method_references
+                or method_name in method_analyzer.dynamic_calls
             )
             
             if not is_used:
@@ -60,37 +66,6 @@ class UDBDPlugin:
             'debug_info': method_analyzer.get_debug_info(),
             'candidate_key': candidate_key
         }
-
-    def _is_method_used_enhanced(self, class_name: str, method_name: str, 
-                                analyzer: 'MethodAnalyzer') -> bool:
-        if (class_name, method_name) in analyzer.local_method_calls:
-            return True
-        
-        if method_name in analyzer.local_function_calls.get(class_name, set()):
-            return True
-        
-        if (class_name, method_name) in analyzer.self_method_calls:
-            return True
-        
-        if (class_name, method_name) in analyzer.instance_method_calls:
-            return True
-        
-        if (class_name, method_name) in analyzer.static_style_calls:
-            return True
-        
-        if method_name in analyzer.method_names_called:
-            return True
-        
-        if method_name in analyzer.attribute_references:
-            return True
-        
-        if method_name in analyzer.string_method_references:
-            return True
-        
-        if method_name in analyzer.dynamic_calls:
-            return True
-        
-        return False
 
     def _log_detailed_unused_info(self, methods_info: Dict, candidate_key: str = "source"):
         self.logger.warning(f"UNUSED DEPENDENCIES: {len(methods_info['unused_methods'])} methods in {candidate_key}")
@@ -287,44 +262,7 @@ if BaseRule is not None:
                 self.add_violation(
                     m["line_number"],
                     f"❌ [Dead Code Violation] Private method '{m['full_signature']}' is defined but never called or referenced.",
-                    suggestion=f"Remove '{m['method_name']}' or invoke it where required."
-                )
-            return self.violations, self.advisories
-
-
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1:
-        target = sys.argv[1]
-        with open(target, "r", encoding="utf-8") as f:
-            src_code = f.read()
-        detector = UDBDPlugin()
-        res = detector.analyze_source(src_code, source_name=target)
-        detector._log_detailed_unused_info(res, candidate_key=target)
-        print(f"Total unused methods: {len(res['unused_methods'])}")
-        for item in res["unused_methods"]:
-            print(f"  L{item['line_number']}: {item['full_signature']}")
-
-
-
-try:
-    from default.base import BaseRule, FileContext
-except ImportError:
-    BaseRule = None
-    FileContext = None
-
-if BaseRule is not None:
-    class UDBDMethodRule(BaseRule):
-        def run(self, tree: ast.AST) -> tuple[list[str], list[str]]:
-            if self.ctx.is_test_file:
-                return self.violations, self.advisories
-            detector = UDBDPlugin()
-            info = detector.analyze_tree(tree, source_name=str(self.ctx.rel_path))
-            for m in info.get("unused_methods", []):
-                self.add_violation(
-                    m["line_number"],
-                    f"❌ [Dead Code Violation] Private method '{m['full_signature']}' is defined but never called or referenced.",
-                    suggestion=f"Remove '{m['method_name']}' or invoke it where required."
+                    suggestion=f"Remove '{m['method_name']}' or invoke it where needed."
                 )
             return self.violations, self.advisories
 
