@@ -1,51 +1,30 @@
 ---
 trigger: always_on
 name: maintenance_testing
-description: Guidelines for Security, Refactoring, and Verification.
+description: Strict guidelines for File-by-File Sub-Atomic Refactoring, Isolated Orchestrator Architecture, Mirrored Fast Testing, and Token Discipline.
 ---
 
-# Maintenance & Testing
+# Maintenance, Refactoring & Verification Standards
 
-## 1. Security-Safety Practices
-> *"Security is a first-class citizen, not an afterthought."*  
-> **With Comprehensive test coverage that is maintained continuously**
+## 1. Strict Command Scope & Token Discipline
+- Execute **only** what the user explicitly asks in the current turn.
+- Never jump ahead to the next file or run unrequested background analyses before the current step is confirmed.
 
-| Risk | Mitigation Strategy |
-| :--- | :--- |
-| **Injection Attacks (SQL/Command/Shell)** | Never concatenate user input directly into executable strings. Always use Parameterized queries, ORM, or Safe execution APIs. |
-| **Path Traversal** | When accessing the file system, sanitize any user-provided path inputs and strictly enforce sandbox boundaries to block access outside permitted directories. |
-| **Secret Leakage** | Never hardcode API Keys or Credentials in the source code. Always use Environment Variables (`.env`) or a Secret Manager. |
-| **Rate Limiting & Abuse** | Enforce request rate sizing limit restrictions and payload thresholds on all public/external APIs. |
-| **Failover & Stability** | Implement Error Retry Logic with Exponential Backoff to prevent system crashes triggered by network failures during third-party or external API calls. |
+## 2. Isolated Sub-Engines & Single Orchestrator Endpoint
+- **Private Worker Directory (`src/core/<domain>/`)**: Contains strictly isolated, single-responsibility sub-engine files. Never place the public manager inside this folder or import internal workers outside the domain.
+- **Single Public Orchestrator (`src/core/<domain>_manager.py`)**: Acts as the sole public endpoint for the domain. External modules must only import from `src/core/<domain>_manager.py` and interact via an explicit Consumer Contract (`start()`, `stop()`, and closed-loop feedback hooks).
 
----
+## 3. The 5-Step File-by-File Engineering Loop
+Never modify multiple sub-engines blindly at once. Process one file at a time through this exact loop:
+1. **Post-Mortem & Workflow Design**: Analyze (a) how the file currently works, (b) hidden bugs, kernel/OS edge cases, race conditions, and sync/async requirements, and (c) how the target sub-atomic workflow should work. Stop and wait for user approval.
+2. **Clean Implementation**: After approval, implement the file with zero comments/docstrings and strict types (no `Any`).
+3. **AST Linter Gate**: Run `human-skills` `linter` on the file and resolve all violations (`0 violations`).
+4. **Immediate Sub-Engine Test & Mandatory Timing Report**: Write and run `PYTHONPATH=. pytest tests/<domain>/test_<file>.py -v --durations=0`. Always explicitly report both the individual test execution durations, the total `pytest` process elapsed time, and confirmation of zero regressions across the whole repository suite.
+5. **Next File Gate**: Move to the next file only after the current file's implementation, linter audit, and test timing are verified.
 
-## 2. Advanced Refactoring & Code Evolution
-> *"Refactoring is a deliberate process, not a quick fix."*
+## 4. Mirrored Ultra-Fast Test Architecture
+- **No Bloated Global Fixtures**: Unit tests must never trigger global database creation or full FastAPI app imports unless explicitly testing routers/DB.
+- **PEP 562 Package Lazy Loading (`__getattr__`)**: Top-level package `__init__.py` files (`src/core/__init__.py`, `src/helpers/__init__.py`) must use lazy `importlib.import_module` + `module.__dict__[name]` lookup so importing a single sub-engine never triggers heavy third-party imports (`yt_dlp`, `cv2`, `sqlalchemy`, `fastapi`).
+- **Sub-Engine Lifecycle Tests (`tests/core/<domain>/test_<worker>.py`)**: Test each internal worker engine independently in milliseconds.
+- **Orchestrator Lifecycle Test (`tests/core/<domain>_manager.py`)**: Test the full end-to-end autonomous lifecycle of the orchestrator after all sub-engines are verified.
 
-**Zero Behavior Changes Verified** — The primary goal of refactoring is to significantly reduce complexity and consistently ensure safety, but the behavior of existing code must never be broken under any circumstances.
-
-### 2.1 The Master Refactoring Strategy
-
-> [!IMPORTANT]  
-> **Method Extraction & Clean-up:** Long method decomposition • Complex conditional extraction • Loop body extraction • Duplicate code consolidation • Guard clause introduction • Command query separation.
-
-- **Design Pattern Application:** Apply `Strategy`, `Factory`, `Observer`, or `Decorator` patterns. Eliminate hardcoded if-else or switch/case logic using *Replace Conditional with Polymorphism* or *Replace Type Code with Subclasses*.
-- **API & Database Optimization:** 
-  - **API:** Ensure Endpoint consolidation, Error handling standardization, Versioning strategy, and firmly maintain backward compatibility.
-  - **Database:** Boost performance using Query simplification, Schema normalization, Index optimization, and Caching strategies (Lazy evaluation).
-- **Architectural Refactoring:** Break tight-coupling using Interface segregation and Dependency inversion (*Replace Inheritance with Delegation*, *Extract Interface*). Consider separate Service extraction or Event-driven refactoring if required.
-- **Safety First:** At the end of the refactoring process, validate utilizing Regression detection and Coverage analysis to ensure that the initial functionality works exactly as prior.
-
----
-
-## 3. Verification & Testing
-
-Testing is mandatory not just for finding bugs in the code, but for keeping the codebase production-ready and future-proof. The following verification strategies must be applied throughout the project lifecycle:
-
-- **Golden Master / Approval Testing:** When refactoring legacy code or validating complex outputs, save the current behavior as a "Golden Record". Ensure that the new output maps exactly identically post-refactoring.
-- **Mutation Testing:** To verify the actual robustness of the unit tests you have written, introduce deliberate bugs (Mutants) into the main code and see if the tests fail. 100% coverage does not equate to safety; having robust assertions is far more critical.
-- **Performance Testing:** Validate whether the system design is genuinely ultra-fast. Measure if I/O bound operations during loads are triggering blocking issues.
-- **Characterization Tests:** Execute these tests to comprehend the undocumented behaviors of any library or third-party API so your system does not break if the API updates in the future.
-- **Integration Validation:** Validate that end-to-end data flow operates perfectly when different modules — specifically the `services/`, `providers/`, and `database` layers — interact simultaneously.
-- **Memory Optimization & Resource Pooling:** Ensure proper connection pooling for database or external API calls. Maintain resource cleanup (e.g., using `finally` blocks or `async with` context managers) to prevent memory leaks and slower responses.

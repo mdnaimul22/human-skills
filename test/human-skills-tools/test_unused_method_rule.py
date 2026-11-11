@@ -12,7 +12,7 @@ if str(_LINTER_DIR) not in sys.path:
     sys.path.insert(0, str(_LINTER_DIR))
 
 from default.base import FileContext
-from default.demo import UDBDPlugin, UDBDMethodRule
+from default.unused_dependencies import UDBDPlugin, UDBDMethodRule
 
 
 def test_unused_method_detected():
@@ -82,3 +82,4 @@ class TestSuite:
     rule = UDBDMethodRule(ctx)
     violations, advisories = rule.run(tree)
     assert len(violations) == 0
+

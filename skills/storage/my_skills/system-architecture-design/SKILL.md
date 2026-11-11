@@ -45,7 +45,7 @@ flowchart TD
     end
 
     subgraph Tier3["Tier 3: Sub-Atomic Component Lifecycle"]
-        T3["system-lifecycle-design"]
+        T3["system-lifecycle-designer"]
         T3 --> C1["3-Way Differential State Reconciliation"]
         T3 --> C2["Sticky Resource Leasing & Free Pools"]
         T3 --> C3["State Machine: Ingested ➔ Active ➔ Drain ➔ Tombstone"]
@@ -277,4 +277,4 @@ When the macro architecture design is established:
 1. **If out-of-process distributed services are defined:**
    - Delegate distributed transaction, Saga orchestration, and Envoy mesh design to **`system-microservices-design`**.
 2. **When implementing code for individual workers, daemons, or modules:**
-   - Delegate state reconciliation, sticky leasing, atomic file swaps, and graceful draining to **`system-lifecycle-design`**.
+   - Delegate state reconciliation, sticky leasing, atomic file swaps, and graceful draining to **`system-lifecycle-designer`**.

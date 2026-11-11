@@ -42,7 +42,7 @@ graph LR
     end
 
     subgraph Micro["Tier 3: Sub-Atomic Layer (Internal)"]
-        L["system-lifecycle-design"]
+        L["system-lifecycle-designer"]
         L --> P1["Reconciliation (3-Way Diff)"]
         L --> P2["Sticky Leases & Invariant State"]
         L --> P3["Atomic Swap & Graceful Drain"]
@@ -53,7 +53,7 @@ graph LR
 
 - **`system-architecture-design` (Tier 1 - The Blueprint):** Governs global capacity planning, modular monolith boundaries, and selective service decomposition.
 - **`system-microservices-design` (Tier 2 - The Inter-Service Fabric):** Governs inter-service data consistency, Saga transactions, service meshes, circuit breaking, and contract enforcement across out-of-process services.
-- **`system-lifecycle-design` (Tier 3 - The Brick):** Ensures every individual service, worker, daemon, or pool is internally deterministic, crash-safe, and self-healing.
+- **`system-lifecycle-designer` (Tier 3 - The Brick):** Ensures every individual service, worker, daemon, or pool is internally deterministic, crash-safe, and self-healing.
 
 ---
 
@@ -315,5 +315,5 @@ Before declaring any enterprise microservice architecture ready for production, 
 - [ ] 18. Thread pools and connection pools are isolated using the Bulkhead Pattern.
 
 ### E. Sub-Atomic Invariant Compliance (Antigravity Standard)
-- [ ] 19. Individual service workers and daemons strictly implement the 7 Invariant Pillars of `system-lifecycle-design`.
+- [ ] 19. Individual service workers and daemons strictly implement the 7 Invariant Pillars of `system-lifecycle-designer`.
 - [ ] 20. W3C `traceparent` context is forwarded across 100% of HTTP, gRPC, and Kafka boundaries.

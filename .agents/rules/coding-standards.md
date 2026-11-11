@@ -108,3 +108,36 @@ Adding a new feature = **existing code remains untouched**, only new modules/lay
 - [ ] Meaningful logging — `print()` is prohibited. Consolidate logs by layer (e.g., `service.log`, `router.log`) instead of per-script.
 - [ ] Graceful degradation — a single failure will not bring down the entire system.
 
+### 2.5 High-Latency Sidecar & Oracle Autonomous Pooling Pattern
+> *"Never force a user request to wait on a slow upstream oracle."*
+
+When external sidecars, challenge solvers, or token oracles require predictable high-latency I/O (>2s per generation), on-demand fetching inside the request path is strictly prohibited.
+
+- **Autonomous Pre-Warmed Pool**: Maintain an active pool with target size ($N$) and replenishment threshold ($T \approx N/2$).
+- **Multi-Tier Persistence**:
+  1. *Tier 1 (In-Memory Queue)*: Thread-safe queue for sub-millisecond pops (< 0.001s).
+  2. *Tier 2 (Distributed Cache / Redis)*: Shared cache with TTL for multi-process sharing.
+  3. *Tier 3 (Local Disk JSON)*: Cold boot and restart durability via safe atomic JSON writes.
+- **Non-Blocking Background Replenishment**: When available items drop to $\le T$, trigger an asynchronous background task guarded by an `asyncio.Lock` or single worker. The consumer never blocks.
+- **Active Expiration Defense**: Parse upstream expiration timestamps (`expiresAt`) and prune with a safety buffer ($t_{expiry} - 300s$).
+
+### 2.6 AST-Safe Data Deserialization (Zero 'isinstance' Branching)
+> *"Validate with schemas, don't branch on runtime types."*
+
+Do not use manual `isinstance(data, list)` or `isinstance(item, dict)` checks when loading JSON or incoming data payloads—these violate clean architecture linters.
+
+- **✅ Canonical Pattern**: Use Pydantic v2 `TypeAdapter`:
+  ```python
+  from pydantic import BaseModel, TypeAdapter
+
+  class EntityModel(BaseModel):
+      id: str
+      value: str
+
+  _LIST_ADAPTER = TypeAdapter(list[EntityModel])
+
+  # Ingest and validate directly with 0 type-branching violations:
+  records = _LIST_ADAPTER.validate_python(raw_json_data)
+  ```
+
+

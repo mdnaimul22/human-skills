@@ -1,11 +1,13 @@
 ---
-name: "lifecycle_designer"
+name: "system-lifecycle-designer"
 description: "Universal architectural methodology for designing granular, atomic, and sub-atomic lifecycles and end-to-end workflows for single functionality integrations across any domain (daemons, batch jobs, request transactions, resource pools). Provides patterns for deterministic identity, pre-commit validation, differential reconciliation, sticky leasing, state machines, transactional persistence, and closed-loop feedback."
 version: "2.0.0"
 author: "Human Skills Team"
-tags: ["lifecycle", "system-design", "state-machine", "architecture", "universal-workflow", "reconciliation", "resource-leasing", "atomic-persistence", "closed-loop"]
+tags: ["lifecycle", "lifecycle_designer", "system-design", "state-machine", "architecture", "universal-workflow", "reconciliation", "resource-leasing", "atomic-persistence", "closed-loop"]
 trigger_patterns:
+  - "lifecycle designer"
   - "lifecycle design"
+  - "system-lifecycle-designer"
   - "workflow design"
   - "state machine design"
   - "subatomic lifecycle"
