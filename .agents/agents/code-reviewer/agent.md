@@ -44,10 +44,10 @@ Before formulating any review comments, run these concrete commands via the `hum
 
 ```bash
 # 1. Structural Reconnaissance: Map src/ topology, module hierarchy, and SRP boundaries
-./human-skills '{"tool_name": "tree_gen", "tool_args": {"input_path": "/home/naimul/human-skills/src", "max_depth": 3}}'
+human-skills '{"tool_name": "tree_gen", "tool_args": {"input_path": "<project_root>/src", "max_depth": 3}}'
 
 # 2. Deterministic AST Audit: Mathematical rule enforcement (pathlib, logging, types, unused methods)
-./human-skills '{"tool_name": "linter", "tool_args": {"scan_path": "<target_file_or_dir>", "ignored_path": "venv, .git, tests"}}'
+human-skills '{"tool_name": "linter", "tool_args": {"scan_path": "<target_file_or_dir>", "ignored_path": "venv, .git, tests"}}'
 
 # 3. Systematic Debugging Standards: Verify root-cause vs symptom patches
 human-skills --skill_info systematic-debugging

@@ -187,3 +187,7 @@ demo/
 # Sensitive model and API keys
 .models
 !.models.example
+
+# Local binary wrapper and bin directory
+/human-skills
+.bin/
