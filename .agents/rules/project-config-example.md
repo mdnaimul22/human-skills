@@ -1,4 +1,5 @@
 ---
+trigger: model_decision
 name: python-project-config
 description: Generates a universal `config/` folder (paths.py, files.py, dotenv.py, settings.py, __init__.py, .env.example) that works across any Python project — FastAPI, CLI, scripts, or AI agent backends.
 ---

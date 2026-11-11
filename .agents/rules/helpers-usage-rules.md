@@ -1,3 +1,8 @@
+---
+trigger: always_on
+name: helpers_usage_rules
+description: Strict usage rules for src/helpers/ — exceptions hierarchy, retry logic, date formatting, and database helpers.
+---
 
 # Helpers Usage Rules
 
