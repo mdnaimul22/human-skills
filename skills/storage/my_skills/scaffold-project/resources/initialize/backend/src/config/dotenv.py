@@ -1,30 +1,54 @@
 import os
 import re
-from pathlib import Path
 
-from .paths import PROJECT_ROOT
 from . import files
 
-_DOTENV_PATH = ".env"
+_DEFAULT_DOTENV_PATH: str = ".env"
 
 
-def load_dotenv(path: str = _DOTENV_PATH) -> None:
+def parse_env_dict(path: str) -> dict[str, str]:
     if not files.exists(path):
-        return
+        return {}
+    result: dict[str, str] = {}
     for line in files.read_text(path).splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
+        clean = line.strip()
+        if not clean or clean.startswith("#") or "=" not in clean:
             continue
-        if "=" in line:
-            key, _, value = line.partition("=")
-            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+        key, _, val = clean.partition("=")
+        k = key.strip()
+        v = val.strip().strip('"').strip("'")
+        if k:
+            result[k] = v
+    return result
 
 
-def set_value(key: str, value: str, path: str = _DOTENV_PATH) -> None:
+def _parse_env_file(path: str, override: bool = False) -> None:
+    parsed = parse_env_dict(path)
+    for key, value in parsed.items():
+        if override:
+            os.environ[key] = value
+        else:
+            os.environ.setdefault(key, value)
+
+
+def load_dotenv(*paths: str, override: bool = False) -> None:
+    target_paths = paths if paths else (_DEFAULT_DOTENV_PATH,)
+    for p in target_paths:
+        if files.exists(p):
+            _parse_env_file(p, override=override)
+        elif p == _DEFAULT_DOTENV_PATH and files.exists(".env.example"):
+            try:
+                files.write_text(p, files.read_text(".env.example"))
+                _parse_env_file(p, override=override)
+            except Exception:
+                pass
+
+
+def set_value(key: str, value: str, path: str = _DEFAULT_DOTENV_PATH) -> None:
     content = files.read_text(path) if files.exists(path) else ""
     lines = content.splitlines()
     found = False
-    new_lines = []
+    new_lines: list[str] = []
     for line in lines:
         if re.match(rf"^\s*{re.escape(key)}\s*=", line):
             new_lines.append(f"{key}={value}")
@@ -34,17 +58,17 @@ def set_value(key: str, value: str, path: str = _DOTENV_PATH) -> None:
     if not found:
         new_lines.append(f"{key}={value}")
     files.write_text(path, "\n".join(new_lines) + "\n")
-    load_dotenv(path)
+    os.environ[key] = value
 
 
 def get_value(key: str, default: str = "") -> str:
-    load_dotenv()
     return os.environ.get(key, default)
 
 
-def remove_value(key: str, path: str = _DOTENV_PATH) -> None:
+def remove_value(key: str, path: str = _DEFAULT_DOTENV_PATH) -> None:
     if not files.exists(path):
         return
     lines = files.read_text(path).splitlines()
     new_lines = [l for l in lines if not re.match(rf"^\s*{re.escape(key)}\s*=", l)]
     files.write_text(path, "\n".join(new_lines) + "\n")
+    os.environ.pop(key, None)

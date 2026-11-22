@@ -16,6 +16,16 @@ def time_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def get_now_utc() -> datetime:
+    """Get current UTC datetime object."""
+    return datetime.now(timezone.utc)
+
+
+def get_now_iso() -> str:
+    """Get current UTC timestamp in ISO 8601 format."""
+    return datetime.now(timezone.utc).isoformat()
+
+
 def time_now_iso() -> str:
     """Get current UTC timestamp in ISO 8601 format."""
     return datetime.now(timezone.utc).isoformat()

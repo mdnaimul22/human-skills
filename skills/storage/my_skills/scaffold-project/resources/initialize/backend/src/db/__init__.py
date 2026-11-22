@@ -1,49 +1,32 @@
-"""
-Database package — connection lifecycle, models, and repositories.
-
-Usage in main.py:
-    from src.db import init_db, shutdown_db, create_tables
-
-    async def lifespan(app):
-        init_db(Settings.DATABASE_URL)
-        await create_tables()
-        yield
-        await shutdown_db()
-
-Usage in routers / services:
-    from src.db import get_session, UserRepository
-
-    @router.get("/me")
-    async def me(session: AsyncSession = Depends(get_session)):
-        repo = UserRepository(session)
-        ...
-"""
-
-from .connection import (
-    init_db,
-    shutdown_db,
-    get_session,
-    session_scope,
-    create_tables,
+from __future__ import annotations
+from typing import TypeVar
+from .domain import resolve_domain_symbol
+from .helpers import (
+    Base, BaseStore, SchemaBranch, SchemaMigrator,
+    active_tables, discover_branches, load_metadata, system_table_names,
 )
-from .models import Base, User, TimestampMixin, OwnershipMixin
-from .repository import BaseRepository
-from .repositories import UserRepository
+from .manager import (
+    DatabaseManager, create_tables, ensure_schema_migrations,
+    get_db_manager, get_session, init_db, session_scope, shutdown_db,
+)
+from .system import (
+    AuthSession, IdentityRepository, RevokedToken, RevokedTokenRecord,
+    RevokedTokenRepository, SessionRepository, User, UserIdentity, UserRepository,
+)
+
+T = TypeVar("T")
 
 __all__ = [
-    # Database Connection Lifecycle & Session Management
-    "init_db",
-    "shutdown_db",
-    "get_session",
-    "session_scope",
-    "create_tables",
-    # SQLAlchemy ORM Models & Mixins
-    "Base",
-    "User",
-    "TimestampMixin",
-    "OwnershipMixin",
-    # Repositories & Data Access Layer
-    "BaseRepository",
-    "UserRepository",
+    "AuthSession", "Base", "BaseStore", "DatabaseManager",
+    "IdentityRepository", "RevokedToken", "RevokedTokenRecord", "RevokedTokenRepository",
+    "SchemaBranch", "SchemaMigrator", "SessionRepository", "User", "UserIdentity",
+    "UserRepository", "active_tables", "create_tables", "discover_branches",
+    "ensure_schema_migrations", "get_db_manager", "get_session", "init_db",
+    "load_metadata", "session_scope", "shutdown_db", "system_table_names",
 ]
 
+def __getattr__(name: str) -> T:
+    try:
+        return resolve_domain_symbol(name)
+    except AttributeError as exc:
+        raise AttributeError(f"module 'src.db' has no attribute '{name}'") from exc

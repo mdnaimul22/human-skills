@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 import pytest
+import pytest_asyncio
 
 INITIALIZE_DIR = Path(__file__).resolve().parent.parent
 if str(INITIALIZE_DIR) not in sys.path:
@@ -14,20 +15,19 @@ os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_FILE}"
 os.environ["APP_ENV"] = "testing"
 os.environ["JWT_SECRET"] = "test-secret-key-for-automated-tests"
 
-from src.db import init_db, shutdown_db, create_tables, get_session
-from src.config import Settings
-from src.routers.auth import _register_limiter, _login_limiter, _reset_limiter
-from main import app
-
-from httpx import AsyncClient, ASGITransport
-import pytest_asyncio
-
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_test_database():
-    _register_limiter.reset()
-    _login_limiter.reset()
-    _reset_limiter.reset()
+    try:
+        from src.routers.auth import _register_limiter, _login_limiter, _reset_limiter
+        _register_limiter.reset()
+        _login_limiter.reset()
+        _reset_limiter.reset()
+    except (ImportError, ModuleNotFoundError):
+        pass
+
+    from src.db import init_db, shutdown_db, create_tables
+
     TEST_DB_FILE.parent.mkdir(parents=True, exist_ok=True)
     if TEST_DB_FILE.exists():
         TEST_DB_FILE.unlink()
@@ -45,6 +45,8 @@ async def setup_test_database():
 
 @pytest_asyncio.fixture
 async def client():
+    from httpx import AsyncClient, ASGITransport
+    from main import app
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         yield ac
@@ -52,5 +54,6 @@ async def client():
 
 @pytest_asyncio.fixture
 async def db_session():
+    from src.db import get_session
     async for session in get_session():
         yield session

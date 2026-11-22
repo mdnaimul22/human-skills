@@ -1,142 +1,186 @@
 from contextlib import asynccontextmanager
-import atexit
-import signal
+import asyncio
+import os
+import subprocess
 import sys
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
-import uvicorn
 
-from src.config import Settings, setup_logger, shutdown_logger, exists
+import uvicorn
+from fastapi import FastAPI
+
+from src.config import Settings, setup_logger, shutdown_logger, uvicorn_logging
 from src.helpers import (
     register_cors,
     register_middleware,
     register_error_handlers,
     kill_pid,
-    generate_nginx_config,
-    setup_tailscale_ingress,
+    init_redis,
+    shutdown_redis,
 )
-from src.db import init_db, shutdown_db, create_tables
-from src.routers import auth_router, agent_router
+from src.apps import (
+    DockerManager,
+    NginxManager,
+    WAFManager,
+    get_git_manager,
+    get_manager,
+    get_system_manager,
+)
+from src.services.intelligence import populate_missing_metadata
+from src.services.history_service import persist_file_record
+from src.core import ClashManager, EgressManager, get_egress_manager
+from src.db import DatabaseManager
+from src.routers import tools_router, auth_router, workspace_router, statistics_router, system_router
 
-# Optional Frontend Orchestration (graceful fallback if web/ is not present)
-try:
-    if not exists("web"):
-        raise ImportError("Frontend 'web' directory not found")
-    from src.helpers import start_frontend, stop_frontend
-    _has_frontend = True
-except (ImportError, AttributeError):
-    _has_frontend = False
+logger = setup_logger(
+    Settings.LOG_DIR / "main.log",
+    name="Vidula.main",
+)
+db_manager = DatabaseManager()
 
-# 1. Initialize Logger
-logger = setup_logger(boss_name="main.txt")
 
-# 2. Define Lifespan (Startup/Shutdown events)
+async def _startup_apps() -> None:
+    db_manager.initialize(Settings.DATABASE_URL)
+    await db_manager.create_tables()
+    await db_manager.migrate()
+    logger.info("Database initialized & schema migrated")
+
+    try:
+        docker_results = DockerManager().ensure_all()
+        for name, ok in docker_results.items():
+            if not ok:
+                logger.warning(f"Docker container '{name}' failed to reach active state.")
+    except Exception as e:
+        logger.error(f"DockerManager execution failed: {e}")
+
+    try:
+        await init_redis()
+    except Exception as e:
+        logger.warning(f"Failed to initialize Redis cache: {e}")
+
+    sys_mgr = get_system_manager()
+    await sys_mgr.start_async()
+
+    manager = get_manager()
+    await manager.start()
+
+    try:
+        if NginxManager.setup_and_reload():
+            logger.info("Nginx automated setup and reload succeeded.")
+        else:
+            logger.warning("Nginx automated setup failed.")
+    except Exception as e:
+        logger.error(f"Failed to run Nginx manager on startup: {e}")
+
+    WAFManager().start_flush_task()
+
+    try:
+        git_results = get_git_manager().start_all()
+        logger.info(f"GitManager autonomous workers started: {git_results}")
+    except Exception as e:
+        logger.error(f"Failed to start GitManager on startup: {e}")
+
+
+async def _shutdown_apps() -> None:
+    try:
+        await asyncio.to_thread(get_git_manager().stop_all)
+        logger.info("GitManager workers stopped cleanly.")
+    except Exception as e:
+        logger.error(f"Failed to stop GitManager on shutdown: {e}")
+
+    await WAFManager().shutdown()
+    await get_manager().shutdown()
+    await get_system_manager().stop_async()
+    await shutdown_redis()
+    await db_manager.shutdown()
+
+
+async def _startup_domain() -> None:
+    get_manager().results.set_completion_callback(persist_file_record)
+
+    try:
+        DockerManager().ensure_container_running()
+        from src.helpers.po_token import get_po_token_pool
+        get_po_token_pool().start()
+    except Exception as e:
+        logger.warning(f"Failed to initialize Docker sidecar manager or PO token pool: {e}")
+
+    asyncio.create_task(populate_missing_metadata())
+
+    try:
+        await ClashManager().start()
+        logger.info("Clash/Mihomo proxy daemon started successfully.")
+    except Exception as e:
+        logger.error(f"Failed to start Clash daemon on startup: {e}")
+
+    try:
+        egress_mgr = get_egress_manager()
+        egress_mgr.start()
+        logger.info("EgressManager initialized and health checker started successfully.")
+    except Exception as e:
+        logger.error(f"Failed to initialize EgressManager on startup: {e}")
+
+
+async def _shutdown_domain() -> None:
+    try:
+        from src.helpers.po_token import get_po_token_pool
+        await get_po_token_pool().stop()
+    except Exception as e:
+        logger.debug(f"PO Token Pool shutdown error: {e}")
+
+    try:
+        get_egress_manager().stop()
+    except Exception as e:
+        logger.error(f"Failed to stop EgressManager on shutdown: {e}")
+
+    try:
+        await ClashManager().stop()
+        logger.info("Clash/Mihomo proxy daemon stopped cleanly.")
+    except Exception as e:
+        logger.error(f"Failed to stop Clash daemon on shutdown: {e}")
+
+    try:
+        DockerManager().stop_container("movie-pot-provider")
+    except Exception as e:
+        logger.debug(f"Docker sidecar stop bypassed: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize Database
-    init_db(Settings.DATABASE_URL)
-    await create_tables()
-    logger.info("Database initialized")
-    
-    # Auto-generate Nginx configuration dynamically on boot
-    if generate_nginx_config():
-        logger.info("Nginx configuration auto-generated successfully")
-    else:
-        logger.warning("Nginx configuration auto-generation skipped or failed")
-    
-    if Settings.ENABLE_TAILSCALE:
-        public_url = await setup_tailscale_ingress()
-        logger.info(f"Tailscale Ingress active: {public_url}")
-
+    uvicorn_logging()
+    await _startup_apps()
+    await _startup_domain()
+    logger.info(f"🚀 {Settings.PROJECT_NAME} v{Settings.VERSION} started in {Settings.ENV} mode")
     yield
-    
-    # --- Shutdown ---
     logger.info("Shutting down application...")
-    await shutdown_db()
+    await _shutdown_domain()
+    await _shutdown_apps()
     shutdown_logger()
 
-# 3. Initialize FastAPI App
+
 app = FastAPI(
     title=Settings.PROJECT_NAME,
     version=Settings.VERSION,
     lifespan=lifespan,
     docs_url="/docs" if not Settings.is_production else None,
-    redoc_url=None
+    redoc_url=None,
 )
 
-# 4. Register Infrastructure / Helpers
 register_cors(app, Settings)
 register_middleware(app, logger, Settings)
 register_error_handlers(app, logger)
 
-# 5. Include Routers
+app.include_router(system_router)
+app.include_router(tools_router)
 app.include_router(auth_router)
-app.include_router(agent_router)
-
-@app.get("/", include_in_schema=False)
-async def root():
-    frontend_url = Settings.FRONTEND_URL
-    if frontend_url:
-        return RedirectResponse(url=frontend_url)
-    return {
-        "status": "ok",
-        "project": Settings.PROJECT_NAME,
-        "version": Settings.VERSION
-    }
-
-
-@app.get("/health", tags=["System"])
-async def health_check():
-    return {
-        "status": "ok", 
-        "project": Settings.PROJECT_NAME,
-        "version": Settings.VERSION
-    }
+app.include_router(workspace_router)
+app.include_router(statistics_router)
 
 
 if __name__ == "__main__":
-    host = Settings.API_HOST
-    api_port = Settings.API_PORT
-    frontend_port = Settings.FRONTEND_PORT
-
-    # 1. Kill any orphaned server processes holding this project's specific ports
-    kill_pid(api_port)
-    if _has_frontend:
-        kill_pid(frontend_port)
-
-    # 2. Concurrently start frontend if available
-    if _has_frontend:
-        start_frontend()
-        atexit.register(stop_frontend)
-
-        def handle_exit(signum, frame):
-            stop_frontend()
-            sys.exit(0)
-
-        signal.signal(signal.SIGINT, handle_exit)
-        signal.signal(signal.SIGTERM, handle_exit)
-
-    # 3. Launch Uvicorn with appropriate reload config
-    try:
-        is_prod = Settings.is_production
-        if is_prod:
-            logger.info(f"Starting API in PRODUCTION mode on http://{host}:{api_port}")
-            uvicorn.run(
-                "main:app", 
-                host=host, 
-                port=api_port, 
-                reload=False
-            )
-        else:
-            logger.info(f"Starting API in DEVELOPMENT mode with hot-reload on http://{host}:{api_port}")
-            uvicorn.run(
-                "main:app", 
-                host=host, 
-                port=api_port, 
-                reload=True,
-                reload_dirs=["src"],
-                reload_includes=["main.py"]
-            )
-    finally:
-        if _has_frontend:
-            stop_frontend()
+    kill_pid(Settings.API_PORT)
+    uvicorn.run(
+        "main:app",
+        host=Settings.API_HOST,
+        port=Settings.API_PORT,
+        reload=False,
+        log_config=uvicorn.config.LOGGING_CONFIG,
+    )

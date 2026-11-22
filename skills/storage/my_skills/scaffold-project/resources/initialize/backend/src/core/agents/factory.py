@@ -12,6 +12,8 @@ logger = setup_logger(boss_name="core.agents.main.txt", his_name="core.agents.fa
 
 class AgentFactory:
     def __init__(self, directories: tuple[str, ...] = ("data/agents",), auto_discover: bool = True) -> None:
+        from src.providers.llm import ClientRotator
+        self.rotator = ClientRotator()
         self._profiles: dict[str, AgentProfile] = {}
         self._rotation_counters: dict[str, int] = {}
         if auto_discover:
@@ -67,7 +69,7 @@ class AgentFactory:
     def _current_client_index(self, profile: AgentProfile, explicit_index: int | None) -> int:
         if explicit_index is not None:
             return explicit_index
-        total_clients = len(Settings.LLM_CLIENTS)
+        total_clients = len(self.rotator.client_configs)
         if total_clients == 0 or not profile.is_rotate:
             return profile.client_index
         current = self._rotation_counters.get(profile.name, 0)

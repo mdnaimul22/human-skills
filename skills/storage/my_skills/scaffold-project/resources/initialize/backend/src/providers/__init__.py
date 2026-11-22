@@ -1,5 +1,5 @@
 from .email import send_email, send_welcome_email, send_verification_email, send_password_reset_email
-from .llm import LLMProvider, ClientRotator
+from .llm import LLMProvider, ClientRotator, ClientConfig
 from .google import verify_google_token
 
 __all__ = [
@@ -13,4 +13,5 @@ __all__ = [
     # LLM & AI Model Inference Provider
     "LLMProvider",
     "ClientRotator",
+    "ClientConfig",
 ]

@@ -1,46 +1,42 @@
-"""
-Config module entry point.
-Auto-loads environment variables and exports all configuration utilities.
-"""
-
 from .files import (
-    read_text, write_text, read_json, write_json, read_yaml, write_yaml, read_pickle, write_pickle,
-    exists, is_file, is_dir, ensure_dir, delete, list_files, get_abs_path, get_rel_path,
-    get_size, get_mtime, read_from_pos,
+    read_text, write_text, read_bytes, write_bytes, read_json, write_json,
+    read_yaml, write_yaml, read_pickle, write_pickle,
+    exists, is_file, is_dir, ensure_dir, delete, list_files, get_abs_path,
+    get_size, get_mtime, read_from_pos, is_subpath, get_rel_path,
 )
-from .dotenv import load_dotenv, set_value, get_value, remove_value
-from .settings import Settings, ClientConfig
-from .logger import setup_logger, shutdown_logger
+from .dotenv import (
+    load_dotenv, set_value, get_value, remove_value, parse_env_dict,
+)
+from .settings import Settings
+from .logger import (
+    job_context,
+    get_telemetry,
+    set_telemetry,
+    reset_telemetry,
+    measure_latency,
+    uvicorn_logging,
+    setup_logger,
+    shutdown_logger,
+    request_id_ctx,
+    sanitize_log_text,
+    CorrelationIdFilter,
+    JsonLinesFormatter,
+    SanitizingFormatter,
+)
 
-# Auto-load environment variables on import
 load_dotenv()
-if exists(".models"):
-    load_dotenv(".models")
 
 __all__ = [
-    # Settings & Configuration
-    "Settings",
-    "ClientConfig",
-    # Logging Utilities
-    "setup_logger",
-    "shutdown_logger",
-    # Environment Variables (.env)
-    "load_dotenv",
-    "set_value",
-    "get_value",
-    "remove_value",
-    # File Operations (Read / Write)
     "read_text",
     "write_text",
+    "read_bytes",
+    "write_bytes",
     "read_json",
     "write_json",
     "read_yaml",
     "write_yaml",
     "read_pickle",
     "write_pickle",
-    "read_from_pos",
-
-    # Filesystem & Path Resolution
     "exists",
     "is_file",
     "is_dir",
@@ -49,6 +45,27 @@ __all__ = [
     "list_files",
     "get_abs_path",
     "get_rel_path",
+    "is_subpath",
     "get_size",
     "get_mtime",
+    "read_from_pos",
+    "load_dotenv",
+    "set_value",
+    "get_value",
+    "remove_value",
+    "parse_env_dict",
+    "Settings",
+    "job_context",
+    "get_telemetry",
+    "set_telemetry",
+    "reset_telemetry",
+    "measure_latency",
+    "uvicorn_logging",
+    "setup_logger",
+    "shutdown_logger",
+    "request_id_ctx",
+    "sanitize_log_text",
+    "CorrelationIdFilter",
+    "JsonLinesFormatter",
+    "SanitizingFormatter",
 ]

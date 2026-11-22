@@ -1,6 +1,6 @@
 ---
 name: scaffold-project
-description: Centralized full-stack project scaffold — bootstraps a complete Python/FastAPI backend skeleton (bootstrap) and scaffolds Next.js (web/) or React Chrome Extension (extension/) frontends (setui) with 11 themes and AI design system intelligence.
+description: scaffold or bootstraps a complet full-stack python backend for any business saas project
 ---
 
 # Scaffold Project

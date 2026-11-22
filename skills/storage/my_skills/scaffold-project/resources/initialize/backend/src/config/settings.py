@@ -1,17 +1,10 @@
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .paths import PROJECT_ROOT
-
-
-class ClientConfig(BaseModel):
-    base_url: str
-    api_key: str
-    model: str
-    proxy: Optional[str] = None
 
 
 class Settings(BaseSettings):
@@ -55,7 +48,6 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = Field(default=0.7, validation_alias="LLM_TEMPERATURE")
     LLM_MAX_TOKENS: int = Field(default=2048, validation_alias="LLM_MAX_TOKENS")
     LLM_RETRIES: int = Field(default=3, validation_alias="LLM_RETRIES")
-    LLM_CLIENTS: list[ClientConfig] = Field(default_factory=list)
     WEBSHARE_TOKEN: Optional[str] = Field(default=None, validation_alias="WEBSHARE_TOKEN")
     PROXY_CACHE_PATH: str = Field(default="data/proxies.json", validation_alias="PROXY_CACHE_PATH")
     PROXY_LAST_UPDATE_PATH: str = Field(default="logs/proxy_last_update.json", validation_alias="PROXY_LAST_UPDATE_PATH")
@@ -63,55 +55,14 @@ class Settings(BaseSettings):
         default="https://proxy.webshare.io/api/v2/proxy/list/download/ulbftisilmdzajnvjjibaxyyyjfuphlrdogauaal/-/any/username/direct/-",
         validation_alias="WEBSHARE_API_URL",
     )
-    SHOT_PLANS_DIR: str = Field(default="data/shot_plans", validation_alias="SHOT_PLANS_DIR")
-
-    @model_validator(mode="before")
-    @classmethod
-    def assemble_client_configs(cls, values: dict) -> dict:
-        grouped: dict[str, dict[str, str]] = {}
-        for key, val in values.items():
-            k = key.lower()
-            if not k.startswith("client_configs_"):
-                continue
-            parts = k.split("_", 3)
-            if len(parts) >= 4:
-                idx, field_name = parts[2], parts[3]
-                grouped.setdefault(idx, {})[field_name] = str(val)
-
-        clients: list[ClientConfig] = []
-        for _, data in sorted(grouped.items(), key=lambda x: int(x[0]) if x[0].isdigit() else 0):
-            base_url = data.get("base_url")
-            api_key = data.get("api_key")
-            model = data.get("model")
-            if base_url and api_key and model:
-                clients.append(
-                    ClientConfig(
-                        base_url=base_url,
-                        api_key=api_key,
-                        model=model,
-                        proxy=data.get("proxy_http"),
-                    )
-                )
-
-        values["LLM_CLIENTS"] = clients
-        return values
-
-    def _resolve(self, val: str) -> Path:
-        val = val.strip()
-        if val.startswith("/."):
-            val = "~/" + val[2:] if val.startswith("/./") else "~/" + val[1:]
-        if val.startswith(".") and not val.startswith("./") and not val.startswith("../"):
-            val = "~/" + val
-        p = Path(val).expanduser()
-        return p if p.is_absolute() else PROJECT_ROOT / p
 
     @property
     def LOG_DIR(self) -> Path:
-        return self._resolve(self.RAW_LOG_DIR)
+        return PROJECT_ROOT.safe_resolve(self.RAW_LOG_DIR)
 
     @property
     def DATA_DIR(self) -> Path:
-        return self._resolve(self.RAW_DATA_DIR)
+        return PROJECT_ROOT.safe_resolve(self.RAW_DATA_DIR)
 
     @property
     def is_production(self) -> bool:
@@ -123,8 +74,10 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_file=(
-            str(PROJECT_ROOT / ".env"),
-            str(PROJECT_ROOT / ".models"),
+            str(PROJECT_ROOT / "env" / ".1e2n3v3"),
+            str(PROJECT_ROOT / "env" / ".1g2i3t4s5y6n7c"),
+            str(PROJECT_ROOT / "env" / ".1y2s3t4e5m"),
+            str(PROJECT_ROOT / "env" / ".1m2o3d4e5l3s"),
         ),
         env_file_encoding="utf-8",
         extra="allow",

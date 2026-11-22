@@ -176,13 +176,15 @@ class Agent(Generic[T]):
         if self.model is not None:
             agent_model = self.model
         else:
-            if not Settings.LLM_CLIENTS:
-                raise ValidationError("No LLM clients configured in Settings.LLM_CLIENTS")
-            if self.client_index >= len(Settings.LLM_CLIENTS):
+            from src.providers.llm import ClientRotator
+            rotator = ClientRotator()
+            if not rotator.client_configs:
+                raise ValidationError("No LLM clients configured in providers.llm")
+            if self.client_index >= len(rotator.client_configs):
                 raise ValidationError(
-                    f"Client index {self.client_index} out of range (total: {len(Settings.LLM_CLIENTS)})"
+                    f"Client index {self.client_index} out of range (total: {len(rotator.client_configs)})"
                 )
-            client = Settings.LLM_CLIENTS[self.client_index]
+            client = rotator.get_by_index(self.client_index)
             provider = OpenAIProvider(base_url=client.base_url, api_key=client.api_key)
             agent_model = OpenAIChatModel(client.model, provider=provider)
 

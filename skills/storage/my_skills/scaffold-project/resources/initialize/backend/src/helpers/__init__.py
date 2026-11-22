@@ -10,7 +10,7 @@ from .exceptions import (
     RateLimitError,
     AuthenticationError,
 )
-from .date_utils import time_now, time_now_iso, parse_iso, format_iso, relative_time
+from .date_utils import time_now, get_now_utc, time_now_iso, get_now_iso, parse_iso, format_iso, relative_time
 from .port_utils import get_pid, kill_pid, is_port_free
 from .tailscale import (
     is_tailscale_installed,
@@ -24,7 +24,7 @@ from .cors import register_cors
 from .middleware import register_middleware
 from .error_handlers import register_error_handlers
 from .rate_limit import RateLimiter
-from .nginx import generate_nginx_config
+
 try:
     from src.config import exists
     if not exists("web"):
@@ -63,7 +63,6 @@ __all__ = [
     "register_middleware",
     "register_error_handlers",
     "RateLimiter",
-    "generate_nginx_config",
 ]
 
 if _has_frontend:

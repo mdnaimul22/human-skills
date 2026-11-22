@@ -1,48 +1,86 @@
 import json
 from collections.abc import Iterable
-from typing import Optional
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 from openai.types.chat import ChatCompletionMessageParam
-from src.config import Settings, ClientConfig
+from pydantic import JsonValue
+from src.config import Settings, setup_logger
 from src.helpers.exceptions import ExternalServiceError
-from .config import ClientRotator
+from .config import ClientConfig, ClientRotator
+
+logger = setup_logger(boss_name="providers.main.txt", his_name="providers.llm.txt")
 
 
-def _create_async_client(config: ClientConfig) -> AsyncOpenAI:
-    transport = DefaultAsyncHttpxClient(proxy=config.proxy, timeout=30.0) if config.proxy else None
-    return AsyncOpenAI(base_url=config.base_url, api_key=config.api_key, http_client=transport, timeout=30.0)
+def _clean_json_text(raw: str) -> str:
+    clean = raw.strip()
+    if clean.startswith("```"):
+        lines = clean.splitlines()
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        clean = "\n".join(lines).strip()
+    return clean
 
 
 class LLMProvider:
-    def __init__(self):
-        self.rotator = ClientRotator()
+    def __init__(self, rotator: ClientRotator | None = None):
+        self.rotator = rotator or ClientRotator()
+        self._clients: dict[tuple[str, str, str | None], AsyncOpenAI] = {}
+
+    def _get_client(self, config: ClientConfig) -> AsyncOpenAI:
+        key = (config.base_url, config.api_key, config.proxy)
+        client = self._clients.get(key)
+        if client is None:
+            transport = DefaultAsyncHttpxClient(proxy=config.proxy, timeout=30.0) if config.proxy else None
+            client = AsyncOpenAI(base_url=config.base_url, api_key=config.api_key, http_client=transport, timeout=30.0)
+            self._clients[key] = client
+        return client
 
     async def process(
         self,
         messages: Iterable[ChatCompletionMessageParam],
-        model: Optional[str] = None,
+        model: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
     ) -> str:
-        last_error = None
-        attempts = max(1, min(Settings.LLM_RETRIES, len(self.rotator.client_configs)))
+        if not self.rotator.client_configs:
+            raise ExternalServiceError("LLM", "No client configurations available")
 
-        for _ in range(attempts):
+        last_error: Exception | None = None
+        attempts = max(1, min(Settings.LLM_RETRIES, len(self.rotator.client_configs)))
+        temp = temperature if temperature is not None else Settings.LLM_TEMPERATURE
+        tokens = max_tokens if max_tokens is not None else Settings.LLM_MAX_TOKENS
+
+        for attempt in range(1, attempts + 1):
             config = self.rotator.get_next_client_config(model=model)
-            client = _create_async_client(config)
+            client = self._get_client(config)
             try:
                 response = await client.chat.completions.create(
                     model=config.model,
                     messages=messages,
-                    temperature=Settings.LLM_TEMPERATURE,
-                    max_tokens=Settings.LLM_MAX_TOKENS,
+                    temperature=temp,
+                    max_tokens=tokens,
                 )
                 return response.choices[0].message.content or ""
             except Exception as e:
                 last_error = e
-            finally:
-                await client.close()
+                logger.warning(f"LLM attempt {attempt}/{attempts} failed on model='{config.model}': {e}")
 
         raise ExternalServiceError("LLM", f"All retry attempts failed: {last_error}")
 
-    async def generate_json(self, messages: Iterable[ChatCompletionMessageParam], model: Optional[str] = None) -> dict:
+    async def generate_json(
+        self,
+        messages: Iterable[ChatCompletionMessageParam],
+        model: str | None = None,
+    ) -> dict[str, JsonValue]:
         raw = await self.process(messages=messages, model=model)
-        return json.loads(raw)
+        clean = _clean_json_text(raw)
+        try:
+            return json.loads(clean)
+        except json.JSONDecodeError as e:
+            raise ExternalServiceError("LLM", f"Failed to parse LLM response as JSON: {e}")
+
+    async def close(self) -> None:
+        for client in self._clients.values():
+            await client.close()
+        self._clients.clear()
