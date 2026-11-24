@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -33,6 +34,23 @@ class LoginRequest(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     id_token: str = Field(min_length=1)
+
+
+class GoogleAuthUrlResponse(BaseModel):
+    url: str
+
+
+class GoogleCallbackRequest(BaseModel):
+    code: str
+
+
+class TokenResponse(BaseModel):
+    token: str
+    user_id: str
+    name: str
+    email: str
+    avatar_url: Optional[str] = None
+    tier: Optional[str] = "registered"
 
 
 class RefreshRequest(BaseModel):
@@ -79,9 +97,13 @@ class UserProfileResponse(BaseModel):
     id: str
     email: str
     name: str
-    email_verified: bool
-    auth_method: str
+    avatar_url: Optional[str] = None
+    tier: str = "registered"
+    email_verified: bool = True
+    auth_method: str = "oauth"
     created_at: datetime
+    total_downloads: int = 0
+    total_favorites: int = 0
 
 
 class GoogleUserInfo(BaseModel):

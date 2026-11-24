@@ -157,12 +157,12 @@ class JobManager:
         cls._singleton = None
         JobRecord._journal_store = None
 
-def get_manager() -> JobManager:
+def get_job_manager() -> JobManager:
     return JobManager.get_instance()
 
 __all__ = [
     "JobManager",
     "JobRecord",
-    "get_manager",
+    "get_job_manager",
     "sanitize_client_error",
 ]

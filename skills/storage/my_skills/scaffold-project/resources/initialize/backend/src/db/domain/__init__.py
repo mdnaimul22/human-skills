@@ -5,6 +5,7 @@ from src.db.helpers.registry import SYSTEM_BRANCH, discover_branches
 
 T = TypeVar("T")
 
+
 def resolve_domain_symbol(name: str, domain_root: str = "src/db/domain") -> T:
     for branch in discover_branches(domain_root):
         if branch.name == SYSTEM_BRANCH:
@@ -18,6 +19,7 @@ def resolve_domain_symbol(name: str, domain_root: str = "src/db/domain") -> T:
             model_res: T = models_mod.__dict__[name]
             return model_res
     raise AttributeError(f"module 'src.db.domain' has no attribute '{name}'")
+
 
 def __getattr__(name: str) -> T:
     return resolve_domain_symbol(name)

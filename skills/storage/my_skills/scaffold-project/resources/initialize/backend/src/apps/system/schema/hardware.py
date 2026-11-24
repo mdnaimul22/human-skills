@@ -54,7 +54,7 @@ class RamTelemetry(BaseModel):
     percent: float = Field(default=0.0, ge=0.0)
     swap_total_bytes: int = Field(default=0, ge=0)
     swap_used_bytes: int = Field(default=0, ge=0)
-    vidula_rss_bytes: int = Field(default=0, ge=0)
+    process_rss_bytes: int = Field(default=0, ge=0)
 
 
 class GpuDeviceTelemetry(BaseModel):
@@ -106,11 +106,11 @@ class GpuTelemetry(BaseModel):
 
     @property
     def is_available(self) -> bool:
-        return self.cuda_available and self.total_vram_bytes > 0
+        return (self.cuda_available and self.total_vram_bytes > 0) or self.vaapi_available
 
     @property
     def is_usable(self) -> bool:
-        return self.is_available and self.nvenc_verified
+        return (self.cuda_available and self.total_vram_bytes > 0 and self.nvenc_verified) or self.vaapi_available
 
 
 class HardwareTelemetrySnapshot(BaseModel):

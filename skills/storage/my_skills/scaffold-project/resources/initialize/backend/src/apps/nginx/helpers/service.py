@@ -60,7 +60,7 @@ class Service:
     def probe_health(cls, timeout: float = 30.0) -> bool:
         target_host = "127.0.0.1" if Settings.API_HOST in ("0.0.0.0", "") else Settings.API_HOST
         scheme = "http"
-        url = f"{scheme}://{target_host}:{Settings.API_PORT}/api/v1/tools/health"
+        url = f"{scheme}://{target_host}:{Settings.API_PORT}/health"
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             try:

@@ -341,7 +341,7 @@ def _resolve_target(spec: str, root_log_dir: Path, default_base: str = "main.txt
         raw = f"{stem}{ext}"
 
     mod_stem = stem
-    for prefix in ("app.", "src.", "myproject.", "chaincv.", "vidula."):
+    for prefix in ("app.", "src.", "myproject."):
         if mod_stem.startswith(prefix):
             mod_stem = mod_stem[len(prefix) :]
             break

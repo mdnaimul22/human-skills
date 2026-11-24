@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import socket
-from src.config import Settings, ensure_dir, exists, setup_logger, write_text
+from src.config import Settings, ensure_dir, setup_logger, sys_exists, write_text
 
 logger = setup_logger(Settings.LOG_DIR / "nginx.log", name="apps.nginx.compiler")
 
@@ -30,16 +31,20 @@ class Compiler:
         return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
     @classmethod
+    def _site_slug(cls, domain: str) -> str:
+        return re.sub(r"[^a-zA-Z0-9]+", "_", domain.strip().lower()).strip("_") or "backend"
+
+    @classmethod
     def has_modsec(cls) -> bool:
-        return exists("/etc/nginx/modsecurity_includes.conf")
+        return sys_exists("/etc/nginx/modsecurity_includes.conf")
 
     @classmethod
     def get_ssl_dir(cls, domain: str) -> str | None:
         direct = f"/etc/letsencrypt/live/{domain}"
-        if exists(f"{direct}/fullchain.pem") and exists(f"{direct}/privkey.pem"):
+        if sys_exists(f"{direct}/fullchain.pem") and sys_exists(f"{direct}/privkey.pem"):
             return direct
         primary = f"/etc/letsencrypt/live/{Settings.FRONTEND_DOMAIN}"
-        if exists(f"{primary}/fullchain.pem") and exists(f"{primary}/privkey.pem"):
+        if sys_exists(f"{primary}/fullchain.pem") and sys_exists(f"{primary}/privkey.pem"):
             return primary
         return None
 
@@ -95,12 +100,16 @@ class Compiler:
             ssl_part = "listen 80;"
             redirect_part = ""
 
+        slug = cls._site_slug(Settings.BACKEND_DOMAIN)
+        upstream_name = f"backend_servers_{slug}"
+        zone_name = f"api_limit_zone_{slug}"
+
         return (
-            f"upstream backend_servers {{\n"
+            f"upstream {upstream_name} {{\n"
             f"    server {target_host}:{Settings.API_PORT};\n"
             f"    keepalive 64;\n"
             f"}}\n\n"
-            f"limit_req_zone $binary_remote_addr zone=api_limit_zone:{Settings.NGINX_RATE_LIMIT_ZONE_SIZE} rate={Settings.NGINX_RATE_LIMIT_RATE};\n\n"
+            f"limit_req_zone $binary_remote_addr zone={zone_name}:{Settings.NGINX_RATE_LIMIT_ZONE_SIZE} rate={Settings.NGINX_RATE_LIMIT_RATE};\n\n"
             f"server {{\n"
             f"    server_name {Settings.BACKEND_DOMAIN};\n"
             f"    include snippets/bot_block.conf;\n\n"
@@ -108,15 +117,15 @@ class Compiler:
             f"    location /health {{\n"
             f"        proxy_http_version 1.1;\n"
             f"        proxy_set_header Connection \"\";\n"
-            f"        proxy_pass http://backend_servers/health;\n"
+            f"        proxy_pass http://{upstream_name}/health;\n"
             f"        proxy_set_header Host $host;\n"
             f"        proxy_set_header X-Real-IP $remote_addr;\n"
             f"    }}\n\n"
             f"    location / {{\n"
-            f"        limit_req zone=api_limit_zone burst={Settings.NGINX_RATE_LIMIT_BURST} nodelay;\n\n"
+            f"        limit_req zone={zone_name} burst={Settings.NGINX_RATE_LIMIT_BURST} nodelay;\n\n"
             f"        proxy_http_version 1.1;\n"
             f"        proxy_set_header Connection \"\";\n"
-            f"        proxy_pass http://backend_servers;\n"
+            f"        proxy_pass http://{upstream_name};\n"
             f"        proxy_set_header Host $host;\n"
             f"        proxy_set_header X-Real-IP $remote_addr;\n"
             f"        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n"

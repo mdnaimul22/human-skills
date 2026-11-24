@@ -75,13 +75,13 @@ class ResourceBudgetCalculator:
 
         total_ram_mb = max(1, snapshot.ram.total_bytes // (1024 * 1024))
         avail_ram_mb = max(0, snapshot.ram.available_bytes // (1024 * 1024))
-        vidula_rss_mb = max(0, snapshot.ram.vidula_rss_bytes // (1024 * 1024))
+        process_rss_mb = max(0, snapshot.ram.process_rss_bytes // (1024 * 1024))
 
         static_ram_cap = min(
             int(total_ram_mb * (Settings.SYSTEM_MAX_RAM_USAGE_PERCENT / 100.0)),
             max(0, total_ram_mb - Settings.SYSTEM_MIN_FREE_RAM_MB),
         )
-        external_used_ram_mb = max(0, (total_ram_mb - avail_ram_mb) - vidula_rss_mb)
+        external_used_ram_mb = max(0, (total_ram_mb - avail_ram_mb) - process_rss_mb)
         dynamic_ram_cap = max(0, total_ram_mb - external_used_ram_mb - Settings.SYSTEM_MIN_FREE_RAM_MB)
         usable_ram_mb = max(0, min(static_ram_cap, dynamic_ram_cap))
 

@@ -30,7 +30,7 @@ class Issuer:
         if not norm_domain or not _DOMAIN_REGEX.match(norm_domain):
             raise ValidationError(f"Invalid domain name: '{domain}'.")
 
-        target_email = email.strip() if email and email.strip() else (Settings.SSL_EMAIL.strip() if Settings.SSL_EMAIL else "admin@vidula.xyz")
+        target_email = email.strip() if email and email.strip() else (Settings.SSL_EMAIL.strip() if Settings.SSL_EMAIL else f"admin@{norm_domain}")
         extra_list = [d.strip().lower() for d in (extra_domains or []) if d.strip().lower()]
         for extra in extra_list:
             if not _DOMAIN_REGEX.match(extra):

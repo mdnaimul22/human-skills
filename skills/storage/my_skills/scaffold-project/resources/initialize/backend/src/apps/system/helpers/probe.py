@@ -8,7 +8,7 @@ import time
 from typing import Optional
 import weakref
 import psutil
-from src.config import Settings, setup_logger, exists, read_text
+from src.config import Settings, setup_logger, sys_exists, sys_read_text
 from ..schema import (
     CpuTelemetry,
     GpuTelemetry,
@@ -110,9 +110,9 @@ class HardwareProbe:
         except (AttributeError, OSError):
             load_1, load_5, load_15 = (raw_pct / 100.0) * logical, 0.0, 0.0
         cgroup_quota: Optional[float] = None
-        if exists("/sys/fs/cgroup/cpu.max"):
+        if sys_exists("/sys/fs/cgroup/cpu.max"):
             try:
-                parts = read_text("/sys/fs/cgroup/cpu.max").strip().split()
+                parts = sys_read_text("/sys/fs/cgroup/cpu.max").strip().split()
                 if len(parts) >= 2 and parts[0] != "max":
                     cgroup_quota = float(parts[0]) / float(parts[1])
             except Exception as e:
@@ -133,19 +133,19 @@ class HardwareProbe:
         )
 
     def _read_cgroup_current_used(self) -> int:
-        if not exists("/sys/fs/cgroup/memory.current"):
+        if not sys_exists("/sys/fs/cgroup/memory.current"):
             return 0
         try:
-            return int(read_text("/sys/fs/cgroup/memory.current").strip())
+            return int(sys_read_text("/sys/fs/cgroup/memory.current").strip())
         except Exception as err:
             logger.debug(f"cgroups memory.current read skipped: {err}")
             return 0
 
     def _read_cgroup_memory_limit(self, total: int, available: int, used: int) -> tuple[int, int, int]:
-        if not exists("/sys/fs/cgroup/memory.max"):
+        if not sys_exists("/sys/fs/cgroup/memory.max"):
             return total, available, used
         try:
-            val = read_text("/sys/fs/cgroup/memory.max").strip()
+            val = sys_read_text("/sys/fs/cgroup/memory.max").strip()
             if val == "max":
                 return total, available, used
             cgroup_bytes = int(val)
@@ -159,7 +159,7 @@ class HardwareProbe:
             logger.debug(f"cgroups memory limit evaluation skipped: {e}")
         return total, available, used
 
-    def _sample_vidula_rss_bytes(self) -> int:
+    def _sample_process_rss_bytes(self) -> int:
         try:
             proc = psutil.Process(os.getpid())
             total_rss = int(proc.memory_info().rss)
@@ -170,7 +170,7 @@ class HardwareProbe:
                     logger.debug(f"Child RSS read skipped: {err}")
             return max(0, total_rss)
         except Exception as exc:
-            logger.warning(f"Failed reading Vidula process-tree RSS: {exc}")
+            logger.warning(f"Failed reading process-tree RSS: {exc}")
             return 0
 
     def _sample_ram_sync(self) -> RamTelemetry:
@@ -190,7 +190,7 @@ class HardwareProbe:
         total, available, used = self._read_cgroup_memory_limit(total, available, used)
         free = max(0, total - used)
         calc_percent = round(((total - available) / total) * 100.0, 1) if total > 0 else 0.0
-        vidula_rss = self._sample_vidula_rss_bytes()
+        process_rss = self._sample_process_rss_bytes()
         return RamTelemetry(
             total_bytes=total,
             available_bytes=available,
@@ -199,14 +199,14 @@ class HardwareProbe:
             percent=max(0.0, min(100.0, calc_percent)),
             swap_total_bytes=swap_total,
             swap_used_bytes=swap_used,
-            vidula_rss_bytes=vidula_rss,
+            process_rss_bytes=process_rss,
         )
 
     def _read_procfs_meminfo(self) -> tuple[int, int, int, int, int]:
-        if not exists("/proc/meminfo"):
+        if not sys_exists("/proc/meminfo"):
             return 1024**3, 512 * (1024**2), 512 * (1024**2), 0, 0
         try:
-            content = read_text("/proc/meminfo")
+            content = sys_read_text("/proc/meminfo")
             values: dict[str, int] = {}
             for line in content.splitlines():
                 parts = line.split(":")

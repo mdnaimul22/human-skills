@@ -1,51 +1,20 @@
-"""
-Retry Utilities — Tenacity-based
-==================================
-Production-grade retry logic with exponential backoff, jitter, and
-configurable exception targeting.
+from __future__ import annotations
 
-Requirements:
-    pip install tenacity
-
-Usage:
-    from src.helpers.retry import retry_on_failure, retry_async_on_failure
-
-    # Sync
-    @retry_on_failure(max_attempts=3)
-    def call_external_api():
-        response = requests.get("https://api.example.com/data", timeout=10)
-        response.raise_for_status()
-        return response.json()
-
-    # Async
-    @retry_async_on_failure(max_attempts=5, retryable=(ConnectionError, TimeoutError))
-    async def fetch_data():
-        async with httpx.AsyncClient() as client:
-            resp = await client.get("https://api.example.com/data", timeout=10)
-            resp.raise_for_status()
-            return resp.json()
-
-    # Manual (non-decorator)
-    from src.helpers.retry import run_with_retry
-    result = await run_with_retry(some_async_fn, arg1, arg2, max_attempts=3)
-"""
-
-from typing import TypeVar, Callable, Protocol, ParamSpec
-
+from collections.abc import Awaitable, Callable
+from typing import ParamSpec, TypeVar
 from tenacity import (
+    RetryCallState,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
-    retry_if_exception_type,
-    before_sleep_log,
 )
+from src.config import Settings, setup_logger
 
-T = TypeVar("T")
+retry_logger = setup_logger(Settings.LOG_DIR / "helpers.log", name="helpers.retry")
+
 P = ParamSpec("P")
-
-class LoggerProtocol(Protocol):
-    def warning(self, msg: str) -> None:
-        ...
+T = TypeVar("T")
 
 _DEFAULT_RETRYABLE: tuple[type[Exception], ...] = (
     ConnectionError,
@@ -54,22 +23,10 @@ _DEFAULT_RETRYABLE: tuple[type[Exception], ...] = (
 )
 
 
-def _build_retry(
-    max_attempts: int = 3,
-    initial_wait: float = 1.0,
-    max_wait: float = 30.0,
-    retryable: tuple[type[Exception], ...] = _DEFAULT_RETRYABLE,
-    logger: LoggerProtocol | None = None,
-):
-    kwargs = {
-        "stop": stop_after_attempt(max_attempts),
-        "wait": wait_exponential_jitter(initial=initial_wait, max=max_wait),
-        "retry": retry_if_exception_type(retryable),
-        "reraise": True,
-    }
-    if logger is not None:
-        kwargs["before_sleep"] = before_sleep_log(logger, 30)
-    return retry(**kwargs)
+def _log_before_sleep(retry_state: RetryCallState) -> None:
+    outcome = retry_state.outcome
+    err = outcome.exception() if outcome is not None else None
+    retry_logger.warning(f"Retry attempt {retry_state.attempt_number} after error: {err}")
 
 
 def retry_on_failure(
@@ -77,9 +34,14 @@ def retry_on_failure(
     initial_wait: float = 1.0,
     max_wait: float = 30.0,
     retryable: tuple[type[Exception], ...] = _DEFAULT_RETRYABLE,
-    logger: LoggerProtocol | None = None,
-):
-    return _build_retry(max_attempts, initial_wait, max_wait, retryable, logger)
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    return retry(
+        stop=stop_after_attempt(max_attempts),
+        wait=wait_exponential_jitter(initial=initial_wait, max=max_wait),
+        retry=retry_if_exception_type(retryable),
+        reraise=True,
+        before_sleep=_log_before_sleep,
+    )
 
 
 def retry_async_on_failure(
@@ -87,24 +49,10 @@ def retry_async_on_failure(
     initial_wait: float = 1.0,
     max_wait: float = 30.0,
     retryable: tuple[type[Exception], ...] = _DEFAULT_RETRYABLE,
-    logger: LoggerProtocol | None = None,
-):
-    return _build_retry(max_attempts, initial_wait, max_wait, retryable, logger)
-
-
-async def run_with_retry(
-    fn: Callable[P, T],
-    *args: P.args,
-    max_attempts: int = 3,
-    initial_wait: float = 1.0,
-    max_wait: float = 30.0,
-    retryable: tuple[type[Exception], ...] = _DEFAULT_RETRYABLE,
-    **kwargs: P.kwargs,
-) -> T:
-    decorator = _build_retry(max_attempts, initial_wait, max_wait, retryable)
-
-    @decorator
-    async def _inner():
-        return await fn(*args, **kwargs)
-
-    return await _inner()
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+    return retry_on_failure(
+        max_attempts=max_attempts,
+        initial_wait=initial_wait,
+        max_wait=max_wait,
+        retryable=retryable,
+    )

@@ -6,15 +6,102 @@ import shutil
 import subprocess
 import threading
 from typing import Optional
-from src.config import Settings, exists, get_abs_path, is_file, setup_logger
+from src.config import (
+    Settings, get_abs_path, is_file, setup_logger,
+    sys_exists, sys_is_dir, sys_is_file, sys_list_dir, sys_read_text,
+)
 from src.helpers import get_ffmpeg_process_env
 from ..schema import GpuBackend, GpuDeviceTelemetry, GpuTelemetry
 
 logger = setup_logger(Settings.LOG_DIR / "system.log", name="apps.system.gpu_detector")
 _DRIVER_RE = re.compile(r"[0-9]+(?:\.[0-9]+)*")
 _CC_RE = re.compile(r"^\d+\.\d+$")
+_DRM_CARD_RE = re.compile(r"card\d+")
 _NVENC_CANDIDATES: tuple[str, ...] = ("h264_nvenc", "hevc_nvenc", "av1_nvenc")
+_PCI_GPU_TAGS: tuple[str, ...] = ("VGA compatible controller:", "3D controller:", "Display controller:")
 _SMI_FIELDS = "index,uuid,name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory,temperature.gpu,compute_cap"
+_DRM_VENDOR_NAMES: dict[str, str] = {
+    "0x1002": "AMD Radeon GPU",
+    "0x8086": "Intel Integrated GPU",
+    "0x10de": "NVIDIA GPU",
+}
+
+
+def _read_sysfs_text(path: str) -> str:
+    if not sys_is_file(path):
+        return ""
+    try:
+        return sys_read_text(path).strip()
+    except OSError:
+        return ""
+
+
+def _find_drm_device_dir(vaapi_dev: str) -> str:
+    dev_name = vaapi_dev.rstrip("/").rsplit("/", 1)[-1]
+    direct = f"/sys/class/drm/{dev_name}/device"
+    if sys_is_dir(direct):
+        return direct
+    for entry in sys_list_dir("/sys/class/drm"):
+        if not _DRM_CARD_RE.fullmatch(entry):
+            continue
+        cand = f"/sys/class/drm/{entry}/device"
+        if sys_is_dir(cand):
+            return cand
+    return ""
+
+
+def _extract_pci_slot(sys_dev_dir: str) -> str:
+    for line in _read_sysfs_text(f"{sys_dev_dir}/uevent").splitlines():
+        if line.startswith("PCI_SLOT_NAME="):
+            return line.split("=", 1)[1].strip()
+    return ""
+
+
+def _resolve_lspci_gpu_name(pci_slot: str) -> str:
+    lspci_bin = shutil.which("lspci")
+    if not lspci_bin:
+        return ""
+    cmd = [lspci_bin, "-s", pci_slot] if pci_slot else [lspci_bin]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=2.0)
+    except (OSError, subprocess.TimeoutExpired) as err:
+        logger.debug(f"lspci GPU name probe skipped: {err}")
+        return ""
+    if proc.returncode != 0:
+        return ""
+    for line in proc.stdout.splitlines():
+        if not any(tag in line for tag in _PCI_GPU_TAGS):
+            continue
+        desc = line.split(":", 2)[-1].strip()
+        if desc:
+            return desc
+    return ""
+
+
+def _read_drm_temp_c(sys_dev_dir: str) -> int:
+    hwmon_root = f"{sys_dev_dir}/hwmon"
+    for entry in sys_list_dir(hwmon_root):
+        raw_temp = _read_sysfs_text(f"{hwmon_root}/{entry}/temp1_input")
+        if raw_temp:
+            return max(0, _parse_int_field(raw_temp, 0) // 1000)
+    return 0
+
+
+def _read_drm_gpu_info(vaapi_dev: str) -> tuple[str, str, int, int, float, int]:
+    sys_dev_dir = _find_drm_device_dir(vaapi_dev)
+    if not sys_dev_dir:
+        return "VA-API GPU", "0.0", 0, 0, 0.0, 0
+    vendor_id = _read_sysfs_text(f"{sys_dev_dir}/vendor").lower()
+    fallback_name = _DRM_VENDOR_NAMES.get(vendor_id, "VA-API GPU")
+    pci_slot = _extract_pci_slot(sys_dev_dir)
+    gpu_name = _resolve_lspci_gpu_name(pci_slot) or fallback_name
+    total_b = _parse_int_field(_read_sysfs_text(f"{sys_dev_dir}/mem_info_vram_total"), 0)
+    used_b = _parse_int_field(_read_sysfs_text(f"{sys_dev_dir}/mem_info_vram_used"), 0)
+    if total_b > 0:
+        used_b = min(total_b, max(0, used_b))
+    busy_pct = max(0.0, min(100.0, _parse_float_field(_read_sysfs_text(f"{sys_dev_dir}/gpu_busy_percent"), 0.0)))
+    temp_c = _read_drm_temp_c(sys_dev_dir)
+    return gpu_name, "0.0", total_b, used_b, busy_pct, temp_c
 
 
 def _decode_text(raw: bytes | str) -> str:
@@ -68,7 +155,7 @@ class GpuDetector:
             if not lib_dir:
                 continue
             candidate = f"{lib_dir}/libnvidia-ml.so.1"
-            if is_file(candidate):
+            if sys_is_file(candidate):
                 try:
                     ctypes.CDLL(candidate, mode=ctypes.RTLD_GLOBAL)
                     return
@@ -104,7 +191,7 @@ class GpuDetector:
                     self._nvml_failed = True
                     if not self._warned_nvml_fallback:
                         self._warned_nvml_fallback = True
-                        logger.warning(f"NVML initialization unavailable, falling back to CLI probe: {err}")
+                        logger.debug(f"NVML initialization unavailable, probing alternative GPU backends: {err}")
                     return False
 
     def _probe_nvml_device(self, idx: int, driver_ver: str) -> GpuDeviceTelemetry:
@@ -204,7 +291,7 @@ class GpuDetector:
         candidates.extend(["/usr/bin", "/usr/local/bin"])
         for d in candidates:
             path = f"{d}/nvidia-smi"
-            if is_file(path):
+            if sys_is_file(path):
                 return path
         return None
 
@@ -274,13 +361,43 @@ class GpuDetector:
 
     def _probe_vaapi(self) -> GpuTelemetry:
         vaapi_dev = Settings.FFMPEG_VAAPI_DEVICE.strip()
-        vaapi_ok = bool(vaapi_dev and exists(vaapi_dev) and os.access(vaapi_dev, os.R_OK | os.W_OK))
+        vaapi_ok = bool(vaapi_dev and sys_exists(vaapi_dev) and os.access(vaapi_dev, os.R_OK | os.W_OK))
+        if not vaapi_ok:
+            return GpuTelemetry(
+                backend=GpuBackend.NONE,
+                cuda_available=False,
+                device_count=0,
+                vaapi_available=False,
+                unavailable_reason="No NVIDIA GPU or accessible VAAPI render node detected",
+            )
+        gpu_name, driver_ver, total_b, used_b, busy_pct, temp_c = _read_drm_gpu_info(vaapi_dev)
+        free_b = max(0, total_b - used_b)
+        mem_util = round((used_b / total_b) * 100.0, 2) if total_b > 0 else 0.0
+        device = GpuDeviceTelemetry(
+            device_id=0,
+            name=gpu_name,
+            total_vram_bytes=total_b,
+            free_vram_bytes=free_b,
+            used_vram_bytes=used_b,
+            compute_capability="0.0",
+            driver_version=driver_ver,
+            gpu_util_percent=busy_pct,
+            mem_util_percent=mem_util,
+            temperature_c=temp_c,
+        )
         return GpuTelemetry(
-            backend=GpuBackend.VAAPI if vaapi_ok else GpuBackend.NONE,
+            device_id=0,
+            name=gpu_name,
+            total_vram_bytes=total_b,
+            free_vram_bytes=free_b,
+            compute_capability="0.0",
+            driver_version=driver_ver,
             cuda_available=False,
-            device_count=1 if vaapi_ok else 0,
-            vaapi_available=vaapi_ok,
-            unavailable_reason=None if vaapi_ok else "No NVIDIA GPU or accessible VAAPI render node detected",
+            device_count=1,
+            devices=[device],
+            backend=GpuBackend.VAAPI,
+            vaapi_available=True,
+            unavailable_reason=None,
         )
 
     def _resolve_ffmpeg_bin(self) -> Optional[str]:

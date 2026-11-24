@@ -1,8 +1,5 @@
 from contextlib import asynccontextmanager
 import asyncio
-import os
-import subprocess
-import sys
 
 import uvicorn
 from fastapi import FastAPI
@@ -21,19 +18,13 @@ from src.apps import (
     NginxManager,
     WAFManager,
     get_git_manager,
-    get_manager,
+    get_job_manager,
     get_system_manager,
 )
-from src.services.intelligence import populate_missing_metadata
-from src.services.history_service import persist_file_record
-from src.core import ClashManager, EgressManager, get_egress_manager
 from src.db import DatabaseManager
-from src.routers import tools_router, auth_router, workspace_router, statistics_router, system_router
+from src.routers import auth_router, system_router
 
-logger = setup_logger(
-    Settings.LOG_DIR / "main.log",
-    name="Vidula.main",
-)
+logger = setup_logger(boss_name="main.txt")
 db_manager = DatabaseManager()
 
 
@@ -59,8 +50,8 @@ async def _startup_apps() -> None:
     sys_mgr = get_system_manager()
     await sys_mgr.start_async()
 
-    manager = get_manager()
-    await manager.start()
+    job_mgr = get_job_manager()
+    await job_mgr.start()
 
     try:
         if NginxManager.setup_and_reload():
@@ -87,60 +78,18 @@ async def _shutdown_apps() -> None:
         logger.error(f"Failed to stop GitManager on shutdown: {e}")
 
     await WAFManager().shutdown()
-    await get_manager().shutdown()
+    await get_job_manager().shutdown()
     await get_system_manager().stop_async()
     await shutdown_redis()
     await db_manager.shutdown()
 
 
 async def _startup_domain() -> None:
-    get_manager().results.set_completion_callback(persist_file_record)
-
-    try:
-        DockerManager().ensure_container_running()
-        from src.helpers.po_token import get_po_token_pool
-        get_po_token_pool().start()
-    except Exception as e:
-        logger.warning(f"Failed to initialize Docker sidecar manager or PO token pool: {e}")
-
-    asyncio.create_task(populate_missing_metadata())
-
-    try:
-        await ClashManager().start()
-        logger.info("Clash/Mihomo proxy daemon started successfully.")
-    except Exception as e:
-        logger.error(f"Failed to start Clash daemon on startup: {e}")
-
-    try:
-        egress_mgr = get_egress_manager()
-        egress_mgr.start()
-        logger.info("EgressManager initialized and health checker started successfully.")
-    except Exception as e:
-        logger.error(f"Failed to initialize EgressManager on startup: {e}")
+    pass
 
 
 async def _shutdown_domain() -> None:
-    try:
-        from src.helpers.po_token import get_po_token_pool
-        await get_po_token_pool().stop()
-    except Exception as e:
-        logger.debug(f"PO Token Pool shutdown error: {e}")
-
-    try:
-        get_egress_manager().stop()
-    except Exception as e:
-        logger.error(f"Failed to stop EgressManager on shutdown: {e}")
-
-    try:
-        await ClashManager().stop()
-        logger.info("Clash/Mihomo proxy daemon stopped cleanly.")
-    except Exception as e:
-        logger.error(f"Failed to stop Clash daemon on shutdown: {e}")
-
-    try:
-        DockerManager().stop_container("movie-pot-provider")
-    except Exception as e:
-        logger.debug(f"Docker sidecar stop bypassed: {e}")
+    pass
 
 
 @asynccontextmanager
@@ -169,10 +118,7 @@ register_middleware(app, logger, Settings)
 register_error_handlers(app, logger)
 
 app.include_router(system_router)
-app.include_router(tools_router)
 app.include_router(auth_router)
-app.include_router(workspace_router)
-app.include_router(statistics_router)
 
 
 if __name__ == "__main__":

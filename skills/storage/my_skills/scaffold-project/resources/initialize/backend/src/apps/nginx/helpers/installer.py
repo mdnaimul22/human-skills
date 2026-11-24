@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
-from src.config import Settings, exists, setup_logger
+from src.config import Settings, setup_logger, sys_exists
 
 logger = setup_logger(Settings.LOG_DIR / "nginx.log", name="apps.nginx.installer")
 
@@ -42,7 +42,7 @@ class Installer:
                 ["sudo", "mkdir", "-p", "/etc/nginx/sites-available", "/etc/nginx/sites-enabled", "/etc/nginx/snippets"],
                 capture_output=True, text=True, timeout=10,
             )
-            if exists("/etc/nginx/sites-enabled/default"):
+            if sys_exists("/etc/nginx/sites-enabled/default"):
                 subprocess.run(["sudo", "rm", "-f", "/etc/nginx/sites-enabled/default"], capture_output=True, timeout=5)
             return res.returncode == 0
         except Exception as e:

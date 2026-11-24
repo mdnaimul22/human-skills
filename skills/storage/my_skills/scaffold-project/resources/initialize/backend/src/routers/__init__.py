@@ -1,12 +1,10 @@
-from .auth import router as auth_router
-from .agent import router as agent_router
-from .dependencies import get_current_user, get_optional_user
+from __future__ import annotations
+from src.apps.auth import get_current_user, get_optional_user
+from .apps import auth_router, system_router
 
 __all__ = [
-    # REST API Routers
     "auth_router",
-    "agent_router",
-    # Authentication & Identity Dependencies
+    "system_router",
     "get_current_user",
     "get_optional_user",
 ]

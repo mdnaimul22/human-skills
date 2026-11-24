@@ -7,7 +7,7 @@
 ## Purpose
 
 - Own the `src/apps/system` platform resource substrate and hardware control plane.
-- Detect host CPU topology (physical, logical, cgroup v2 quota, EWMA utilization), memory (total, available, swap, cgroup v2, Vidula process-tree RSS), and multi-tier GPU hardware (`pynvml` primary → `nvidia-smi` fallback incl. WSL2 `/usr/lib/wsl/lib` → VAAPI device check, zero `torch` import) plus one-shot startup FFmpeg NVENC encode canary.
+- Detect host CPU topology (physical, logical, cgroup v2 quota, EWMA utilization), memory (total, available, swap, cgroup v2, Application process-tree RSS), and multi-tier GPU hardware (`pynvml` primary → `nvidia-smi` fallback incl. WSL2 `/usr/lib/wsl/lib` → VAAPI device check, zero `torch` import) plus one-shot startup FFmpeg NVENC encode canary.
 - Enforce configuration-driven resource caps (`Settings.SYSTEM_*`, hot-reloaded at runtime from `env/.system` with atomic Pydantic validation) and fair-share allocation across `UserTier` (`GUEST`, `REGISTERED`, `PREMIUM`) and `LoadLevel` (`NORMAL`, `ELEVATED`, `CRITICAL`, `EMERGENCY`) with damped de-escalation hysteresis.
 - Prevent CPU/RAM/GPU/VRAM oversubscription via an atomic resource ledger (`LeaseTracker`) and per-loop FIFO waiter wakeup (`ResourceGovernor`).
 - Maintain closed-loop encoder circuit breakers (`HardwareCircuitBreaker`) so failing NVENC executions automatically downgrade hybrid workloads to CPU (`libx264`/`libx265`).
@@ -18,7 +18,7 @@
 - `src/apps/system/manager.py` owns the public facade and lifecycle orchestrator (`SystemManager`, `get_system_manager()`).
 - `src/apps/system/helpers/` owns isolated sub-engine workers:
   - `gpu_detector.py` — `GpuDetector` (`pynvml` → `nvidia-smi` → VAAPI + startup NVENC canary + clean shutdown).
-  - `probe.py` — `HardwareProbe` (non-blocking sampler, CPU warmup/EWMA, Vidula process-tree RSS, cgroups v2, SHA-256 hardware fingerprint, and leak-free `weakref.WeakKeyDictionary` for event loop locks).
+  - `probe.py` — `HardwareProbe` (non-blocking sampler, CPU warmup/EWMA, Application process-tree RSS, cgroups v2, SHA-256 hardware fingerprint, and leak-free `weakref.WeakKeyDictionary` for event loop locks).
   - `profiler.py` — `HardwareProfiler` (config-driven thresholds, hysteresis `LoadLevel`, orthogonal `GpuHealthState`).
   - `budget.py` — `ResourceBudgetCalculator` & `PermitAllocationDecision` (90% usable ceilings, decomposed sub-atomic thread/RAM calculators with complexity $\le 5$, and fair-share multi-dimensional permit calculation).
   - `allocator.py` — `ResourceAllocator` (8 seeded config-driven workload profiles incl. `egress`, `sync_from_settings()`).

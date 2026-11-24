@@ -143,7 +143,7 @@ def get_rel_path(path: str | Path, base: str | Path | None = None) -> str:
     if not path:
         return ""
     p_str = str(path).strip()
-    base_dir = Path(base).resolve() if base else PROJECT_ROOT.root
+    base_dir = Path(base).resolve() if base else PROJECT_ROOT
     try:
         p = Path(p_str)
         if p.is_absolute():
@@ -154,3 +154,49 @@ def get_rel_path(path: str | Path, base: str | Path | None = None) -> str:
     if p_str.startswith(clean_base + "/"):
         return p_str[len(clean_base) + 1:].lstrip("/")
     return p_str
+
+
+def _sys_path(abs_path: str) -> Path:
+    p = Path(abs_path)
+    if not abs_path or not p.is_absolute():
+        raise ValueError(f"System path must be absolute: {abs_path!r}")
+    return p
+
+
+def sys_exists(abs_path: str) -> bool:
+    try:
+        return _sys_path(abs_path).exists()
+    except (ValueError, OSError):
+        return False
+
+
+def sys_is_file(abs_path: str) -> bool:
+    try:
+        return _sys_path(abs_path).is_file()
+    except (ValueError, OSError):
+        return False
+
+
+def sys_is_dir(abs_path: str) -> bool:
+    try:
+        return _sys_path(abs_path).is_dir()
+    except (ValueError, OSError):
+        return False
+
+
+def sys_list_dir(abs_path: str) -> list[str]:
+    try:
+        target = _sys_path(abs_path)
+        if not target.is_dir():
+            return []
+        return sorted(entry.name for entry in target.iterdir())
+    except (ValueError, OSError):
+        return []
+
+
+def sys_read_text(abs_path: str, encoding: str = "utf-8") -> str:
+    return _sys_path(abs_path).read_text(encoding=encoding, errors="replace")
+
+
+def sys_read_bytes(abs_path: str) -> bytes:
+    return _sys_path(abs_path).read_bytes()

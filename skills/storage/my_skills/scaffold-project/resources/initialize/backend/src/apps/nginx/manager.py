@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional
-from src.config import Settings, ensure_dir, exists, read_json, setup_logger, write_json
+from src.config import Settings, ensure_dir, exists, read_json, setup_logger, sys_exists, write_json
 from src.helpers import get_now_iso
 from src.apps.nginx.schema import NGINX_STATE_ADAPTER, NginxState, NginxStatus
 from .helpers import (
@@ -70,7 +70,7 @@ class NginxManager:
     def _should_skip_reload(cls, old_hash: Optional[str], current_hash: str) -> bool:
         if old_hash != current_hash:
             return False
-        return all(exists(f) for f in cls._get_expected_files())
+        return all(sys_exists(f) for f in cls._get_expected_files())
 
     @classmethod
     def _sync_old_domains(cls, old_backend: Optional[str], old_frontend: Optional[str]) -> None:

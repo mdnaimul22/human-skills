@@ -166,10 +166,10 @@ class HardwareProfiler:
         if not Settings.SYSTEM_GPU_ENABLED:
             return GpuHealthState.DISABLED, "GPU disabled via SYSTEM_GPU_ENABLED=false"
         gpu = snapshot.gpu
-        if gpu is None or not gpu.cuda_available or gpu.total_vram_bytes <= 0:
-            reason = gpu.unavailable_reason if (gpu is not None and gpu.unavailable_reason) else "No CUDA GPU detected"
+        if gpu is None or not gpu.is_available:
+            reason = gpu.unavailable_reason if (gpu is not None and gpu.unavailable_reason) else "No GPU detected"
             return GpuHealthState.UNAVAILABLE, reason
-        if not gpu.nvenc_verified:
+        if gpu.cuda_available and not gpu.nvenc_verified:
             return GpuHealthState.NVENC_FAILED, gpu.nvenc_failure_reason or "NVENC canary unverified"
         if breaker is not None and breaker.is_tripped(encoder):
             return GpuHealthState.CIRCUIT_OPEN, f"Encoder circuit {encoder} is OPEN"
@@ -177,16 +177,17 @@ class HardwareProfiler:
         primary = gpu.devices[0] if gpu.devices else None
         temp_c = primary.temperature_c if primary is not None else 0
         gpu_util = primary.gpu_util_percent if primary is not None else 0.0
-        total_vram_mb = max(1, gpu.total_vram_bytes // (1024 * 1024))
-        free_vram_mb = gpu.free_vram_bytes // (1024 * 1024)
-        used_vram_pct = ((total_vram_mb - free_vram_mb) / total_vram_mb) * 100.0
 
         if temp_c >= Settings.SYSTEM_GPU_MAX_TEMP_C:
             return GpuHealthState.THERMAL_THROTTLED, f"temp={temp_c}C>={Settings.SYSTEM_GPU_MAX_TEMP_C}C"
         if gpu_util >= Settings.SYSTEM_GPU_MAX_UTIL_PERCENT:
             return GpuHealthState.UTIL_SATURATED, f"gpu_util={gpu_util:.1f}%>={Settings.SYSTEM_GPU_MAX_UTIL_PERCENT:.1f}%"
-        if free_vram_mb < Settings.SYSTEM_GPU_MIN_FREE_VRAM_MB:
-            return GpuHealthState.VRAM_PRESSURED, f"free_vram={free_vram_mb}MB<{Settings.SYSTEM_GPU_MIN_FREE_VRAM_MB}MB"
-        if used_vram_pct >= Settings.SYSTEM_GPU_MAX_VRAM_USAGE_PERCENT:
-            return GpuHealthState.VRAM_PRESSURED, f"vram={used_vram_pct:.1f}%>={Settings.SYSTEM_GPU_MAX_VRAM_USAGE_PERCENT:.1f}%"
+        if gpu.total_vram_bytes > 0:
+            total_vram_mb = max(1, gpu.total_vram_bytes // (1024 * 1024))
+            free_vram_mb = gpu.free_vram_bytes // (1024 * 1024)
+            used_vram_pct = ((total_vram_mb - free_vram_mb) / total_vram_mb) * 100.0
+            if free_vram_mb < Settings.SYSTEM_GPU_MIN_FREE_VRAM_MB:
+                return GpuHealthState.VRAM_PRESSURED, f"free_vram={free_vram_mb}MB<{Settings.SYSTEM_GPU_MIN_FREE_VRAM_MB}MB"
+            if used_vram_pct >= Settings.SYSTEM_GPU_MAX_VRAM_USAGE_PERCENT:
+                return GpuHealthState.VRAM_PRESSURED, f"vram={used_vram_pct:.1f}%>={Settings.SYSTEM_GPU_MAX_VRAM_USAGE_PERCENT:.1f}%"
         return GpuHealthState.HEALTHY, "healthy"

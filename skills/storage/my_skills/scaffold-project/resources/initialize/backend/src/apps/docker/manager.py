@@ -1,7 +1,7 @@
 from __future__ import annotations
 import threading
 from typing import Callable, Optional
-from src.config import Settings, exists, read_json, setup_logger
+from src.config import Settings, exists, read_json, setup_logger, write_json
 from .helpers import (
     ContainerSpec,
     ContainerState,
@@ -47,7 +47,11 @@ class DockerManager:
     def reload_specs(self) -> None:
         with self._lock:
             if not exists(self._config_path):
-                logger.warning(f"Containers config file '{self._config_path}' not found.")
+                try:
+                    write_json(self._config_path, [])
+                    logger.info(f"Initialized empty containers config file '{self._config_path}'.")
+                except Exception as err:
+                    logger.warning(f"Failed to initialize containers config '{self._config_path}': {err}")
                 self._specs = {}
                 return
             try:

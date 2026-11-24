@@ -1,33 +1,47 @@
-"""
-CORS Configuration — FastAPI
-==============================
-Settings-driven CORS middleware. Zero hardcoding.
+from __future__ import annotations
 
-Usage in main.py:
-    from src.api.cors import register_cors
-    register_cors(app, settings)
-
-All origins are derived from Settings (API_HOST, API_PORT, FRONTEND_URL).
-"""
-
+from typing import Protocol
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.config import Settings
 
 
-def register_cors(app: FastAPI, settings: Settings) -> None:
-    origins: list[str] = [f"http://{settings.API_HOST}:{settings.API_PORT}"]
+class CorsSettingsProtocol(Protocol):
+    @property
+    def is_development(self) -> bool: ...
 
-    if settings.FRONTEND_URL:
-        for u in settings.FRONTEND_URL.split(","):
-            clean = u.strip()
-            if clean and clean not in origins:
-                origins.append(clean)
+    API_PORT: int
+    FRONTEND_URL: str
+    EXTRA_CORS_ORIGINS: str
+
+
+def register_cors(app: FastAPI, settings: CorsSettingsProtocol) -> None:
+    origins: set[str] = set()
+
+    if settings.is_development:
+        api_port = settings.API_PORT
+        origins.update([
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            f"http://localhost:{api_port}",
+            f"http://127.0.0.1:{api_port}",
+        ])
+
+    frontend_url = settings.FRONTEND_URL
+    if frontend_url:
+        origins.add(frontend_url.rstrip("/"))
+
+    extra = settings.EXTRA_CORS_ORIGINS
+    if extra:
+        for origin in extra.split(","):
+            clean = origin.strip().rstrip("/")
+            if clean:
+                origins.add(clean)
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-        allow_headers=["Content-Type", "Authorization"],
+        allow_origins=sorted(origins),
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "X-Request-ID"],
         allow_credentials=True,
+        max_age=3600,
     )

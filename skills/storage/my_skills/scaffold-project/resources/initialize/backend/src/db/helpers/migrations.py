@@ -83,9 +83,15 @@ class SchemaMigrator:
         existing_cols = await conn.run_sync(self._get_existing_columns, "users")
         if "google_id" not in existing_cols:
             return []
-        res = await conn.exec_driver_sql(
-            "SELECT id, google_id, access_token, refresh_token, token_expires_at, created_at, updated_at FROM users"
-        )
+        has_oauth_cols = {"access_token", "refresh_token", "token_expires_at"}.issubset(existing_cols)
+        if has_oauth_cols:
+            res = await conn.exec_driver_sql(
+                "SELECT id, google_id, access_token, refresh_token, token_expires_at, created_at, updated_at FROM users"
+            )
+        else:
+            res = await conn.exec_driver_sql(
+                "SELECT id, google_id, NULL, NULL, NULL, created_at, updated_at FROM users"
+            )
         rows = res.fetchall()
         for row in rows:
             uid, gid, atok, rtok, exp, c_at, u_at = row[0], row[1], row[2], row[3], row[4], row[5], row[6]
@@ -108,11 +114,19 @@ class SchemaMigrator:
             "updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, "
             "CONSTRAINT pk_users PRIMARY KEY (id))"
         )
-        await conn.exec_driver_sql(
-            "INSERT INTO users__new (id, email, name, avatar_url, tier, status, created_at, updated_at) "
-            "SELECT id, email, name, avatar_url, COALESCE(tier, 'registered'), 'active', "
-            "COALESCE(created_at, CURRENT_TIMESTAMP), COALESCE(updated_at, CURRENT_TIMESTAMP) FROM users"
-        )
+        has_profile_cols = {"avatar_url", "tier"}.issubset(existing_cols)
+        if has_profile_cols:
+            await conn.exec_driver_sql(
+                "INSERT INTO users__new (id, email, name, avatar_url, tier, status, created_at, updated_at) "
+                "SELECT id, email, name, avatar_url, COALESCE(tier, 'registered'), 'active', "
+                "COALESCE(created_at, CURRENT_TIMESTAMP), COALESCE(updated_at, CURRENT_TIMESTAMP) FROM users"
+            )
+        else:
+            await conn.exec_driver_sql(
+                "INSERT INTO users__new (id, email, name, avatar_url, tier, status, created_at, updated_at) "
+                "SELECT id, email, name, NULL, 'registered', 'active', "
+                "COALESCE(created_at, CURRENT_TIMESTAMP), COALESCE(updated_at, CURRENT_TIMESTAMP) FROM users"
+            )
         await conn.exec_driver_sql("DROP TABLE users")
         await conn.exec_driver_sql("ALTER TABLE users__new RENAME TO users")
         await conn.exec_driver_sql("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_email ON users (email)")

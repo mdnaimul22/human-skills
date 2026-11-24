@@ -25,6 +25,12 @@ from src.config.files import (
     get_abs_path,
     is_subpath,
     get_rel_path,
+    sys_exists,
+    sys_is_file,
+    sys_is_dir,
+    sys_list_dir,
+    sys_read_text,
+    sys_read_bytes,
 )
 
 
@@ -51,7 +57,7 @@ def test_read_write_text_and_bytes(tmp_workspace: str) -> None:
 
 def test_read_write_json_and_yaml(tmp_workspace: str) -> None:
     rel_json = f"{tmp_workspace}/data.json"
-    payload = {"service": "vidula", "count": 42, "active": True}
+    payload = {"service": "scaffold", "count": 42, "active": True}
     write_json(rel_json, payload)
     assert read_json(rel_json) == payload
 
@@ -111,6 +117,7 @@ def test_subpath_and_rel_path(tmp_workspace: str) -> None:
     assert not is_subpath(f"{tmp_workspace}/sub", tmp_workspace)
 
     assert get_rel_path(f"{tmp_workspace}/child.txt") == f"{tmp_workspace}/child.txt"
+    assert get_rel_path(get_abs_path(f"{tmp_workspace}/child.txt")) == f"{tmp_workspace}/child.txt"
 
 
 def test_sandbox_traversal_defense() -> None:
@@ -122,3 +129,26 @@ def test_sandbox_traversal_defense() -> None:
 
     with pytest.raises(ValueError, match="escapes sandbox"):
         delete("../../etc/passwd")
+
+
+def test_sys_readonly_helpers_and_absolute_guard(tmp_path: Path) -> None:
+    sample_dir = tmp_path / "sys_probe"
+    sample_dir.mkdir()
+    sample_file = sample_dir / "temp1_input"
+    sample_file.write_text("58000\n", encoding="utf-8")
+
+    assert sys_exists(str(sample_dir))
+    assert sys_is_dir(str(sample_dir))
+    assert sys_is_file(str(sample_file))
+    assert sys_list_dir(str(sample_dir)) == ["temp1_input"]
+    assert sys_read_text(str(sample_file)) == "58000\n"
+    assert sys_read_bytes(str(sample_file)) == b"58000\n"
+
+    assert not sys_exists("relative/path.txt")
+    assert not sys_is_file("relative/path.txt")
+    assert not sys_is_dir("relative/path")
+    assert sys_list_dir("relative/path") == []
+    with pytest.raises(ValueError, match="must be absolute"):
+        sys_read_text("relative/path.txt")
+    with pytest.raises(ValueError, match="must be absolute"):
+        sys_read_bytes("relative/path.txt")

@@ -115,7 +115,7 @@
   - `Settings.GITSYNC_FORWARD_FILE = "forward.json"`
   - `Settings.GITSYNC_AUTOMATION_FILE = "automation.json"`
   - `Settings.GITSYNC_MEMORY_FILE = "memory.json"`
-  - `Settings.FFMPEG_GIT_PROJECT_ID = "vidula-ffmpeg"`
+  - `Settings.GIT_PROJECT_ID = "app-sync"`
   - `_STALE_LOCK_SECONDS = 5.0` (`providers/git.py`)
 
 ## Runtime Contracts

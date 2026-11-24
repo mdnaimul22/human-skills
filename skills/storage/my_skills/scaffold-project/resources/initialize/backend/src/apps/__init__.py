@@ -14,7 +14,7 @@ _MANAGERS: dict[str, str] = {
     "GitManager": ".git",
     "get_git_manager": ".git",
     "JobManager": ".jobs",
-    "get_manager": ".jobs",
+    "get_job_manager": ".jobs",
     "NginxManager": ".nginx",
     "get_nginx_manager": ".nginx",
     "SystemManager": ".system",

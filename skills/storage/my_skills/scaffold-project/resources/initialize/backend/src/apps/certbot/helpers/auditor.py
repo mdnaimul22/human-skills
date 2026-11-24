@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from cryptography import x509
-from src.config import Settings, exists, is_file, read_bytes, setup_logger
+from src.config import Settings, setup_logger, sys_is_file, sys_read_bytes
 from src.helpers import ValidationError
 from .schema import CertificateBundle, SslAuditReport
 
@@ -24,8 +24,8 @@ class Auditor:
         cert_file = f"{cert_dir}/cert.pem"
         privkey = f"{cert_dir}/privkey.pem"
 
-        target_cert = fullchain if is_file(fullchain) else (cert_file if is_file(cert_file) else "")
-        target_key = privkey if is_file(privkey) else ""
+        target_cert = fullchain if sys_is_file(fullchain) else (cert_file if sys_is_file(cert_file) else "")
+        target_key = privkey if sys_is_file(privkey) else ""
 
         if not target_cert or not target_key:
             return CertificateBundle(
@@ -39,7 +39,7 @@ class Auditor:
             )
 
         try:
-            pem_data = read_bytes(target_cert)
+            pem_data = sys_read_bytes(target_cert)
             cert = x509.load_pem_x509_certificate(pem_data)
             expiry_utc = cert.not_valid_after_utc
             now_utc = datetime.now(timezone.utc)

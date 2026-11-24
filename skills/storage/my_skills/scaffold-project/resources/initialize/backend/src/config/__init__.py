@@ -3,6 +3,7 @@ from .files import (
     read_yaml, write_yaml, read_pickle, write_pickle,
     exists, is_file, is_dir, ensure_dir, delete, list_files, get_abs_path,
     get_size, get_mtime, read_from_pos, is_subpath, get_rel_path,
+    sys_exists, sys_is_file, sys_is_dir, sys_list_dir, sys_read_text, sys_read_bytes,
 )
 from .dotenv import (
     load_dotenv, set_value, get_value, remove_value, parse_env_dict,
@@ -49,6 +50,12 @@ __all__ = [
     "get_size",
     "get_mtime",
     "read_from_pos",
+    "sys_exists",
+    "sys_is_file",
+    "sys_is_dir",
+    "sys_list_dir",
+    "sys_read_text",
+    "sys_read_bytes",
     "load_dotenv",
     "set_value",
     "get_value",

@@ -219,12 +219,12 @@ class SystemManager:
             f"load_1m={snapshot.cpu.load_1m:.2f} usable_threads={budget.usable_cpu_threads} "
             f"(cap={Settings.SYSTEM_MAX_CPU_USAGE_PERCENT:.0f}% reserved={Settings.SYSTEM_RESERVED_CPU_CORES})"
         )
-        rss_mb = snapshot.ram.vidula_rss_bytes // (1024 * 1024)
+        rss_mb = snapshot.ram.process_rss_bytes // (1024 * 1024)
         swap_used_mb = snapshot.ram.swap_used_bytes // (1024 * 1024)
         swap_total_mb = snapshot.ram.swap_total_bytes // (1024 * 1024)
         logger.info(
             f"system.startup.ram total={budget.total_ram_mb}MB avail={budget.available_ram_mb}MB "
-            f"used={snapshot.ram.percent:.1f}% vidula_rss={rss_mb}MB swap={swap_used_mb}/{swap_total_mb}MB "
+            f"used={snapshot.ram.percent:.1f}% process_rss={rss_mb}MB swap={swap_used_mb}/{swap_total_mb}MB "
             f"usable_budget={budget.usable_ram_mb}MB (cap={Settings.SYSTEM_MAX_RAM_USAGE_PERCENT:.0f}% "
             f"floor={Settings.SYSTEM_MIN_FREE_RAM_MB}MB)"
         )
@@ -261,6 +261,20 @@ class SystemManager:
                     f"name=\"{gpu.name}\" cc={gpu.compute_capability} driver={gpu.driver_version} "
                     f"vram={used_mb}/{total_mb}MB free={free_mb}MB nvenc=FAILED reason=\"{reason}\" fallback=cpu_only"
                 )
+            return
+        if gpu is not None and gpu.vaapi_available:
+            primary = gpu.devices[0] if gpu.devices else None
+            used_b = primary.used_vram_bytes if primary is not None else max(0, gpu.total_vram_bytes - gpu.free_vram_bytes)
+            used_mb = used_b // (1024 * 1024)
+            total_mb = gpu.total_vram_bytes // (1024 * 1024)
+            free_mb = gpu.free_vram_bytes // (1024 * 1024)
+            util = primary.gpu_util_percent if primary is not None else 0.0
+            temp = primary.temperature_c if primary is not None else 0
+            logger.info(
+                f"system.startup.gpu backend={gpu.backend.value} count={gpu.device_count} dev={gpu.device_id} "
+                f"name=\"{gpu.name}\" vram={used_mb}/{total_mb}MB free={free_mb}MB util={util:.0f}% temp={temp}C "
+                f"vaapi=ready max_sessions={budget.max_gpu_sessions} vram_budget={budget.usable_vram_mb}MB health={gpu_health.value}"
+            )
             return
         vaapi_ok = gpu.vaapi_available if gpu is not None else False
         backend = gpu.backend.value if gpu is not None else "none"
@@ -300,7 +314,7 @@ class SystemManager:
 
     def _format_gpu_heartbeat_tag(self, snapshot: HardwareTelemetrySnapshot, gpu_health: GpuHealthState) -> str:
         gpu = snapshot.gpu
-        if gpu is None or not gpu.cuda_available or gpu.total_vram_bytes <= 0:
+        if gpu is None or not gpu.is_available:
             return f"none(state={gpu_health.value})"
         primary = gpu.devices[0] if gpu.devices else None
         util = primary.gpu_util_percent if primary is not None else 0.0
@@ -310,7 +324,7 @@ class SystemManager:
         total_mb = gpu.total_vram_bytes // (1024 * 1024)
         free_mb = gpu.free_vram_bytes // (1024 * 1024)
         return (
-            f"dev{gpu.device_id}(util={util:.0f}% temp={temp}C "
+            f"dev{gpu.device_id}(backend={gpu.backend.value} util={util:.0f}% temp={temp}C "
             f"vram={used_mb}/{total_mb}MB free={free_mb}MB state={gpu_health.value})"
         )
 

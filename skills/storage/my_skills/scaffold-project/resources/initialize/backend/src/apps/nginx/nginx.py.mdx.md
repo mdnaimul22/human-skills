@@ -8,7 +8,7 @@
 
 - Own the `src/apps/nginx` platform ingress substrate and orchestrator.
 - Inspect host Nginx binary presence and provide automated package provisioning (`apt-get`) and system directory initialization when missing.
-- Dynamically compile vhost configurations for backend (`api.vidula.xyz`) and frontend (`vidula.xyz`) with adaptive Let's Encrypt SSL, ModSecurity WAF integration, rate-limiting zones, and Google site verification blocks.
+- Dynamically compile vhost configurations for backend (`api.example.com`) and frontend (`example.com`) with adaptive Let's Encrypt SSL, ModSecurity WAF integration, rate-limiting zones, and Google site verification blocks.
 - Deploy generated server blocks to `/etc/nginx/sites-available/`, establish symlinks to `/etc/nginx/sites-enabled/`, and safely clean up obsolete configurations.
 - Verify configuration syntax (`nginx -t`) and perform graceful service reload (`systemctl reload nginx`) with fallback restart capability.
 - Manage state persistence (`data/apps/nginx/state.json`) with SHA-256 change detection to avoid unnecessary reloads during application restarts.

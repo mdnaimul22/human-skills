@@ -29,12 +29,12 @@ class Deployer:
     def deploy(cls) -> bool:
         logger.info("Deploying dynamic Nginx configurations to system paths...")
         api_conf_src = get_abs_path(f"data/apps/nginx/{Settings.BACKEND_DOMAIN}")
-        vidula_conf_src = get_abs_path(f"data/apps/nginx/{Settings.FRONTEND_DOMAIN}")
+        frontend_conf_src = get_abs_path(f"data/apps/nginx/{Settings.FRONTEND_DOMAIN}")
         bot_block_src = get_abs_path("data/apps/nginx/bot_block.conf")
 
         deployments = [
             (api_conf_src, f"/etc/nginx/sites-available/{Settings.BACKEND_DOMAIN}"),
-            (vidula_conf_src, f"/etc/nginx/sites-available/{Settings.FRONTEND_DOMAIN}"),
+            (frontend_conf_src, f"/etc/nginx/sites-available/{Settings.FRONTEND_DOMAIN}"),
             (bot_block_src, "/etc/nginx/snippets/bot_block.conf"),
         ]
 

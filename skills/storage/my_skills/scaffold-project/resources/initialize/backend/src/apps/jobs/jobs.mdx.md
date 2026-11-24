@@ -66,7 +66,7 @@
     - `shutdown(self) -> None`
     - `stream_progress(self, job_id: str) -> AsyncGenerator[str, None]`
 - **Top-level Functions:**
-  - `get_manager() -> JobManager`
+  - `get_job_manager() -> JobManager`
   - `compute_canonical_job_hash(service_type: str, target: str, params: Optional[dict]) -> str`
   - `resolve_stream_lane(tier: Optional[str]) -> str`
   - `plan_recovery(records: dict) -> RecoveryPlan`
@@ -82,7 +82,7 @@
 
 ## Runtime Contracts
 
-- **Singleton Pattern:** External callers always access `JobManager` via `get_manager()` or `JobManager.get_instance()`.
+- **Singleton Pattern:** External callers always access `JobManager` via `get_job_manager()` or `JobManager.get_instance()`.
 - **Zero-Trust Resource Leasing:** Compute-heavy workloads (e.g., ffmpeg encoding) must never run on-demand without leasing capacity from `SystemManager` (`src/apps/system/`).
 - **Distributed & In-Memory Deduplication:** Requests with matching canonical hashes return existing active `JobRecord` handles without duplicate execution.
 - **Process Tree Hygiene & Safety:** Any spawned subprocess must run in an isolated process group and be reaped via `kill_stale_tree` with `/proc/<pid>/cmdline` verification to prevent PID recycling accidents.
@@ -108,7 +108,7 @@
   5. Commit & Stream: `JobResults` commits staged outputs while `LiveMonitor` streams SSE updates.
 - **Sub-Engine Isolation ("Internal Machinery"):**
   - All worker components reside strictly in `src/apps/jobs/helpers/` and are private to `src/apps/jobs/`.
-  - External modules never import private helpers directly; they only consume `src.apps.jobs.get_manager()` or `JobManager`.
+  - External modules never import private helpers directly; they only consume `src.apps.jobs.get_job_manager()` or `JobManager`.
 - **Closed-Loop Feedback:** Failed or timed-out jobs trigger circuit breaker feedback and immediately release leased tokens back to `SystemManager`.
 
 ## Work Guidance
