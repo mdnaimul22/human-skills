@@ -19,6 +19,8 @@ _MANAGERS: dict[str, str] = {
     "get_nginx_manager": ".nginx",
     "SystemManager": ".system",
     "get_system_manager": ".system",
+    "TunnelManager": ".tunnel",
+    "get_tunnel_manager": ".tunnel",
     "WAFManager": ".waf",
 }
 

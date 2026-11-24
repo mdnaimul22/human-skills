@@ -14,6 +14,13 @@ logger = setup_logger(Settings.LOG_DIR / "tunnel.log", name="apps.tunnel.process
 LineCallback = Callable[[str], None]
 
 
+def _pump_stdout(proc: subprocess.Popen[str], out_queue: queue.Queue[str]) -> None:
+    if proc.stdout is None:
+        return
+    for raw_line in proc.stdout:
+        out_queue.put(raw_line)
+
+
 class CliTunnelProcess:
     def __init__(
         self,
@@ -46,14 +53,7 @@ class CliTunnelProcess:
         proc = self._process
         if proc is None or proc.stdout is None:
             return
-
-        def _reader() -> None:
-            if proc.stdout is None:
-                return
-            for raw_line in proc.stdout:
-                out_queue.put(raw_line)
-
-        threading.Thread(target=_reader, daemon=True).start()
+        threading.Thread(target=_pump_stdout, args=(proc, out_queue), daemon=True).start()
 
     def _handle_line(self, line: str) -> Optional[str]:
         cleaned = line.strip()

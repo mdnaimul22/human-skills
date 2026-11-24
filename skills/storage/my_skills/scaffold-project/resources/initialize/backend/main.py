@@ -20,6 +20,7 @@ from src.apps import (
     get_git_manager,
     get_job_manager,
     get_system_manager,
+    get_tunnel_manager,
 )
 from src.db import DatabaseManager
 from src.routers import auth_router, system_router
@@ -69,8 +70,18 @@ async def _startup_apps() -> None:
     except Exception as e:
         logger.error(f"Failed to start GitManager on startup: {e}")
 
+    try:
+        await get_tunnel_manager().start_async()
+    except Exception as e:
+        logger.error(f"Failed to start TunnelManager on startup: {e}")
+
 
 async def _shutdown_apps() -> None:
+    try:
+        await get_tunnel_manager().stop_async()
+    except Exception as e:
+        logger.error(f"Failed to stop TunnelManager on shutdown: {e}")
+
     try:
         await asyncio.to_thread(get_git_manager().stop_all)
         logger.info("GitManager workers stopped cleanly.")
