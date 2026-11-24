@@ -182,6 +182,12 @@ class LiveMonitor:
         return len(expired)
 
     async def _zombie_lease_reaper(self) -> list[str]:
+        active_job_ids = {
+            jid for jid, job in list(self._jobs.items())
+            if job.status == JobStatus.PROCESSING
+        }
+        if active_job_ids:
+            await self.control.renew_active_tokens(active_job_ids, ttl=300.0)
         return await self.control.reap_expired_tokens(ttl=300.0)
 
     async def _tombstone_compaction_loop(self) -> None:

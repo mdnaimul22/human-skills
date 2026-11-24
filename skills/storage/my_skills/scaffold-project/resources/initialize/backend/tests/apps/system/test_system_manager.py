@@ -225,9 +225,9 @@ async def test_system_manager_start_async_banner_status_and_config_reload() -> N
         orig_env = os.environ.get("SYSTEM_MAX_CPU_USAGE_PERCENT")
         try:
             Settings.SYSTEM_CONFIG_FILE = rel_cfg
-            sm._config_mtime = None
+            sm._sync_config_state()
             write_text(rel_cfg, "SYSTEM_MAX_CPU_USAGE_PERCENT=82.0\n")
-            changed = sm._check_config_reload()
+            changed = await sm._check_config_reload()
             assert "SYSTEM_MAX_CPU_USAGE_PERCENT" in changed
             assert Settings.SYSTEM_MAX_CPU_USAGE_PERCENT == 82.0
         finally:

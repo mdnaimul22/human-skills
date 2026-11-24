@@ -201,7 +201,8 @@ def test_oauth_state_generation_verification_and_callback_csrf_defense(auth_sess
     app = FastAPI()
     app.include_router(auth_router)
     app.dependency_overrides[get_session] = lambda: auth_session
-    client = TestClient(app, base_url="http://localhost:8000")
+    from src.config import Settings
+    client = TestClient(app, base_url=f"http://localhost:{Settings.API_PORT}")
 
     r_no_state = client.get("/api/v1/auth/callback?code=fake_code", follow_redirects=False)
     assert r_no_state.status_code == 307

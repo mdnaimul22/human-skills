@@ -29,7 +29,7 @@ async def test_kill_stale_tree_async_non_existent_pid() -> None:
 
 @pytest.mark.asyncio
 async def test_kill_stale_tree_successful_mock() -> None:
-    with patch("src.apps.jobs.helpers.job_runner.read_bytes", return_value=b"ffmpeg\x00-i\x00test.mp4\x00"):
+    with patch("src.apps.jobs.helpers.job_runner.sys_read_bytes", return_value=b"ffmpeg\x00-i\x00test.mp4\x00"):
         with patch("os.getpgid", return_value=12345):
             with patch("os.killpg") as mock_killpg:
                 res = await kill_stale_tree_async(12345, ["ffmpeg", "-i", "test.mp4"])

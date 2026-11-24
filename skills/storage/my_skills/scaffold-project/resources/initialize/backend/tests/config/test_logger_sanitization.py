@@ -6,7 +6,6 @@ import uuid
 import src.config.logger as cfg_logger
 from src.config import (
     JsonLinesFormatter,
-    PROJECT_ROOT,
     SanitizingFormatter,
     delete,
     get_abs_path,
@@ -15,6 +14,7 @@ from src.config import (
     setup_logger,
 )
 from src.config.logger import ColorFormatter
+from src.config.paths import PROJECT_ROOT
 
 
 def _make_record(msg: str, exc_info: object = None, extra: dict[str, object] | None = None) -> logging.LogRecord:
@@ -41,7 +41,8 @@ def test_sanitize_log_text_project_root_and_home() -> None:
     assert sanitize_log_text(f"bin={root_str}") == "bin=<PROJECT_ROOT>"
 
     sibling = f"{root_str}_other/a"
-    assert sanitize_log_text(sibling) == f"<HOME>/{os.path.basename(root_str)}_other/a"
+    expected_sibling = sibling.replace(home_str, "<HOME>", 1) if sibling.startswith(home_str) else sibling
+    assert sanitize_log_text(sibling) == expected_sibling
     assert "<PROJECT_ROOT>_other" not in sanitize_log_text(sibling)
 
     assert sanitize_log_text(f"{home_str}/miniconda3/bin/yt-dlp") == "<HOME>/miniconda3/bin/yt-dlp"

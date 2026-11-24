@@ -1,12 +1,25 @@
 from __future__ import annotations
+from pathlib import Path
 import subprocess
 import time
+import uuid
 import pytest
+from src.config import delete, ensure_dir, get_abs_path
 from src.apps.git import (
     ForwardRule, GitConfig, GitManager, ProjectCreate, ProjectUpdate,
     ScheduleConfig, UpstreamEntry,
 )
 from src.helpers import NotFoundError
+
+
+@pytest.fixture
+def sandbox_path() -> Path:
+    rel = f"tmp/test_tmp/git_e2e_{uuid.uuid4().hex[:8]}"
+    ensure_dir(rel)
+    try:
+        yield Path(get_abs_path(rel))
+    finally:
+        delete(rel)
 
 
 def _git(cwd: str, *args: str) -> str:
@@ -59,7 +72,8 @@ def _reset_git_manager() -> None:
     GitManager.reset_instance()
 
 
-def test_e2e_sparse_clone_scoped_surgical_commit_and_orphan_cleanup(tmp_path) -> None:
+def test_e2e_sparse_clone_scoped_surgical_commit_and_orphan_cleanup(sandbox_path: Path) -> None:
+    tmp_path = sandbox_path
     upstream_bare, upstream_work, target_bare, target_work = _setup_local_git_fixture(tmp_path)
     data_dir = str(tmp_path / "data_gitsync")
     mgr = GitManager(data_dir=data_dir)
@@ -148,7 +162,8 @@ def test_e2e_sparse_clone_scoped_surgical_commit_and_orphan_cleanup(tmp_path) ->
 
 
 @pytest.mark.asyncio
-async def test_async_bridge_and_worker_lifecycle(tmp_path) -> None:
+async def test_async_bridge_and_worker_lifecycle(sandbox_path: Path) -> None:
+    tmp_path = sandbox_path
     upstream_bare, _, _, target_work = _setup_local_git_fixture(tmp_path)
     mgr = GitManager(data_dir=str(tmp_path / "data_gitsync"))
     meta = mgr.create_project(ProjectCreate(name="Async Sync", path=target_work))
@@ -195,7 +210,8 @@ async def test_async_bridge_and_worker_lifecycle(tmp_path) -> None:
         mgr.get_project(meta.id)
 
 
-def test_branch_head_pushes_active_branch_and_mismatch_fails_fast(tmp_path) -> None:
+def test_branch_head_pushes_active_branch_and_mismatch_fails_fast(sandbox_path: Path) -> None:
+    tmp_path = sandbox_path
     upstream_bare, _, target_bare, target_work = _setup_local_git_fixture(tmp_path)
     _git(target_work, "checkout", "-b", "development")
     _git(target_work, "push", "-u", "origin", "development")

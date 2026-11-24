@@ -23,6 +23,7 @@ from src.apps import (
     get_tunnel_manager,
 )
 from src.db import DatabaseManager
+from src.providers import get_proxy_manager
 from src.routers import auth_router, system_router
 
 logger = setup_logger(boss_name="main.txt")
@@ -75,8 +76,18 @@ async def _startup_apps() -> None:
     except Exception as e:
         logger.error(f"Failed to start TunnelManager on startup: {e}")
 
+    try:
+        await get_proxy_manager().start_async()
+    except Exception as e:
+        logger.error(f"Failed to start ProxyManager on startup: {e}")
+
 
 async def _shutdown_apps() -> None:
+    try:
+        await get_proxy_manager().stop_async()
+    except Exception as e:
+        logger.error(f"Failed to stop ProxyManager on shutdown: {e}")
+
     try:
         await get_tunnel_manager().stop_async()
     except Exception as e:

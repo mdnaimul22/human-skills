@@ -122,6 +122,21 @@ class JobControl:
             except Exception as e:
                 logger.debug(f"Governor release bypassed for {job_id}: {e}")
 
+    async def renew_active_tokens(self, job_ids: set[str], ttl: float = 300.0) -> int:
+        if not job_ids:
+            return 0
+        now = time.time()
+        renewed = 0
+        async with self.lock:
+            for jid in job_ids:
+                if jid in self._active_tokens:
+                    self._active_tokens[jid] = now
+                    lease = self._governor_leases.get(jid)
+                    if lease is not None and not lease.released:
+                        lease.expires_at = max(lease.expires_at, now + ttl)
+                    renewed += 1
+        return renewed
+
     async def reap_expired_tokens(self, ttl: float = 300.0) -> list[str]:
         now = time.time()
         reaped: list[str] = []

@@ -5,7 +5,7 @@ import os
 import signal
 import time
 from typing import Awaitable, Callable, Optional
-from src.config import Settings, delete, exists, read_bytes, request_id_ctx, set_telemetry, setup_logger
+from src.config import Settings, delete, exists, request_id_ctx, set_telemetry, setup_logger, sys_read_bytes
 from src.schema import JobStatus
 from src.apps.system.schema.resource import ResourcePermit
 from .job_journal import JobRecord
@@ -24,7 +24,7 @@ def _command_matches(actual: list[str], expected: list[str]) -> bool:
 def kill_stale_tree(pid: int, expected_cmd: list[str]) -> bool:
     cmdline_path = f"/proc/{pid}/cmdline"
     try:
-        raw = read_bytes(cmdline_path)
+        raw = sys_read_bytes(cmdline_path)
         actual = [arg.decode(errors="replace") for arg in raw.split(b"\x00") if arg]
     except (OSError, IOError):
         return False
@@ -51,7 +51,7 @@ def kill_stale_tree(pid: int, expected_cmd: list[str]) -> bool:
 async def kill_stale_tree_async(pid: int, expected_cmd: list[str]) -> bool:
     cmdline_path = f"/proc/{pid}/cmdline"
     try:
-        raw = read_bytes(cmdline_path)
+        raw = sys_read_bytes(cmdline_path)
         actual = [arg.decode(errors="replace") for arg in raw.split(b"\x00") if arg]
     except (OSError, IOError):
         return False

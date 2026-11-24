@@ -1,7 +1,9 @@
 from __future__ import annotations
+from pathlib import Path
 import time
+import uuid
 import pytest
-from src.config import Settings, write_text
+from src.config import Settings, delete, ensure_dir, get_abs_path, write_text
 from src.helpers import NotFoundError, ValidationError
 from src.apps.git.helpers import (
     ChangeClassifier, ConfigWatcher, ForwardEngine, OrphanEngine,
@@ -12,9 +14,18 @@ from src.apps.git.schema import (
 )
 
 
+@pytest.fixture
+def sandbox_path() -> Path:
+    rel = f"tmp/test_tmp/git_helpers_{uuid.uuid4().hex[:8]}"
+    ensure_dir(rel)
+    try:
+        yield Path(get_abs_path(rel))
+    finally:
+        delete(rel)
+
+
 def test_gitsync_settings_initialized_from_env_control_panel() -> None:
-    assert Settings.RAW_GITSYNC_DATA_DIR == "data/gitsync"
-    assert Settings.GITSYNC_DATA_DIR == Settings.DATA_DIR / "gitsync"
+    assert Settings.RAW_GITSYNC_DATA_DIR == "data/apps/git"
     assert Settings.GIT_BRANCH == "main"
     assert Settings.SYNC_INTERVAL_MINUTES >= 1
     assert Settings.SYNC_POLL_SECONDS >= 1
@@ -71,12 +82,12 @@ def test_orphan_engine_detects_all_lineage_removals() -> None:
     assert orphans == {"dst/gone", "dst/removed", "dst/old_name", "dst/same"}
 
 
-def test_project_registry_crud_and_fail_fast_errors(tmp_path) -> None:
-    registry = ProjectRegistry(data_dir=str(tmp_path / "gitsync"))
-    meta = registry.create(ProjectCreate(name="FFmpeg Sync", path=str(tmp_path / "repo")))
+def test_project_registry_crud_and_fail_fast_errors(sandbox_path: Path) -> None:
+    registry = ProjectRegistry(data_dir=str(sandbox_path / "gitsync"))
+    meta = registry.create(ProjectCreate(name="FFmpeg Sync", path=str(sandbox_path / "repo")))
     assert meta.id == "ffmpeg-sync"
 
-    dup = registry.create(ProjectCreate(name="FFmpeg Sync", path=str(tmp_path / "repo2")))
+    dup = registry.create(ProjectCreate(name="FFmpeg Sync", path=str(sandbox_path / "repo2")))
     assert dup.id == "ffmpeg-sync-1"
 
     up = UpstreamEntry(project_name="ffmpeg-skill", upstream_id="up1", path="up/ff", url="https://example.com/ff.git")
@@ -92,10 +103,10 @@ def test_project_registry_crud_and_fail_fast_errors(tmp_path) -> None:
         registry.delete("nonexistent-project")
 
 
-def test_config_watcher_hot_reload_and_corrupted_json_raises(tmp_path) -> None:
-    data_dir = str(tmp_path / "gitsync")
+def test_config_watcher_hot_reload_and_corrupted_json_raises(sandbox_path: Path) -> None:
+    data_dir = str(sandbox_path / "gitsync")
     registry = ProjectRegistry(data_dir=data_dir)
-    meta = registry.create(ProjectCreate(name="Watch Test", path=str(tmp_path / "repo")))
+    meta = registry.create(ProjectCreate(name="Watch Test", path=str(sandbox_path / "repo")))
     watcher = ConfigWatcher(meta.id, meta.path, data_dir=data_dir)
     assert not watcher.has_changed()
 
@@ -117,14 +128,14 @@ def test_config_watcher_hot_reload_and_corrupted_json_raises(tmp_path) -> None:
         load_memory(f"{data_dir}/{meta.id}/memory.json")
 
 
-def test_forward_engine_blocks_path_traversal_and_git_dir(tmp_path) -> None:
-    repo = tmp_path / "repo"
+def test_forward_engine_blocks_path_traversal_and_git_dir(sandbox_path: Path) -> None:
+    repo = sandbox_path / "repo"
     repo.mkdir()
-    src_file = tmp_path / "source.py"
+    src_file = sandbox_path / "source.py"
     src_file.write_text("print('hi')\n", encoding="utf-8")
 
     engine = ForwardEngine(repo_root=str(repo))
-    escape_rule = ForwardRule(from_path=str(src_file), to_path=str(tmp_path / "outside.py"))
+    escape_rule = ForwardRule(from_path=str(src_file), to_path=str(sandbox_path / "outside.py"))
     with pytest.raises(ValidationError):
         engine.forward([escape_rule], [])
 
@@ -133,8 +144,8 @@ def test_forward_engine_blocks_path_traversal_and_git_dir(tmp_path) -> None:
         engine.forward([git_rule], [])
 
 
-def test_forward_engine_ignores_pycache_no_spurious_copies(tmp_path) -> None:
-    repo = tmp_path / "repo"
+def test_forward_engine_ignores_pycache_no_spurious_copies(sandbox_path: Path) -> None:
+    repo = sandbox_path / "repo"
     repo.mkdir()
     src_dir = repo / "vendor" / "scripts"
     src_dir.mkdir(parents=True)

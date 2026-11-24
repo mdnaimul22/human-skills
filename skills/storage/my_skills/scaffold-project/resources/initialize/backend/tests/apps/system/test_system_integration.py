@@ -44,7 +44,7 @@ async def test_circuit_breaker_fallback_permit() -> None:
     await sm.start_async()
     try:
         for _ in range(Settings.SYSTEM_BREAKER_FAILURE_THRESHOLD):
-            sm.notify_hardware_anomaly("hw_encoder", "simulated hardware failure")
+            sm.notify_hardware_anomaly("h264_nvenc", "simulated hardware failure")
 
         fallback_permit = await sm.acquire_resource_permit("encode", "j_cpu_fb", user_tier=UserTier.PREMIUM, timeout=5.0)
         try:

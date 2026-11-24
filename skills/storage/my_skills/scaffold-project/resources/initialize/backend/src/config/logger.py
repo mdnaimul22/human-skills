@@ -292,7 +292,7 @@ class JsonLinesFormatter(logging.Formatter):
             return {
                 "type": getattr(exc_type, "__name__", "Exception") if exc_type else "Exception",
                 "message": sanitize_log_text(_safe_str(exc_val)),
-                "stack": sanitize_log_text(traceback.format_exc()) if exc_tb else None,
+                "stack": sanitize_log_text("".join(traceback.format_exception(exc_type, exc_val, exc_tb))) if exc_tb else None,
             }
         if record.levelno >= logging.ERROR:
             try:

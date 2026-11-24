@@ -1,9 +1,23 @@
 import time
+import uuid
+import pytest
+from src.config import delete, ensure_dir
 from src.apps.waf.schema import TrafficEntry
 from src.apps.waf.helpers.traffic_store import TrafficStore
 
-def test_traffic_store_entry_and_stats(tmp_path):
-    store = TrafficStore(storage_path=f"{tmp_path}/requested_url.json")
+
+@pytest.fixture
+def sandbox_dir() -> str:
+    rel = f"tmp/test_tmp/waf_traffic_{uuid.uuid4().hex[:8]}"
+    ensure_dir(rel)
+    try:
+        yield rel
+    finally:
+        delete(rel)
+
+
+def test_traffic_store_entry_and_stats(sandbox_dir: str):
+    store = TrafficStore(storage_path=f"{sandbox_dir}/requested_url.json")
     entry = TrafficEntry(
         timestamp=time.time(),
         method="GET",
@@ -23,8 +37,8 @@ def test_traffic_store_entry_and_stats(tmp_path):
     assert stats.total_allowed == 1
     assert stats.total_blocked == 0
 
-def test_blocked_and_threat_stats(tmp_path):
-    store = TrafficStore(storage_path=f"{tmp_path}/requested_url.json")
+def test_blocked_and_threat_stats(sandbox_dir: str):
+    store = TrafficStore(storage_path=f"{sandbox_dir}/requested_url.json")
     entry = TrafficEntry(
         timestamp=time.time(),
         method="POST",
@@ -45,8 +59,8 @@ def test_blocked_and_threat_stats(tmp_path):
     assert stats.by_threat_category.get("sql_injection") == 1
     assert stats.by_rule.get("SQLi-1") == 1
 
-def test_track_url_persistence(tmp_path):
-    path = f"{tmp_path}/requested_url.json"
+def test_track_url_persistence(sandbox_dir: str):
+    path = f"{sandbox_dir}/requested_url.json"
     store = TrafficStore(storage_path=path)
     store.track_url("/api/v1/tools", 200)
     store.track_url("/honeypot.php", 403)

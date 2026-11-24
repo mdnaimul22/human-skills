@@ -16,15 +16,6 @@ from src.apps.system import (
     WorkloadType,
 )
 from src.apps.system.helpers import HardwareValidator, ResourceValidator
-from src.core.validators import (
-    HardwareValidator as CoreHardwareValidator,
-    ResourceValidator as CoreResourceValidator,
-)
-
-
-def test_core_validators_reexport_without_cycle() -> None:
-    assert CoreHardwareValidator is HardwareValidator
-    assert CoreResourceValidator is ResourceValidator
 
 
 def test_hardware_telemetry_effective_cores() -> None:

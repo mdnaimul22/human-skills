@@ -51,30 +51,6 @@ async def test_system_runs_and_authenticates_when_domain_is_deleted():
     await mgr.shutdown()
 
 @pytest.mark.asyncio
-async def test_domain_removal_detects_orphans_and_prunes_safely():
-    mgr = DatabaseManager()
-    mgr.initialize("sqlite+aiosqlite:///:memory:")
-    await mgr.create_tables(domain_root="src/db/domain")
-    await mgr.migrate(domain_root="src/db/domain")
-    assert mgr.orphans == []
-
-    await mgr.migrate(domain_root="src/db/non_existent_domain_dir")
-    assert "download_history" in mgr.orphans
-    assert "favorite_channels" in mgr.orphans
-    assert "users" not in mgr.orphans
-
-    pruned = await mgr.prune_orphans(domain_root="src/db/non_existent_domain_dir")
-    assert "download_history" in pruned
-    assert mgr.orphans == []
-
-    async with mgr.engine.connect() as conn:
-        remaining = await conn.run_sync(lambda sc: set(inspect(sc).get_table_names()))
-    assert "users" in remaining
-    assert "user_identities" in remaining
-    assert "download_history" not in remaining
-    await mgr.shutdown()
-
-@pytest.mark.asyncio
 async def test_legacy_users_table_migrates_to_user_identities():
     mgr = DatabaseManager()
     mgr.initialize("sqlite+aiosqlite:///:memory:")

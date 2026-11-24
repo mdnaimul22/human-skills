@@ -78,13 +78,20 @@ class Settings(BaseSettings):
     LLM_MAX_TOKENS: int = Field(default=2048, validation_alias="LLM_MAX_TOKENS")
     LLM_RETRIES: int = Field(default=3, validation_alias="LLM_RETRIES")
 
-    WEBSHARE_TOKEN: Optional[str] = Field(default=None, validation_alias="WEBSHARE_TOKEN")
-    PROXY_CACHE_PATH: str = Field(default="data/proxies.json", validation_alias="PROXY_CACHE_PATH")
-    PROXY_LAST_UPDATE_PATH: str = Field(default="logs/proxy_last_update.json", validation_alias="PROXY_LAST_UPDATE_PATH")
-    WEBSHARE_API_URL: str = Field(
-        default="https://proxy.webshare.io/api/v2/proxy/list/download/ulbftisilmdzajnvjjibaxyyyjfuphlrdogauaal/-/any/username/direct/-",
-        validation_alias="WEBSHARE_API_URL",
-    )
+    PROXY_CONFIG_FILE: str = Field(default="env/.1p2r3o4x5y6", validation_alias="PROXY_CONFIG_FILE")
+    PROXY_MANAGER: bool = Field(default=False, validation_alias="PROXY_MANAGER")
+    PROXY: bool = Field(default=False, validation_alias="PROXY")
+    PROXY_PROVIDER: str = Field(default="webshare", validation_alias="PROXY_PROVIDER")
+    PROXY_CACHE_PATH: str = Field(default="data/providers/proxy/proxies.json", validation_alias="PROXY_CACHE_PATH")
+    PROXY_STATE_PATH: str = Field(default="data/providers/proxy/state.json", validation_alias="PROXY_STATE_PATH")
+    PROXY_REFRESH_INTERVAL_SEC: float = Field(default=3600.0, ge=10.0, le=86400.0, validation_alias="PROXY_REFRESH_INTERVAL_SEC")
+    PROXY_POLL_INTERVAL_SEC: float = Field(default=30.0, ge=0.5, le=300.0, validation_alias="PROXY_POLL_INTERVAL_SEC")
+    PROXY_REQUEST_TIMEOUT_SEC: float = Field(default=30.0, ge=1.0, le=120.0, validation_alias="PROXY_REQUEST_TIMEOUT_SEC")
+    PROXY_COOLDOWN_SEC: float = Field(default=120.0, ge=1.0, le=3600.0, validation_alias="PROXY_COOLDOWN_SEC")
+    PROXY_MAX_FAILURES: int = Field(default=3, ge=1, le=20, validation_alias="PROXY_MAX_FAILURES")
+    PROXY_STATIC_URLS: str = Field(default="", validation_alias="PROXY_STATIC_URLS")
+    WEBSHARE_TOKEN: str = Field(default="", validation_alias="WEBSHARE_TOKEN")
+    WEBSHARE_API_URL: str = Field(default="", validation_alias="WEBSHARE_API_URL")
 
     MAX_CONCURRENT_JOBS: int = Field(default=20, validation_alias="MAX_CONCURRENT_JOBS")
     MAX_USER_CONCURRENT_JOBS: int = Field(default=15, validation_alias="MAX_USER_CONCURRENT_JOBS")
@@ -218,6 +225,7 @@ class Settings(BaseSettings):
             str(PROJECT_ROOT / "env" / ".1y2s3t4e5m"),
             str(PROJECT_ROOT / "env" / ".1m2o3d4e5l3s"),
             str(PROJECT_ROOT / "env" / ".1t2u3n4n5e6l7"),
+            str(PROJECT_ROOT / "env" / ".1p2r3o4x5y6"),
         ),
         env_file_encoding="utf-8",
         extra="allow",
