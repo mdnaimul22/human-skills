@@ -1,0 +1,46 @@
+# Server
+API_HOST=127.0.0.1
+API_PORT=8000
+APP_ENV=development
+
+# Frontend
+FRONTEND_URL=http://localhost:3000
+FRONTEND_PORT=3000
+
+# Public URL (TunnelManager config lives in env/.1t2u3n4n5e6l7)
+PUBLIC_URL=
+
+# Database
+DATABASE_URL=sqlite+aiosqlite:///./data/app.db
+
+# Auth — JWT
+JWT_SECRET=super-secret-key-change-me-in-production
+ACCESS_TOKEN_EXPIRY_MINUTES=15
+REFRESH_TOKEN_EXPIRY_HOURS=168
+VERIFY_TOKEN_EXPIRY_HOURS=24
+RESET_TOKEN_EXPIRY_HOURS=1
+
+# Auth — Google OAuth (leave empty to disable)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# Auth — Frontend URLs (for email verification / password reset links)
+FRONTEND_VERIFY_URL=http://localhost:3000/verify-email
+FRONTEND_RESET_URL=http://localhost:3000/reset-password
+
+# SMTP (leave empty for dev console logging)
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM_EMAIL=
+
+# Nginx Rate Limiting
+NGINX_RATE_LIMIT_ZONE_SIZE=10m
+NGINX_RATE_LIMIT_RATE=10r/s
+NGINX_RATE_LIMIT_BURST=20
+
+# LLM Controls
+LLM_TEMPERATURE=0.7
+LLM_MAX_TOKENS=2048
+LLM_RETRIES=3

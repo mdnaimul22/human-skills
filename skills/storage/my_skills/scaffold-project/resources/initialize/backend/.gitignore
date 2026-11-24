@@ -141,8 +141,8 @@ pnpm-lock.yaml
 # Environment and simulation data
 .env
 .models
-env
-
+env/*
+!env/*.example
 
 archived/
 
@@ -154,5 +154,9 @@ __pycache__/
 .venv
 venv/
 venv
-data/
+data/*
+!data/agents/
+data/agents/*
+!data/agents/general.yaml
 logs/
+tmp/

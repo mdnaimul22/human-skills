@@ -14,8 +14,22 @@ REPO_URL = "https://github.com/mdnaimul22/human-skills.git"
 TAR_URL = "https://github.com/mdnaimul22/human-skills/archive/refs/heads/main.tar.gz"
 BACKEND_REL_PATH = "skills/storage/my_skills/scaffold-project/resources/initialize/backend"
 
-SKIP_DIRS = {"__pycache__", ".pytest_cache", ".venv", "venv", ".git", "logs"}
+SKIP_DIRS = {"__pycache__", ".pytest_cache", ".venv", "venv", ".git", "logs", "tmp"}
 SKIP_FILES = {"bootstrap.py", ".DS_Store"}
+ALLOWED_DATA_SUBDIRS = {"agents"}
+
+
+def _should_copy_file(rel: Path) -> bool:
+    if rel.name in SKIP_FILES or rel.name.endswith(".db"):
+        return False
+    parts = rel.parts
+    if not parts:
+        return False
+    if parts[0] == "env":
+        return rel.name.endswith(".example")
+    if parts[0] == "data":
+        return len(parts) >= 2 and parts[1] in ALLOWED_DATA_SUBDIRS
+    return True
 
 
 def check_empty_directory():
@@ -41,27 +55,27 @@ def copy_tree_dynamic(source_dir: Path, target_dir: Path) -> list[str]:
     for item in sorted(source_dir.rglob("*")):
         if any(part in SKIP_DIRS for part in item.parts):
             continue
-        if item.is_file() and item.name not in SKIP_FILES and not item.name.endswith(".db"):
-            rel = item.relative_to(source_dir)
-            dest = target_dir / rel
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(item, dest)
-            copied.append(str(rel))
-            print(f"   [Scaffolded] {rel}")
+        if not item.is_file():
+            continue
+        rel = item.relative_to(source_dir)
+        if not _should_copy_file(rel):
+            continue
+        dest = target_dir / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(item, dest)
+        copied.append(str(rel))
+        print(f"   [Scaffolded] {rel}")
 
-    if (target_dir / ".env.example").exists() and not (target_dir / ".env").exists():
-        shutil.copy2(target_dir / ".env.example", target_dir / ".env")
-        print("   [Created] .env (from .env.example)")
+    target_env_dir = target_dir / "env"
+    if target_env_dir.exists():
+        for example_file in sorted(target_env_dir.glob("*.example")):
+            active_name = example_file.name[:-len(".example")]
+            active_path = target_env_dir / active_name
+            if active_name and not active_path.exists():
+                shutil.copy2(example_file, active_path)
+                print(f"   [Created] env/{active_name} (from env/{example_file.name})")
 
-    if (target_dir / ".models.example").exists() and not (target_dir / ".models").exists():
-        if (source_dir / ".models").exists():
-            shutil.copy2(source_dir / ".models", target_dir / ".models")
-            print("   [Scaffolded] .models")
-        else:
-            shutil.copy2(target_dir / ".models.example", target_dir / ".models")
-            print("   [Created] .models (from .models.example)")
-
-    for d in ["logs", "docs", "data"]:
+    for d in ["logs", "docs", "data", "tmp", "env"]:
         (target_dir / d).mkdir(parents=True, exist_ok=True)
 
     return copied

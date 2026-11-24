@@ -140,7 +140,8 @@ pnpm-lock.yaml
 
 # Environment and simulation data
 .env
-env
+env/*
+!skills/storage/my_skills/scaffold-project/resources/initialize/backend/env/*.example
 
 archived/
 
@@ -174,6 +175,11 @@ extra_tools/
 .env
 .env.stock_resource
 data/
+!skills/storage/my_skills/scaffold-project/resources/initialize/backend/data/
+skills/storage/my_skills/scaffold-project/resources/initialize/backend/data/*
+!skills/storage/my_skills/scaffold-project/resources/initialize/backend/data/agents/
+skills/storage/my_skills/scaffold-project/resources/initialize/backend/data/agents/*
+!skills/storage/my_skills/scaffold-project/resources/initialize/backend/data/agents/general.yaml
 downloads_test/
 *.mp4
 *.webm
