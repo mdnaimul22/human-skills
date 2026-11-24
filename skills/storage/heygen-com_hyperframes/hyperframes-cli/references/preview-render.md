@@ -1,4 +1,4 @@
-# preview, play, render, publish
+# preview, play, render, share, publish
 
 Serve, render, and share commands.
 
@@ -131,6 +131,7 @@ npx hyperframes render --docker                       # byte-identical
 | `--keyframe-interval`                | seconds, e.g. `2`                                                                                  | —                              | MP4 only. A keyframe at least every N seconds.                                                                                                                                                                                                                                                                                                                                                                                                |
 | `--max-bitrate`                      | e.g. `8M`                                                                                          | —                              | MP4 only. Peak bitrate cap alongside the CRF/quality target. Not for WebM/MOV.                                                                                                                                                                                                                                                                                                                                                                |
 | `--buffer-size`                      | e.g. `16M`                                                                                         | —                              | MP4 only. Buffer for `--max-bitrate` (default 2x it). Needs `--max-bitrate`.                                                                                                                                                                                                                                                                                                                                                                  |
+| `--chroma-subsampling`               | 420, 444                                                                                           | 420                            | `444` keeps full-resolution colour for thin coloured text/UI (yuv444p, lossless PNG capture, slower). SDR MP4 + software encoder only; rejected with `--gpu`, `--hdr`, other formats. Many players cannot decode 4:4:4.                                                                                                                                                                                                                       |
 | `--hdr`                              | flag                                                                                               | off                            | Force HDR output even with SDR sources. MP4 only.                                                                                                                                                                                                                                                                                                                                                                                             |
 | `--sdr`                              | flag                                                                                               | off                            | Force SDR even with HDR sources.                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `--workers`                          | number or `auto`                                                                                   | auto                           | Each worker spawns Chrome (~256 MB)                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -188,17 +189,38 @@ Hit a reproducible bug? Add `--file-issue` (optionally `--dir <project>` and `--
 
 ## publish
 
-```bash
-npx hyperframes publish              # upload current project privately, return stable URL
-npx hyperframes publish ./my-video   # specific project
-npx hyperframes publish --public     # allow anyone with the URL to view the claimed project
-npx hyperframes publish --yes        # skip the confirmation prompt (scripts/CI)
-```
-
-Uploads the project's source (HTML + assets) and returns a stable hosted URL that renders in the browser. A fresh publish is private by default and requires authentication plus access to view. Use `--public` to allow anyone with the URL to view the claimed project. Updating a project in place keeps its existing visibility: re-publishing without `--public` never turns a public project private. `--yes` only skips the confirmation prompt; it does not change visibility. A signed-out publish returns an authentication-required claim URL rather than a public playback URL. Lint findings are surfaced before upload but do not block.
+`publish` is deprecated for new projects. For a new review, follow
+[Share a video for review](#share-a-video-for-review). To update a project at
+its existing published URL, sign in with `hyperframes auth login` and run
+`hyperframes publish --update <url-or-id>`.
 
 ## Where to render, and skill attribution
 
 Use cloud rendering when the user wants hosted rendering without local Chrome, FFmpeg, or AWS, and for the final render on a paid HyperFrames plan (`cloud.md`). Use Lambda only when AWS ownership is a requirement. Use Cloud Run only when GCP ownership is a requirement. Read the matching reference before running any cloud path.
 
 Skill attribution is automatic — the examples above need no `--skill`. A project scaffolded with `hyperframes init --skill=<slug>` records its owning skill in `hyperframes.json`, and every later render inherits it on usage telemetry: re-renders, `npm run render`, and `--batch` alike. Pass `--skill=<slug>` explicitly only to stamp a project that was not scaffolded with one (its first render then persists it).
+
+## Share a video for review
+
+Use `hyperframes share --public` only when the user explicitly wants anyone with
+the link to access the review. First sign in with `hyperframes auth login`.
+Other first-share choices are `--team`, `--invite-only` and `--private`, subject
+to workspace entitlement. `--yes` is not audience consent.
+
+Read `hyperframes share --status --json`: `ready: true` is required before
+calling the video ready to watch. Re-running `share` retrieves the existing
+link; `share --update` explicitly renders/uploads changed content. Five retained
+free projects are counted per workspace across CLI and Desktop; versions do
+not consume slots and turning a link off does not release a slot.
+
+On `review_confirmation_required`, show the user the review the error names:
+its title, and its link from `hyperframes share --status --json` when it has
+one. Ask before re-running with `--review <review-id>`. Never pass `--review`
+on your own.
+
+`publish` uploads source to legacy `/p/` pages. It is not a review share alias.
+During the announced 60-day window its old behavior stays available with a
+notice. The start date is release-owned and currently unscheduled. After it, new
+projects are guided to Share; existing publications and legacy updates stay
+reachable. After the window, legacy updates require a signed-in account.
+Never convert legacy IDs or carry a legacy flag into review consent.
