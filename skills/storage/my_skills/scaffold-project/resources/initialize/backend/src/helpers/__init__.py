@@ -43,6 +43,7 @@ _LAZY_EXPORTS: dict[str, str] = {
     "shutdown_redis": ".redis_client",
     "RateLimiter": ".rate_limit",
     "register_cors": ".cors",
+    "get_allowed_redirect_hosts": ".cors",
     "register_middleware": ".middleware",
     "register_error_handlers": ".error_handlers",
     "NLE_COMPAT": ".media_compat",

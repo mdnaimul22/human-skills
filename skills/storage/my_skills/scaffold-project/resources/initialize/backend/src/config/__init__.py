@@ -9,6 +9,7 @@ from .dotenv import (
     load_dotenv, set_value, get_value, remove_value, parse_env_dict,
 )
 from .settings import Settings
+from .reloader import EnvChanges, EnvHotReloader, EnvWatchEntry, get_env_reloader, reload_env_namespace
 from .logger import (
     job_context,
     get_telemetry,
@@ -62,6 +63,11 @@ __all__ = [
     "remove_value",
     "parse_env_dict",
     "Settings",
+    "EnvChanges",
+    "EnvHotReloader",
+    "EnvWatchEntry",
+    "get_env_reloader",
+    "reload_env_namespace",
     "job_context",
     "get_telemetry",
     "set_telemetry",

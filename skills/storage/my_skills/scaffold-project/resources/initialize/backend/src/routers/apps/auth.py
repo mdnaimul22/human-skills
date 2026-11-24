@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config import Settings, setup_logger
 from src.apps.auth import Principal, get_current_user, get_google_auth_url, verify_oauth_state
 from src.db import get_session
+from src.helpers import get_allowed_redirect_hosts
 from src.helpers.rate_limit import RateLimiter
 from src.schema import (
     GoogleAuthUrlResponse, GoogleCallbackRequest, TokenResponse, UserProfileResponse,
@@ -26,7 +27,7 @@ def _resolve_frontend_base(request: Request) -> str:
     if raw_host:
         if any(c in raw_host for c in ("@", "/", "\\")) or any(c.isspace() for c in raw_host):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid redirect host")
-        if raw_host.lower() not in Settings.allowed_redirect_hosts:
+        if raw_host.lower() not in get_allowed_redirect_hosts(Settings):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid redirect host")
 
     backend_host = Settings.BACKEND_DOMAIN.lower()
