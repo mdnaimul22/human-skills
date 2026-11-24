@@ -43,10 +43,25 @@ class Settings(BaseSettings):
     FRONTEND_DOMAIN: str = Field(default="localhost", validation_alias="FRONTEND_DOMAIN")
     EXTRA_CORS_ORIGINS: str = Field(default="", validation_alias="EXTRA_CORS_ORIGINS")
     ALLOWED_REDIRECT_HOSTS: str = Field(default="", validation_alias="ALLOWED_REDIRECT_HOSTS")
-    ENABLE_TAILSCALE: bool = Field(default=False, validation_alias="ENABLE_TAILSCALE")
     PUBLIC_URL: Optional[str] = Field(default=None, validation_alias="PUBLIC_URL")
     SSL_EMAIL: str = Field(default="", validation_alias="SSL_EMAIL")
     GOOGLE_VERIFICATION_CODE: str = Field(default="", validation_alias="GOOGLE_VERIFICATION_CODE")
+
+    TUNNEL_CONFIG_FILE: str = Field(default="env/.1t2u3n4n5e6l7", validation_alias="TUNNEL_CONFIG_FILE")
+    TUNNEL_MANAGER: bool = Field(default=False, validation_alias="TUNNEL_MANAGER")
+    TUNNEL: bool = Field(default=False, validation_alias="TUNNEL")
+    TUNNEL_PROVIDER: str = Field(default="cloudflared", validation_alias="TUNNEL_PROVIDER")
+    TUNNEL_TARGET_HOST: str = Field(default="127.0.0.1", validation_alias="TUNNEL_TARGET_HOST")
+    TUNNEL_TARGET_PORT: int = Field(default=0, ge=0, le=65535, validation_alias="TUNNEL_TARGET_PORT")
+    TUNNEL_AUTO_INSTALL: bool = Field(default=True, validation_alias="TUNNEL_AUTO_INSTALL")
+    TUNNEL_AUTO_RESTART: bool = Field(default=True, validation_alias="TUNNEL_AUTO_RESTART")
+    TUNNEL_POLL_INTERVAL_SEC: float = Field(default=5.0, ge=0.5, le=300.0, validation_alias="TUNNEL_POLL_INTERVAL_SEC")
+    TUNNEL_START_TIMEOUT_SEC: float = Field(default=45.0, ge=5.0, le=600.0, validation_alias="TUNNEL_START_TIMEOUT_SEC")
+    TUNNEL_MAX_RESTARTS: int = Field(default=5, ge=0, le=50, validation_alias="TUNNEL_MAX_RESTARTS")
+    TUNNEL_CLOUDFLARE_TOKEN: str = Field(default="", validation_alias="TUNNEL_CLOUDFLARE_TOKEN")
+    TUNNEL_CLOUDFLARE_HOSTNAME: str = Field(default="", validation_alias="TUNNEL_CLOUDFLARE_HOSTNAME")
+    TUNNEL_TAILSCALE_AUTHKEY: str = Field(default="", validation_alias="TUNNEL_TAILSCALE_AUTHKEY")
+    TUNNEL_TAILSCALE_HTTPS_PORT: int = Field(default=443, ge=1, le=65535, validation_alias="TUNNEL_TAILSCALE_HTTPS_PORT")
 
     DATABASE_URL: str = Field(default="sqlite+aiosqlite:///./data/app.db", validation_alias="DATABASE_URL")
     REDIS_ENABLED: bool = Field(default=False, validation_alias="REDIS_ENABLED")
@@ -212,6 +227,35 @@ class Settings(BaseSettings):
                 changes[k] = (old_val, new_val)
         return changes
 
+    def reload_tunnel_env(self) -> dict[str, tuple[float | int | str | bool, float | int | str | bool]]:
+        parsed = parse_env_dict(self.TUNNEL_CONFIG_FILE)
+        if not parsed:
+            return {}
+        tunnel_updates = {
+            k: v for k, v in parsed.items()
+            if (k == "TUNNEL" or k.startswith("TUNNEL_")) and k in type(self).model_fields
+        }
+        if not tunnel_updates:
+            return {}
+        candidate_data = self.model_dump()
+        candidate_data.update(tunnel_updates)
+        candidate = type(self).model_validate(candidate_data)
+        changes: dict[str, tuple[float | int | str | bool, float | int | str | bool]] = {}
+        candidate_dict = candidate.model_dump()
+        for k in tunnel_updates:
+            old_val = self.__dict__.get(k)
+            new_val = candidate_dict.get(k)
+            if old_val != new_val and old_val is not None and new_val is not None:
+                self.__dict__[k] = new_val
+                self.__pydantic_fields_set__.add(k)
+                os.environ[k] = tunnel_updates[k]
+                changes[k] = (old_val, new_val)
+        return changes
+
+    @property
+    def resolved_tunnel_port(self) -> int:
+        return self.TUNNEL_TARGET_PORT if self.TUNNEL_TARGET_PORT > 0 else self.API_PORT
+
     @property
     def LOG_DIR(self) -> Path:
         return PROJECT_ROOT.safe_resolve(self.RAW_LOG_DIR)
@@ -262,6 +306,7 @@ class Settings(BaseSettings):
             str(PROJECT_ROOT / "env" / ".1g2i3t4s5y6n7c"),
             str(PROJECT_ROOT / "env" / ".1y2s3t4e5m"),
             str(PROJECT_ROOT / "env" / ".1m2o3d4e5l3s"),
+            str(PROJECT_ROOT / "env" / ".1t2u3n4n5e6l7"),
         ),
         env_file_encoding="utf-8",
         extra="allow",
