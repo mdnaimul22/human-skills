@@ -5,16 +5,32 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.helpers.cors import register_cors
+from src.helpers.cors import get_allowed_redirect_hosts, register_cors
 from src.helpers.retry import retry_async_on_failure, retry_on_failure
 
 
 @dataclass
 class DummyCorsSettings:
     is_development: bool = True
+    is_testing: bool = False
     API_PORT: int = 8000
     FRONTEND_URL: str = "https://example.com/"
-    EXTRA_CORS_ORIGINS: str = "https://a.example.com/, https://b.example.com"
+    EXTRA_CORS_ORIGINS: str = "https://a.example.com/, https://b.example.com:8443"
+    ALLOWED_REDIRECT_HOSTS: str = "portal.example.com"
+
+
+def test_get_allowed_redirect_hosts_dev_and_prod() -> None:
+    dev_hosts = get_allowed_redirect_hosts(DummyCorsSettings(is_development=True))
+    assert "example.com" in dev_hosts
+    assert "example.com:443" in dev_hosts
+    assert "a.example.com" in dev_hosts
+    assert "b.example.com:8443" in dev_hosts
+    assert "portal.example.com" in dev_hosts
+    assert "localhost:8000" in dev_hosts
+
+    prod_hosts = get_allowed_redirect_hosts(DummyCorsSettings(is_development=False, is_testing=False))
+    assert "example.com" in prod_hosts
+    assert "localhost:8000" not in prod_hosts
 
 
 def test_register_cors_attaches_middleware_cleanly() -> None:

@@ -4,7 +4,7 @@ import threading
 import weakref
 from collections import deque
 from typing import Optional
-from src.config import Settings, ensure_dir, exists, get_mtime, setup_logger, write_json
+from src.config import EnvChanges, Settings, ensure_dir, get_env_reloader, setup_logger, write_json
 from src.helpers import get_now_iso
 from .helpers import origin_from_url
 from .providers import BaseTunnelProvider, create_provider
@@ -47,11 +47,17 @@ class TunnelManager:
         self._started_at: Optional[str] = None
         self._restart_count: int = 0
         self._events: deque[TunnelEvent] = deque(maxlen=50)
-        self._config_mtime: float = 0.0
         self._stop_event: Optional[asyncio.Event] = None
         self._watch_task: Optional[asyncio.Task[None]] = None
         self._thread_lock = threading.Lock()
         self._loop_locks: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Lock] = weakref.WeakKeyDictionary()
+        get_env_reloader().register(
+            name="tunnel",
+            env_path_fn=lambda: Settings.TUNNEL_CONFIG_FILE,
+            prefixes=("TUNNEL_",),
+            exact_keys=("TUNNEL",),
+            on_change=self._on_env_changed,
+        )
 
     @classmethod
     def get_instance(cls) -> TunnelManager:
@@ -108,34 +114,34 @@ class TunnelManager:
         except Exception as err:
             logger.debug(f"tunnel.manager.state_persist_err err={err}")
 
-    def _sync_config_mtime(self) -> None:
-        cfg_path = Settings.TUNNEL_CONFIG_FILE
-        if exists(cfg_path):
-            try:
-                self._config_mtime = get_mtime(cfg_path)
-            except OSError as err:
-                logger.debug(f"tunnel.manager.mtime_err path={cfg_path} err={err}")
+    def _sync_config_state(self) -> None:
+        get_env_reloader().sync_entry("tunnel")
 
-    def _reload_config_if_changed(self) -> dict[str, tuple[float | int | str | bool, float | int | str | bool]]:
-        cfg_path = Settings.TUNNEL_CONFIG_FILE
-        if not exists(cfg_path):
-            return {}
-        try:
-            mtime = get_mtime(cfg_path)
-        except OSError:
-            return {}
-        if mtime <= self._config_mtime:
-            return {}
-        self._config_mtime = mtime
-        try:
-            changes = Settings.reload_tunnel_env()
-            if changes:
-                keys = ",".join(sorted(changes.keys()))
-                logger.info(f"tunnel.config.reloaded path={cfg_path} updated={keys}")
-            return changes
-        except Exception as err:
-            logger.error(f"tunnel.config.reload_failed path={cfg_path} err={err}")
-            return {}
+    async def _on_env_changed(self, changes: EnvChanges) -> None:
+        if not Settings.TUNNEL_MANAGER:
+            logger.info("tunnel.manager.disabled_via_hot_reload")
+            await self.deactivate_async()
+            self._state = TunnelState.DISABLED
+            self._persist_state()
+            return
+        if not Settings.TUNNEL:
+            if self._adapter is not None or self._state != TunnelState.STANDBY:
+                logger.info("tunnel.manager.deactivating_via_hot_reload")
+                await self.deactivate_async()
+            return
+        needs_restart = bool(_RECONFIG_KEYS.intersection(changes.keys()))
+        if needs_restart and self._adapter is not None:
+            logger.info("tunnel.manager.restarting_on_config_change")
+            await self.deactivate_async()
+            await self.activate_async()
+            return
+        if self._state in {TunnelState.STANDBY, TunnelState.DISABLED, TunnelState.ERROR}:
+            logger.info("tunnel.manager.activating_via_hot_reload")
+            await self.activate_async()
+
+    async def _check_config_reload(self) -> list[str]:
+        changes = await get_env_reloader().check_entry_async("tunnel")
+        return sorted(changes.keys())
 
     async def activate_async(self, provider: Optional[str] = None, port: Optional[int] = None) -> Optional[str]:
         lock = self._get_op_lock()
@@ -228,29 +234,6 @@ class TunnelManager:
         self._persist_state()
         return stopped
 
-    async def _apply_hot_reload(self, changes: dict[str, tuple[float | int | str | bool, float | int | str | bool]]) -> bool:
-        if not Settings.TUNNEL_MANAGER:
-            logger.info("tunnel.manager.disabled_via_hot_reload")
-            await self.deactivate_async()
-            self._state = TunnelState.DISABLED
-            self._persist_state()
-            return False
-        if not Settings.TUNNEL:
-            if self._adapter is not None or self._state != TunnelState.STANDBY:
-                logger.info("tunnel.manager.deactivating_via_hot_reload")
-                await self.deactivate_async()
-            return True
-        needs_restart = bool(_RECONFIG_KEYS.intersection(changes.keys()))
-        if needs_restart and self._adapter is not None:
-            logger.info("tunnel.manager.restarting_on_config_change")
-            await self.deactivate_async()
-            await self.activate_async()
-            return True
-        if self._state in {TunnelState.STANDBY, TunnelState.DISABLED, TunnelState.ERROR}:
-            logger.info("tunnel.manager.activating_via_hot_reload")
-            await self.activate_async()
-        return True
-
     def _compute_backoff_sec(self) -> float:
         return min(30.0, float(2 ** min(self._restart_count, 4)))
 
@@ -281,11 +264,9 @@ class TunnelManager:
             await self.activate_async()
 
     async def poll_once_async(self) -> bool:
-        changes = self._reload_config_if_changed()
-        if changes:
-            keep_running = await self._apply_hot_reload(changes)
-            if not keep_running:
-                return False
+        await self._check_config_reload()
+        if not Settings.TUNNEL_MANAGER:
+            return False
         await self._run_watchdog_tick()
         return True
 
@@ -304,7 +285,7 @@ class TunnelManager:
                 break
 
     async def start_async(self) -> Optional[str]:
-        self._sync_config_mtime()
+        self._sync_config_state()
         if not Settings.TUNNEL_MANAGER:
             self._state = TunnelState.DISABLED
             logger.info("TunnelManager disabled (TUNNEL_MANAGER=false)")

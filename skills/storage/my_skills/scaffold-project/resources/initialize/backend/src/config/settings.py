@@ -1,29 +1,10 @@
-import os
-import urllib.parse
 from pathlib import Path
 from typing import Optional
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .dotenv import parse_env_dict
 from .paths import PROJECT_ROOT
-
-
-def _extract_hosts_from_url(target: set[str], url_str: str) -> None:
-    if not url_str:
-        return
-    parsed = urllib.parse.urlparse(url_str)
-    if not parsed.hostname:
-        return
-    host = parsed.hostname.lower()
-    target.add(host)
-    if parsed.port:
-        target.add(f"{host}:{parsed.port}")
-    elif parsed.scheme == "https":
-        target.add(f"{host}:443")
-    elif parsed.scheme == "http":
-        target.add(f"{host}:80")
 
 
 class Settings(BaseSettings):
@@ -202,56 +183,6 @@ class Settings(BaseSettings):
             raise ValueError("RAM free floors must strictly descend (ELEVATED > CRITICAL > EMERGENCY)")
         return self
 
-    def reload_system_env(self) -> dict[str, tuple[float | int | str | bool, float | int | str | bool]]:
-        parsed = parse_env_dict(self.SYSTEM_CONFIG_FILE)
-        if not parsed:
-            return {}
-        system_updates = {
-            k: v for k, v in parsed.items()
-            if k.startswith("SYSTEM_") and k in type(self).model_fields
-        }
-        if not system_updates:
-            return {}
-        candidate_data = self.model_dump()
-        candidate_data.update(system_updates)
-        candidate = type(self).model_validate(candidate_data)
-        changes: dict[str, tuple[float | int | str | bool, float | int | str | bool]] = {}
-        candidate_dict = candidate.model_dump()
-        for k in system_updates:
-            old_val = self.__dict__.get(k)
-            new_val = candidate_dict.get(k)
-            if old_val != new_val and old_val is not None and new_val is not None:
-                self.__dict__[k] = new_val
-                self.__pydantic_fields_set__.add(k)
-                os.environ[k] = system_updates[k]
-                changes[k] = (old_val, new_val)
-        return changes
-
-    def reload_tunnel_env(self) -> dict[str, tuple[float | int | str | bool, float | int | str | bool]]:
-        parsed = parse_env_dict(self.TUNNEL_CONFIG_FILE)
-        if not parsed:
-            return {}
-        tunnel_updates = {
-            k: v for k, v in parsed.items()
-            if (k == "TUNNEL" or k.startswith("TUNNEL_")) and k in type(self).model_fields
-        }
-        if not tunnel_updates:
-            return {}
-        candidate_data = self.model_dump()
-        candidate_data.update(tunnel_updates)
-        candidate = type(self).model_validate(candidate_data)
-        changes: dict[str, tuple[float | int | str | bool, float | int | str | bool]] = {}
-        candidate_dict = candidate.model_dump()
-        for k in tunnel_updates:
-            old_val = self.__dict__.get(k)
-            new_val = candidate_dict.get(k)
-            if old_val != new_val and old_val is not None and new_val is not None:
-                self.__dict__[k] = new_val
-                self.__pydantic_fields_set__.add(k)
-                os.environ[k] = tunnel_updates[k]
-                changes[k] = (old_val, new_val)
-        return changes
-
     @property
     def resolved_tunnel_port(self) -> int:
         return self.TUNNEL_TARGET_PORT if self.TUNNEL_TARGET_PORT > 0 else self.API_PORT
@@ -279,26 +210,6 @@ class Settings(BaseSettings):
     @property
     def is_testing(self) -> bool:
         return self.ENV.lower() == "testing"
-
-    @property
-    def allowed_redirect_hosts(self) -> set[str]:
-        hosts: set[str] = set()
-        _extract_hosts_from_url(hosts, self.FRONTEND_URL)
-        cors_items = self.EXTRA_CORS_ORIGINS.split(",") if self.EXTRA_CORS_ORIGINS else []
-        for raw_origin in cors_items:
-            _extract_hosts_from_url(hosts, raw_origin.strip())
-        redirect_items = self.ALLOWED_REDIRECT_HOSTS.split(",") if self.ALLOWED_REDIRECT_HOSTS else []
-        for h in redirect_items:
-            val = h.strip().lower()
-            if val:
-                hosts.add(val)
-        if self.is_development or self.is_testing:
-            hosts.update({
-                "localhost", "127.0.0.1",
-                "localhost:3000", f"localhost:{self.API_PORT}",
-                "127.0.0.1:3000", f"127.0.0.1:{self.API_PORT}",
-            })
-        return hosts
 
     model_config = SettingsConfigDict(
         env_file=(

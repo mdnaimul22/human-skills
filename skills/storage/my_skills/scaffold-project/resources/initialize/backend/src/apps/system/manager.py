@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import threading
 import time
 from typing import AsyncGenerator, Optional
-from src.config import Settings, exists, get_mtime, setup_logger
+from src.config import EnvChanges, Settings, get_env_reloader, setup_logger
 from .schema import (
     CircuitState,
     CpuTelemetry,
@@ -87,7 +87,12 @@ class SystemManager:
         self._last_load_level: Optional[LoadLevel] = None
         self._last_gpu_health: Optional[GpuHealthState] = None
         self._last_heartbeat_at: float = 0.0
-        self._config_mtime: Optional[float] = None
+        get_env_reloader().register(
+            name="system",
+            env_path_fn=lambda: Settings.SYSTEM_CONFIG_FILE,
+            prefixes=("SYSTEM_",),
+            on_change=self._on_env_changed,
+        )
 
     @classmethod
     def get_instance(cls) -> SystemManager:
@@ -127,7 +132,7 @@ class SystemManager:
             if self._running:
                 return
             self._running = True
-            self._sync_initial_config_mtime()
+            self._sync_config_state()
             self._spawn_background_tasks()
         logger.info("SystemManager started")
 
@@ -135,7 +140,7 @@ class SystemManager:
         with self._lock:
             already_running = self._running
             self._running = True
-            self._sync_initial_config_mtime()
+            self._sync_config_state()
         snapshot = await self.probe.sample(force_refresh=True, warmup=True)
         level, _, gpu_health, gpu_reason, budget = self._evaluate_state(snapshot)
         with self._lock:
@@ -174,38 +179,15 @@ class SystemManager:
             except asyncio.CancelledError as err:
                 logger.debug(f"SystemManager background task cancelled on shutdown: {err}")
 
-    def _sync_initial_config_mtime(self) -> None:
-        cfg_path = Settings.SYSTEM_CONFIG_FILE
-        if exists(cfg_path):
-            try:
-                self._config_mtime = get_mtime(cfg_path)
-            except OSError:
-                self._config_mtime = None
+    def _sync_config_state(self) -> None:
+        get_env_reloader().sync_entry("system")
 
-    def _check_config_reload(self) -> list[str]:
-        cfg_path = Settings.SYSTEM_CONFIG_FILE
-        if not exists(cfg_path):
-            self._config_mtime = None
-            return []
-        try:
-            mtime = get_mtime(cfg_path)
-        except OSError:
-            return []
-        if self._config_mtime is not None and mtime == self._config_mtime:
-            return []
-        try:
-            changes = Settings.reload_system_env()
-            self._config_mtime = mtime
-            if changes:
-                self.allocator.sync_from_settings()
-                keys = sorted(changes.keys())
-                logger.info(f"system.config.reloaded path={cfg_path} updated={','.join(keys)}")
-                return keys
-            return []
-        except Exception as exc:
-            self._config_mtime = mtime
-            logger.error(f"system.config.reload_failed path={cfg_path} error={exc}")
-            return []
+    async def _on_env_changed(self, _changes: EnvChanges) -> None:
+        self.allocator.sync_from_settings()
+
+    async def _check_config_reload(self) -> list[str]:
+        changes = await get_env_reloader().check_entry_async("system")
+        return sorted(changes.keys())
 
     def _log_startup_cpu_ram(self, snapshot: HardwareTelemetrySnapshot, budget: SystemResourceBudget) -> None:
         cgroup_val = (
@@ -376,7 +358,7 @@ class SystemManager:
             )
 
     async def _sampler_step(self) -> None:
-        self._check_config_reload()
+        await self._check_config_reload()
         snapshot = await self.probe.sample(force_refresh=True, warmup=not self._banner_logged)
         level, load_reason, gpu_health, gpu_reason, budget = self._evaluate_state(snapshot)
         if not self._banner_logged:

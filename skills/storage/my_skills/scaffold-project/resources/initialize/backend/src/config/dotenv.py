@@ -65,6 +65,10 @@ def get_value(key: str, default: str = "") -> str:
     return os.environ.get(key, default)
 
 
+def sync_process_env(key: str, value: str) -> None:
+    os.environ[key] = value
+
+
 def remove_value(key: str, path: str = _DEFAULT_DOTENV_PATH) -> None:
     if not files.exists(path):
         return

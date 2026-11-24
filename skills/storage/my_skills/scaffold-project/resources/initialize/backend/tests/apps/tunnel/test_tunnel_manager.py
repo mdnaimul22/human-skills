@@ -4,7 +4,7 @@ from typing import Optional
 import pytest
 from src.apps.tunnel import TunnelManager, TunnelProvider, TunnelState, get_tunnel_manager
 from src.apps.tunnel.providers import BaseTunnelProvider
-from src.config import Settings, delete, exists, write_text
+from src.config import EnvHotReloader, Settings, delete, exists, write_text
 
 
 class _StubProvider(BaseTunnelProvider):
@@ -34,6 +34,7 @@ class _StubProvider(BaseTunnelProvider):
 
 def setup_function() -> None:
     TunnelManager.reset_instance()
+    EnvHotReloader.reset_instance()
 
 
 @pytest.mark.asyncio
@@ -98,7 +99,6 @@ async def test_manager_activates_and_hot_reloads_env_toggles(monkeypatch: pytest
         assert mgr.get_status().state == TunnelState.STANDBY
 
         write_text(cfg_rel, "TUNNEL_MANAGER=true\nTUNNEL=true\nTUNNEL_PROVIDER=cloudflared\n")
-        mgr._config_mtime -= 1.0
         assert await mgr.poll_once_async() is True
         assert mgr.get_status().state == TunnelState.ACTIVE
         assert mgr.get_tunnel_url() == "https://alpha.trycloudflare.com"
@@ -106,13 +106,11 @@ async def test_manager_activates_and_hot_reloads_env_toggles(monkeypatch: pytest
         assert Settings.PUBLIC_URL == "https://alpha.trycloudflare.com"
 
         write_text(cfg_rel, "TUNNEL_MANAGER=true\nTUNNEL=true\nTUNNEL_PROVIDER=tailscale\n")
-        mgr._config_mtime -= 1.0
         assert await mgr.poll_once_async() is True
         assert mgr.get_tunnel_url() == "https://node.ts.net"
         assert created[0].stop_calls >= 1
 
         write_text(cfg_rel, "TUNNEL_MANAGER=true\nTUNNEL=false\nTUNNEL_PROVIDER=tailscale\n")
-        mgr._config_mtime -= 1.0
         assert await mgr.poll_once_async() is True
         assert mgr.get_status().state == TunnelState.STANDBY
         assert mgr.get_tunnel_url() is None

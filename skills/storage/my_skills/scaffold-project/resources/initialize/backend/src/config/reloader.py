@@ -1,11 +1,10 @@
 from __future__ import annotations
 import hashlib
 import inspect
-import os
 import threading
 from dataclasses import dataclass
 from typing import Awaitable, Callable, Optional
-from .dotenv import parse_env_dict
+from .dotenv import parse_env_dict, sync_process_env
 from .files import exists, get_mtime, read_bytes
 from .logger import setup_logger
 from .settings import Settings
@@ -56,7 +55,7 @@ def reload_env_namespace(
         if old_val != new_val and old_val is not None and new_val is not None:
             Settings.__dict__[k] = new_val
             Settings.__pydantic_fields_set__.add(k)
-            os.environ[k] = updates[k]
+            sync_process_env(k, updates[k])
             changes[k] = (old_val, new_val)
     return changes
 

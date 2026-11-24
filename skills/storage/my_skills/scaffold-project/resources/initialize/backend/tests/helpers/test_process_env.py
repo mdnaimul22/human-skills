@@ -2,12 +2,12 @@ import os
 import uuid
 import pytest
 from pydantic import ValidationError as PydanticValidationError
-from src.config import Settings, delete, get_abs_path, is_dir, write_text
+from src.config import Settings, delete, get_abs_path, is_dir, reload_env_namespace, write_text
 from src.helpers import get_ffmpeg_process_env, inject_gpu_library_env
 
 
 def test_system_settings_90_percent_defaults() -> None:
-    assert Settings.SYSTEM_CONFIG_FILE == "env/.system"
+    assert Settings.SYSTEM_CONFIG_FILE == "env/.1y2s3t4e5m"
     assert Settings.SYSTEM_MAX_CPU_USAGE_PERCENT == 90.0
     assert Settings.SYSTEM_MAX_RAM_USAGE_PERCENT == 90.0
     assert Settings.SYSTEM_GPU_MAX_VRAM_USAGE_PERCENT == 90.0
@@ -26,7 +26,7 @@ def test_reload_system_env_atomic_validation_and_apply() -> None:
     try:
         Settings.SYSTEM_CONFIG_FILE = rel_cfg
         write_text(rel_cfg, "SYSTEM_MAX_CPU_USAGE_PERCENT=78.5\nSYSTEM_GPU_MAX_NVENC_SESSIONS=5\n")
-        changes = Settings.reload_system_env()
+        changes = reload_env_namespace(rel_cfg, prefixes=("SYSTEM_",))
         assert changes["SYSTEM_MAX_CPU_USAGE_PERCENT"] == (orig_cpu, 78.5)
         assert changes["SYSTEM_GPU_MAX_NVENC_SESSIONS"] == (orig_nvenc, 5)
         assert Settings.SYSTEM_MAX_CPU_USAGE_PERCENT == 78.5
@@ -37,7 +37,7 @@ def test_reload_system_env_atomic_validation_and_apply() -> None:
             "SYSTEM_MAX_CPU_USAGE_PERCENT=65.0\nSYSTEM_CPU_ELEVATED_PCT=90.0\nSYSTEM_CPU_CRITICAL_PCT=80.0\n",
         )
         with pytest.raises(PydanticValidationError):
-            Settings.reload_system_env()
+            reload_env_namespace(rel_cfg, prefixes=("SYSTEM_",))
         assert Settings.SYSTEM_MAX_CPU_USAGE_PERCENT == 78.5
         assert Settings.SYSTEM_CPU_ELEVATED_PCT < Settings.SYSTEM_CPU_CRITICAL_PCT
     finally:
