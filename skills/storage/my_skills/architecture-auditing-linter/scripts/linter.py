@@ -20,7 +20,7 @@ class Linter(Tool):
     }
     instruction: str = "Audit your codebase. Use linter_type='default' for architecture violations & type safety, 'rest_api' for REST API quality scoring."
 
-    CONFIG_INFRA_FILES: set = {"paths.py", "files.py", "logger.py", "dotenv.py", "__init__.py"}
+    CONFIG_INFRA_FILES: set = {"paths.py", "files.py", "logger.py", "dotenv.py"}
 
     async def execute(self, **kwargs) -> Response:
         scan_path_str = self.args.get("scan_path") or self.args.get("path")
@@ -407,10 +407,17 @@ class Linter(Tool):
 
             try:
                 content = py_file.read_text(encoding="utf-8", errors="ignore")
-                for match in re.finditer(r"^(?:from|import)\s+([\w.]+)", content, re.MULTILINE):
-                    imported = match.group(1).split(".")[0]
-                    if imported != module:
-                        internal_modules[module].add(imported)
+                tree = ast.parse(content)
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Import):
+                        for alias in node.names:
+                            imported = alias.name.split(".")[0]
+                            if imported != module:
+                                internal_modules[module].add(imported)
+                    elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                        imported = node.module.split(".")[0]
+                        if imported != module:
+                            internal_modules[module].add(imported)
             except Exception:
                 continue
 

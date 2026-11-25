@@ -83,7 +83,10 @@ All rules in `default` mode are modularly located in `scripts/default/` and can 
 | `code_complexity` | ⚠️ Deep nesting depth (> 4 levels), high cyclomatic complexity (> 15), and oversized functions. |
 | `code_duplication` | ❌ DRY violation: structural AST duplication between function bodies. |
 | `memory_efficiency` | ⚠️ In-place string concatenation inside loops (`+=`), unneeded list comprehensions in generator functions, ❌ dictionary-like `get()`/`__getitem__()` on Pydantic models, and ⚠️ serialized `model_dump().get()` calls. |
-| `pythonic_standards` | ❌ PEP 8 naming (classes PascalCase, functions snake_case), shadowing Python built-ins, and `global` statement usage. |
+| `pythonic_standards` | ❌ PEP 8 naming (`LightHouse`/`Light_House`, snake_case functions without uppercase), ⚠️ class limits (`<= 20` chars, max 1 `_`, max 3 consecutive uppercase) & function limits (`<= 25` chars, max 3 internal `_`), shadowing Python built-ins, and `global` statement usage. |
+| `section_comments` | ⚠️ Enforces mandatory `#` file/section header comments in multi-module `__init__.py` exports (`_LAZY_EXPORTS` / `__all__`, including `config/__init__.py`) and grouped `settings.py` blocks (`> 8` fields). |
+| `future_annotations` | ❌ Smart check requiring `from __future__ import annotations` only when a file uses `TYPE_CHECKING` imports in annotations or unquoted class self-references. |
+| `unused_dependencies` | ❌ Detects unused private class methods (`_helper`) while exempting decorated framework hooks and local closures. |
 
 ### What it detects in `rest_api` mode?
 When `linter_type="rest_api"` is used, it evaluates router files based on Enterprise API Best Practices.

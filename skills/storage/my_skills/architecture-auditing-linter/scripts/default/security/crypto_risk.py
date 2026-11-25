@@ -6,8 +6,6 @@ from default.security import SecurityDetector, SecurityIssue, CRITICAL, HIGH, ME
 
 
 class CryptoDetector(SecurityDetector):
-    """Detects weak cryptography, hardcoded secrets, and SSL bypass."""
-
     name = "crypto"
     description = (
         "Detects weak hashing, insecure randomness, hardcoded secrets, "
@@ -17,65 +15,153 @@ class CryptoDetector(SecurityDetector):
     WEAK_HASHES = {'md5', 'sha1'}
     WEAK_CIPHERS = {'DES', 'Blowfish', 'RC4', 'ARC4', 'RC2', 'IDEA'}
 
-    # RSA/DSA/EC minimum safe key sizes
     WEAK_KEY_SIZES = {
         'RSA': 2048,
         'DSA': 2048,
-        'DH':  2048,
-        'EC':  256,
+        'DH': 2048,
+        'EC': 256,
     }
 
-    HARDCODED_PATTERNS = [
-        (r'(?:password|passwd|pwd)\s*=\s*["\'][^"\']{3,}["\']', HIGH,
+    SECRET_VAR_RULES = (
+        ({'private_key', 'priv_key'}, 10, CRITICAL, "Hardcoded private key detected — critical security risk."),
+        ({'password', 'passwd', 'pwd', 'db_password', 'user_password', 'smtp_password'}, 3, HIGH,
          "Hardcoded password detected. Use environment variables or secrets management."),
-        (r'(?:api_key|apikey|api_secret)\s*=\s*["\'][^"\']{3,}["\']', HIGH,
+        ({'api_key', 'apikey', 'api_secret', 'client_secret'}, 3, HIGH,
          "Hardcoded API key detected. Use environment variables."),
-        (r'(?:secret|secret_key)\s*=\s*["\'][^"\']{3,}["\']', HIGH,
+        ({'secret', 'secret_key', 'jwt_secret', 'app_secret', 'signing_secret'}, 3, HIGH,
          "Hardcoded secret detected. Use environment variables."),
-        (r'(?:token|auth_token|access_token)\s*=\s*["\'][^"\']{8,}["\']', MEDIUM,
+        ({'token', 'auth_token', 'access_token', 'refresh_token', 'bearer_token'}, 8, MEDIUM,
          "Potential hardcoded token detected. Rotate and use secure storage."),
-        (r'(?:private_key|priv_key)\s*=\s*["\'][^"\']{10,}["\']', CRITICAL,
-         "Hardcoded private key detected — critical security risk."),
-    ]
+    )
+
+    NON_SECRET_TOKEN_PREFIXES = (
+        'eos_', 'bos_', 'pad_', 'unk_', 'sep_', 'cls_', 'mask_', 'stop_',
+        'next_page_', 'page_', 'prev_page_', 'cursor_', 'csrf_',
+    )
+
+    CRYPTO_BYTES_KEY_NAMES = {
+        'key', 'iv', 'aes_key', 'secret_key', 'hmac_key', 'encryption_key',
+        'signing_key', 'cipher_key', 'master_key', 'enc_key', 'dec_key', 'fernet_key',
+    }
+
+    SECURITY_RANDOM_KEYWORDS = {
+        'token', 'secret', 'password', 'passwd', 'pwd', 'key',
+        'salt', 'nonce', 'otp', 'pin', 'csrf', 'session', 'iv', 'auth',
+    }
+
+    PLACEHOLDER_MARKERS = (
+        'your_', 'your-', 'changeme', 'change_me', 'placeholder', 'example',
+        'dummy', 'fake', 'sample', 'replace_me', 'todo', 'xxx', '***',
+    )
+
+    _ENV_VAR_RE = re.compile(r"^[A-Z][A-Z0-9_]{2,}$")
 
     def detect(self, tree: ast.AST, source_code: str) -> List[SecurityIssue]:
         issues: List[SecurityIssue] = []
-
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Call):
-                issues.extend(self._check_call(node))
-
-        # Regex-based hardcoded secret detection
-        for pattern, severity, message in self.HARDCODED_PATTERNS:
-            for match in re.finditer(pattern, source_code, re.IGNORECASE):
-                line = source_code[:match.start()].count('\n') + 1
-                issues.append(SecurityIssue(severity, line, "hardcoded_secret", message))
-
-        # Hardcoded AES key/IV (bytes literal with 16/24/32 bytes)
-        issues.extend(self._detect_hardcoded_key(source_code))
-
+        self._walk_node(tree, issues, security_func=False)
         return issues
 
-    # ──────────────────────────────────────────────
-    # Call-level checks
-    # ──────────────────────────────────────────────
+    def _is_security_name(self, name: str) -> bool:
+        tokens = set(name.lower().split("_"))
+        return bool(tokens & self.SECURITY_RANDOM_KEYWORDS)
 
-    def _check_call(self, node: ast.Call) -> List[SecurityIssue]:
+    def _walk_node(self, node: ast.AST, issues: List[SecurityIssue], security_func: bool) -> None:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            in_sec = security_func or self._is_security_name(node.name)
+            for child in ast.iter_child_nodes(node):
+                self._walk_node(child, issues, in_sec)
+            return
+
+        if isinstance(node, ast.Assign):
+            target_names = [t.id for t in node.targets if isinstance(t, ast.Name)]
+            target_names += [t.attr for t in node.targets if isinstance(t, ast.Attribute)]
+            in_sec = security_func or any(self._is_security_name(n) for n in target_names)
+            for name in target_names:
+                issues.extend(self._check_secret_assignment(name, node.value, node.lineno))
+            for child in ast.iter_child_nodes(node):
+                self._walk_node(child, issues, in_sec)
+            return
+
+        if isinstance(node, ast.AnnAssign):
+            target_name = node.target.id if isinstance(node.target, ast.Name) else (
+                node.target.attr if isinstance(node.target, ast.Attribute) else ""
+            )
+            in_sec = security_func or (bool(target_name) and self._is_security_name(target_name))
+            if target_name and node.value is not None:
+                issues.extend(self._check_secret_assignment(target_name, node.value, node.lineno))
+            for child in ast.iter_child_nodes(node):
+                self._walk_node(child, issues, in_sec)
+            return
+
+        if isinstance(node, ast.Call):
+            issues.extend(self._check_call(node, security_func))
+            for kw in node.keywords:
+                if kw.arg:
+                    issues.extend(self._check_secret_assignment(kw.arg, kw.value, node.lineno))
+
+        for child in ast.iter_child_nodes(node):
+            self._walk_node(child, issues, security_func)
+
+    def _is_placeholder_or_non_secret(self, value: str) -> bool:
+        stripped = value.strip()
+        low = stripped.lower()
+        if not stripped or " " in stripped:
+            return True
+        if stripped.startswith("<") and stripped.endswith(">"):
+            return True
+        if stripped.startswith("${") or stripped.startswith("$"):
+            return True
+        if self._ENV_VAR_RE.match(stripped):
+            return True
+        if low in {"string", "str", "none", "null", "true", "false", "empty", "default", "secret", "password", "token"}:
+            return True
+        if any(m in low for m in self.PLACEHOLDER_MARKERS):
+            return True
+        return False
+
+    def _check_secret_assignment(self, var_name: str, value_node: ast.expr, lineno: int) -> List[SecurityIssue]:
+        if not isinstance(value_node, ast.Constant):
+            return []
+
+        low = var_name.lower()
+
+        if isinstance(value_node.value, bytes):
+            if low in self.CRYPTO_BYTES_KEY_NAMES and len(value_node.value) in (16, 24, 32):
+                return [SecurityIssue(
+                    HIGH, lineno, "hardcoded_crypto_key",
+                    f"Hardcoded cryptographic key/IV detected ({len(value_node.value)} bytes). "
+                    "Use a secure key management system or environment variable."
+                )]
+            return []
+
+        if not isinstance(value_node.value, str):
+            return []
+
+        if low.startswith(self.NON_SECRET_TOKEN_PREFIXES):
+            return []
+
+        if self._is_placeholder_or_non_secret(value_node.value):
+            return []
+
+        for names, min_len, severity, message in self.SECRET_VAR_RULES:
+            if low in names and len(value_node.value) >= min_len:
+                return [SecurityIssue(severity, lineno, "hardcoded_secret", message)]
+
+        return []
+
+    def _check_call(self, node: ast.Call, security_context: bool) -> List[SecurityIssue]:
         results = []
 
-        # ── hashlib.md5() / hashlib.sha1() ──
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-            mod  = node.func.value.id
+            mod = node.func.value.id
             func = node.func.attr
 
             if mod == 'hashlib' and func in self.WEAK_HASHES:
                 results.extend(self._check_weak_hash_attr(node, func))
 
-            # hashlib.new('md5', ...) / hashlib.new('sha1', ...)
             if mod == 'hashlib' and func == 'new':
                 results.extend(self._check_hashlib_new(node))
 
-            # SSL verify=False
             if mod == 'requests' and func in ('get', 'post', 'put', 'delete', 'patch', 'request', 'head'):
                 for kw in node.keywords:
                     if kw.arg == 'verify' and isinstance(kw.value, ast.Constant) and kw.value.value is False:
@@ -84,44 +170,40 @@ class CryptoDetector(SecurityDetector):
                             "'verify=False' disables SSL certificate verification — vulnerable to MITM attacks."
                         ))
 
-            # Weak cipher: DES.new(), RC4.new(), etc.
             if func == 'new' and mod in self.WEAK_CIPHERS:
                 results.append(SecurityIssue(
                     HIGH, node.lineno, "weak_cipher",
                     f"'{mod}' cipher is cryptographically broken. Use AES-256 or ChaCha20."
                 ))
 
-            # AES ECB mode: AES.new(key, AES.MODE_ECB)
             results.extend(self._check_ecb_mode(node, mod, func))
 
-            # Insecure random
-            if mod == 'random' and func in ('random', 'randint', 'choice', 'sample', 'uniform'):
+            if security_context and mod == 'random' and func in ('random', 'randint', 'choice', 'sample', 'uniform'):
                 results.append(SecurityIssue(
                     MEDIUM, node.lineno, "insecure_random",
                     f"'random.{func}()' is not cryptographically secure. Use 'secrets' module."
                 ))
 
-            # urllib3 warning suppression
-            if func == 'disable_warnings':
+            if func == 'disable_warnings' and 'urllib3' in mod.lower():
                 results.append(SecurityIssue(
                     MEDIUM, node.lineno, "ssl_bypass",
                     "Disabling SSL warnings — likely hiding verify=False issues."
                 ))
 
-            # RSA/DSA/DH weak key size: RSA.generate(1024)
             results.extend(self._check_weak_key_size(node, mod, func))
 
-        # JWT algorithms=["none"] — jwt.decode(token, algorithms=["none"])
+        elif isinstance(node.func, ast.Attribute) and node.func.attr == 'disable_warnings':
+            if 'urllib3' in ast.unparse(node.func.value).lower():
+                results.append(SecurityIssue(
+                    MEDIUM, node.lineno, "ssl_bypass",
+                    "Disabling SSL warnings — likely hiding verify=False issues."
+                ))
+
         results.extend(self._check_jwt(node))
 
         return results
 
-    # ──────────────────────────────────────────────
-    # Helpers
-    # ──────────────────────────────────────────────
-
     def _check_weak_hash_attr(self, node: ast.Call, func: str) -> List[SecurityIssue]:
-        """hashlib.md5() or hashlib.sha1() without usedforsecurity=False."""
         has_usedforsecurity_false = any(
             kw.arg == 'usedforsecurity'
             and isinstance(kw.value, ast.Constant)
@@ -137,7 +219,6 @@ class CryptoDetector(SecurityDetector):
         return []
 
     def _check_hashlib_new(self, node: ast.Call) -> List[SecurityIssue]:
-        """hashlib.new('md5') or hashlib.new('sha1') — string-based call."""
         if not node.args:
             return []
         first_arg = node.args[0]
@@ -163,12 +244,10 @@ class CryptoDetector(SecurityDetector):
         )]
 
     def _check_ecb_mode(self, node: ast.Call, mod: str, func: str) -> List[SecurityIssue]:
-        """AES.new(key, AES.MODE_ECB) — ECB mode is deterministic and insecure."""
         if func != 'new':
             return []
-        # Look for MODE_ECB in positional args or 'mode' keyword
         ecb_found = False
-        for arg in node.args[1:]:  # second positional arg is mode
+        for arg in node.args[1:]:
             if isinstance(arg, ast.Attribute) and arg.attr == 'MODE_ECB':
                 ecb_found = True
         for kw in node.keywords:
@@ -184,7 +263,6 @@ class CryptoDetector(SecurityDetector):
         return []
 
     def _check_weak_key_size(self, node: ast.Call, mod: str, func: str) -> List[SecurityIssue]:
-        """RSA.generate(1024) — flag keys below recommended size."""
         if func != 'generate':
             return []
         min_size = self.WEAK_KEY_SIZES.get(mod)
@@ -205,7 +283,6 @@ class CryptoDetector(SecurityDetector):
         return []
 
     def _check_jwt(self, node: ast.Call) -> List[SecurityIssue]:
-        """jwt.decode(..., algorithms=['none']) — signature verification bypass."""
         if not isinstance(node.func, ast.Attribute):
             return []
         if node.func.attr != 'decode':
@@ -214,7 +291,6 @@ class CryptoDetector(SecurityDetector):
         for kw in node.keywords:
             if kw.arg != 'algorithms':
                 continue
-            # algorithms=["none"] or algorithms=["None"]
             if isinstance(kw.value, ast.List):
                 for elt in kw.value.elts:
                     if isinstance(elt, ast.Constant) and str(elt.value).lower() == 'none':
@@ -224,19 +300,3 @@ class CryptoDetector(SecurityDetector):
                             "critical authentication bypass. Always specify a strong algorithm (e.g. HS256, RS256)."
                         )]
         return []
-
-    def _detect_hardcoded_key(self, source_code: str) -> List[SecurityIssue]:
-        """Detect hardcoded AES key/IV as bytes literals (16, 24, or 32 bytes)."""
-        issues = []
-        # Matches: key = b"exactly16bytesXX" or iv = b'someiv__'
-        pattern = r'(?:key|iv|aes_key|secret_key)\s*=\s*b["\']([^"\']{10,})["\']'
-        for match in re.finditer(pattern, source_code, re.IGNORECASE):
-            value = match.group(1)
-            if len(value) in (16, 24, 32):
-                line = source_code[:match.start()].count('\n') + 1
-                issues.append(SecurityIssue(
-                    HIGH, line, "hardcoded_crypto_key",
-                    f"Hardcoded cryptographic key/IV detected ({len(value)} bytes). "
-                    "Use a secure key management system or environment variable."
-                ))
-        return issues

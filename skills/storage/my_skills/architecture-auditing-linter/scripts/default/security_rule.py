@@ -16,7 +16,7 @@ class SecurityRule(BaseRule):
         if not sec_dir.exists():
             return detectors
 
-        for py_file in sorted(sec_dir.glob("*_risk.py")):
+        for py_file in sorted(sec_dir.glob("*_risk*.py")):
             module_name = f"default.security.{py_file.stem}"
             spec = importlib.util.spec_from_file_location(module_name, py_file)
             if not spec or not spec.loader:

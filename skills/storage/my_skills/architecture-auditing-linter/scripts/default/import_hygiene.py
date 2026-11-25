@@ -46,7 +46,7 @@ class ImportHygieneRule(BaseRule):
             )
             return
 
-        if top_level in self.DEPRECATED_MODULES:
+        if node.level == 0 and top_level in self.DEPRECATED_MODULES:
             replacement = self.DEPRECATED_MODULES[top_level]
             self.add_violation(
                 node,

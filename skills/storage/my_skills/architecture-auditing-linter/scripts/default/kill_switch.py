@@ -13,10 +13,14 @@ class KillSwitchRule(BaseRule):
         if self.ctx.is_main_file:
             if isinstance(node.func, ast.Name) and node.func.id == "kill_pid":
                 self._has_kill_pid = True
+            elif isinstance(node.func, ast.Attribute) and node.func.attr == "kill_pid":
+                self._has_kill_pid = True
             if isinstance(node.func, ast.Attribute) and node.func.attr == "run":
                 if isinstance(node.func.value, ast.Name) and node.func.value.id == "uvicorn":
-                    self._has_uvicorn_run = True
-                    self._uvicorn_node = node
+                    uses_non_tcp = any(kw.arg in ("uds", "fd") for kw in node.keywords)
+                    if not uses_non_tcp:
+                        self._has_uvicorn_run = True
+                        self._uvicorn_node = node
 
         self.generic_visit(node)
 

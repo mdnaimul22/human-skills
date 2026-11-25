@@ -24,10 +24,23 @@ class CodeComplexityRule(BaseRule):
 
     def visit_If(self, node: ast.If) -> None:
         self._enter_block(node)
-        self.generic_visit(node)
+        self.visit(node.test)
+        for stmt in node.body:
+            self.visit(stmt)
+        if len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If):
+            self._exit_block()
+            self.visit(node.orelse[0])
+            return
+        for stmt in node.orelse:
+            self.visit(stmt)
         self._exit_block()
 
     def visit_For(self, node: ast.For) -> None:
+        self._enter_block(node)
+        self.generic_visit(node)
+        self._exit_block()
+
+    def visit_AsyncFor(self, node: ast.AsyncFor) -> None:
         self._enter_block(node)
         self.generic_visit(node)
         self._exit_block()
@@ -42,13 +55,22 @@ class CodeComplexityRule(BaseRule):
         self.generic_visit(node)
         self._exit_block()
 
-    def _check_function_complexity(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
-        branch_count = 1
-        for child in ast.walk(node):
-            if isinstance(child, (ast.If, ast.For, ast.While, ast.ExceptHandler, ast.With, ast.Assert)):
-                branch_count += 1
+    def _count_branches(self, node: ast.AST) -> int:
+        count = 0
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                continue
+            if isinstance(child, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.ExceptHandler, ast.IfExp)):
+                count += 1
             elif isinstance(child, ast.BoolOp):
-                branch_count += len(child.values) - 1
+                count += len(child.values) - 1
+            elif isinstance(child, ast.comprehension):
+                count += len(child.ifs)
+            count += self._count_branches(child)
+        return count
+
+    def _check_function_complexity(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        branch_count = 1 + self._count_branches(node)
 
         if branch_count > 15:
             self.add_violation(
@@ -64,10 +86,21 @@ class CodeComplexityRule(BaseRule):
                 suggestion="Decompose long function into focused, reusable helper functions."
             )
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+    def _visit_scoped_func(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         self._check_function_complexity(node)
+        saved_depth = self._current_depth
+        self._current_depth = 0
         self.generic_visit(node)
+        self._current_depth = saved_depth
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._visit_scoped_func(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self._check_function_complexity(node)
+        self._visit_scoped_func(node)
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        saved_depth = self._current_depth
+        self._current_depth = 0
         self.generic_visit(node)
+        self._current_depth = saved_depth

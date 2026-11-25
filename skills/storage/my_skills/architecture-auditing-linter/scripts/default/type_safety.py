@@ -1,8 +1,30 @@
 import ast
-from default.base import BaseRule
+from default.base import BaseRule, FileContext
 
 
 class TypeSafetyRule(BaseRule):
+    EQUALITY_DUNDERS = {"__eq__", "__ne__"}
+    BEFORE_VALIDATORS = {"field_validator", "model_validator", "validator", "root_validator"}
+
+    def __init__(self, context: FileContext):
+        super().__init__(context)
+        self._in_equality_dunder = 0
+        self._in_before_validator = 0
+        self._typing_cast_imported = False
+        self._non_typing_cast_imported = False
+
+    def run(self, tree: ast.AST) -> tuple[list[str], list[str]]:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                for alias in node.names:
+                    bound = alias.asname or alias.name
+                    if bound == "cast":
+                        if node.module in ("typing", "typing_extensions"):
+                            self._typing_cast_imported = True
+                        else:
+                            self._non_typing_cast_imported = True
+        return super().run(tree)
+
     @staticmethod
     def _contains_any_type(node: ast.AST | None) -> bool:
         if not node:
@@ -24,6 +46,22 @@ class TypeSafetyRule(BaseRule):
                 return True
             if isinstance(child, ast.Attribute) and child.attr == "object":
                 if isinstance(child.value, ast.Name) and child.value.id == "builtins":
+                    return True
+        return False
+
+    def _is_before_validator(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        for dec in node.decorator_list:
+            if not isinstance(dec, ast.Call):
+                continue
+            dec_name = dec.func.id if isinstance(dec.func, ast.Name) else (
+                dec.func.attr if isinstance(dec.func, ast.Attribute) else ""
+            )
+            if dec_name not in self.BEFORE_VALIDATORS:
+                continue
+            for kw in dec.keywords:
+                if kw.arg == "mode" and isinstance(kw.value, ast.Constant) and kw.value.value == "before":
+                    return True
+                if kw.arg == "pre" and isinstance(kw.value, ast.Constant) and kw.value.value is True:
                     return True
         return False
 
@@ -49,6 +87,8 @@ class TypeSafetyRule(BaseRule):
         self.generic_visit(node)
 
     def _check_func_annotations(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        is_eq = node.name in self.EQUALITY_DUNDERS
+
         if node.returns:
             if self._contains_any_type(node.returns):
                 ret_str = ast.unparse(node.returns)
@@ -74,7 +114,7 @@ class TypeSafetyRule(BaseRule):
                         f"❌ [Type Safety Violation] Parameter '{arg.arg}' in function '{node.name}' annotated with 'Any' ('{arg_ann_str}').",
                         suggestion=f"Define a concrete Pydantic schema or TypedDict for parameter '{arg.arg}' instead of '{arg_ann_str}'."
                     )
-                elif self._contains_object_type(arg.annotation):
+                elif self._contains_object_type(arg.annotation) and not is_eq:
                     arg_ann_str = ast.unparse(arg.annotation)
                     self.add_violation(
                         arg,
@@ -82,13 +122,25 @@ class TypeSafetyRule(BaseRule):
                         suggestion=f"Passing 'object' allows arbitrary invalid values to bypass validation. Enforce an explicit Pydantic schema, Protocol, or TypedDict for '{arg.arg}' instead of '{arg_ann_str}'."
                     )
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+    def _visit_func(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         self._check_func_annotations(node)
+        is_eq = node.name in self.EQUALITY_DUNDERS
+        is_before = self._is_before_validator(node)
+        if is_eq:
+            self._in_equality_dunder += 1
+        if is_before:
+            self._in_before_validator += 1
         self.generic_visit(node)
+        if is_eq:
+            self._in_equality_dunder -= 1
+        if is_before:
+            self._in_before_validator -= 1
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._visit_func(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self._check_func_annotations(node)
-        self.generic_visit(node)
+        self._visit_func(node)
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if self._contains_any_type(node.annotation):
@@ -116,6 +168,15 @@ class TypeSafetyRule(BaseRule):
                 suggestion=suggestion
             )
         self.generic_visit(node)
+
+    @staticmethod
+    def _is_exception_type_expr(node: ast.AST) -> bool:
+        for sub in ast.walk(node):
+            if isinstance(sub, ast.Name) and (sub.id in ("BaseException", "Exception") or sub.id.endswith(("Error", "Exception"))):
+                return True
+            if isinstance(sub, ast.Attribute) and (sub.attr in ("BaseException", "Exception") or sub.attr.endswith(("Error", "Exception"))):
+                return True
+        return False
 
     def visit_Call(self, node: ast.Call) -> None:
         if isinstance(node.func, ast.Name) and node.func.id == "getattr":
@@ -181,7 +242,9 @@ class TypeSafetyRule(BaseRule):
         if isinstance(node.func, ast.Name) and node.func.id == "isinstance":
             is_ast_check = False
             is_object_check = False
+            is_exc_check = False
             if len(node.args) >= 2:
+                is_exc_check = self._is_exception_type_expr(node.args[1])
                 for sub in ast.walk(node.args[1]):
                     if isinstance(sub, ast.Attribute) and isinstance(sub.value, ast.Name) and sub.value.id == "ast":
                         is_ast_check = True
@@ -206,7 +269,7 @@ class TypeSafetyRule(BaseRule):
                     f"❌ [Type Safety Violation] Meaningless tautological check 'isinstance({obj_repr}, {type_repr})' detected.",
                     suggestion=suggestion
                 )
-            elif not is_ast_check:
+            elif not is_ast_check and not is_exc_check and self._in_equality_dunder == 0 and self._in_before_validator == 0:
                 obj_repr = ast.unparse(node.args[0]) if len(node.args) >= 1 else "obj"
                 type_repr = ast.unparse(node.args[1]) if len(node.args) >= 2 else "Type"
                 suggestion = (
@@ -221,7 +284,8 @@ class TypeSafetyRule(BaseRule):
                 )
 
         if isinstance(node.func, ast.Name) and node.func.id == "cast":
-            if len(node.args) >= 1 and self._contains_object_type(node.args[0]):
+            is_typing_cast = self._typing_cast_imported or not self._non_typing_cast_imported
+            if is_typing_cast and len(node.args) >= 1 and self._contains_object_type(node.args[0]):
                 type_repr = ast.unparse(node.args[0])
                 suggestion = (
                     f"Casting to '{type_repr}' completely destroys static type safety. "
